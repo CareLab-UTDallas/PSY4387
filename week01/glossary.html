@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossary of Terms — Paraphrase Exercise</title>
+</head>
+<body style="margin:0; padding:0; background:#ffffff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#1f2933; -webkit-font-smoothing:antialiased;">
+<div style="max-width:820px; margin:0 auto; padding:16px 20px 40px 20px; box-sizing:border-box;">
+
+  <h1 style="margin:0 0 4px 0; font-size:26px; font-weight:700; color:#1f2933; letter-spacing:-0.01em;">&#128214; Glossary of Terms</h1>
+  <p style="margin:0 0 10px 0; font-size:15px; color:#52606d;">Key terms and definitions used throughout the course.</p>
+  <div style="display:inline-block; margin:0 0 10px 0; padding:8px 14px; font-size:14px; color:#5c4326; background:#fdf3e7; border:1px solid #f2d6b3; border-radius:8px;">Showing the 10 key terms for Week 1.</div>
+
+  <div style="margin:8px 0 20px 0; padding:14px 16px; font-size:14.5px; line-height:1.55; color:#334155; background:#eef4fb; border:1px solid #cfe0f2; border-radius:10px;">
+    <strong>Your task.</strong> For each of the 10 terms below, write <strong>one sentence in your own words</strong> that captures the meaning. Do not copy the definition. When all 10 are marked done, use the <strong>Copy all responses</strong> button at the bottom and paste the result into the Canvas assignment.
+  </div>
+
+  <div style="position:sticky; top:0; z-index:10; background:#ffffff; padding:10px 0 8px 0; border-bottom:1px solid #e4e7eb; margin-bottom:8px;">
+    <div style="font-size:14px; color:#3e4c59;"><span id="progressText" style="font-weight:700;">0 of 10 done</span></div>
+    <div style="height:8px; background:#e4e7eb; border-radius:99px; margin-top:6px; overflow:hidden;">
+      <div id="progressBar" style="height:100%; width:0%; background:#3d7d3f; border-radius:99px; transition:width .2s ease;"></div>
+    </div>
+  </div>
+
+  <div id="entries"></div>
+
+  <div style="margin-top:24px; padding:18px; background:#f7f8f9; border:1px solid #e4e7eb; border-radius:10px;">
+    <button id="copyBtn" style="font-size:15px; font-weight:600; color:#ffffff; background:#3d7d3f; border:none; border-radius:8px; padding:12px 20px; cursor:pointer;">Copy all responses</button>
+    <span id="copyStatus" style="margin-left:12px; font-size:14px; color:#3e4c59;"></span>
+    <p style="margin:12px 0 0 0; font-size:13.5px; color:#7b8794;">This page does not save your work. Copy your responses and paste them into Canvas to submit. Refreshing clears everything.</p>
+  </div>
+
+</div>
+
+<script>
+var DATA = [
+  {L:"A", term:"Allegiance effect", tag:"Research Methods", def:"The finding that approximately 65% of outcome variance in comparative psychotherapy studies is attributable to researcher allegiance, the investigators' theoretical orientation, rather than genuine treatment differences (Luborsky et al., 1999)."},
+  {L:"C", term:"Common factors", tag:"clinical_reasoning", def:"Elements shared across all effective psychotherapies, including therapeutic alliance, therapist empathy, positive expectancy, and facilitation of engagement. In the learning paradigm, common factors are reconceptualized as the conditions that enable complex learning."},
+  {L:"D", term:"Dodo bird verdict", tag:"Research Methods", def:"The observation, first articulated by Rosenzweig (1936) and named after the Dodo Bird in Alice in Wonderland ('Everyone has won and all must have prizes'), that bona fide psychotherapies tend to produce roughly equivalent outcomes in large-scale meta-analyses. When combined with the allegiance effect, the Dodo Bird verdict undermines empirical claims of superiority for any single therapeutic orientation and supports a shift toward mechanism-informed, process-based approaches to clinical training."},
+  {L:"E", term:"Evidence-based practice", tag:"professional_practice", def:"The integration of the best available research evidence with clinical expertise and patient values and preferences in making clinical decisions (APA Presidential Task Force, 2006). Evidence-based practice in psychology is broader than the use of empirically supported treatments; it encompasses evidence-based assessment, case formulation, treatment planning, and ongoing outcome monitoring within a framework of clinical expertise and responsiveness to patient characteristics."},
+  {L:"M", term:"Mechanism of change", tag:"Research Methods", def:"A specific psychological, biological, or social process through which a therapeutic intervention produces its effects on clinical outcomes. Identifying mechanisms of change, as distinct from correlates or predictors of outcome, requires demonstrating that the proposed mechanism mediates the relationship between treatment and outcome, changes temporally prior to symptom improvement, and is specifically targeted by the intervention."},
+  {L:"M", term:"Multi-level framework", tag:"general", def:"An organizing approach that examines psychological problems and their treatment across multiple interacting levels, biological, cognitive, affective, developmental, social, and cultural. It underlies the platform's integration of a clinical workflow with a layered psychological-science framework."},
+  {L:"O", term:"Orientation-based thinking", tag:"clinical_practice", def:"The habit of understanding cases and choosing interventions primarily through the lens of a single therapy 'orientation' (e.g., CBT or psychodynamic) rather than through the underlying mechanisms of change. Process-based approaches critique this in favor of mechanism-focused reasoning."},
+  {L:"P", term:"Psychotherapy", tag:"professional_practice", def:"The informed and intentional application of clinical methods and interpersonal stances derived from established psychological principles for the purpose of assisting people to modify their behaviors, cognitions, emotions, and/or other personal characteristics in directions that the participants deem desirable. In a clinical science framework, psychotherapy is understood as the strategic disruption of empirically identified maintaining mechanisms through evidence-based change processes."},
+  {L:"R", term:"Retention gap", tag:"clinical_reasoning", def:"The disparity in treatment completion rates between training clinics (30.4% dropout) and private practice (17% dropout). Meta-analytic evidence from 669 studies with 83,000+ patients demonstrates this systemic gap, reflecting training model failures rather than patient inadequacy."},
+  {L:"T", term:"Therapeutic alliance", tag:"Social Processes", def:"The quality of the collaborative relationship between therapist and client, including agreement on goals, agreement on tasks, and the emotional bond. Consistently the strongest predictor of outcome across treatment modalities."}
+];
+
+var STUDENT_NAME = "";
+
+function normWords(s){
+  return s.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(function(w){return w.length>0;});
+}
+
+// Longest run of consecutive words the response shares with the definition.
+function longestSharedRun(resp, def){
+  var r = normWords(resp), d = normWords(def);
+  if(r.length===0) return 0;
+  var best=0;
+  for(var i=0;i<r.length;i++){
+    for(var j=0;j<d.length;j++){
+      var k=0;
+      while(i+k<r.length && j+k<d.length && r[i+k]===d[j+k]) k++;
+      if(k>best) best=k;
+    }
+  }
+  return best;
+}
+
+var state = DATA.map(function(){return {text:"", ack:false};});
+var lastLetter = "";
+var container = document.getElementById("entries");
+
+DATA.forEach(function(item, idx){
+  if(item.L !== lastLetter){
+    var h = document.createElement("h2");
+    h.textContent = item.L;
+    h.setAttribute("style","margin:20px 0 6px 0; font-size:20px; font-weight:700; color:#b06f2a; font-family:Georgia,'Times New Roman',serif; border-bottom:1px solid #e4e7eb; padding-bottom:6px;");
+    container.appendChild(h);
+    lastLetter = item.L;
+  }
+
+  var card = document.createElement("div");
+  card.setAttribute("style","background:#f7f8f9; border:1px solid #e4e7eb; border-radius:10px; padding:16px 18px; margin:0 0 16px 0;");
+
+  var head = document.createElement("div");
+  head.setAttribute("style","display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;");
+  var title = document.createElement("div");
+  title.setAttribute("style","font-size:17px; font-weight:700; color:#1f2933;");
+  title.textContent = item.term;
+  var tag = document.createElement("span");
+  tag.setAttribute("style","font-size:12.5px; color:#3e4c59; background:#e1e6ea; padding:4px 10px; border-radius:6px; white-space:nowrap;");
+  tag.textContent = item.tag;
+  head.appendChild(title); head.appendChild(tag);
+  card.appendChild(head);
+
+  var def = document.createElement("p");
+  def.setAttribute("style","margin:8px 0 12px 0; font-size:15px; line-height:1.55; color:#3e4c59;");
+  def.textContent = item.def;
+  card.appendChild(def);
+
+  var label = document.createElement("label");
+  label.setAttribute("style","display:block; font-size:13.5px; font-weight:600; color:#334155; margin-bottom:4px;");
+  label.textContent = "Your one-sentence paraphrase:";
+  card.appendChild(label);
+
+  var ta = document.createElement("textarea");
+  ta.setAttribute("rows","2");
+  ta.setAttribute("style","width:100%; box-sizing:border-box; font-family:inherit; font-size:14.5px; line-height:1.5; color:#1f2933; padding:9px 11px; border:1px solid #cbd2d9; border-radius:8px; resize:vertical;");
+  card.appendChild(ta);
+
+  var warn = document.createElement("div");
+  warn.setAttribute("style","display:none; margin-top:8px; padding:9px 11px; font-size:13px; line-height:1.5; color:#8a5a00; background:#fff5e5; border:1px solid #f1cf8f; border-radius:8px;");
+  card.appendChild(warn);
+
+  var ackWrap = document.createElement("label");
+  ackWrap.setAttribute("style","display:none; align-items:flex-start; gap:8px; margin-top:8px; font-size:13px; color:#334155; cursor:pointer;");
+  var ackBox = document.createElement("input");
+  ackBox.type = "checkbox";
+  ackBox.setAttribute("style","margin-top:2px;");
+  var ackText = document.createElement("span");
+  ackText.textContent = "I've reviewed this and it's in my own words.";
+  ackWrap.appendChild(ackBox); ackWrap.appendChild(ackText);
+  card.appendChild(ackWrap);
+
+  var status = document.createElement("div");
+  status.setAttribute("style","margin-top:8px; font-size:13px; font-weight:600; color:#7b8794;");
+  status.textContent = "Not started";
+  card.appendChild(status);
+
+  function evaluate(){
+    var text = ta.value.trim();
+    state[idx].text = text;
+    var words = normWords(text).length;
+    var run = longestSharedRun(text, item.def);
+
+    if(text.length === 0){
+      warn.style.display = "none";
+      ackWrap.style.display = "none";
+      state[idx].ack = false;
+      status.textContent = "Not started";
+      status.style.color = "#7b8794";
+      updateProgress(); return;
+    }
+
+    if(words < 4){
+      warn.style.display = "block";
+      warn.textContent = "That looks very short. Aim for one full sentence in your own words.";
+      ackWrap.style.display = "none";
+      state[idx].ack = false;
+      status.textContent = "Too short";
+      status.style.color = "#b45309";
+      updateProgress(); return;
+    }
+
+    // 6+ consecutive shared words = too close to the source.
+    if(run >= 6){
+      warn.style.display = "block";
+      warn.textContent = "This shares a long stretch of wording with the original definition (" + run + " words in a row). Please reword it more fully. If you're confident it's genuinely your own, check the box below to continue.";
+      ackWrap.style.display = "flex";
+      if(ackBox.checked){
+        state[idx].ack = true;
+        status.textContent = "Done (acknowledged)";
+        status.style.color = "#3d7d3f";
+      } else {
+        state[idx].ack = false;
+        status.textContent = "Needs review";
+        status.style.color = "#b45309";
+      }
+      updateProgress(); return;
+    }
+
+    // Clean paraphrase.
+    warn.style.display = "none";
+    ackWrap.style.display = "none";
+    ackBox.checked = false;
+    state[idx].ack = false;
+    status.textContent = "Done";
+    status.style.color = "#3d7d3f";
+    updateProgress();
+  }
+
+  ta.addEventListener("input", evaluate);
+  ackBox.addEventListener("change", evaluate);
+  container.appendChild(card);
+});
+
+function isDone(i){
+  var s = state[i];
+  var text = s.text.trim();
+  if(normWords(text).length < 4) return false;
+  var run = longestSharedRun(text, DATA[i].def);
+  if(run >= 6) return s.ack === true;
+  return true;
+}
+
+function updateProgress(){
+  var done = 0;
+  for(var i=0;i<DATA.length;i++){ if(isDone(i)) done++; }
+  document.getElementById("progressText").textContent = done + " of " + DATA.length + " done";
+  document.getElementById("progressBar").style.width = (done/DATA.length*100) + "%";
+}
+
+document.getElementById("copyBtn").addEventListener("click", function(){
+  var doneCount = 0;
+  for(var i=0;i<DATA.length;i++){ if(isDone(i)) doneCount++; }
+  var lines = [];
+  lines.push("Week 1 Glossary — Paraphrase Exercise");
+  lines.push("Completed: " + doneCount + " of " + DATA.length);
+  lines.push("");
+  DATA.forEach(function(item, i){
+    var mark = isDone(i) ? "" : "  [incomplete]";
+    lines.push((i+1) + ". " + item.term + mark);
+    lines.push("   " + (state[i].text.trim() || "(no response)"));
+    lines.push("");
+  });
+  var out = lines.join("\n");
+  var status = document.getElementById("copyStatus");
+
+  function fallback(){
+    var t = document.createElement("textarea");
+    t.value = out;
+    t.setAttribute("style","position:fixed; top:0; left:0; opacity:0;");
+    document.body.appendChild(t); t.focus(); t.select();
+    try{ document.execCommand("copy"); status.textContent = "Copied. Paste it into Canvas."; }
+    catch(e){ status.textContent = "Copy failed — select the text manually."; }
+    document.body.removeChild(t);
+  }
+
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(out).then(function(){
+      status.textContent = "Copied. Paste it into Canvas.";
+    }, fallback);
+  } else { fallback(); }
+
+  if(doneCount < DATA.length){
+    status.textContent += " (" + (DATA.length - doneCount) + " still incomplete)";
+  }
+});
+
+updateProgress();
+</script>
+</body>
+</html>
