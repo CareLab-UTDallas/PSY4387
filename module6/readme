@@ -1,0 +1,22 @@
+# Undergraduate single-file reading: Canvas upload instructions
+
+Each package contains one self-contained `index.html`. Its styling, figures,
+audio, and video are embedded directly in that file, so Canvas does not need to
+execute JavaScript or resolve sibling asset folders. The page is presentation
+only: it does not send reading activity, quiz responses, grades, or student
+records to the application.
+
+## Upload
+
+1. Upload only `index.html` through the approved Canvas method that renders HTML
+   directly. A standard Canvas File module item presents HTML as a download.
+2. Keep the uploaded page restricted to enrolled course users. Do not make it
+   public to work around a Canvas restriction.
+3. In Canvas Student View, confirm the module heading and reading are visible,
+   native audio controls work, expandable transcripts open, and citation links
+    navigate when selected. Static citation links intentionally use normal
+    same-window navigation so Canvas can handle them without opening a new
+    browser context.
+
+Build activities, knowledge checks, completion rules, and grades as separate
+Canvas items. The static page intentionally does not track or submit work.
