@@ -35,17 +35,19 @@
 </div>
 
 <script>
+// concepts: meaning-bearing words a genuine paraphrase is likely to touch.
+// A response sharing NONE of these (nor the term's own words) is flagged as possibly off-topic.
 var DATA = [
-  {L:"A", term:"Allegiance effect", tag:"Research Methods", def:"The finding that approximately 65% of outcome variance in comparative psychotherapy studies is attributable to researcher allegiance, the investigators' theoretical orientation, rather than genuine treatment differences (Luborsky et al., 1999)."},
-  {L:"C", term:"Common factors", tag:"clinical_reasoning", def:"Elements shared across all effective psychotherapies, including therapeutic alliance, therapist empathy, positive expectancy, and facilitation of engagement. In the learning paradigm, common factors are reconceptualized as the conditions that enable complex learning."},
-  {L:"D", term:"Dodo bird verdict", tag:"Research Methods", def:"The observation, first articulated by Rosenzweig (1936) and named after the Dodo Bird in Alice in Wonderland ('Everyone has won and all must have prizes'), that bona fide psychotherapies tend to produce roughly equivalent outcomes in large-scale meta-analyses. When combined with the allegiance effect, the Dodo Bird verdict undermines empirical claims of superiority for any single therapeutic orientation and supports a shift toward mechanism-informed, process-based approaches to clinical training."},
-  {L:"E", term:"Evidence-based practice", tag:"professional_practice", def:"The integration of the best available research evidence with clinical expertise and patient values and preferences in making clinical decisions (APA Presidential Task Force, 2006). Evidence-based practice in psychology is broader than the use of empirically supported treatments; it encompasses evidence-based assessment, case formulation, treatment planning, and ongoing outcome monitoring within a framework of clinical expertise and responsiveness to patient characteristics."},
-  {L:"M", term:"Mechanism of change", tag:"Research Methods", def:"A specific psychological, biological, or social process through which a therapeutic intervention produces its effects on clinical outcomes. Identifying mechanisms of change, as distinct from correlates or predictors of outcome, requires demonstrating that the proposed mechanism mediates the relationship between treatment and outcome, changes temporally prior to symptom improvement, and is specifically targeted by the intervention."},
-  {L:"M", term:"Multi-level framework", tag:"general", def:"An organizing approach that examines psychological problems and their treatment across multiple interacting levels, biological, cognitive, affective, developmental, social, and cultural. It underlies the platform's integration of a clinical workflow with a layered psychological-science framework."},
-  {L:"O", term:"Orientation-based thinking", tag:"clinical_practice", def:"The habit of understanding cases and choosing interventions primarily through the lens of a single therapy 'orientation' (e.g., CBT or psychodynamic) rather than through the underlying mechanisms of change. Process-based approaches critique this in favor of mechanism-focused reasoning."},
-  {L:"P", term:"Psychotherapy", tag:"professional_practice", def:"The informed and intentional application of clinical methods and interpersonal stances derived from established psychological principles for the purpose of assisting people to modify their behaviors, cognitions, emotions, and/or other personal characteristics in directions that the participants deem desirable. In a clinical science framework, psychotherapy is understood as the strategic disruption of empirically identified maintaining mechanisms through evidence-based change processes."},
-  {L:"R", term:"Retention gap", tag:"clinical_reasoning", def:"The disparity in treatment completion rates between training clinics (30.4% dropout) and private practice (17% dropout). Meta-analytic evidence from 669 studies with 83,000+ patients demonstrates this systemic gap, reflecting training model failures rather than patient inadequacy."},
-  {L:"T", term:"Therapeutic alliance", tag:"Social Processes", def:"The quality of the collaborative relationship between therapist and client, including agreement on goals, agreement on tasks, and the emotional bond. Consistently the strongest predictor of outcome across treatment modalities."}
+  {L:"A", term:"Allegiance effect", tag:"Research Methods", def:"The finding that approximately 65% of outcome variance in comparative psychotherapy studies is attributable to researcher allegiance, the investigators' theoretical orientation, rather than genuine treatment differences (Luborsky et al., 1999).", concepts:["allegiance","researcher","research","outcome","bias","orientation","belief","favor","preference","study","result","therapy","treatment"]},
+  {L:"C", term:"Common factors", tag:"clinical_reasoning", def:"Elements shared across all effective psychotherapies, including therapeutic alliance, therapist empathy, positive expectancy, and facilitation of engagement. In the learning paradigm, common factors are reconceptualized as the conditions that enable complex learning.", concepts:["shared","common","across","alliance","empathy","expectancy","engagement","effective","therapies","therapy","element","relationship"]},
+  {L:"D", term:"Dodo bird verdict", tag:"Research Methods", def:"The observation, first articulated by Rosenzweig (1936) and named after the Dodo Bird in Alice in Wonderland ('Everyone has won and all must have prizes'), that bona fide psychotherapies tend to produce roughly equivalent outcomes in large-scale meta-analyses. When combined with the allegiance effect, the Dodo Bird verdict undermines empirical claims of superiority for any single therapeutic orientation and supports a shift toward mechanism-informed, process-based approaches to clinical training.", concepts:["equivalent","equal","similar","same","outcome","therapies","therapy","effective","superiority","better","comparable","treatment","result"]},
+  {L:"E", term:"Evidence-based practice", tag:"professional_practice", def:"The integration of the best available research evidence with clinical expertise and patient values and preferences in making clinical decisions (APA Presidential Task Force, 2006). Evidence-based practice in psychology is broader than the use of empirically supported treatments; it encompasses evidence-based assessment, case formulation, treatment planning, and ongoing outcome monitoring within a framework of clinical expertise and responsiveness to patient characteristics.", concepts:["evidence","research","clinical","expertise","patient","values","preferences","decision","integration","best","practice","treatment"]},
+  {L:"M", term:"Mechanism of change", tag:"Research Methods", def:"A specific psychological, biological, or social process through which a therapeutic intervention produces its effects on clinical outcomes. Identifying mechanisms of change, as distinct from correlates or predictors of outcome, requires demonstrating that the proposed mechanism mediates the relationship between treatment and outcome, changes temporally prior to symptom improvement, and is specifically targeted by the intervention.", concepts:["mechanism","process","change","intervention","effect","outcome","how","cause","produce","treatment","work","symptom"]},
+  {L:"M", term:"Multi-level framework", tag:"general", def:"An organizing approach that examines psychological problems and their treatment across multiple interacting levels, biological, cognitive, affective, developmental, social, and cultural. It underlies the platform's integration of a clinical workflow with a layered psychological-science framework.", concepts:["level","multiple","biological","cognitive","affective","social","cultural","developmental","layer","approach","framework","problem"]},
+  {L:"O", term:"Orientation-based thinking", tag:"clinical_practice", def:"The habit of understanding cases and choosing interventions primarily through the lens of a single therapy 'orientation' (e.g., CBT or psychodynamic) rather than through the underlying mechanisms of change. Process-based approaches critique this in favor of mechanism-focused reasoning.", concepts:["orientation","single","one","school","approach","cbt","psychodynamic","lens","mechanism","therapy","intervention","case"]},
+  {L:"P", term:"Psychotherapy", tag:"professional_practice", def:"The informed and intentional application of clinical methods and interpersonal stances derived from established psychological principles for the purpose of assisting people to modify their behaviors, cognitions, emotions, and/or other personal characteristics in directions that the participants deem desirable. In a clinical science framework, psychotherapy is understood as the strategic disruption of empirically identified maintaining mechanisms through evidence-based change processes.", concepts:["clinical","treatment","psychological","behavior","emotion","cognition","change","therapist","client","patient","method","help","principle","intervention"]},
+  {L:"R", term:"Retention gap", tag:"clinical_reasoning", def:"The disparity in treatment completion rates between training clinics (30.4% dropout) and private practice (17% dropout). Meta-analytic evidence from 669 studies with 83,000+ patients demonstrates this systemic gap, reflecting training model failures rather than patient inadequacy.", concepts:["dropout","completion","retention","training","clinic","private","practice","gap","disparity","difference","rate","patient","quit","leave"]},
+  {L:"T", term:"Therapeutic alliance", tag:"Social Processes", def:"The quality of the collaborative relationship between therapist and client, including agreement on goals, agreement on tasks, and the emotional bond. Consistently the strongest predictor of outcome across treatment modalities.", concepts:["relationship","alliance","collaborative","therapist","client","bond","trust","goal","task","connection","rapport","predictor","outcome"]}
 ];
 
 var STUDENT_NAME = "";
@@ -67,6 +69,23 @@ function longestSharedRun(resp, def){
     }
   }
   return best;
+}
+
+// Loose stem so "relationships" matches "relationship", "helping" matches "help".
+function stem(w){
+  return w.replace(/(ing|ed|es|s)$/,"");
+}
+// How many of the term's concept words (or the term's own words) the response touches.
+function conceptHits(resp, item){
+  var r = normWords(resp).map(stem);
+  var rset = {};
+  r.forEach(function(w){ rset[w] = true; });
+  var pool = (item.concepts || []).concat(normWords(item.term));
+  var hits = 0;
+  pool.forEach(function(c){
+    if(rset[stem(c)]) hits++;
+  });
+  return hits;
 }
 
 var state = DATA.map(function(){return {text:"", ack:false};});
@@ -145,13 +164,30 @@ DATA.forEach(function(item, idx){
       updateProgress(); return;
     }
 
-    if(words < 4){
+    if(words < 5){
       warn.style.display = "block";
       warn.textContent = "That looks very short. Aim for one full sentence in your own words.";
       ackWrap.style.display = "none";
       state[idx].ack = false;
       status.textContent = "Too short";
       status.style.color = "#b45309";
+      updateProgress(); return;
+    }
+
+    // Touches none of the concept's meaning-bearing words: likely off-topic.
+    if(conceptHits(text, item) === 0){
+      warn.style.display = "block";
+      warn.textContent = "This doesn't seem to touch on what this term is about. Make sure your sentence captures the actual meaning. If you're sure it does, check the box below to continue.";
+      ackWrap.style.display = "flex";
+      if(ackBox.checked){
+        state[idx].ack = true;
+        status.textContent = "Done (acknowledged)";
+        status.style.color = "#3d7d3f";
+      } else {
+        state[idx].ack = false;
+        status.textContent = "Check relevance";
+        status.style.color = "#b45309";
+      }
       updateProgress(); return;
     }
 
@@ -190,7 +226,8 @@ DATA.forEach(function(item, idx){
 function isDone(i){
   var s = state[i];
   var text = s.text.trim();
-  if(normWords(text).length < 4) return false;
+  if(normWords(text).length < 5) return false;
+  if(conceptHits(text, DATA[i]) === 0) return s.ack === true;
   var run = longestSharedRun(text, DATA[i].def);
   if(run >= 6) return s.ack === true;
   return true;
