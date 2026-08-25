@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treatment Explorer — Mechanisms from Historical Traditions</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1c1b19; --muted:#6b6862; --line:#e7e4de; --line2:#eceae4;
+    --card:#ffffff; --card-shadow:0 1px 2px rgba(28,27,25,.04),0 8px 24px rgba(28,27,25,.06);
+    --field:#f3f1ec; --accent:#5b6b4f; --accent-ink:#3f4b37;
+    --tag-mech-bg:#e7ecf6; --tag-mech-ink:#3a4a6b;
+    --tag-fac-bg:#e4f0e4; --tag-fac-ink:#3c5c3e;
+    --badge-dx-bg:#e9e7e2; --badge-dx-ink:#4a4740;
+    --badge-pop-bg:#ffffff; --badge-pop-ink:#4a4740;
+    --badge-deep-bg:#8a5a25; --badge-deep-ink:#ffffff;
+    --note-ink:#57544e; --focus:#2f6f4f;
+    --radius:18px; --radius-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:'Iowan Old Style',Georgia,'Times New Roman',serif;
+    -webkit-font-smoothing:antialiased;line-height:1.5;}
+  .wrap{max-width:1040px;margin:0 auto;padding:26px 20px 56px;}
+  .masthead{display:flex;align-items:center;gap:14px;padding-bottom:18px;margin-bottom:20px;border-bottom:1px solid var(--line);}
+  .mark{flex:0 0 auto;width:46px;height:46px;border-radius:12px;background:#eef1ea;display:grid;place-items:center;}
+  .masthead h1{margin:0;font-size:27px;letter-spacing:-.015em;font-weight:600;line-height:1.08;}
+  .masthead .sub{margin:3px 0 0;font-size:14px;color:var(--muted);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:.01em;}
+  .masthead .sub u{text-decoration-color:var(--accent);text-underline-offset:2px;}
+  .tabs{display:flex;gap:22px;margin-bottom:18px;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;}
+  .tab{padding-bottom:9px;color:var(--muted);border-bottom:2px solid transparent;}
+  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600;}
+  .searchbar label{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .field-row{position:relative;display:flex;align-items:center;}
+  .field-row svg.magnifier{position:absolute;left:15px;pointer-events:none;opacity:.5;}
+  #query{width:100%;padding:14px 16px 14px 44px;font-size:16px;color:var(--ink);background:var(--field);border:1.5px solid transparent;border-radius:var(--radius-sm);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;transition:border-color .15s,background .15s;}
+  #query::placeholder{color:#9b988f;}
+  #query:focus{outline:none;border-color:var(--focus);background:#fff;}
+  .hint{margin:9px 2px 18px;font-size:13px;color:var(--muted);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .hint b{color:var(--accent-ink);font-weight:600;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 2px 18px;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .chip-btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 13px;font-size:13px;cursor:pointer;color:var(--ink);transition:.15s;}
+  .chip-btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .resultcount{font-size:12.5px;color:var(--muted);margin:0 2px 14px;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start;}
+  @media (max-width:720px){ .grid{grid-template-columns:1fr;} }
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--card-shadow);padding:22px 22px 18px;}
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  .card-title{margin:0;font-size:20px;font-weight:600;letter-spacing:-.01em;line-height:1.18;}
+  .chip-tag{flex:0 0 auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;letter-spacing:.02em;padding:5px 9px;border-radius:7px;white-space:nowrap;margin-top:3px;}
+  .chip-tag.mechanism{background:var(--tag-mech-bg);color:var(--tag-mech-ink);}
+  .chip-tag.facilitator{background:var(--tag-fac-bg);color:var(--tag-fac-ink);}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin:13px 0 4px;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .badge{font-size:12.5px;padding:5px 11px;border-radius:8px;}
+  .badge.dx{background:var(--badge-dx-bg);color:var(--badge-dx-ink);}
+  .badge.pop{background:var(--badge-pop-bg);color:var(--badge-pop-ink);border:1px solid var(--line);}
+  .badge.deep{background:var(--badge-deep-bg);color:var(--badge-deep-ink);font-weight:600;}
+
+  .sections{margin-top:14px;}
+  .acc{border-top:1px solid var(--line);}
+  .acc:last-of-type{border-bottom:1px solid var(--line);}
+  .acc-btn{width:100%;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:13px 2px;text-align:left;color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;}
+  .acc-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px;}
+  .acc-btn .ic{flex:0 0 auto;opacity:.6;display:grid;place-items:center;width:19px;height:19px;}
+  .acc-btn .lbl{flex:1 1 auto;}
+  .acc-btn .chev{flex:0 0 auto;transition:transform .2s;opacity:.55;}
+  .acc[data-open="true"] .acc-btn .chev{transform:rotate(180deg);}
+  .acc[data-open="true"] .acc-btn{color:var(--accent-ink);}
+  .acc-panel{overflow:hidden;max-height:0;transition:max-height .24s ease;}
+  .acc-panel .inner{padding:0 2px 16px 31px;color:#44413b;font-size:14.5px;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;}
+  .acc.highlight .acc-btn{background:#f6f8f4;}
+  .acc.highlight{outline:1.5px solid #cdd8c4;border-radius:10px;}
+  .acc-btn .required{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);background:#eef1ea;border-radius:5px;padding:3px 6px;font-weight:600;}
+
+  .note{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--note-ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;}
+  .note b{color:var(--ink);}
+  .guide-row{margin-top:4px;display:flex;justify-content:flex-end;}
+  .guide-link{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:13px;color:#9a7a3f;background:none;border:none;cursor:not-allowed;display:inline-flex;align-items:center;gap:6px;padding:8px 2px;opacity:.8;}
+  .emptystate{grid-column:1/-1;background:var(--card);border:1px dashed var(--line);border-radius:var(--radius);padding:28px 24px;text-align:center;color:var(--muted);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14.5px;}
+  .emptystate b{color:var(--ink);}
+  @media (prefers-reduced-motion:reduce){ .acc-panel,.acc-btn .chev{transition:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <div class="mark" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="11" stroke="#5b6b4f" stroke-width="2"/><circle cx="13" cy="13" r="6" stroke="#5b6b4f" stroke-width="2"/><circle cx="13" cy="13" r="1.8" fill="#5b6b4f"/></svg>
+    </div>
+    <div>
+      <h1>Treatment Explorer &mdash; Mechanisms from Historical Traditions</h1>
+      <p class="sub"><u>Evidence-based</u> interventions organized by <u>mechanism</u></p>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Result views">
+    <div class="tab" role="tab" aria-selected="true">All results</div>
+    <div class="tab" role="tab" aria-selected="false" style="opacity:.5;">By mechanism</div>
+    <div class="tab" role="tab" aria-selected="false" style="opacity:.5;">By disorder</div>
+  </div>
+
+  <div class="searchbar">
+    <label for="query">Search &amp; filter</label>
+    <div class="field-row">
+      <svg class="magnifier" width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6.2" stroke="#1c1b19" stroke-width="1.7"/><line x1="13.6" y1="13.6" x2="17.5" y2="17.5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <input id="query" type="text" value="psychodynamic" autocomplete="off" spellcheck="false" aria-describedby="searchhint" />
+    </div>
+  </div>
+  <p class="hint" id="searchhint">Type a search term and press Enter, or use a shortcut below. Try <b>psychodynamic</b>, <b>CBT</b>, or <b>exposure</b>.</p>
+  <div class="chips" id="chips" role="group" aria-label="Search shortcuts"></div>
+
+  <div class="resultcount" id="resultcount"></div>
+  <div class="grid" id="results" aria-live="polite"></div>
+</div>
+
+<script>
+// ===========================================================================
+// Treatment Explorer 2 — "Mechanisms from Historical Traditions"
+// Psychological Mechanisms + Clinical Notes are VERBATIM from instructor screenshots.
+// Core Procedures / Neural Systems / Facilitating Factors are grounded in the
+// literature (searches run and cited in build conversation); no memory-only claims.
+// Citations appearing on cards (Driessen et al., 2015) verified:
+//   Clinical Psychology Review, vol. 42, pp. 1-15.
+// ===========================================================================
+
+// Tag types: "mechanism" (blue "Mechanism dominant") | "facilitator" (green "Facilitator dominant")
+// deepDive: whether the "Deep Dive Available" badge + "Explore Full Intervention Guide" show.
+
+const CARDS = [
+  // ---------------------------------------------------------------- PSYCHODYNAMIC
+  {
+    id: "psychodynamic-depression",
+    match: ["psychodynamic", "psychodynamic therapy", "pdt"],
+    title: "Psychodynamic Therapy for Depression",
+    tag: "facilitator",
+    badges: ["Major Depressive Disorder", "Adult"],
+    deepDive: false,
+    sections: {
+      core: "Free association and exploration of unconscious material, transference interpretation, identification and clarification of defense mechanisms, and working through recurring self-critical and self-defeating relational patterns. The therapeutic relationship itself is the primary vehicle of change.",
+      mechanism: "Resolution of unconscious conflict maintaining depressive affect, corrective emotional experience within the therapeutic relationship, improved affect tolerance and self-reflective capacity, insight into self-critical and self-defeating relational patterns",
+      neural: "Implicates limbic and prefrontal circuits that encode early relational templates. Object-relations models link caregiver-based cognitive-affective units to the amygdala, hippocampus, and medial prefrontal cortex; imaging of psychodynamic process is developing but methodologically harder than for CBT because the therapeutic relationship is itself an active ingredient.",
+      facilitating: "Benefits from a patient's capacity for self-reflection and affect tolerance, a durable therapeutic alliance, and time to work through patterns. Psychodynamic Supportive Therapy suits lower reflective capacity; expressive work suits higher."
+    },
+    note: "Supported for depression in meta-analyses (Driessen et al., 2015); Psychodynamic Supportive Therapy (PST) and Long-Term Psychodynamic Psychotherapy (LTPP) are related variants; use PHQ-9 to track symptomatic change"
+  },
+  {
+    id: "stpt",
+    match: ["psychodynamic", "stpt", "short-term psychodynamic", "short term psychodynamic"],
+    title: "Short-Term Psychodynamic Therapy (STPT)",
+    tag: "facilitator",
+    badges: ["Various (Relational / Personality)", "Adult"],
+    deepDive: false,
+    sections: {
+      core: "Active, time-limited work with an agreed focus: rapid identification and interpretation of transference, confrontation of character defenses, and tracking of the core conflictual relationship theme. The defined time frame is used therapeutically to sustain focus.",
+      mechanism: "Insight into unconscious conflict maintaining symptoms, corrective emotional experience in the therapeutic dyad, internalization of the therapist as a collaborative helpful object, resolution of the focal relational theme",
+      neural: "Shares the relational-template circuitry of psychodynamic work (amygdala, hippocampus, medial prefrontal cortex), with the focal, affect-activating stance of models such as ISTDP intended to mobilize and then regulate emotional responses within session.",
+      facilitating: "Suited to patients who can tolerate a focused, affect-activating stance and an active therapist. The time limit itself sustains motivation; comorbid personality pathology is a common and appropriate target rather than an exclusion."
+    },
+    note: "Typically 16-40 sessions; foundational models: Davanloo (ISTDP), Malan, Mann, Sifneos; ISTDP variant uses active confrontation of character defenses; suitable for depression, anxiety, and personality pathology"
+  },
+
+  // ---------------------------------------------------------------- CBT (multiple)
+  {
+    id: "cbt-depression",
+    match: ["cbt", "cognitive behavioral therapy", "cognitive behavioural therapy", "cbt for depression"],
+    title: "CBT (cognitive-behavioral therapy) for Depression",
+    tag: "mechanism",
+    badges: ["Major Depressive Disorder", "Adult"],
+    deepDive: true,
+    sections: {
+      core: "Cognitive restructuring through thought records and Socratic questioning, behavioral experiments that test predictions, and an integrated behavioral component of activity scheduling, all supported by between-session homework.",
+      mechanism: "Reduced avoidance, increased reward engagement, cognitive reappraisal",
+      neural: "Associated with diminished limbic (amygdala) reactivity to negative stimuli and altered prefrontal and cingulate activity, consistent with strengthened top-down prefrontal regulation. Subgenual anterior cingulate change tracks symptom improvement.",
+      facilitating: "Benefits from capacity to engage cognitive skills, a structured collaborative alliance, and consistent homework completion; explicit case formulation links technique to the individual."
+    },
+    note: "Use PHQ-9; start with BA"
+  },
+  {
+    id: "cbt-panic",
+    match: ["cbt", "exposure", "panic", "panic-focused cbt", "panic focused cbt"],
+    title: "Panic-Focused CBT (cognitive-behavioral therapy) with Exposure",
+    tag: "mechanism",
+    badges: ["Panic Disorder", "Adult"],
+    deepDive: true,
+    sections: {
+      core: "Psychoeducation on the panic cycle, cognitive work on catastrophic misappraisal of bodily sensations, and interoceptive exposure that deliberately induces feared sensations, alongside in vivo exposure to avoided situations and systematic dropping of safety behaviors.",
+      mechanism: "Inhibitory learning; reduced catastrophic misinterpretation",
+      neural: "Engages the fear-extinction network (amygdala, ventromedial prefrontal cortex, hippocampus) and interoceptive processing regions including the insula, with new inhibitory associations competing against catastrophic appraisals of bodily cues.",
+      facilitating: "Works best when relaxation is not used as a safety behavior; violating catastrophic expectancies, rather than reducing discomfort, drives change. Anxiety sensitivity is the key treatment target."
+    },
+    note: "Use PDSS; focus on prediction error"
+  },
+  {
+    id: "cbt-social",
+    match: ["cbt", "social anxiety", "cbt for social anxiety"],
+    title: "CBT (cognitive-behavioral therapy) for Social Anxiety",
+    tag: "mechanism",
+    badges: ["Social Anxiety Disorder", "Adult"],
+    deepDive: true,
+    sections: {
+      core: "Attention training that redirects self-focused attention outward, behavioral experiments that test feared social outcomes, systematic reduction of safety behaviors, and work on anticipatory and post-event processing (rumination).",
+      mechanism: "Reduced self-focus, corrected threat predictions",
+      neural: "Targets heightened amygdala reactivity to social-evaluative threat and recruits prefrontal regulatory regions; shifting attention away from internal self-monitoring reduces the maintaining loop of self-focused processing.",
+      facilitating: "Depends on willingness to drop safety behaviors and enter feared social situations; the Clark-Wells self-focused-attention model guides which processes to target."
+    },
+    note: "Use LSAS"
+  },
+  {
+    id: "cbt-gad",
+    match: ["cbt", "gad", "generalized anxiety", "generalised anxiety", "cbt for gad"],
+    title: "CBT (cognitive-behavioral therapy) for GAD (generalized anxiety disorder)",
+    tag: "mechanism",
+    badges: ["GAD", "Adult"],
+    deepDive: true,
+    sections: {
+      core: "Worry postponement and stimulus control, worry exposure in which worst-case scenarios are written and sat with rather than neutralized, uncertainty-tolerance experiments, and reduction of reassurance-seeking and overly cautious behaviors.",
+      mechanism: "Shift from verbal worry to emotional processing",
+      neural: "Implicates threat-biased attention and judgment supported by amygdala-prefrontal circuits; worry functions as verbal-linguistic avoidance that dampens emotional processing, and treatment re-engages that avoided affective content.",
+      facilitating: "Benefits from tolerating uncertainty and resisting reassurance-seeking; worry is reframed as cognitive avoidance rather than useful problem-solving."
+    },
+    note: "Use GAD-7"
+  },
+
+  // ---------------------------------------------------------------- EXPOSURE (adds PE)
+  {
+    id: "prolonged-exposure",
+    match: ["exposure", "prolonged exposure", "pe"],
+    title: "Prolonged Exposure",
+    tag: "mechanism",
+    badges: ["PTSD", "Adult"],
+    deepDive: true,
+    sections: {
+      core: "Repeated imaginal exposure in which the patient narrates the trauma memory in detail, in vivo exposure to safe but avoided trauma reminders, processing of the exposure, and psychoeducation on the maintaining role of avoidance.",
+      mechanism: "Fear extinction + reconsolidation",
+      neural: "Grounded in the fear-extinction circuit: the overactive amygdala, the hypoactive ventromedial prefrontal cortex that normally downregulates it, and the hippocampus that supplies context. Prolonged exposure increases connectivity among these regions, improving extinction recall.",
+      facilitating: "Rests on emotional processing theory (activate the fear memory, then present information incongruent with it); requires tolerating short-term distress and sufficient engagement with the memory rather than avoidance."
+    },
+    note: "SUDS + PCL-5"
+  }
+];
+
+// Search index: query term -> ordered card ids. A card can appear under several searches.
+const SEARCHES = {
+  "psychodynamic": ["psychodynamic-depression", "stpt"],
+  "cbt": ["cbt-depression", "cbt-panic", "cbt-social", "cbt-gad"],
+  "exposure": ["cbt-panic", "prolonged-exposure"]
+};
+
+var CARD_BY_ID = {}; CARDS.forEach(function(c){ CARD_BY_ID[c.id] = c; });
+var SHORTCUTS = ["psychodynamic","CBT","exposure"];
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function norm(s){return (s||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();}
+
+function resolve(q){
+  q = norm(q);
+  if(!q) return [];
+  // exact search-term hit
+  if(SEARCHES[q]) return SEARCHES[q].map(function(id){return CARD_BY_ID[id];});
+  // leading-substring of a known search term (progressive typing)
+  var keys = Object.keys(SEARCHES);
+  for(var i=0;i<keys.length;i++){ if(keys[i].indexOf(q)===0) return SEARCHES[keys[i]].map(function(id){return CARD_BY_ID[id];}); }
+  // fallback: any card whose match list contains the query
+  var hits = CARDS.filter(function(c){ return c.match.some(function(m){ return norm(m).indexOf(q)!==-1 || norm(m).indexOf(q)===0; }); });
+  return hits;
+}
+
+function accordion(icon, label, body, required){
+  var acc = el("div","acc"+(required?" highlight":"")); acc.setAttribute("data-open","false");
+  var btn = el("button","acc-btn");
+  btn.setAttribute("aria-expanded","false");
+  btn.innerHTML = '<span class="ic" aria-hidden="true">'+icon+'</span><span class="lbl">'+esc(label)+'</span>'+
+    (required?'<span class="required">Start here</span>':'')+
+    '<svg class="chev" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var panel = el("div","acc-panel");
+  panel.appendChild(el("div","inner", esc(body)));
+  acc.appendChild(btn); acc.appendChild(panel);
+  return acc;
+}
+
+var IC_TARGET = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.2" stroke="#1c1b19" stroke-width="1.5"/><circle cx="10" cy="10" r="3" stroke="#1c1b19" stroke-width="1.5"/><circle cx="10" cy="10" r=".9" fill="#1c1b19"/></svg>';
+var IC_BRAIN = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 3.2c-2.4 0-3.7 1.5-3.7 3 0 .5-.5.8-.9 1.2-.7.6-1 1.4-.8 2.3.1.6 0 1-.3 1.5-.5.9-.3 2 .5 2.6.4.3.6.7.6 1.2.1 1.3 1.2 2.3 2.6 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/><path d="M10 3.2c2.4 0 3.7 1.5 3.7 3 0 .5.5.8.9 1.2.7.6 1 1.4.8 2.3-.1.6 0 1 .3 1.5.5.9.3 2-.5 2.6-.4.3-.6.7-.6 1.2-.1 1.3-1.2 2.3-2.6 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/></svg>';
+var IC_PEOPLE = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="7" cy="8" r="2.4" stroke="#1c1b19" stroke-width="1.4"/><circle cx="13.5" cy="8.5" r="2" stroke="#1c1b19" stroke-width="1.4"/><path d="M3.5 15.5c0-2 1.6-3.3 3.5-3.3s3.5 1.3 3.5 3.3M11 15.5c0-1.6 1.2-2.8 2.8-2.8 1.4 0 2.5.9 2.7 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/></svg>';
+
+function renderCard(c){
+  var card = el("article","card");
+  var head = el("div","card-head");
+  head.appendChild(el("h2","card-title", esc(c.title)));
+  var tagText = c.tag==="facilitator" ? "Facilitator dominant" : "Mechanism dominant";
+  head.appendChild(el("span","chip-tag "+c.tag, tagText));
+  card.appendChild(head);
+
+  var badges = el("div","badges");
+  c.badges.forEach(function(b,i){
+    badges.appendChild(el("span","badge "+(i===0?"dx":"pop"), esc(b)));
+  });
+  if(c.deepDive) badges.appendChild(el("span","badge deep","Deep Dive Available"));
+  card.appendChild(badges);
+
+  var secs = el("div","sections");
+  secs.appendChild(accordion(IC_TARGET,"Core Procedures", c.sections.core, false));
+  secs.appendChild(accordion(IC_BRAIN,"Psychological Mechanisms", c.sections.mechanism, true));
+  secs.appendChild(accordion(IC_BRAIN,"Neural Systems", c.sections.neural, false));
+  secs.appendChild(accordion(IC_PEOPLE,"Facilitating Factors", c.sections.facilitating, false));
+  card.appendChild(secs);
+
+  card.appendChild(el("p","note","<b>Clinical Note:</b> " + esc(c.note)));
+  if(c.deepDive){
+    var gr = el("div","guide-row");
+    gr.innerHTML = '<button class="guide-link" type="button" tabindex="-1" aria-disabled="true" title="Not part of this preview">Explore Full Intervention Guide <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M11 6l4 4-4 4" stroke="#9a7a3f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+    card.appendChild(gr);
+  }
+  return card;
+}
+
+function render(){
+  var q = document.getElementById("query").value;
+  var cards = resolve(q);
+  var box = document.getElementById("results");
+  var count = document.getElementById("resultcount");
+  box.innerHTML = "";
+  if(cards.length===0){
+    var e = el("div","emptystate");
+    e.innerHTML = 'No treatments match <b>"'+esc(q.trim())+'"</b>. Try <b>psychodynamic</b>, <b>CBT</b>, or <b>exposure</b>.';
+    box.appendChild(e); count.textContent = "";
+  } else {
+    cards.forEach(function(c){ box.appendChild(renderCard(c)); });
+    count.textContent = cards.length===1 ? "1 treatment" : cards.length+" treatments";
+  }
+  // sync shortcut pressed-state
+  Array.prototype.forEach.call(document.querySelectorAll(".chip-btn"), function(b){
+    b.setAttribute("aria-pressed", String(norm(b.dataset.q)===norm(q)));
+  });
+}
+
+// shortcuts
+(function(){
+  var box = document.getElementById("chips");
+  SHORTCUTS.forEach(function(s){
+    var b = el("button","chip-btn", s); b.dataset.q = s;
+    b.addEventListener("click", function(){ document.getElementById("query").value = s; render(); });
+    box.appendChild(b);
+  });
+})();
+
+// accordion delegation
+document.getElementById("results").addEventListener("click", function(e){
+  var btn = e.target.closest(".acc-btn"); if(!btn) return;
+  var acc = btn.closest(".acc"); var panel = acc.querySelector(".acc-panel");
+  var open = acc.getAttribute("data-open")==="true";
+  acc.setAttribute("data-open", String(!open));
+  btn.setAttribute("aria-expanded", String(!open));
+  panel.style.maxHeight = open ? "0px" : (panel.querySelector(".inner").scrollHeight + 4) + "px";
+});
+
+document.getElementById("query").addEventListener("input", render);
+render();
+</script>
+</body>
+</html>
