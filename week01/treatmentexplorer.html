@@ -1,0 +1,484 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treatment Explorer — First Look</title>
+<style>
+  :root{
+    --bg:#faf9f7;
+    --ink:#1c1b19;
+    --muted:#6b6862;
+    --line:#e7e4de;
+    --card:#ffffff;
+    --card-shadow:0 1px 2px rgba(28,27,25,.04),0 8px 24px rgba(28,27,25,.06);
+    --field:#f3f1ec;
+    --accent:#5b6b4f;            /* muted moss — the Explorer's identity color */
+    --accent-ink:#3f4b37;
+    --tag-mech-bg:#e7ecf6;        /* "Mechanism dominant" chip */
+    --tag-mech-ink:#3a4a6b;
+    --badge-dx-bg:#e9e7e2;
+    --badge-dx-ink:#4a4740;
+    --badge-pop-bg:#ffffff;
+    --badge-pop-ink:#4a4740;
+    --badge-deep-bg:#8a5a25;      /* "Deep Dive Available" */
+    --badge-deep-ink:#ffffff;
+    --note-ink:#57544e;
+    --focus:#2f6f4f;
+    --radius:18px;
+    --radius-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Iowan Old Style',Georgia,'Times New Roman',serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  .wrap{
+    max-width:720px;
+    margin:0 auto;
+    padding:26px 20px 56px;
+  }
+
+  /* ---------- Masthead ---------- */
+  .masthead{
+    display:flex;align-items:center;gap:14px;
+    padding-bottom:18px;margin-bottom:20px;
+    border-bottom:1px solid var(--line);
+  }
+  .mark{
+    flex:0 0 auto;width:46px;height:46px;border-radius:12px;
+    background:#eef1ea;display:grid;place-items:center;
+  }
+  .mark svg{display:block;}
+  .masthead h1{
+    margin:0;font-size:29px;letter-spacing:-.015em;font-weight:600;line-height:1.05;
+  }
+  .masthead .sub{
+    margin:2px 0 0;font-size:14px;color:var(--muted);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    letter-spacing:.01em;
+  }
+  .masthead .sub u{text-decoration-color:var(--accent);text-underline-offset:2px;}
+
+  /* ---------- Tabs (single active "All results") ---------- */
+  .tabs{
+    display:flex;gap:22px;margin-bottom:18px;
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;
+  }
+  .tab{padding-bottom:9px;color:var(--muted);border-bottom:2px solid transparent;}
+  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600;}
+
+  /* ---------- Search & Filter ---------- */
+  .searchbar{margin-bottom:8px;}
+  .searchbar label{
+    display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:7px;
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .field-row{position:relative;display:flex;align-items:center;}
+  .field-row svg.magnifier{position:absolute;left:15px;pointer-events:none;opacity:.5;}
+  #query{
+    width:100%;padding:14px 16px 14px 44px;
+    font-size:16px;color:var(--ink);
+    background:var(--field);border:1.5px solid transparent;border-radius:var(--radius-sm);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    transition:border-color .15s,background .15s;
+  }
+  #query::placeholder{color:#9b988f;}
+  #query:focus{outline:none;border-color:var(--focus);background:#fff;}
+  .hint{
+    margin:9px 2px 22px;font-size:13px;color:var(--muted);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .hint b{color:var(--accent-ink);font-weight:600;}
+  .resultcount{
+    font-size:12.5px;color:var(--muted);margin:0 2px 14px;
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+
+  /* ---------- Card ---------- */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--card-shadow);padding:24px 24px 20px;
+  }
+  .card + .card{margin-top:18px;}
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;}
+  .card-title{margin:0;font-size:23px;font-weight:600;letter-spacing:-.01em;line-height:1.15;}
+  .chip-mech{
+    flex:0 0 auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:11.5px;letter-spacing:.02em;
+    background:var(--tag-mech-bg);color:var(--tag-mech-ink);
+    padding:5px 10px;border-radius:7px;white-space:nowrap;margin-top:3px;
+  }
+  .badges{
+    display:flex;flex-wrap:wrap;gap:8px;margin:13px 0 4px;
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .badge{font-size:12.5px;padding:5px 11px;border-radius:8px;}
+  .badge.dx{background:var(--badge-dx-bg);color:var(--badge-dx-ink);}
+  .badge.pop{background:var(--badge-pop-bg);color:var(--badge-pop-ink);border:1px solid var(--line);}
+  .badge.deep{background:var(--badge-deep-bg);color:var(--badge-deep-ink);font-weight:600;}
+
+  /* ---------- Accordions ---------- */
+  .sections{margin-top:16px;}
+  .acc{border-top:1px solid var(--line);}
+  .acc:last-of-type{border-bottom:1px solid var(--line);}
+  .acc-btn{
+    width:100%;background:none;border:none;cursor:pointer;
+    display:flex;align-items:center;gap:11px;
+    padding:15px 2px;text-align:left;color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15.5px;
+  }
+  .acc-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px;}
+  .acc-btn .ic{flex:0 0 auto;opacity:.62;display:grid;place-items:center;width:20px;height:20px;}
+  .acc-btn .lbl{flex:1 1 auto;}
+  .acc-btn .required{
+    font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--accent-ink);background:#eef1ea;border-radius:5px;padding:3px 7px;font-weight:600;
+  }
+  .acc-btn .chev{flex:0 0 auto;transition:transform .2s;opacity:.55;}
+  .acc[data-open="true"] .acc-btn .chev{transform:rotate(180deg);}
+  .acc[data-open="true"] .acc-btn{color:var(--accent-ink);}
+  .acc-panel{
+    overflow:hidden;max-height:0;transition:max-height .24s ease;
+  }
+  .acc-panel .inner{
+    padding:0 2px 18px 33px;color:#44413b;font-size:15.5px;
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;
+  }
+  .acc-panel .inner .tiny{
+    display:block;margin-top:8px;font-size:12.5px;color:var(--muted);
+  }
+  .acc.highlight .acc-btn{background:#f6f8f4;}
+  .acc.highlight{outline:1.5px solid #cdd8c4;border-radius:10px;}
+
+  .note{
+    margin-top:18px;padding-top:15px;border-top:1px solid var(--line);
+    font-size:13.5px;color:var(--note-ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .note b{color:var(--ink);}
+
+  /* Inert full-guide affordance — present, clearly not part of this activity */
+  .guide-row{
+    margin-top:6px;display:flex;justify-content:flex-end;
+  }
+  .guide-link{
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:13.5px;color:#9a7a3f;background:none;border:none;cursor:not-allowed;
+    display:inline-flex;align-items:center;gap:6px;padding:8px 2px;opacity:.75;
+  }
+
+  .emptystate{
+    background:var(--card);border:1px dashed var(--line);border-radius:var(--radius);
+    padding:30px 24px;text-align:center;color:var(--muted);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14.5px;
+  }
+  .emptystate b{color:var(--ink);}
+  .hidden{display:none !important;}
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion:reduce){
+    .acc-panel,.acc-btn .chev{transition:none;}
+  }
+  @media (max-width:480px){
+    .wrap{padding:20px 14px 44px;}
+    .masthead h1{font-size:25px;}
+    .card-title{font-size:20px;}
+    .card-head{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Masthead -->
+  <div class="masthead">
+    <div class="mark" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="13" cy="13" r="11" stroke="#5b6b4f" stroke-width="2"/>
+        <circle cx="13" cy="13" r="6" stroke="#5b6b4f" stroke-width="2"/>
+        <circle cx="13" cy="13" r="1.8" fill="#5b6b4f"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Treatment Explorer</h1>
+      <p class="sub"><u>Evidence-based</u> interventions organized by <u>mechanism</u></p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" role="tablist" aria-label="Result views">
+    <div class="tab" role="tab" aria-selected="true">All results</div>
+    <div class="tab" role="tab" aria-selected="false" style="opacity:.5;">By mechanism</div>
+    <div class="tab" role="tab" aria-selected="false" style="opacity:.5;">By disorder</div>
+  </div>
+
+  <!-- Search & Filter -->
+  <div class="searchbar">
+    <label for="query">Search &amp; filter</label>
+    <div class="field-row">
+      <svg class="magnifier" width="17" height="17" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="9" cy="9" r="6.2" stroke="#1c1b19" stroke-width="1.7"/>
+        <line x1="13.6" y1="13.6" x2="17.5" y2="17.5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+      <input id="query" type="text" value="Behavioral Activation" autocomplete="off" spellcheck="false"
+             aria-describedby="searchhint" />
+    </div>
+  </div>
+  <p class="hint" id="searchhint">
+    Showing the card that matches your search. To switch treatments, clear the box and type
+    <b>CBT for Depression</b>.
+  </p>
+
+  <div class="resultcount" id="resultcount"></div>
+
+  <!-- Results region -->
+  <div id="results" aria-live="polite">
+    <!-- BA CARD -->
+    <article class="card" data-key="ba" data-match="behavioral activation|ba|behavioural activation">
+      <div class="card-head">
+        <h2 class="card-title">Behavioral Activation</h2>
+        <span class="chip-mech">Mechanism dominant</span>
+      </div>
+      <div class="badges">
+        <span class="badge dx">Major Depressive Disorder</span>
+        <span class="badge pop">Adult</span>
+        <span class="badge deep">Deep Dive Available</span>
+      </div>
+
+      <div class="sections">
+        <!-- Core Procedures -->
+        <div class="acc" data-open="false">
+          <button class="acc-btn" aria-expanded="false">
+            <span class="ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.2" stroke="#1c1b19" stroke-width="1.5"/><circle cx="10" cy="10" r="3" stroke="#1c1b19" stroke-width="1.5"/><circle cx="10" cy="10" r=".9" fill="#1c1b19"/></svg>
+            </span>
+            <span class="lbl">Core Procedures</span>
+            <svg class="chev" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-panel"><div class="inner">
+            Self-monitoring of daily activities with mood ratings, functional analysis of avoidance patterns, values-based activity scheduling, and graded task assignment that reintroduces avoided activities in small, achievable steps.
+            <span class="tiny">Structured around identifying triggers and avoidance responses, then planning alternative approach behaviors regardless of momentary motivation.</span>
+          </div></div>
+        </div>
+
+        <!-- Psychological Mechanisms (REQUIRED) -->
+        <div class="acc highlight" data-open="false" data-required="true">
+          <button class="acc-btn" aria-expanded="false">
+            <span class="ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 3.2c-2.4 0-3.7 1.5-3.7 3 0 .5-.5.8-.9 1.2-.7.6-1 1.4-.8 2.3.1.6 0 1-.3 1.5-.5.9-.3 2 .5 2.6.4.3.6.7.6 1.2.1 1.3 1.2 2.3 2.6 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/><path d="M10 3.2c2.4 0 3.7 1.5 3.7 3 0 .5.5.8.9 1.2.7.6 1 1.4.8 2.3-.1.6 0 1 .3 1.5.5.9.3 2-.5 2.6-.4.3-.6.7-.6 1.2-.1 1.3-1.2 2.3-2.6 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </span>
+            <span class="lbl">Psychological Mechanisms</span>
+            <span class="required">Start here</span>
+            <svg class="chev" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-panel"><div class="inner">
+            Increased activation and reduced avoidance restore contact with positive reinforcement in the environment, reversing the withdrawal-and-low-reward cycle that maintains depressed mood.
+            <span class="tiny">Increased reinforcement, reduced avoidance, increased reward engagement.</span>
+          </div></div>
+        </div>
+
+        <!-- Neural Systems -->
+        <div class="acc" data-open="false">
+          <button class="acc-btn" aria-expanded="false">
+            <span class="ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 3.2c-2.4 0-3.7 1.5-3.7 3 0 .5-.5.8-.9 1.2-.7.6-1 1.4-.8 2.3.1.6 0 1-.3 1.5-.5.9-.3 2 .5 2.6.4.3.6.7.6 1.2.1 1.3 1.2 2.3 2.6 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/><path d="M10 3.2c2.4 0 3.7 1.5 3.7 3 0 .5.5.8.9 1.2.7.6 1 1.4.8 2.3-.1.6 0 1 .3 1.5.5.9.3 2-.5 2.6-.4.3-.6.7-.6 1.2-.1 1.3-1.2 2.3-2.6 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </span>
+            <span class="lbl">Neural Systems</span>
+            <svg class="chev" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-panel"><div class="inner">
+            Engages the mesolimbic reward circuit. Treatment is associated with changes in reward-related activation of the ventral striatum and nucleus accumbens, regions that show blunted reward responsiveness in depression.
+            <span class="tiny">Reward-circuit account; the causal chain from activation to reward-signal change is still an active research question.</span>
+          </div></div>
+        </div>
+
+        <!-- Facilitating Factors -->
+        <div class="acc" data-open="false">
+          <button class="acc-btn" aria-expanded="false">
+            <span class="ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="7" cy="8" r="2.4" stroke="#1c1b19" stroke-width="1.4"/><circle cx="13.5" cy="8.5" r="2" stroke="#1c1b19" stroke-width="1.4"/><path d="M3.5 15.5c0-2 1.6-3.3 3.5-3.3s3.5 1.3 3.5 3.3M11 15.5c0-1.6 1.2-2.8 2.8-2.8 1.4 0 2.5.9 2.7 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </span>
+            <span class="lbl">Facilitating Factors</span>
+            <svg class="chev" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-panel"><div class="inner">
+            Well suited to low motivation and to more severe depression, since it asks clients to act before motivation returns rather than after. The straightforward, concrete structure makes it comparatively easy to deliver and to scale.
+            <span class="tiny">Designated a well-established treatment for depression by the American Psychological Association.</span>
+          </div></div>
+        </div>
+      </div>
+
+      <p class="note"><b>Clinical Note:</b> Best for low motivation.</p>
+      <div class="guide-row">
+        <button class="guide-link" type="button" tabindex="-1" aria-disabled="true"
+                title="Not part of this preview">
+          Explore Full Intervention Guide
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M11 6l4 4-4 4" stroke="#9a7a3f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </article>
+
+    <!-- CBT CARD -->
+    <article class="card hidden" data-key="cbt" data-match="cbt for depression|cbt|cognitive behavioral therapy|cognitive behavioural therapy|cognitive therapy">
+      <div class="card-head">
+        <h2 class="card-title">CBT (cognitive-behavioral therapy) for Depression</h2>
+        <span class="chip-mech">Mechanism dominant</span>
+      </div>
+      <div class="badges">
+        <span class="badge dx">Major Depressive Disorder</span>
+        <span class="badge pop">Adult</span>
+        <span class="badge deep">Deep Dive Available</span>
+      </div>
+
+      <div class="sections">
+        <!-- Core Procedures -->
+        <div class="acc" data-open="false">
+          <button class="acc-btn" aria-expanded="false">
+            <span class="ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.2" stroke="#1c1b19" stroke-width="1.5"/><circle cx="10" cy="10" r="3" stroke="#1c1b19" stroke-width="1.5"/><circle cx="10" cy="10" r=".9" fill="#1c1b19"/></svg>
+            </span>
+            <span class="lbl">Core Procedures</span>
+            <svg class="chev" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-panel"><div class="inner">
+            Cognitive restructuring through thought records and Socratic questioning, behavioral experiments that test the accuracy of predictions, and an integrated behavioral component of activity scheduling, all supported by between-session homework.
+            <span class="tiny">Collaborative empiricism: each automatic thought is treated as a hypothesis to examine against evidence rather than a belief to argue down.</span>
+          </div></div>
+        </div>
+
+        <!-- Psychological Mechanisms (REQUIRED) -->
+        <div class="acc highlight" data-open="false" data-required="true">
+          <button class="acc-btn" aria-expanded="false">
+            <span class="ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 3.2c-2.4 0-3.7 1.5-3.7 3 0 .5-.5.8-.9 1.2-.7.6-1 1.4-.8 2.3.1.6 0 1-.3 1.5-.5.9-.3 2 .5 2.6.4.3.6.7.6 1.2.1 1.3 1.2 2.3 2.6 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/><path d="M10 3.2c2.4 0 3.7 1.5 3.7 3 0 .5.5.8.9 1.2.7.6 1 1.4.8 2.3-.1.6 0 1 .3 1.5.5.9.3 2-.5 2.6-.4.3-.6.7-.6 1.2-.1 1.3-1.2 2.3-2.6 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </span>
+            <span class="lbl">Psychological Mechanisms</span>
+            <span class="required">Start here</span>
+            <svg class="chev" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-panel"><div class="inner">
+            Correcting biased information processing and reappraising maladaptive automatic thoughts reduces the negative cognitive bias that maintains depression, while an integrated behavioral component reduces avoidance and rebuilds reward engagement.
+            <span class="tiny">Reduced avoidance, increased reward engagement, cognitive reappraisal.</span>
+          </div></div>
+        </div>
+
+        <!-- Neural Systems -->
+        <div class="acc" data-open="false">
+          <button class="acc-btn" aria-expanded="false">
+            <span class="ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 3.2c-2.4 0-3.7 1.5-3.7 3 0 .5-.5.8-.9 1.2-.7.6-1 1.4-.8 2.3.1.6 0 1-.3 1.5-.5.9-.3 2 .5 2.6.4.3.6.7.6 1.2.1 1.3 1.2 2.3 2.6 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/><path d="M10 3.2c2.4 0 3.7 1.5 3.7 3 0 .5.5.8.9 1.2.7.6 1 1.4.8 2.3-.1.6 0 1 .3 1.5.5.9.3 2-.5 2.6-.4.3-.6.7-.6 1.2-.1 1.3-1.2 2.3-2.6 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </span>
+            <span class="lbl">Neural Systems</span>
+            <svg class="chev" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-panel"><div class="inner">
+            Associated with diminished limbic (amygdala) reactivity to negative stimuli and altered prefrontal and cingulate activity, consistent with strengthened top-down prefrontal regulation over emotional responses. Subgenual anterior cingulate change tracks symptom improvement.
+            <span class="tiny">Prefrontal–limbic regulation account, drawn from a systematic review of task-based fMRI studies.</span>
+          </div></div>
+        </div>
+
+        <!-- Facilitating Factors -->
+        <div class="acc" data-open="false">
+          <button class="acc-btn" aria-expanded="false">
+            <span class="ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="7" cy="8" r="2.4" stroke="#1c1b19" stroke-width="1.4"/><circle cx="13.5" cy="8.5" r="2" stroke="#1c1b19" stroke-width="1.4"/><path d="M3.5 15.5c0-2 1.6-3.3 3.5-3.3s3.5 1.3 3.5 3.3M11 15.5c0-1.6 1.2-2.8 2.8-2.8 1.4 0 2.5.9 2.7 2.3" stroke="#1c1b19" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </span>
+            <span class="lbl">Facilitating Factors</span>
+            <svg class="chev" width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="#1c1b19" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-panel"><div class="inner">
+            Benefits from a client's capacity to engage with and practice cognitive skills, a structured collaborative alliance, and consistent completion of between-session homework. Explicit case formulation links each technique to the individual client.
+            <span class="tiny">Structured, skills-based, and homework-dependent by design.</span>
+          </div></div>
+        </div>
+      </div>
+
+      <p class="note"><b>Clinical Note:</b> Use PHQ-9; start with BA.</p>
+      <div class="guide-row">
+        <button class="guide-link" type="button" tabindex="-1" aria-disabled="true"
+                title="Not part of this preview">
+          Explore Full Intervention Guide
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M11 6l4 4-4 4" stroke="#9a7a3f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </article>
+
+    <!-- Empty state -->
+    <div class="emptystate hidden" id="empty">
+      No treatment matches <b id="emptyterm"></b>. For this preview, search
+      <b>Behavioral Activation</b> or <b>CBT for Depression</b>.
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var input = document.getElementById('query');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var empty = document.getElementById('empty');
+  var emptyTerm = document.getElementById('emptyterm');
+  var countEl = document.getElementById('resultcount');
+
+  function norm(s){ return (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim(); }
+
+  function matchCard(card, q){
+    if(!q) return true;
+    var pats = card.getAttribute('data-match').split('|');
+    for(var i=0;i<pats.length;i++){
+      if(norm(pats[i]) && q.indexOf(norm(pats[i])) !== -1) return true;
+    }
+    // also allow partial: query is a leading substring of a pattern (progressive typing)
+    for(var j=0;j<pats.length;j++){
+      var p = norm(pats[j]);
+      if(p && p.indexOf(q) === 0) return true;
+    }
+    return false;
+  }
+
+  function render(){
+    var q = norm(input.value);
+    var shown = 0;
+    cards.forEach(function(c){
+      var ok = matchCard(c, q);
+      c.classList.toggle('hidden', !ok);
+      if(ok) shown++;
+    });
+    if(shown === 0 && q){
+      empty.classList.remove('hidden');
+      emptyTerm.textContent = '"' + input.value.trim() + '"';
+      countEl.textContent = '';
+    } else {
+      empty.classList.add('hidden');
+      countEl.textContent = shown === 1 ? '1 treatment' : shown + ' treatments';
+    }
+  }
+
+  input.addEventListener('input', render);
+
+  // Accordion behavior (event delegation)
+  document.getElementById('results').addEventListener('click', function(e){
+    var btn = e.target.closest('.acc-btn');
+    if(!btn) return;
+    var acc = btn.closest('.acc');
+    var panel = acc.querySelector('.acc-panel');
+    var open = acc.getAttribute('data-open') === 'true';
+    acc.setAttribute('data-open', String(!open));
+    btn.setAttribute('aria-expanded', String(!open));
+    panel.style.maxHeight = open ? '0px' : (panel.querySelector('.inner').scrollHeight + 4) + 'px';
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
