@@ -224,18 +224,18 @@ const SESSION = {
       banner: null
     },
     adolescent: {
-      label: "David, 42",
-      chip: "Major depressive disorder with significant withdrawal from work, social activities, and self-care over the past four months",
+      label: "Jordan, 15",
+      chip: "Major depressive disorder with significant withdrawal from school, friends, and daily routines over the past four months",
       banner: "Adolescent (14–16)"
     },
     literacy: {
-      label: "David, 42",
+      label: "Marcus, 38",
       chip: "Major depressive disorder with significant withdrawal from work, social activities, and self-care over the past four months",
       banner: "Limited literacy"
     },
     older: {
-      label: "David, 42",
-      chip: "Major depressive disorder with significant withdrawal from work, social activities, and self-care over the past four months",
+      label: "Mr. Thompson, 72",
+      chip: "Major depressive disorder with significant withdrawal from community, family, and daily routines since retirement",
       banner: "Older adult (70+)"
     }
   },
@@ -247,8 +247,8 @@ const SESSION = {
         text: "Activity monitoring review: Opens the session by reviewing homework data, reinforcing the behavioral model and collaborative empiricism. Activity monitoring is the foundation of BA — it provides the data that drives intervention." },
       text: {
         baseline:   "David, last week you tracked your daily activities and mood ratings. Let's look at what you found. What patterns did you notice?",
-        adolescent: "Hey David, last week you kept track of what you did each day and how you were feeling. Let's check out what you found. Did you notice any patterns or things that stood out to you?",
-        literacy:   "David, last week you wrote down what you did each day and how you felt. Can you tell me what you noticed?",
+        adolescent: "Hey Jordan, last week you kept track of what you did each day and how you were feeling. Let's check out what you found. Did you notice any patterns or things that stood out to you?",
+        literacy:   "Marcus, last week you wrote down what you did each day and how you felt. Can you tell me what you noticed?",
         older:      "Mr. Thompson, last week you kept a record of your daily routines and mood ratings. Let's take a moment to review your findings together. Over your many years, you may have noticed certain patterns in how your days unfold. What stood out to you this past week?"
       }
     },
@@ -256,7 +256,7 @@ const SESSION = {
     { role: "patient",
       text: {
         baseline:   "I mostly just stayed in bed or watched TV. The days kind of blurred together. My mood was pretty low the whole time, maybe a 2 or 3 out of 10 most days.",
-        adolescent: "I mostly just stayed in bed or watched TV. The days kind of blurred together. My mood was pretty low the whole time, maybe a 2 or 3 out of 10 most days.",
+        adolescent: "I mostly just stayed in my room on my phone or watched videos. The days kind of blurred together. My mood was pretty low the whole time, maybe a 2 or 3 out of 10 most days.",
         literacy:   "I mostly stayed in bed or watched TV. All the days felt the same. My mood was low most days, like a 2 or 3 out of 10.",
         older:      "To be honest, I mostly stayed in bed or watched television. The days seemed to blend into each other. My mood was quite low most of the time, probably around a 2 or 3 out of 10 on most days."
       }
@@ -316,7 +316,7 @@ const SESSION = {
     { role: "patient",
       text: {
         baseline:   "I used to go fishing on weekends with my brother. I used to cook dinner for my family most nights. And I was pretty active at my church before all this started.",
-        adolescent: "I used to go fishing on weekends with my brother. I used to cook dinner for my family most nights. And I was pretty active at my church before all this started.",
+        adolescent: "I used to play basketball with my friends after school. I used to draw a lot, like almost every day. And I used to hang out with my cousin most weekends before all this started.",
         literacy:   "I used to go fishing with my brother. I used to cook dinner for my family. I was active at church before all this.",
         older:      "I used to go fishing on weekends with my brother. I used to cook dinner for my family most nights. And I was quite involved with my church before all this started."
       }
@@ -336,7 +336,7 @@ const SESSION = {
     { role: "patient",
       text: {
         baseline:   "Maybe I could cook dinner one night instead of ordering takeout. And I could call my brother — I haven't talked to him in weeks. I don't think I'm ready for church yet though.",
-        adolescent: "Maybe I could cook dinner one night instead of ordering takeout. And I could call my brother — I haven't talked to him in weeks. I don't think I'm ready for church yet though.",
+        adolescent: "Maybe I could draw something one night instead of just scrolling. And I could text my cousin — I haven't talked to him in weeks. I don't think I'm ready to go back to basketball with everyone yet though.",
         literacy:   "I could cook dinner one night instead of ordering food. I could call my brother. I'm not ready for church yet.",
         older:      "Perhaps I could cook dinner one evening instead of ordering takeout. And I could call my brother — it's been weeks since we talked. I don't think I'm quite ready for church yet, though."
       }
@@ -347,7 +347,7 @@ const SESSION = {
         text: "Specificity in scheduling: Moves from vague intention to concrete commitment by specifying day and time. Research shows that implementation intentions (when-where-what plans) significantly increase follow-through compared to general goals." },
       text: {
         baseline:   "That sounds like a solid plan. Let's get specific so it's more likely to happen. Which night will you cook dinner, and what time will you call your brother?",
-        adolescent: "That sounds like a solid plan. Let's make it specific so it's easier to stick to. Which night will you cook dinner, and when will you call your brother?",
+        adolescent: "That sounds like a solid plan. Let's make it specific so it's easier to stick to. Which night will you draw, and when will you text your cousin?",
         literacy:   "That's a good plan. Let's make it clear so it's easier to do. Which night will you cook dinner? What time will you call your brother?",
         older:      "That sounds like a solid and thoughtful plan. Let's make it specific, as that increases the likelihood you'll follow through. Which evening will you prepare dinner, and when would you like to call your brother?"
       }
@@ -356,7 +356,7 @@ const SESSION = {
     { role: "patient",
       text: {
         baseline:   "I could cook on Thursday. And I'll call my brother Sunday afternoon — he's usually free then.",
-        adolescent: "I could cook on Thursday. And I'll call my brother Sunday afternoon — he's usually free then.",
+        adolescent: "I could draw on Thursday. And I'll text my cousin Sunday afternoon — he's usually around then.",
         literacy:   "I'll cook on Thursday. I'll call my brother Sunday afternoon, he's free then.",
         older:      "I could cook on Thursday. And I'll call my brother Sunday afternoon — that's usually when he's available."
       }
@@ -367,7 +367,7 @@ const SESSION = {
         text: "Collaborative scheduling with built-in hypothesis testing: Formalizes the schedule and frames the upcoming week as a behavioral experiment. Continuing activity monitoring allows the patient to gather evidence for the BA model, strengthening engagement with treatment. The clinician makes an explicit prediction to test." },
       text: {
         baseline:   "Perfect. Let's write those into your schedule right now. Thursday evening: cook dinner. Sunday afternoon: call your brother. I also want you to continue your activity and mood monitoring so we can see how your mood responds to these scheduled activities. The prediction based on the BA model is that your mood will be higher during and after these activities than during the low-activity periods. We'll check that prediction together next week. Does this plan feel doable?",
-        adolescent: "Perfect. Let's put those in your calendar: Thursday night, cook dinner. Sunday afternoon, call your brother. I also want you to keep tracking your activities and mood so we can see how these planned things affect how you feel. Based on the BA model, your mood should be higher during and after these activities than when you're not doing much. We'll check that together next week. Does this plan seem like something you can do?",
+        adolescent: "Perfect. Let's put those in your schedule: Thursday night, draw something. Sunday afternoon, text your cousin. I also want you to keep tracking your activities and mood so we can see how these planned things affect how you feel. Based on the BA model, your mood should be higher during and after these activities than when you're not doing much. We'll check that together next week. Does this plan seem like something you can do?",
         literacy:   "Great. Let's write it down: Thursday evening, cook dinner. Sunday afternoon, call your brother. Keep tracking your activities and mood so we can see how you feel after these things. The behavioral activation model says your mood should be higher during and after these activities than when you do less. We'll check this next week. Does this plan sound okay to you?",
         older:      "Excellent. Let's note those in your calendar now: Thursday evening, cook dinner; Sunday afternoon, call your brother. I would also like you to continue monitoring your activities and mood, so we can observe how your mood responds to these scheduled events. According to the behavioral activation model, we would expect your mood to be higher during and after these activities compared to periods of low activity. We'll review your progress together next week. Does this approach feel manageable for you?"
       }
