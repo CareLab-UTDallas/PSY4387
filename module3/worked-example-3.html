@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Worked Example — Therapeutic Alliance Rupture and Repair</title>
+<style>
+  :root{
+    --bg:#ffffff; --panel:#f7f6f4; --ink:#1f1e1c; --muted:#6f6c66;
+    --line:#e7e4de; --line2:#eceae4;
+    --clinician-bubble:#efe7e0; --patient-bubble:#eceae7;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --tab-active:#8a5a25;
+    --chip-bg:#e9e7e2; --chip-ink:#4a4740;
+    --field:#ffffff; --focus:#2f6f4f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c5c3e;
+    --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px;margin:0 auto;padding:22px 18px 60px;}
+
+  /* Stage tabs */
+  .stagebar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+  .stage-tab{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);border-radius:10px;padding:10px 16px;cursor:pointer;
+    font-size:14.5px;transition:.15s;}
+  .stage-tab .n{color:var(--muted);}
+  .stage-tab[aria-selected="true"]{background:var(--tab-active);border-color:var(--tab-active);color:#fff;}
+  .stage-tab[aria-selected="true"] .n{color:#f0dcc6;}
+  .stage-tab:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .arrow{color:var(--muted);}
+  .progress{display:flex;gap:5px;margin-left:auto;align-items:center;}
+  .pdot{width:26px;height:6px;border-radius:3px;background:var(--line);}
+  .pdot.on{background:var(--accent);}
+
+  /* Card shell */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:24px 24px 26px;}
+  h2.sess{margin:0 0 6px;font-size:22px;letter-spacing:-.01em;}
+  .sess-blurb{margin:0 0 14px;color:var(--muted);font-size:15px;max-width:70ch;}
+  .metarow{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:8px;}
+  .metaline{font-size:13.5px;margin:5px 0;padding:6px 10px;border-radius:8px;display:inline-block;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.4;}
+  .metaline.mech{background:#fdf3e7;color:#8a5a25;}
+  .metaline.intv{background:#eaf4ee;color:#3c5c3e;}
+  .metaline b{font-weight:700;}
+  .adaptbanner{background:#f1ecfa;border:1px solid #d9cdf0;color:#5b3c8a;border-radius:12px;padding:12px 15px;margin:14px 0 4px;font-size:13.5px;line-height:1.5;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .adaptbanner b{font-weight:700;}
+  .adaptbanner .back{flex:0 0 auto;background:none;border:none;color:#5b3c8a;text-decoration:underline;cursor:pointer;font:inherit;font-size:13.5px;padding:0;}
+  .adaptbanner .back:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .pchip{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:13px;}
+  .pchip b{font-weight:600;}
+  .scen{background:var(--chip-bg);color:var(--chip-ink);border-radius:8px;padding:5px 11px;font-size:13px;}
+  .recafter{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13.5px;margin:6px 0 2px;}
+  .recafter a{color:var(--accent);text-decoration:none;cursor:default;}
+
+  /* Instruction box */
+  .instr{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);
+    border-radius:12px;padding:14px 16px;margin:16px 0 20px;font-size:14px;line-height:1.55;}
+  .instr h3{margin:0 0 6px;font-size:14px;font-weight:700;}
+  .instr b{font-weight:700;}
+  .instr .done{font-weight:700;}
+
+  /* Chat */
+  .chat{display:flex;flex-direction:column;gap:16px;}
+  .row{display:flex;gap:12px;}
+  .row.cl{flex-direction:row-reverse;}
+  .avatar{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:#efe7df;
+    display:grid;place-items:center;margin-top:20px;}
+  .row.pt .avatar{background:#e9e9e6;}
+  .stack{max-width:74%;display:flex;flex-direction:column;gap:8px;}
+  .who{font-size:12.5px;color:var(--muted);}
+  .row.cl .who{text-align:right;}
+  .bubble{border-radius:14px;padding:13px 15px;font-size:15px;line-height:1.5;}
+  .row.cl .bubble{background:var(--clinician-bubble);border-top-right-radius:5px;text-align:right;}
+  .row.pt .bubble{background:var(--patient-bubble);border-top-left-radius:5px;}
+  .tech{background:var(--amber-bg);border:1px solid var(--amber-line);border-radius:10px;
+    padding:10px 13px;font-size:13px;color:var(--amber-ink);line-height:1.5;text-align:left;}
+  .tech b{color:var(--amber-ink);font-weight:700;}
+
+  /* Toggle */
+  .toggle{margin-top:24px;border-top:1px solid var(--line);padding-top:18px;}
+  .toggle h4{margin:0 0 4px;font-size:15px;}
+  .toggle p{margin:0 0 12px;color:var(--muted);font-size:13.5px;max-width:74ch;}
+  .toggle-btns{display:flex;flex-wrap:wrap;gap:9px;}
+  .tbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 15px;
+    cursor:pointer;font-size:13.5px;color:var(--ink);transition:.15s;}
+  .tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .tbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .tbtn-link{border:none;background:none;color:var(--muted);cursor:pointer;font:inherit;font-size:13.5px;padding:9px 6px;text-decoration:none;}
+  .tbtn-link[aria-pressed="true"]{color:var(--ink);font-weight:600;}
+  .tbtn-link:hover{color:var(--ink);}
+  .tbtn-link:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  /* Stage 2 gaps */
+  .gapwrap{display:flex;flex-direction:column;gap:8px;}
+  .gap-ta{width:100%;min-height:82px;resize:vertical;border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;font:inherit;font-size:15px;background:var(--field);
+    border-top-right-radius:5px;}
+  .gap-ta:focus{outline:none;border-color:var(--focus);}
+  .gap-ta.locked{background:#f3f1ec;color:#55524c;}
+  .submit{align-self:flex-end;background:var(--accent);color:#fff;border:none;border-radius:10px;
+    padding:10px 18px;font-size:14px;cursor:pointer;}
+  .submit:disabled{opacity:.5;cursor:default;}
+  .submit:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .compare{display:flex;flex-direction:column;gap:10px;margin-top:2px;}
+  .cmp-card{border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.55;text-align:left;}
+  .cmp-expert{background:var(--clinician-bubble);}
+  .cmp-expert .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);font-weight:700;margin-bottom:4px;}
+  .cmp-tech{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);}
+  .cmp-tech b{font-weight:700;}
+  .cmp-fb{background:var(--ok-bg);border:1px solid var(--ok-line);color:var(--ok-ink);}
+  .cmp-fb .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px;}
+  .cmp-fb p{margin:0 0 7px;}
+  .cmp-fb .k{font-weight:700;}
+
+  .status{font-size:13px;color:var(--muted);margin-top:14px;}
+  .status b{color:var(--accent-ink);}
+  .hidden{display:none !important;}
+  .done-banner{margin-top:16px;background:var(--ok-bg);border:1px solid var(--ok-line);
+    color:var(--ok-ink);border-radius:12px;padding:14px 16px;font-size:14.5px;}
+  .done-banner b{font-weight:700;}
+
+  .bottom-nav{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);
+    display:flex;justify-content:flex-end;}
+  .bottom-nav.back{justify-content:flex-start;}
+  .nav-btn{display:inline-flex;align-items:center;gap:9px;border:none;cursor:pointer;
+    background:var(--accent);color:#fff;border-radius:10px;padding:12px 20px;font-size:15px;
+    font-weight:600;transition:.15s;}
+  .nav-btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .nav-btn:hover{filter:brightness(1.05);}
+  .nav-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  @media(max-width:560px){
+    .stack{max-width:86%;}
+    .panel{padding:18px 15px 20px;}
+    h2.sess{font-size:19px;}
+  }
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="stagebar">
+    <button class="stage-tab" id="tab1" aria-selected="true" onclick="setStage(1)">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M2 10s3-5.5 8-5.5S18 10 18 10s-3 5.5-8 5.5S2 10 2 10Z" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.3" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span><span class="n">Stage 1:</span> Learn from the Expert</span>
+    </button>
+    <span class="arrow">&rarr;</span>
+    <button class="stage-tab" id="tab2" aria-selected="false" onclick="setStage(2)">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 14.5 13.5 5l2 2L6 16.5 3.5 17l.5-2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      <span><span class="n">Stage 2:</span> Fill in the Gaps</span>
+    </button>
+    <span class="progress" id="progress" aria-hidden="true"><span class="pdot on"></span><span class="pdot" id="pdot2"></span></span>
+  </div>
+
+  <div class="panel">
+    <h2 class="sess" id="sessTitle"></h2>
+    <p class="sess-blurb" id="sessBlurb"></p>
+    <div class="metarow">
+      <span class="pchip" id="pchip"></span>
+      <span class="scen" id="scen"></span>
+    </div>
+    <div class="metaline mech" id="metaMech"></div>
+    <div class="metaline intv" id="metaIntv"></div>
+    <div class="recafter" id="recafter"></div>
+
+    <div class="adaptbanner hidden" id="adaptBanner"></div>
+
+    <div class="instr" id="instr"></div>
+
+    <div class="chat" id="chat"></div>
+
+    <!-- Stage 1 patient toggle -->
+    <div class="toggle hidden" id="toggle">
+      <h4>Explore with a different patient</h4>
+      <p>Same clinical situation, different patient. Every score, technique, and recommendation stays identical &mdash; only communication style adapts. Consider what you would change before clicking.</p>
+      <div class="toggle-btns" id="toggleBtns"></div>
+    </div>
+
+    <div class="done-banner hidden" id="doneBanner"></div>
+    <div class="status hidden" id="status"></div>
+
+    <div class="bottom-nav hidden" id="bottomNav"></div>
+  </div>
+</div>
+
+<script>
+// ===========================================================================
+// Worked Example 3 — Therapeutic Alliance Rupture and Repair
+// Base transcript, technique annotations, and all three adaptations are VERBATIM
+// from the instructor PDFs (WorkedExample3 stage1/Stage2/Adolescent/LowLiteracy/
+// OlderAdult). Techniques held constant across adaptations; only communication
+// style adapts. Adaptations receive distinct names/ages/context per instructor
+// preference (baseline Alicia, 30 kept).
+// Stage 2 per-gap feedback grounded in the alliance rupture-repair evidence base
+// (Safran & Muran resolution model; metacommunication; withdrawal-rupture
+// resolution; social-anxiety premature accommodation).
+// ===========================================================================
+
+const SESSION = {
+  title: "Therapeutic Alliance Rupture and Repair",
+  tag: "Clinical Skills",
+  blurb: "Alliance management: identifying a rupture, taking responsibility, and repairing the therapeutic relationship — Y1 Spring Bloom Level 4.",
+  recommendedAfter: ["Social Bases", "Clinical Reasoning"],
+
+  // Two gaps per the Stage 2 PDF. Gap positions are clinician turns after C1.
+  gapClinicianIndices: [2, 3],
+
+  patients: {
+    baseline: {
+      label: "Alicia, 30",
+      chip: "Social anxiety; 8 sessions in; suddenly disengaged and monosyllabic in today's session",
+      banner: null
+    },
+    adolescent: {
+      label: "Maya, 15",
+      chip: "Social anxiety; 8 sessions in; suddenly disengaged and monosyllabic in today's session",
+      banner: "Adolescent (14–16)"
+    },
+    literacy: {
+      label: "Rosa, 34",
+      chip: "Social anxiety; 8 sessions in; suddenly disengaged and monosyllabic in today's session",
+      banner: "Limited literacy"
+    },
+    older: {
+      label: "Mrs. Bennett, 74",
+      chip: "Social anxiety; 8 sessions in; suddenly disengaged and monosyllabic in today's session",
+      banner: "Older adult (70+)"
+    }
+  },
+
+  turns: [
+    // C0 — Naming the rupture
+    { role: "clinician",
+      technique: { label: "Naming the rupture directly",
+        text: "Naming the rupture directly using observation, not diagnosis. This is more effective than asking 'Are you okay?' which invites a reflexive 'yes.'" },
+      text: {
+        baseline:   "Alicia, I notice you seem different today — quieter than usual. I'm wondering if something is going on, or if something happened between us that I should know about.",
+        adolescent: "Hey Maya, you seem a bit different today—quieter than usual. Is something up, or did I maybe do something that bothered you?",
+        literacy:   "Rosa, you seem quieter today. Is something bothering you, or did I do something that upset you?",
+        older:      "I notice today you seem a bit more reserved than is typical for you, Mrs. Bennett. I wonder if perhaps something is weighing on your mind, or if there has been any misunderstanding between us that I should be aware of."
+      }
+    },
+    // P0
+    { role: "patient",
+      text: {
+        baseline:   "Last week, when I described the party situation, you suggested I try the exposure and I felt like you weren't listening to how hard that is for me. Like you just wanted to move me along.",
+        adolescent: "Last week, when I told you about the party, you said I should try that exposure thing. It felt like you didn't get how tough that is for me. Like you just wanted me to get over it.",
+        literacy:   "Last week, when I talked about the party, you said I should try exposure. Exposure means facing something that scares me. I felt like you didn't see how hard that is for me. I thought you wanted me to just hurry up.",
+        older:      "Last week, when I talked about that party, you suggested I try the exposure and it felt like you didn't quite understand how difficult that would be for me. It seemed as though you wanted to move me forward quickly."
+      }
+    },
+    // C1 — Taking responsibility
+    { role: "clinician",
+      technique: { label: "Taking responsibility without excessive apologizing",
+        text: "Taking responsibility without excessive apologizing — acknowledging the specific error, validating the client's perception, and offering repair without defensiveness." },
+      text: {
+        baseline:   "I'm really glad you told me that. You're right — I moved to the exposure too quickly. I heard the party situation as an opportunity for practice, and I missed what it was like for you to be there in the first place. That was my error.",
+        adolescent: "Thanks for telling me that. You're totally right—I jumped to the exposure idea too fast. I heard about the party and thought, 'hey, this is a good chance to practice,' but I didn't really stop to think about how hard it was just being there for you. That was my mistake.",
+        literacy:   "Thank you for telling me. You are right—I moved too fast to exposure. I saw the party as a way to practice, but I didn't think about how tough it was for you. That was my mistake. Can you tell me what you heard me say just now?",
+        older:      "Thank you for sharing that with me. You are correct — I moved toward the exposure step too swiftly. I viewed the party situation as a good practice opportunity and, in doing so, I did not fully appreciate how challenging it was for you simply to be present there. That was my oversight."
+      }
+    },
+    // P1 — the premature "it's okay"
+    { role: "patient",
+      technique: { label: "Premature accommodation (watch for)",
+        text: "The client's withdrawal of the rupture may be premature accommodation (a quiet withdrawal-type rupture — going overly agreeable and smoothing it over before it is genuinely resolved). The clinician should explore whether the repair is genuine or whether there is more she needs to express — clients with social anxiety are particularly prone to 'automatic repair' before the rupture is genuinely resolved." },
+      text: {
+        baseline:   "It's okay, I know you're trying to help.",
+        adolescent: "It's okay, I know you're trying to help.",
+        literacy:   "It's okay, I know you want to help.",
+        older:      "It's alright, I know your intention is to help."
+      }
+    },
+    // C2 — GAP 1: explore whether genuine (expert answer from Stage 1)
+    { role: "clinician",
+      technique: { label: "Metacommunication / exploring genuineness",
+        text: "Explore whether the 'it's okay' is genuine repair or premature accommodation. Rather than accepting the quick reassurance, metacommunicate — name what may be happening between you and open space for her to say more about the impact of the original rupture." },
+      text: {
+        baseline:   "I want to make sure we've really worked this through — is there more you want me to understand about what that was like for you?",
+        adolescent: "I want to check in—when you say 'it's okay,' do you really feel like we're good, or are you just saying that to move on? I want to make sure we actually talk it through if there's more you want me to know about how that felt for you.",
+        literacy:   "I want to make sure we really talk about this. Is there more you want me to know about how you felt? Can you tell me what I just asked?",
+        older:      "I would like to pause here and consider whether your 'it's alright' reflects genuine resolution, or if we might be moving past this too quickly. If it feels too soon, I want to ensure we have truly addressed what happened — is there anything further you would like me to understand about how that experience affected you?"
+      }
+    },
+    // P2 — patient opens up (bridges to gap 2)
+    { role: "patient",
+      text: {
+        baseline:   "I guess... it did sting. It made me wonder whether coming here is even helping, if the hard parts just get skipped past.",
+        adolescent: "I guess... yeah, it kind of stung. It made me wonder if this is even helping, if the hard stuff just gets rushed.",
+        literacy:   "I guess it did hurt. It made me wonder if coming here helps, if the hard parts get skipped.",
+        older:      "I suppose... it did sting, if I am honest. It left me wondering whether these sessions are truly helping, if the difficult parts are simply passed over."
+      }
+    },
+    // C3 — GAP 2: consolidate the repair (expert answer, grounded)
+    { role: "clinician",
+      technique: { label: "Consolidating the repair",
+        text: "Consolidate the repair: validate what she just risked saying, affirm that naming it is exactly what keeps the work on track, and re-establish collaboration over the pace of exposure rather than defending the original plan." },
+      text: {
+        baseline:   "Thank you for saying that — it took something to tell me, and it's exactly the kind of thing I want to hear when it happens. It matters to me that this helps, not that we move fast. Can we decide together how and when to approach the hard parts, so the pace feels like yours?",
+        adolescent: "Thanks for being honest—that took guts to say, and it's exactly what I want you to tell me when it comes up. What matters to me is that this actually helps, not that we go fast. Can we figure out together how and when to take on the hard stuff, so the pace feels like yours?",
+        literacy:   "Thank you for telling me. That was brave to say, and it is just what I want to hear when it happens. What matters is that this helps you, not that we go fast. Can we choose together how and when to face the hard parts, so the pace is yours?",
+        older:      "Thank you for telling me that — it took something to say, and it is precisely what I hope you will share when it arises. What matters to me is that this is genuinely helpful, not that we proceed quickly. Might we decide together how and when to approach the difficult parts, so that the pace feels like your own?"
+      }
+    }
+  ]
+};
+
+// Per-gap coaching feedback, grounded in Safran & Muran alliance rupture-repair.
+const GAP_FEEDBACK = {
+  2: { // explore genuineness of the "it's okay"
+    lookFor: "A response that does NOT simply accept the quick 'it's okay' — instead it metacommunicates, gently naming that the repair may be premature and inviting Alicia to say more about the impact of the original rupture.",
+    why: "Alicia's fast reassurance is a quiet withdrawal-type rupture — going agreeable and smoothing it over before it is resolved — and clients with social anxiety are especially prone to this 'automatic repair.' Your Module 3 reading stresses that the withdrawal rupture is dangerous precisely because it is easy to welcome: nothing looks wrong on the surface. The skilled move is to notice the drop in genuine engagement and gently name it, staying with the rupture and opening space for her to say more, rather than letting it close over unresolved.",
+    watchFor: "Don't accept 'it's okay' at face value, don't over-apologize, and don't move back to content or the exposure plan yet — that would let the rupture close over unresolved."
+  },
+  3: { // consolidate the repair after she opens up
+    lookFor: "A response that validates what Alicia just risked, frames her naming it as a good sign for the work, and re-establishes shared control over the pace of exposure rather than defending the original plan.",
+    why: "Once a withdrawal rupture opens into genuine expression, consolidating it — affirming the disclosure and restoring collaboration — strengthens the alliance and models that difficulties between them can be raised safely. Renegotiating the pace addresses the specific misattunement (moving to exposure too fast) at its source.",
+    watchFor: "Don't rush back into the exposure task, don't reassure in a way that minimizes what she said, and don't take unilateral control of the plan; the repair is consolidated by collaboration, not by the therapist fixing it alone."
+  }
+};
+
+
+// ---- state ----
+var stage = 1;
+var patientKey = "baseline";
+var submitted = {}; // gapIndex -> true
+
+var PATIENT_ORDER = ["adolescent","literacy","older"];
+var PATIENT_BTNLABEL = {adolescent:"Adolescent (14–16)", literacy:"Limited literacy", older:"Older adult (70+)"};
+
+function el(tag, cls, html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function clinicianTurnIndices(){
+  var out=[]; SESSION.turns.forEach(function(t,i){ if(t.role==="clinician") out.push(i); }); return out;
+}
+function isGap(turnIdx){
+  var cl = clinicianTurnIndices();
+  var pos = cl.indexOf(turnIdx);
+  return stage===2 && SESSION.gapClinicianIndices.indexOf(pos)!==-1;
+}
+function clinicianPos(turnIdx){ return clinicianTurnIndices().indexOf(turnIdx); }
+
+function renderHeader(){
+  document.getElementById("sessTitle").textContent = SESSION.title;
+  document.getElementById("sessBlurb").textContent = SESSION.blurb;
+  var p = SESSION.patients[patientKey];
+  document.getElementById("pchip").innerHTML = "<b>Patient:</b> " + esc(p.label);
+  document.getElementById("scen").textContent = p.chip;
+
+  var mm = document.getElementById("metaMech"), mi = document.getElementById("metaIntv");
+  if(SESSION.metaMechanism){ mm.innerHTML = "<b>Mechanism:</b> " + esc(SESSION.metaMechanism); mm.classList.remove("hidden"); }
+  else { mm.classList.add("hidden"); mm.innerHTML = ""; }
+  if(SESSION.metaIntervention){ mi.innerHTML = "<b>Intervention:</b> " + esc(SESSION.metaIntervention); mi.classList.remove("hidden"); }
+  else { mi.classList.add("hidden"); mi.innerHTML = ""; }
+
+  var ra = document.getElementById("recafter");
+  ra.innerHTML = "";
+  var book = '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="flex:0 0 auto"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+  ra.insertAdjacentHTML("beforeend", book + "<span>Recommended after:</span>");
+  SESSION.recommendedAfter.forEach(function(r,i){
+    ra.insertAdjacentHTML("beforeend", (i?" , ":" ") + '<a>'+esc(r)+'</a>');
+  });
+
+  // Purple adaptation banner (Stage 1 only, when a non-baseline patient is active)
+  var ab = document.getElementById("adaptBanner");
+  if(stage===1 && p.banner){
+    ab.classList.remove("hidden");
+    ab.innerHTML = '<div><b>AI-adapted for: '+esc(p.banner)+'.</b> All clinical content is unchanged — every score, technique, and recommendation is identical to the expert version. Amber annotations refer to the original phrasing.</div>' +
+      '<button class="back" type="button" id="backOrig">Back to original</button>';
+    document.getElementById("backOrig").addEventListener("click", function(){
+      patientKey = "baseline"; renderHeader(); renderChat(); renderToggle();
+    });
+  } else {
+    ab.classList.add("hidden"); ab.innerHTML = "";
+  }
+}
+
+function renderInstr(){
+  var box = document.getElementById("instr");
+  if(stage===1){
+    box.innerHTML =
+      "<h3>What to do in Stage 1</h3>" +
+      "(1) Read the full conversation from top to bottom. " +
+      "(2) After each clinician response, read the <b>amber annotation box</b> below it. It explains <i>why</i> the clinician said what they said, not just the technique name. " +
+      "(3) When a response surprises you, write one sentence about what you expected and why the expert's choice differs. " +
+      "When you have read every exchange and every annotation, select <b>Stage 2: Fill in the Gaps</b>.";
+  } else {
+    box.innerHTML =
+      "<h3>What to do in Stage 2</h3>" +
+      "(1) Read the conversation to the first gap. (2) Type what you think the clinician could say. " +
+      "(3) Select <b>Submit Response</b> to reveal the expert response and feedback. (4) Read the feedback before moving to the next gap. " +
+      "<div class='done'>You are done when every gap has a submitted response and you have read each comparison.</div>";
+  }
+}
+
+function bubbleRow(turn, turnIdx){
+  var role = turn.role;
+  var row = el("div","row "+(role==="clinician"?"cl":"pt"));
+  var av = el("div","avatar");
+  av.innerHTML = role==="clinician"
+    ? '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M6 3v4a3 3 0 0 0 6 0V3" stroke="#8a5a25" stroke-width="1.4" stroke-linecap="round"/><path d="M9 10v2a4 4 0 0 0 8 0v-1" stroke="#8a5a25" stroke-width="1.4"/><circle cx="17" cy="9.5" r="1.6" stroke="#8a5a25" stroke-width="1.4"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#6f6c66" stroke-width="1.4"/><path d="M4 16c0-3 2.7-5 6-5s6 2 6 5" stroke="#6f6c66" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  var stack = el("div","stack");
+  var who = el("div","who", role==="clinician" ? (isGap(turnIdx) ? "Clinician (Your Turn)" : "Clinician") : "Patient");
+  stack.appendChild(who);
+
+  if(isGap(turnIdx)){
+    stack.appendChild(buildGap(turn, turnIdx));
+  } else {
+    var b = el("div","bubble", esc(turn.text[patientKey]));
+    stack.appendChild(b);
+    if(role==="clinician" && turn.technique){
+      var tech = el("div","tech","<b>Technique:</b> " + esc(turn.technique.text));
+      stack.appendChild(tech);
+    }
+  }
+  row.appendChild(av); row.appendChild(stack);
+  return row;
+}
+
+function buildGap(turn, turnIdx){
+  var wrap = el("div","gapwrap");
+  var done = submitted[turnIdx];
+  var ta = el("textarea","gap-ta"+(done?" locked":""));
+  ta.placeholder = "What would you say to the patient here?";
+  ta.setAttribute("aria-label","Your clinician response for this gap");
+  if(done){ ta.value = done.text; ta.readOnly = true; }
+  wrap.appendChild(ta);
+
+  if(!done){
+    var btn = el("button","submit","Submit Response");
+    btn.disabled = true;
+    ta.addEventListener("input", function(){ btn.disabled = ta.value.trim().length===0; });
+    btn.addEventListener("click", function(){
+      submitted[turnIdx] = { text: ta.value.trim() };
+      renderChat(); updateStatus();
+    });
+    wrap.appendChild(btn);
+  } else {
+    wrap.appendChild(buildCompare(turn, turnIdx));
+  }
+  return wrap;
+}
+
+function buildCompare(turn, turnIdx){
+  var pos = clinicianPos(turnIdx);
+  var fb = GAP_FEEDBACK[pos];
+  var box = el("div","compare");
+  var exp = el("div","cmp-card cmp-expert");
+  exp.innerHTML = "<div class='lab'>Expert Response</div>" + esc(turn.text[patientKey]);
+  box.appendChild(exp);
+  var tech = el("div","cmp-card cmp-tech","<b>Technique:</b> " + esc(turn.technique.text));
+  box.appendChild(tech);
+  var f = el("div","cmp-card cmp-fb");
+  f.innerHTML = "<div class='lab'>Feedback</div>" +
+    "<p><span class='k'>What a strong response includes:</span> " + esc(fb.lookFor) + "</p>" +
+    "<p><span class='k'>Why:</span> " + esc(fb.why) + "</p>" +
+    "<p><span class='k'>Watch for:</span> " + esc(fb.watchFor) + "</p>";
+  box.appendChild(f);
+  return box;
+}
+
+function renderChat(){
+  var chat = document.getElementById("chat");
+  chat.innerHTML = "";
+  SESSION.turns.forEach(function(t,i){ chat.appendChild(bubbleRow(t,i)); });
+}
+
+function updateStatus(){
+  var status = document.getElementById("status");
+  var banner = document.getElementById("doneBanner");
+  if(stage!==2){ status.classList.add("hidden"); banner.classList.add("hidden"); return; }
+  var total = SESSION.gapClinicianIndices.length;
+  var gapTurnIdxs = clinicianTurnIndices().filter(function(ti){ return isGap(ti); });
+  var done = gapTurnIdxs.filter(function(ti){ return submitted[ti]; }).length;
+  status.classList.remove("hidden");
+  status.innerHTML = "Gaps completed: <b>"+done+" of "+total+"</b>.";
+  if(done===total){
+    banner.classList.remove("hidden");
+    banner.innerHTML = "<b>Stage 2 complete.</b> You've submitted every gap and can compare each of your responses with the expert's. You've now finished both stages of this worked example.";
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+
+function renderToggle(){
+  var t = document.getElementById("toggle");
+  if(stage!==1){ t.classList.add("hidden"); return; }
+  t.classList.remove("hidden");
+  var box = document.getElementById("toggleBtns");
+  box.innerHTML = "";
+  var all = PATIENT_ORDER.map(function(k){return [k,PATIENT_BTNLABEL[k]];});
+  all.forEach(function(pair){
+    var b = el("button","tbtn", pair[1]);
+    b.setAttribute("aria-pressed", String(patientKey===pair[0]));
+    b.addEventListener("click", function(){
+      patientKey = pair[0];
+      renderHeader(); renderChat(); renderToggle();
+    });
+    box.appendChild(b);
+  });
+  // "Back to original" text link at the end of the toggle row (matches PDF)
+  var back = el("button","tbtn-link", "Back to original");
+  back.setAttribute("aria-pressed", String(patientKey==="baseline"));
+  back.addEventListener("click", function(){
+    patientKey = "baseline"; renderHeader(); renderChat(); renderToggle();
+  });
+  box.appendChild(back);
+}
+
+function renderBottomNav(){
+  var nav = document.getElementById("bottomNav");
+  nav.innerHTML = "";
+  nav.classList.remove("hidden","back");
+  if(stage===1){
+    var b = el("button","nav-btn");
+    b.innerHTML = 'Next Stage: Fill in the Gaps ' +
+      '<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    b.addEventListener("click", function(){ setStage(2); });
+    nav.appendChild(b);
+  } else {
+    nav.classList.add("back");
+    var b2 = el("button","nav-btn secondary");
+    b2.innerHTML = '<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M16 10H5M9 6l-4 4 4 4" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Back to Stage 1';
+    b2.addEventListener("click", function(){ setStage(1); });
+    nav.appendChild(b2);
+  }
+}
+
+function setStage(s){
+  stage = s;
+  document.getElementById("tab1").setAttribute("aria-selected", String(s===1));
+  document.getElementById("tab2").setAttribute("aria-selected", String(s===2));
+  document.getElementById("pdot2").classList.toggle("on", s===2);
+  // Stage 2 always uses baseline patient (variants are a Stage-1-only feature)
+  if(s===2){ patientKey = "baseline"; }
+  renderHeader(); renderInstr(); renderChat(); renderToggle(); updateStatus(); renderBottomNav();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+// init
+renderHeader(); renderInstr(); renderChat(); renderToggle(); updateStatus(); renderBottomNav();
+</script>
+</body>
+</html>
