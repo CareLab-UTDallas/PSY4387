@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Worked Example — Cognitive Restructuring for Catastrophic Thinking</title>
+<style>
+  :root{
+    --bg:#ffffff; --panel:#f7f6f4; --ink:#1f1e1c; --muted:#6f6c66;
+    --line:#e7e4de; --line2:#eceae4;
+    --clinician-bubble:#efe7e0; --patient-bubble:#eceae7;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --tab-active:#8a5a25;
+    --chip-bg:#e9e7e2; --chip-ink:#4a4740;
+    --field:#ffffff; --focus:#2f6f4f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c5c3e;
+    --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px;margin:0 auto;padding:22px 18px 60px;}
+
+  /* Stage tabs */
+  .stagebar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+  .stage-tab{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);border-radius:10px;padding:10px 16px;cursor:pointer;
+    font-size:14.5px;transition:.15s;}
+  .stage-tab .n{color:var(--muted);}
+  .stage-tab[aria-selected="true"]{background:var(--tab-active);border-color:var(--tab-active);color:#fff;}
+  .stage-tab[aria-selected="true"] .n{color:#f0dcc6;}
+  .stage-tab:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .arrow{color:var(--muted);}
+  .progress{display:flex;gap:5px;margin-left:auto;align-items:center;}
+  .pdot{width:26px;height:6px;border-radius:3px;background:var(--line);}
+  .pdot.on{background:var(--accent);}
+
+  /* Card shell */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:24px 24px 26px;}
+  h2.sess{margin:0 0 6px;font-size:22px;letter-spacing:-.01em;}
+  .sess-blurb{margin:0 0 14px;color:var(--muted);font-size:15px;max-width:70ch;}
+  .metarow{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:8px;}
+  .metaline{font-size:13.5px;margin:5px 0;padding:6px 10px;border-radius:8px;display:inline-block;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.4;}
+  .metaline.mech{background:#fdf3e7;color:#8a5a25;}
+  .metaline.intv{background:#eaf4ee;color:#3c5c3e;}
+  .metaline b{font-weight:700;}
+  .adaptbanner{background:#f1ecfa;border:1px solid #d9cdf0;color:#5b3c8a;border-radius:12px;padding:12px 15px;margin:14px 0 4px;font-size:13.5px;line-height:1.5;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .adaptbanner b{font-weight:700;}
+  .adaptbanner .back{flex:0 0 auto;background:none;border:none;color:#5b3c8a;text-decoration:underline;cursor:pointer;font:inherit;font-size:13.5px;padding:0;}
+  .adaptbanner .back:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .pchip{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:13px;}
+  .pchip b{font-weight:600;}
+  .scen{background:var(--chip-bg);color:var(--chip-ink);border-radius:8px;padding:5px 11px;font-size:13px;}
+  .recafter{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13.5px;margin:6px 0 2px;}
+  .recafter a{color:var(--accent);text-decoration:none;cursor:default;}
+
+  /* Instruction box */
+  .instr{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);
+    border-radius:12px;padding:14px 16px;margin:16px 0 20px;font-size:14px;line-height:1.55;}
+  .instr h3{margin:0 0 6px;font-size:14px;font-weight:700;}
+  .instr b{font-weight:700;}
+  .instr .done{font-weight:700;}
+
+  /* Chat */
+  .chat{display:flex;flex-direction:column;gap:16px;}
+  .row{display:flex;gap:12px;}
+  .row.cl{flex-direction:row-reverse;}
+  .avatar{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:#efe7df;
+    display:grid;place-items:center;margin-top:20px;}
+  .row.pt .avatar{background:#e9e9e6;}
+  .stack{max-width:74%;display:flex;flex-direction:column;gap:8px;}
+  .who{font-size:12.5px;color:var(--muted);}
+  .row.cl .who{text-align:right;}
+  .bubble{border-radius:14px;padding:13px 15px;font-size:15px;line-height:1.5;}
+  .row.cl .bubble{background:var(--clinician-bubble);border-top-right-radius:5px;text-align:right;}
+  .row.pt .bubble{background:var(--patient-bubble);border-top-left-radius:5px;}
+  .tech{background:var(--amber-bg);border:1px solid var(--amber-line);border-radius:10px;
+    padding:10px 13px;font-size:13px;color:var(--amber-ink);line-height:1.5;text-align:left;}
+  .tech b{color:var(--amber-ink);font-weight:700;}
+
+  /* Toggle */
+  .toggle{margin-top:24px;border-top:1px solid var(--line);padding-top:18px;}
+  .toggle h4{margin:0 0 4px;font-size:15px;}
+  .toggle p{margin:0 0 12px;color:var(--muted);font-size:13.5px;max-width:74ch;}
+  .toggle-btns{display:flex;flex-wrap:wrap;gap:9px;}
+  .tbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 15px;
+    cursor:pointer;font-size:13.5px;color:var(--ink);transition:.15s;}
+  .tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .tbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .tbtn-link{border:none;background:none;color:var(--muted);cursor:pointer;font:inherit;font-size:13.5px;padding:9px 6px;text-decoration:none;}
+  .tbtn-link[aria-pressed="true"]{color:var(--ink);font-weight:600;}
+  .tbtn-link:hover{color:var(--ink);}
+  .tbtn-link:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  /* Stage 2 gaps */
+  .gapwrap{display:flex;flex-direction:column;gap:8px;}
+  .gap-ta{width:100%;min-height:82px;resize:vertical;border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;font:inherit;font-size:15px;background:var(--field);
+    border-top-right-radius:5px;}
+  .gap-ta:focus{outline:none;border-color:var(--focus);}
+  .gap-ta.locked{background:#f3f1ec;color:#55524c;}
+  .submit{align-self:flex-end;background:var(--accent);color:#fff;border:none;border-radius:10px;
+    padding:10px 18px;font-size:14px;cursor:pointer;}
+  .submit:disabled{opacity:.5;cursor:default;}
+  .submit:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .compare{display:flex;flex-direction:column;gap:10px;margin-top:2px;}
+  .cmp-card{border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.55;text-align:left;}
+  .cmp-expert{background:var(--clinician-bubble);}
+  .cmp-expert .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);font-weight:700;margin-bottom:4px;}
+  .cmp-tech{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);}
+  .cmp-tech b{font-weight:700;}
+  .cmp-fb{background:var(--ok-bg);border:1px solid var(--ok-line);color:var(--ok-ink);}
+  .cmp-fb .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px;}
+  .cmp-fb p{margin:0 0 7px;}
+  .cmp-fb .k{font-weight:700;}
+
+  .status{font-size:13px;color:var(--muted);margin-top:14px;}
+  .status b{color:var(--accent-ink);}
+  .hidden{display:none !important;}
+  .done-banner{margin-top:16px;background:var(--ok-bg);border:1px solid var(--ok-line);
+    color:var(--ok-ink);border-radius:12px;padding:14px 16px;font-size:14.5px;}
+  .done-banner b{font-weight:700;}
+
+  .bottom-nav{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);
+    display:flex;justify-content:flex-end;}
+  .bottom-nav.back{justify-content:flex-start;}
+  .nav-btn{display:inline-flex;align-items:center;gap:9px;border:none;cursor:pointer;
+    background:var(--accent);color:#fff;border-radius:10px;padding:12px 20px;font-size:15px;
+    font-weight:600;transition:.15s;}
+  .nav-btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .nav-btn:hover{filter:brightness(1.05);}
+  .nav-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  @media(max-width:560px){
+    .stack{max-width:86%;}
+    .panel{padding:18px 15px 20px;}
+    h2.sess{font-size:19px;}
+  }
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="stagebar">
+    <button class="stage-tab" id="tab1" aria-selected="true" onclick="setStage(1)">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M2 10s3-5.5 8-5.5S18 10 18 10s-3 5.5-8 5.5S2 10 2 10Z" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.3" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span><span class="n">Stage 1:</span> Learn from the Expert</span>
+    </button>
+    <span class="arrow">&rarr;</span>
+    <button class="stage-tab" id="tab2" aria-selected="false" onclick="setStage(2)">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 14.5 13.5 5l2 2L6 16.5 3.5 17l.5-2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      <span><span class="n">Stage 2:</span> Fill in the Gaps</span>
+    </button>
+    <span class="progress" id="progress" aria-hidden="true"><span class="pdot on"></span><span class="pdot" id="pdot2"></span></span>
+  </div>
+
+  <div class="panel">
+    <h2 class="sess" id="sessTitle"></h2>
+    <p class="sess-blurb" id="sessBlurb"></p>
+    <div class="metarow">
+      <span class="pchip" id="pchip"></span>
+      <span class="scen" id="scen"></span>
+    </div>
+    <div class="metaline mech" id="metaMech"></div>
+    <div class="metaline intv" id="metaIntv"></div>
+    <div class="recafter" id="recafter"></div>
+
+    <div class="adaptbanner hidden" id="adaptBanner"></div>
+
+    <div class="instr" id="instr"></div>
+
+    <div class="chat" id="chat"></div>
+
+    <!-- Stage 1 patient toggle -->
+    <div class="toggle hidden" id="toggle">
+      <h4>Explore with a different patient</h4>
+      <p>Same clinical situation, different patient. Every score, technique, and recommendation stays identical &mdash; only communication style adapts. Consider what you would change before clicking.</p>
+      <div class="toggle-btns" id="toggleBtns"></div>
+    </div>
+
+    <div class="done-banner hidden" id="doneBanner"></div>
+    <div class="status hidden" id="status"></div>
+
+    <div class="bottom-nav hidden" id="bottomNav"></div>
+  </div>
+</div>
+
+<script>
+// ===========================================================================
+// Worked Example 4 (Module 4) — Cognitive Restructuring for Catastrophic Thinking
+// Base transcript + technique annotations VERBATIM from instructor PDFs
+// (MariaStage1 / MariaStage2 / Adolescent / LimitedLiteracy / OlderAdult).
+// Techniques held constant across adaptations; only communication style adapts.
+// Adaptations get distinct name/age/context per instructor preference
+// (baseline Maria, 34 kept).
+// FOUR Stage 2 gaps per instructor decision (inspo directions): belief-rating,
+// probability-estimation, validation+reframe+re-rating, coping-card. Each gap's
+// expert answer is the corresponding clinician turn from Stage 1.
+// Stage 2 feedback grounded in the Module 4 reading (catastrophizing as a
+// cognitive distortion; Socratic questioning; accuracy-not-optimism; coping card
+// as generalization) plus standard cognitive-restructuring practice.
+// ===========================================================================
+
+const SESSION = {
+  title: "Cognitive Restructuring for Catastrophic Thinking",
+  tag: "CBT Interventions",
+  blurb: "A cognitive restructuring session targeting catastrophic thinking as a maintenance mechanism in generalized anxiety disorder. Demonstrates Socratic questioning and thought evaluation.",
+  recommendedAfter: ["Cognitive Processes", "Evidence-Based Treatments"],
+  metaMechanism: "Catastrophic thinking / probability overestimation",
+  metaIntervention: "Cognitive restructuring via Socratic questioning",
+
+  // Four gaps at these clinician-turn positions (0-based across clinician turns):
+  // 1 = guided-discovery belief rating, 3 = probability estimation,
+  // 5 = validation + reframe + re-rating, 6 = generalization / coping card.
+  gapClinicianIndices: [1, 3, 5, 6],
+
+  patients: {
+    baseline: {
+      label: "Maria, 34",
+      chip: "Generalized anxiety disorder with persistent worry about health, finances, and family safety",
+      banner: null
+    },
+    adolescent: {
+      label: "Maya, 15",
+      chip: "Generalized anxiety disorder with persistent worry about school, health, and family safety",
+      banner: "Adolescent (14–16)"
+    },
+    literacy: {
+      label: "Rosa, 36",
+      chip: "Generalized anxiety disorder with persistent worry about health, finances, and family safety",
+      banner: "Limited literacy"
+    },
+    older: {
+      label: "Mrs. Alvarez, 72",
+      chip: "Generalized anxiety disorder with persistent worry about health, finances, and family safety",
+      banner: "Older adult (70+)"
+    }
+  },
+
+  turns: [
+    // C0 — Mechanism link
+    { role: "clinician",
+      technique: { label: "Mechanism link",
+        text: "Mechanism link: Explicitly connects the session to the identified maintenance mechanism (catastrophic thinking) and bridges from homework, reinforcing the treatment model." },
+      text: {
+        baseline:   "Last session we identified catastrophic thinking as one of the patterns that keeps your anxiety going. You mentioned keeping a thought record this week. What did you notice?",
+        adolescent: "Last time we talked, we figured out that your brain sometimes jumps to the worst-case scenario, which keeps your anxiety going. You mentioned keeping track of your thoughts this week. What did you notice?",
+        literacy:   "Last time, we talked about a thinking pattern called catastrophic thinking. That means you imagine the worst thing happening. You said you kept a note of your thoughts this week. What did you notice?",
+        older:      "At our last meeting, we discussed how catastrophic thinking has been a longstanding pattern contributing to your anxiety. You mentioned that you kept a thought record over the past week. Could you share what you observed during that time?"
+      }
+    },
+    // P0
+    { role: "patient",
+      text: {
+        baseline:   "I wrote down a few situations. The big one was Tuesday — my husband was 20 minutes late coming home and I immediately thought he'd been in a car accident. I was shaking by the time he walked in.",
+        adolescent: "I wrote down a few things. The biggest was on Tuesday — my mom was about 20 minutes late picking me up and I instantly thought she'd been in a car accident. I was shaking by the time she pulled up.",
+        literacy:   "I wrote down a few things. The big one was Tuesday — my husband was 20 minutes late coming home and I thought he had a car accident. I was shaking when he got home.",
+        older:      "I wrote down a few situations. The main one was on Tuesday — my husband was about 20 minutes late getting home, and my mind immediately went to the thought that he'd been in a car accident. By the time he walked in, I was physically shaking."
+      }
+    },
+    // C1 — Guided discovery (belief rating)  [GAP]
+    { role: "clinician",
+      technique: { label: "Guided discovery",
+        text: "Guided discovery: Selects a vivid, recent example for in-session work. Assessing belief intensity before restructuring establishes a baseline and helps the patient recognize the shift after Socratic questioning." },
+      text: {
+        baseline:   "That's a really clear example. Let's use that one to practice the process together. When you had the thought 'he's been in a car accident,' how much did you believe it in that moment, from 0 to 100?",
+        adolescent: "That's a super clear example. Let's use that one to practice together. When you thought, 'she's been in a car accident,' how much did you believe it right then, from 0 to 100?",
+        literacy:   "That's a good example. Let's use it to practice. When you thought 'he's had a car accident,' how much did you believe it right then, from 0 to 100? 0 means not at all, 100 means totally sure.",
+        older:      "That's an excellent example, and it's one that many people in your stage of life can relate to, especially with a long shared history. Let's use that situation to walk through the process together. When you had the thought, 'he's been in a car accident,' how much did you believe it was true in that moment, using a scale from 0 to 100?"
+      }
+    },
+    // P1
+    { role: "patient",
+      text: {
+        baseline:   "In the moment? Probably 85 or 90. It felt completely real. My body was already reacting like it had actually happened.",
+        adolescent: "In the moment? Probably 85 or 90. It felt totally real. My body was already freaking out like it had actually happened.",
+        literacy:   "In that moment? Maybe 85 or 90. It felt real. My body acted like it really happened.",
+        older:      "In that moment? Probably 85 or 90. It felt absolutely real. My body was already reacting as if it had happened."
+      }
+    },
+    // C2 — Psychoeducation + Socratic question
+    { role: "clinician",
+      technique: { label: "Psychoeducation + Socratic question",
+        text: "Psychoeducation + Socratic question: Names the mechanism explicitly so the patient understands why this pattern maintains anxiety (thought → physiological arousal → thought confirmation loop). Then begins Socratic questioning by examining the evidence base." },
+      text: {
+        baseline:   "Your mind jumped to the worst-case scenario and your body responded as though it were already true. That's exactly how catastrophic thinking works as a maintenance mechanism — the thought triggers a fear response, which then makes the thought feel even more credible. Let me ask you this: how many times has your husband been late coming home in the past year?",
+        adolescent: "Your mind went straight to the worst possible thing, and your body reacted like it was real. That's exactly how catastrophic thinking keeps anxiety going — the scary thought sets off your fear, which makes the thought feel even more real. Let me ask: how many times has your mom been late picking you up in the past year?",
+        literacy:   "Your mind went to the worst, and your body reacted like it was true. Catastrophic thinking means your thoughts make you feel scared, and then the fear makes the thought feel even more real. Tell me, how many times has your husband been late in the past year?",
+        older:      "Your mind immediately leapt to the worst possible outcome, and your body responded as if it were reality. This is a classic example of catastrophic thinking, which, as we discussed, serves to keep anxiety going. The thought triggers a strong fear response, which then makes the thought seem even more believable. Let me ask: over the past year, with all the years you and your husband have spent together, how often has he been late getting home?"
+      }
+    },
+    // P2
+    { role: "patient",
+      text: {
+        baseline:   "I don't know, maybe 30 or 40 times? He works in construction so his schedule is unpredictable.",
+        adolescent: "I don't know, maybe 30 or 40 times? She has a long commute and traffic is unpredictable.",
+        literacy:   "I don't know, maybe 30 or 40 times? He works in construction, so his hours are not steady.",
+        older:      "I'm not sure, maybe 30 or 40 times? He works in construction, so his hours are unpredictable."
+      }
+    },
+    // C3 — Probability estimation  [GAP]
+    { role: "clinician",
+      technique: { label: "Probability estimation",
+        text: "Probability estimation: Continues the Socratic line by guiding the patient to examine the actual evidence for the catastrophic prediction. This targets the probability overestimation component of the maintenance mechanism." },
+      text: {
+        baseline:   "And of those 30 or 40 times, how many of those were because of an actual car accident?",
+        adolescent: "And out of those 30 or 40 times, how many were actually because of a car accident?",
+        literacy:   "Of those 30 or 40 times, how many were because of a real car accident?",
+        older:      "And out of those 30 or 40 occasions, how many times was his lateness actually due to a car accident?"
+      }
+    },
+    // P3
+    { role: "patient",
+      text: {
+        baseline:   "None. Zero. He's just been stuck in traffic or stayed late at the job site.",
+        adolescent: "None. Zero. She's just been stuck in traffic or gotten held up.",
+        literacy:   "None. Zero. He's just been stuck in traffic or stayed late at work.",
+        older:      "None. Zero. It's always been traffic or working late at the job site."
+      }
+    },
+    // C4 — Evidence synthesis
+    { role: "clinician",
+      technique: { label: "Evidence synthesis",
+        text: "Evidence synthesis: Guides the patient to draw their own conclusion from the evidence rather than telling them their thought is wrong. This is Socratic questioning at its core — the therapist asks, the patient discovers." },
+      text: {
+        baseline:   "So the data from your own experience shows that 0 out of 30 or 40 times the lateness was due to an accident. If we treated that like an experiment, what would the evidence suggest about the probability of a car accident when he's late?",
+        adolescent: "So looking at your own experience, 0 out of 30 or 40 times was it because of an accident. If we treat that like a science experiment, what does the evidence say about the chances of a car accident when she's late?",
+        literacy:   "So looking at your own experience, 0 out of 30 or 40 times was it because of an accident. If we treat that like a science experiment, what does the evidence say about the chances of a car accident when he's late?",
+        older:      "So, drawing on your own experience — over 30 or 40 times, there were zero incidents involving an accident. If we look at that as a kind of personal experiment, what does the evidence suggest about the likelihood of a car accident when he's late?"
+      }
+    },
+    // P4
+    { role: "patient",
+      text: {
+        baseline:   "That it's really unlikely. Like, less than a percent chance. When I hear it like that, I feel kind of silly for getting so worked up.",
+        adolescent: "That it's really unlikely. Like, less than a percent chance. When I hear it like that, I feel kind of silly for freaking out.",
+        literacy:   "That it's really unlikely. Less than one percent. Hearing it that way, I feel silly for worrying so much.",
+        older:      "It's really unlikely. Less than a percent chance, I'd say. Hearing it that way, I feel a bit foolish for getting so anxious."
+      }
+    },
+    // C5 — Validation + Mechanism reframe + Re-rating  [GAP]
+    { role: "clinician",
+      technique: { label: "Validation + Mechanism reframe + Re-rating",
+        text: "Validation + Mechanism reframe + Re-rating: Validates the emotional function of worry (care for family) while maintaining the cognitive model. Avoids shaming the patient. Re-rates belief to measure the impact of restructuring." },
+      text: {
+        baseline:   "I want to be careful here — your anxiety isn't silly. The worry comes from how much you love your family. What's happening is that your mind's threat detection system is overestimating the danger, and that's the specific pattern we're learning to catch and correct. Now that you've looked at the evidence, where would you rate your belief in the car accident thought?",
+        adolescent: "I want to be clear — your anxiety isn't silly. You worry because you care about your family. What's happening is your brain's alarm system is overreacting, and that's the pattern we're learning to spot and change. Now that you've looked at the facts, where would you rate your belief in the car accident thought?",
+        literacy:   "Your anxiety isn't silly. Anxiety means worry or fear. It comes from caring about your family. Your mind's warning system is making the danger seem bigger than it is. That's the pattern we want to notice and change. Now, after looking at the facts, where would you rate your belief in the car accident thought?",
+        older:      "I want to reassure you — your anxiety is not foolish. The worry comes from deep care for your loved ones, which is quite understandable after a lifetime together. What's happening is that your mind's threat system is overestimating the actual danger, and that's the pattern we're working to recognize and adjust. Now that you've reviewed the evidence, where would you rate your belief in the car accident thought?"
+      }
+    },
+    // P5
+    { role: "patient",
+      text: {
+        baseline:   "Maybe a 20 now. I can see it's my anxiety talking, not reality. But how do I remember that in the moment when my body is already panicking?",
+        adolescent: "Maybe a 20 now. I can see it's my anxiety talking, not reality. But how do I remember that when I'm already panicking?",
+        literacy:   "Maybe a 20 now. I can see it's my anxiety, not real life. But how do I remember that when I'm already panicking?",
+        older:      "Maybe a 20 now. I can see it's my anxiety, not reality. But how do I remind myself of that in the moment, when my body is already panicking?"
+      }
+    },
+    // C6 — Generalization planning (coping card)  [GAP]
+    { role: "clinician",
+      technique: { label: "Generalization planning",
+        text: "Generalization planning: Addresses the patient's concern about real-world application by introducing a concrete behavioral tool (coping card) that bridges the in-session cognitive work to between-session practice. This prevents the restructuring from being an isolated intellectual exercise." },
+      text: {
+        baseline:   "That's a great question and it tells me you're already thinking about how to apply this outside of session. One approach is to create a coping card — a brief written reminder you can pull out when you notice the catastrophic thought. It might say something like: 'He has been late 40 times. Zero were accidents. My threat system is overestimating danger.' Would you be willing to create one of those this week and try using it the next time this thought comes up?",
+        adolescent: "That's a really good question — it shows you're already thinking about using this in real life. One thing you can try is making a coping card — just a quick note you can keep with you for when that scary thought pops up. It could say: 'She has been late 40 times. Zero were accidents. My brain is overreacting.' Would you be up for making one this week and trying it out next time this thought comes up?",
+        literacy:   "That's a great question. You're thinking about how to use this outside our talks. One way is to make a coping card. That's a small note you can read when you have the scary thought. It could say: 'He has been late 40 times. Zero were accidents. My mind is making danger seem bigger.' Would you try making one this week and use it next time this thought comes?",
+        older:      "That's an excellent question, and it shows you're already thinking about how to use these strategies between our sessions. One helpful approach is to create a coping card — a brief written reminder you can keep handy for those moments. It might say something like: 'He has been late 40 times. Zero were accidents. My threat system is overestimating danger.' Would you be open to creating a card like this and trying it out the next time the thought arises?"
+      }
+    },
+    // P6
+    { role: "patient",
+      text: {
+        baseline:   "Yeah, I could do that. I think having something written down would help because in the moment I can't think straight.",
+        adolescent: "Yeah, I could do that. I think having something written down would help because in the moment I can't think straight.",
+        literacy:   "Yes, I could do that. Having something written would help, because I can't think clearly when I'm scared.",
+        older:      "Yes, I think I could do that. Having something written down would help, because in the moment I can't organize my thoughts."
+      }
+    }
+  ]
+};
+
+// Per-gap coaching feedback, grounded in the Module 4 reading + cognitive-restructuring practice.
+const GAP_FEEDBACK = {
+  1: { // guided discovery — belief rating
+    lookFor: "A response that picks the vivid recent example and asks the patient to rate how strongly she believed the catastrophic thought in the moment (a 0–100 rating), before any restructuring.",
+    why: "Getting a belief rating first establishes a baseline. Catastrophic thoughts are accepted as fact in the moment; quantifying the belief makes it visible as a belief (not a certainty) and sets up a measurable before/after so the patient can see the shift her own reasoning produces.",
+    watchFor: "Don't argue the thought down or reassure yet; rating precedes restructuring. Avoid jumping straight to evidence before you know how strong the belief was."
+  },
+  3: { // probability estimation
+    lookFor: "A Socratic question that turns her own frequency data into a probability check — of all the times he was late, how many were actually accidents — letting her confront the base rate herself.",
+    why: "Catastrophizing overestimates the probability of the worst outcome. Having the patient supply the actual count (many late arrivals, zero accidents) targets the probability-overestimation component directly and lets her discover the mismatch rather than being told it.",
+    watchFor: "Don't state the conclusion for her ('so it's clearly unlikely'). The power is in her drawing it from her own evidence; keep asking rather than telling."
+  },
+  5: { // validation + reframe + re-rating
+    lookFor: "A response that validates the worry's emotional function (care for family) WITHOUT shaming, reframes it as an overactive threat system, and then re-rates the belief now that evidence has been examined.",
+    why: "When she calls herself 'silly,' the skilled move is accuracy, not agreement: the reading stresses cognitive work aims at a fairer reading, not blanket optimism or self-criticism. Validating the care behind the worry keeps her engaged, the mechanism reframe preserves the model, and re-rating measures the restructuring's effect.",
+    watchFor: "Don't let 'I feel silly' stand — that's a new distortion (self-criticism). And don't skip the re-rating; measuring the belief drop is what demonstrates the technique worked."
+  },
+  6: { // generalization / coping card
+    lookFor: "A response that answers her real-world concern by proposing a concrete, portable tool — a coping card summarizing the evidence — and secures her willingness to use it before the next episode.",
+    why: "In-session belief change fades if it stays an intellectual exercise. A coping card carries the evidence-based counter-statement into the moment of panic, when she 'can't think straight,' bridging session work to between-session practice and making the restructuring durable.",
+    watchFor: "Don't leave it abstract ('just try to remember the evidence'); the point is a written, specific reminder. And collaborate on it rather than dictating — her buy-in predicts whether she'll actually use it."
+  }
+};
+
+
+// ---- state ----
+var stage = 1;
+var patientKey = "baseline";
+var submitted = {}; // gapIndex -> true
+
+var PATIENT_ORDER = ["adolescent","literacy","older"];
+var PATIENT_BTNLABEL = {adolescent:"Adolescent (14–16)", literacy:"Limited literacy", older:"Older adult (70+)"};
+
+function el(tag, cls, html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function clinicianTurnIndices(){
+  var out=[]; SESSION.turns.forEach(function(t,i){ if(t.role==="clinician") out.push(i); }); return out;
+}
+function isGap(turnIdx){
+  var cl = clinicianTurnIndices();
+  var pos = cl.indexOf(turnIdx);
+  return stage===2 && SESSION.gapClinicianIndices.indexOf(pos)!==-1;
+}
+function clinicianPos(turnIdx){ return clinicianTurnIndices().indexOf(turnIdx); }
+
+function renderHeader(){
+  document.getElementById("sessTitle").textContent = SESSION.title;
+  document.getElementById("sessBlurb").textContent = SESSION.blurb;
+  var p = SESSION.patients[patientKey];
+  document.getElementById("pchip").innerHTML = "<b>Patient:</b> " + esc(p.label);
+  document.getElementById("scen").textContent = p.chip;
+
+  var mm = document.getElementById("metaMech"), mi = document.getElementById("metaIntv");
+  if(SESSION.metaMechanism){ mm.innerHTML = "<b>Mechanism:</b> " + esc(SESSION.metaMechanism); mm.classList.remove("hidden"); }
+  else { mm.classList.add("hidden"); mm.innerHTML = ""; }
+  if(SESSION.metaIntervention){ mi.innerHTML = "<b>Intervention:</b> " + esc(SESSION.metaIntervention); mi.classList.remove("hidden"); }
+  else { mi.classList.add("hidden"); mi.innerHTML = ""; }
+
+  var ra = document.getElementById("recafter");
+  ra.innerHTML = "";
+  var book = '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="flex:0 0 auto"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+  ra.insertAdjacentHTML("beforeend", book + "<span>Recommended after:</span>");
+  SESSION.recommendedAfter.forEach(function(r,i){
+    ra.insertAdjacentHTML("beforeend", (i?" , ":" ") + '<a>'+esc(r)+'</a>');
+  });
+
+  // Purple adaptation banner (Stage 1 only, when a non-baseline patient is active)
+  var ab = document.getElementById("adaptBanner");
+  if(stage===1 && p.banner){
+    ab.classList.remove("hidden");
+    ab.innerHTML = '<div><b>AI-adapted for: '+esc(p.banner)+'.</b> All clinical content is unchanged — every score, technique, and recommendation is identical to the expert version. Amber annotations refer to the original phrasing.</div>' +
+      '<button class="back" type="button" id="backOrig">Back to original</button>';
+    document.getElementById("backOrig").addEventListener("click", function(){
+      patientKey = "baseline"; renderHeader(); renderChat(); renderToggle();
+    });
+  } else {
+    ab.classList.add("hidden"); ab.innerHTML = "";
+  }
+}
+
+function renderInstr(){
+  var box = document.getElementById("instr");
+  if(stage===1){
+    box.innerHTML =
+      "<h3>What to do in Stage 1</h3>" +
+      "(1) Read the full conversation from top to bottom. " +
+      "(2) After each clinician response, read the <b>amber annotation box</b> below it. It explains <i>why</i> the clinician said what they said, not just the technique name. " +
+      "(3) When a response surprises you, write one sentence about what you expected and why the expert's choice differs. " +
+      "When you have read every exchange and every annotation, select <b>Stage 2: Fill in the Gaps</b>.";
+  } else {
+    box.innerHTML =
+      "<h3>What to do in Stage 2</h3>" +
+      "(1) Read the conversation to the first gap. (2) Type what you think the clinician could say. " +
+      "(3) Select <b>Submit Response</b> to reveal the expert response and feedback. (4) Read the feedback before moving to the next gap. " +
+      "<div class='done'>You are done when every gap has a submitted response and you have read each comparison.</div>";
+  }
+}
+
+function bubbleRow(turn, turnIdx){
+  var role = turn.role;
+  var row = el("div","row "+(role==="clinician"?"cl":"pt"));
+  var av = el("div","avatar");
+  av.innerHTML = role==="clinician"
+    ? '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M6 3v4a3 3 0 0 0 6 0V3" stroke="#8a5a25" stroke-width="1.4" stroke-linecap="round"/><path d="M9 10v2a4 4 0 0 0 8 0v-1" stroke="#8a5a25" stroke-width="1.4"/><circle cx="17" cy="9.5" r="1.6" stroke="#8a5a25" stroke-width="1.4"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#6f6c66" stroke-width="1.4"/><path d="M4 16c0-3 2.7-5 6-5s6 2 6 5" stroke="#6f6c66" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  var stack = el("div","stack");
+  var who = el("div","who", role==="clinician" ? (isGap(turnIdx) ? "Clinician (Your Turn)" : "Clinician") : "Patient");
+  stack.appendChild(who);
+
+  if(isGap(turnIdx)){
+    stack.appendChild(buildGap(turn, turnIdx));
+  } else {
+    var b = el("div","bubble", esc(turn.text[patientKey]));
+    stack.appendChild(b);
+    if(role==="clinician" && turn.technique){
+      var tech = el("div","tech","<b>Technique:</b> " + esc(turn.technique.text));
+      stack.appendChild(tech);
+    }
+  }
+  row.appendChild(av); row.appendChild(stack);
+  return row;
+}
+
+function buildGap(turn, turnIdx){
+  var wrap = el("div","gapwrap");
+  var done = submitted[turnIdx];
+  var ta = el("textarea","gap-ta"+(done?" locked":""));
+  ta.placeholder = "What would you say to the patient here?";
+  ta.setAttribute("aria-label","Your clinician response for this gap");
+  if(done){ ta.value = done.text; ta.readOnly = true; }
+  wrap.appendChild(ta);
+
+  if(!done){
+    var btn = el("button","submit","Submit Response");
+    btn.disabled = true;
+    ta.addEventListener("input", function(){ btn.disabled = ta.value.trim().length===0; });
+    btn.addEventListener("click", function(){
+      submitted[turnIdx] = { text: ta.value.trim() };
+      renderChat(); updateStatus();
+    });
+    wrap.appendChild(btn);
+  } else {
+    wrap.appendChild(buildCompare(turn, turnIdx));
+  }
+  return wrap;
+}
+
+function buildCompare(turn, turnIdx){
+  var pos = clinicianPos(turnIdx);
+  var fb = GAP_FEEDBACK[pos];
+  var box = el("div","compare");
+  var exp = el("div","cmp-card cmp-expert");
+  exp.innerHTML = "<div class='lab'>Expert Response</div>" + esc(turn.text[patientKey]);
+  box.appendChild(exp);
+  var tech = el("div","cmp-card cmp-tech","<b>Technique:</b> " + esc(turn.technique.text));
+  box.appendChild(tech);
+  var f = el("div","cmp-card cmp-fb");
+  f.innerHTML = "<div class='lab'>Feedback</div>" +
+    "<p><span class='k'>What a strong response includes:</span> " + esc(fb.lookFor) + "</p>" +
+    "<p><span class='k'>Why:</span> " + esc(fb.why) + "</p>" +
+    "<p><span class='k'>Watch for:</span> " + esc(fb.watchFor) + "</p>";
+  box.appendChild(f);
+  return box;
+}
+
+function renderChat(){
+  var chat = document.getElementById("chat");
+  chat.innerHTML = "";
+  SESSION.turns.forEach(function(t,i){ chat.appendChild(bubbleRow(t,i)); });
+}
+
+function updateStatus(){
+  var status = document.getElementById("status");
+  var banner = document.getElementById("doneBanner");
+  if(stage!==2){ status.classList.add("hidden"); banner.classList.add("hidden"); return; }
+  var total = SESSION.gapClinicianIndices.length;
+  var gapTurnIdxs = clinicianTurnIndices().filter(function(ti){ return isGap(ti); });
+  var done = gapTurnIdxs.filter(function(ti){ return submitted[ti]; }).length;
+  status.classList.remove("hidden");
+  status.innerHTML = "Gaps completed: <b>"+done+" of "+total+"</b>.";
+  if(done===total){
+    banner.classList.remove("hidden");
+    banner.innerHTML = "<b>Stage 2 complete.</b> You've submitted every gap and can compare each of your responses with the expert's. You've now finished both stages of this worked example.";
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+
+function renderToggle(){
+  var t = document.getElementById("toggle");
+  if(stage!==1){ t.classList.add("hidden"); return; }
+  t.classList.remove("hidden");
+  var box = document.getElementById("toggleBtns");
+  box.innerHTML = "";
+  var all = PATIENT_ORDER.map(function(k){return [k,PATIENT_BTNLABEL[k]];});
+  all.forEach(function(pair){
+    var b = el("button","tbtn", pair[1]);
+    b.setAttribute("aria-pressed", String(patientKey===pair[0]));
+    b.addEventListener("click", function(){
+      patientKey = pair[0];
+      renderHeader(); renderChat(); renderToggle();
+    });
+    box.appendChild(b);
+  });
+  // "Back to original" text link at the end of the toggle row (matches PDF)
+  var back = el("button","tbtn-link", "Back to original");
+  back.setAttribute("aria-pressed", String(patientKey==="baseline"));
+  back.addEventListener("click", function(){
+    patientKey = "baseline"; renderHeader(); renderChat(); renderToggle();
+  });
+  box.appendChild(back);
+}
+
+function renderBottomNav(){
+  var nav = document.getElementById("bottomNav");
+  nav.innerHTML = "";
+  nav.classList.remove("hidden","back");
+  if(stage===1){
+    var b = el("button","nav-btn");
+    b.innerHTML = 'Next Stage: Fill in the Gaps ' +
+      '<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    b.addEventListener("click", function(){ setStage(2); });
+    nav.appendChild(b);
+  } else {
+    nav.classList.add("back");
+    var b2 = el("button","nav-btn secondary");
+    b2.innerHTML = '<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M16 10H5M9 6l-4 4 4 4" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Back to Stage 1';
+    b2.addEventListener("click", function(){ setStage(1); });
+    nav.appendChild(b2);
+  }
+}
+
+function setStage(s){
+  stage = s;
+  document.getElementById("tab1").setAttribute("aria-selected", String(s===1));
+  document.getElementById("tab2").setAttribute("aria-selected", String(s===2));
+  document.getElementById("pdot2").classList.toggle("on", s===2);
+  // Stage 2 always uses baseline patient (variants are a Stage-1-only feature)
+  if(s===2){ patientKey = "baseline"; }
+  renderHeader(); renderInstr(); renderChat(); renderToggle(); updateStatus(); renderBottomNav();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+// init
+renderHeader(); renderInstr(); renderChat(); renderToggle(); updateStatus(); renderBottomNav();
+</script>
+</body>
+</html>
