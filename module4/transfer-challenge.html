@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Challenge — When Common Factors Drive Change</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --level-bg:#fbe7e0; --level-ink:#b0472a;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --model-bg:#f6f4ef; --rubric-bg:#eef3fb; --rubric-line:#c9d9f0; --rubric-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px;}
+  .head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px;}
+  .back-ic{flex:0 0 auto;margin-top:4px;opacity:.6;}
+  .head h1{margin:0;font-size:24px;letter-spacing:-.01em;font-weight:700;}
+  .tabrow{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 22px;padding-left:38px;font-size:14px;}
+  .lvl{background:var(--level-bg);color:var(--level-ink);font-weight:700;border-radius:8px;padding:4px 12px;}
+  .tabrow .t{color:var(--muted);padding:4px 0;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;margin-bottom:20px;}
+  .panel h2{margin:0 0 14px;font-size:17px;font-weight:700;}
+  .panel p{margin:0 0 14px;font-size:15.5px;line-height:1.6;}
+  .panel p:last-child{margin-bottom:0;}
+  .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
+  .qhead h2{margin:0;font-size:17px;font-weight:700;}
+  .qtype{flex:0 0 auto;font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:7px;padding:5px 10px;}
+  .qprompt{font-size:15.5px;margin:0 0 14px;line-height:1.55;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin-bottom:18px;}
+  .do b{color:var(--ink);font-weight:700;}
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font:inherit;font-size:15px;line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:14px;}
+  .opt .txt{flex:1 1 auto;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;}
+  .opt:disabled{cursor:default;}
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.62;}
+  .verdict{margin:16px 0 0;font-size:15px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14.5px;color:#44413b;line-height:1.6;}
+  .qfoot{display:flex;justify-content:flex-end;margin-top:20px;}
+  .btn{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;transition:.12s;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  /* open-ended */
+  .open-ta{width:100%;min-height:150px;resize:vertical;border:1px solid var(--line);border-radius:12px;
+    padding:13px 15px;font:inherit;font-size:15px;background:#fff;line-height:1.55;}
+  .open-ta:focus{outline:none;border-color:var(--focus);}
+  .open-ta.locked{background:#f7f6f3;color:#55524c;}
+  .model{background:var(--model-bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:16px;font-size:14.5px;line-height:1.6;}
+  .model .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);font-weight:700;margin-bottom:6px;}
+  .rubric{background:var(--rubric-bg);border:1px solid var(--rubric-line);border-radius:12px;padding:14px 16px;margin-top:12px;}
+  .rubric .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--rubric-ink);font-weight:700;margin-bottom:8px;}
+  .rubric .rdim{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px;font-size:14px;color:#33465f;line-height:1.5;}
+  .rubric .rdim:last-child{margin-bottom:0;}
+  .rubric .rchk{flex:0 0 auto;width:18px;height:18px;border:1.5px solid #9fb2d0;border-radius:5px;margin-top:2px;cursor:pointer;display:grid;place-items:center;background:#fff;}
+  .rubric .rchk.on{background:#3a6b3e;border-color:#3a6b3e;}
+  .rubric .rdim b{color:#2f4a72;font-weight:700;}
+  .selfrate{margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:14px;}
+  .selfrate .lab{font-weight:700;color:var(--ink);}
+  .rate-btns{display:flex;gap:6px;}
+  .rate-btn{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font:inherit;font-size:14px;color:var(--ink);}
+  .rate-btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
+  .rate-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .selfnote{margin-top:10px;font-size:12.5px;color:var(--muted);line-height:1.5;}
+  .results h2{display:flex;align-items:center;gap:9px;}
+  .results .score{font-size:15.5px;margin:0 0 4px;}
+  .results .sub{font-size:13px;color:var(--muted);margin:2px 0 0;}
+  .ea-sub{color:var(--muted);font-size:14px;margin:-6px 0 14px;}
+  .book{flex:0 0 auto;opacity:.7;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+  @media(max-width:560px){ .wrap{padding:18px 14px 44px;} .tabrow{padding-left:0;} .head h1{font-size:20px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg class="back-ic" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 5l-5 5 5 5" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1 id="title"></h1>
+  </div>
+  <div class="tabrow" id="tabrow"></div>
+  <section class="panel scenario" id="scenario"></section>
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+  <section class="panel results hidden" id="resultsPanel"></section>
+  <section class="panel hidden" id="eaPanel"></section>
+</div>
+<script>
+// ===========================================================================
+// Transfer Challenge 3 (Module 4) — "When Common Factors Drive Change"
+// Scenario, three questions, MC options/correct answers, the open-ended prompt,
+// and Expert Analysis are VERBATIM from instructor screenshots.
+// Answers are not stored anywhere.
+//
+// Q2 is OPEN-ENDED. The live platform grades it with an AI model; a static
+// Canvas file cannot. So Q2 is implemented as SELF-ASSESSMENT: the student
+// writes a response, submits to reveal a model answer + rubric, then self-scores
+// against the rubric. This is honest about who is evaluating (the student), and
+// preserves the write-first-then-compare structure. The results panel reports MC
+// as a real tally and the open-ended item as self-assessed (kept separate).
+//
+// Verified against the readings: common vs. specific factors / Dodo Bird
+// (Module 1); alliance accounts for outcome variance (Module 3); BA as a
+// specific technique providing durable relapse-prevention skills (Module 4).
+// ===========================================================================
+
+const CHALLENGE = {
+  title: "When Common Factors Drive Change",
+  level: "Level 4: Analyze",
+  tabs: ["Evidence-Based Practice", "Mechanisms of Change"],
+
+  scenario: {
+    heading: "Clinical Scenario",
+    paras: [
+      "James, a 50-year-old construction foreman, was referred for depression (PHQ-9 = 18) following his divorce. He was assigned to a trainee therapist, Dr. Chen, who planned to deliver Behavioral Activation (BA) with careful attention to the protocol: activity monitoring, values assessment, scheduling of mastery and pleasure activities, and contingency management for avoidance. Over 10 sessions, James's PHQ-9 dropped to 6 — a clinically significant and reliable improvement.",
+      "However, Dr. Chen's supervisor reviewed session recordings and observed that the technical delivery of BA was inconsistent. Activity scheduling was introduced in session three but irregularly followed up, values assessment was superficial, and the functional analysis of avoidance was never completed. What was consistently present across all sessions was a strong therapeutic relationship: Dr. Chen demonstrated genuine warmth, validated James's experience of loss, provided a safe space for emotional expression, and conveyed consistent positive regard. James frequently described therapy as \"the one place where someone actually listens to me.\"",
+      "Process data show that the Working Alliance Inventory (WAI-SR) was 78 by session three and remained above 75 throughout treatment. Activity monitoring logs were completed sporadically, and James's daily activity levels did not substantially change. Yet his depression remitted. Dr. Chen's supervisor must now evaluate what drove the clinical improvement and what implications this has for training."
+    ]
+  },
+
+  doThisMC: "Pick the single best option, choosing based on the reasoning it reflects — not just a familiar phrase. After you answer, read whether you were correct and why before advancing.",
+  doThisOpen: "Write a clear response that answers the question, names the evidence from the scenario that supports your answer, and explains your reasoning. When you submit, you'll compare your response against a model answer and rubric, then rate your own work.",
+
+  questions: [
+    {
+      id: "q1",
+      type: "mc",
+      prompt: "Based on the available process data, which mechanism most likely accounts for James's improvement?",
+      options: [
+        { id: "a", text: "Behavioral activation through increased engagement in valued activities, consistent with the BA model" },
+        { id: "b", text: "Common therapeutic factors—particularly the alliance, emotional validation, and corrective relational experience—rather than the specific BA techniques" },
+        { id: "c", text: "Spontaneous remission unrelated to any treatment mechanism" },
+        { id: "d", text: "Placebo effect from simply attending regular appointments" }
+      ],
+      correct: "b",
+      explanation: "The process data point away from the specific BA mechanism: activity monitoring was sporadic and James's activity levels did not substantially change, so behavioral activation was not meaningfully delivered. Meanwhile the alliance was strong and stable (WAI-SR above 75 throughout), and James experienced validation and a corrective sense of being heard. The best-supported reading is that common factors, not the specific BA techniques, drove the improvement."
+    },
+    {
+      id: "q2",
+      type: "open",
+      prompt: "As Dr. Chen's supervisor, how would you frame feedback about this case? Analyze the tension between the positive outcome and the protocol adherence issues. Address: (a) what this case reveals about the relative contribution of specific versus common factors, (b) the risks of concluding that protocol fidelity does not matter based on a single case, (c) how you would help Dr. Chen develop both technical skills and relational skills, and (d) what additional data would help clarify the mechanisms of change.",
+      rubric: [
+        { dim: "Specific vs. common factors", desc: "Analyzes what the case shows about the relative contribution of specific techniques versus common factors, using the process data (sporadic monitoring, unchanged activity, high stable alliance) as evidence." },
+        { dim: "Risks of over-generalizing", desc: "Recognizes that one case cannot support the conclusion that protocol fidelity is unimportant; notes that the specific-common balance varies by presentation, severity, and maintaining mechanism." },
+        { dim: "Developing both skill sets", desc: "Proposes a concrete supervision plan that affirms Dr. Chen's relational strengths while building technical BA competence, rather than treating the two as opposed." },
+        { dim: "Additional data / mechanisms", desc: "Suggests further process measures that would help clarify what drove change (e.g., session-by-session mechanism tracking, activity-level data, alliance measures alongside symptom change)." }
+      ],
+      modelAnswer: "A strong response holds several truths at once. First, it credits the improvement as real and names common factors — the alliance, emotional validation, and the corrective experience of being genuinely heard after a relational loss — as the most likely mechanism, citing the process data (WAI-SR stable above 75; activity monitoring sporadic; activity levels unchanged) as evidence that the specific BA techniques were not meaningfully delivered. Second, it resists over-generalizing: a single case cannot establish that protocol fidelity is unimportant, because the balance of specific and common factors varies by presentation, severity, and maintaining mechanism — a depression maintained mainly by behavioral withdrawal and anhedonia might have needed the BA components James did not receive. Third, it frames supervision developmentally: celebrate Dr. Chen's genuine relational strengths while helping her build technical fidelity, so that mastering the specific techniques expands the range of patients she can serve rather than replacing what she already does well. Fourth, it asks for better data: session-by-session mechanism tracking, activity-level data, and alliance measures alongside symptom change would help disentangle what actually drove James's remission and guide future cases.",
+      // A self-rating scale for the metacognitive check (student assigns).
+      selfScaleMax: 5
+    },
+    {
+      id: "q3",
+      type: "mc",
+      prompt: "If James returns in six months with a depressive relapse, what would this suggest about the durability of change driven primarily by common factors versus specific mechanisms?",
+      options: [
+        { id: "a", text: "It would confirm that BA is an ineffective treatment for depression" },
+        { id: "b", text: "It would suggest that common-factor-driven improvement, while real, may lack the durable skills-based change that specific techniques like BA provide for relapse prevention" },
+        { id: "c", text: "It would prove that James was never truly improved in the first place" },
+        { id: "d", text: "It would have no implications for understanding mechanisms of change" }
+      ],
+      correct: "b",
+      explanation: "Specific techniques in BA — activity scheduling, values-based activation, functional analysis of avoidance — give patients portable skills that serve as relapse-prevention tools. Alliance-driven improvement, though genuine, may not equip the patient with these protective strategies, so a relapse would suggest that the change, while real, lacked the durable skills-based component that specific techniques provide."
+    }
+  ],
+
+  expertAnalysis: {
+    heading: "Expert Analysis",
+    subhead: "Model answer and clinical reasoning walkthrough",
+    paras: [
+      "This case presents a nuanced challenge for evidence-based practice: what happens when a patient improves substantially but the improvement appears attributable to common therapeutic factors rather than the specific mechanisms targeted by the selected treatment protocol? The answer requires holding multiple truths simultaneously.",
+      "First, James's improvement is real and clinically meaningful. Common factors—particularly the therapeutic alliance, emotional validation, and the corrective experience of being genuinely heard after a relational loss—are well-established mechanisms of change in their own right. Research consistently shows that alliance accounts for a meaningful proportion of therapy outcome variance across treatment modalities.",
+      "Second, this single case cannot support the generalized conclusion that protocol fidelity is unimportant. The specific-common factor interaction varies by presentation, severity, and maintaining mechanism. James's depression was precipitated by interpersonal loss and maintained partly by social isolation and invalidation—a presentation for which relational factors may be particularly potent. A patient whose depression is maintained by behavioral withdrawal and anhedonia might require the specific behavioral scheduling components that James did not receive.",
+      "Third, the durability question is crucial. Specific techniques in BA (activity scheduling, values-based activation, functional analysis of avoidance) provide patients with portable skills that serve as relapse prevention tools. Alliance-driven improvement, while genuine, may not equip the patient with these protective strategies. Supervision should celebrate Dr. Chen's relational strengths while emphasizing that mastering specific techniques expands the range of patients she can effectively serve."
+    ]
+  }
+};
+
+var idx = 0;
+var mc = {};        // qid -> chosen option id (mc only)
+var mcCorrect = 0, mcTotal = 0;
+var openState = {}; // qid -> { text, revealed, checks:Set, selfScore }
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var CHECK='<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS='<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+var TICK='<svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5 8.5-9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var BOOK='<svg class="book" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+
+function renderStatic(){
+  document.getElementById("title").textContent = CHALLENGE.title;
+  var tr=document.getElementById("tabrow");
+  tr.appendChild(el("span","lvl",esc(CHALLENGE.level)));
+  CHALLENGE.tabs.forEach(function(t){ tr.appendChild(el("span","t",esc(t))); });
+  var sc=document.getElementById("scenario");
+  sc.appendChild(el("h2",null,esc(CHALLENGE.scenario.heading)));
+  CHALLENGE.scenario.paras.forEach(function(p){ sc.appendChild(el("p",null,esc(p))); });
+  mcTotal = CHALLENGE.questions.filter(function(q){return q.type==="mc";}).length;
+}
+
+function nextBtn(last){
+  var b=el("button","btn");
+  if(last){ b.innerHTML='View Expert Analysis '+BOOK.replace('class="book" ',''); b.addEventListener("click",finish); }
+  else { b.innerHTML='Next Question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+         b.addEventListener("click",function(){ idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); }); }
+  return b;
+}
+
+function renderQuestion(){
+  var q=CHALLENGE.questions[idx];
+  var panel=document.getElementById("qpanel"); panel.innerHTML="";
+  var last = idx===CHALLENGE.questions.length-1;
+  var head=el("div","qhead");
+  head.appendChild(el("h2",null,"Question "+(idx+1)+" of "+CHALLENGE.questions.length));
+  head.appendChild(el("span","qtype", q.type==="open"?"Open-Ended":"Multiple Choice"));
+  panel.appendChild(head);
+  panel.appendChild(el("p","qprompt",esc(q.prompt)));
+
+  if(q.type==="mc"){
+    panel.appendChild(el("div","do","<b>Do this:</b> "+esc(CHALLENGE.doThisMC)));
+    var chosen=mc[q.id]!==undefined?mc[q.id]:null;
+    var isAns=chosen!==null;
+    var opts=el("div","options");
+    q.options.forEach(function(o){
+      var cls="opt";
+      if(isAns){ if(o.id===q.correct)cls+=" correct"; else if(o.id===chosen)cls+=" wrong"; else cls+=" dim"; }
+      var btn=el("button",cls); btn.type="button"; if(isAns)btn.disabled=true;
+      var mark=""; if(isAns&&o.id===q.correct)mark=CHECK; else if(isAns&&o.id===chosen)mark=CROSS;
+      btn.innerHTML='<span class="k">'+o.id.toUpperCase()+'.</span><span class="txt">'+esc(o.text)+'</span><span class="mark">'+mark+'</span>';
+      if(!isAns) btn.addEventListener("click",function(){ chooseMC(q,o.id); });
+      opts.appendChild(btn);
+    });
+    panel.appendChild(opts);
+    if(isAns){
+      var right=chosen===q.correct;
+      if(right) panel.appendChild(el("p","verdict ok","Correct!"));
+      else { var ct=""; q.options.forEach(function(o){ if(o.id===q.correct)ct=o.text; });
+             panel.appendChild(el("p","verdict no","Incorrect. The correct answer is: "+esc(ct))); }
+      panel.appendChild(el("p","explain",esc(q.explanation)));
+      var foot=el("div","qfoot"); foot.appendChild(nextBtn(last)); panel.appendChild(foot);
+    }
+  } else {
+    // open-ended self-assessment
+    panel.appendChild(el("div","do","<b>Do this:</b> "+esc(CHALLENGE.doThisOpen)));
+    var st=openState[q.id]||(openState[q.id]={text:"",revealed:false,checks:{},selfScore:null});
+    var ta=el("textarea","open-ta"+(st.revealed?" locked":""));
+    ta.placeholder="Write your response here. Be thorough and reference specific clinical concepts...";
+    ta.value=st.text; if(st.revealed) ta.readOnly=true;
+    ta.addEventListener("input",function(){ st.text=ta.value; sub.disabled=ta.value.trim().length===0; });
+    panel.appendChild(ta);
+    if(!st.revealed){
+      var foot0=el("div","qfoot");
+      var sub=el("button","btn","Reveal model answer &amp; rubric");
+      sub.disabled=st.text.trim().length===0;
+      sub.addEventListener("click",function(){ st.revealed=true; renderQuestion(); });
+      foot0.appendChild(sub); panel.appendChild(foot0);
+    } else {
+      // model answer
+      var m=el("div","model"); m.innerHTML='<div class="lab">Model Answer</div>'+esc(q.modelAnswer);
+      panel.appendChild(m);
+      // rubric with self-check
+      var rb=el("div","rubric");
+      rb.appendChild(el("div","lab","Rubric — check each element your response covered"));
+      q.rubric.forEach(function(r,i){
+        var row=el("div","rdim");
+        var box=el("div","rchk"+(st.checks[i]?" on":"")); box.setAttribute("role","checkbox");
+        box.setAttribute("aria-checked",st.checks[i]?"true":"false"); box.tabIndex=0;
+        box.innerHTML=st.checks[i]?TICK:"";
+        function toggle(){ st.checks[i]=!st.checks[i]; box.classList.toggle("on",st.checks[i]); box.setAttribute("aria-checked",st.checks[i]?"true":"false"); box.innerHTML=st.checks[i]?TICK:""; }
+        box.addEventListener("click",toggle);
+        box.addEventListener("keydown",function(e){ if(e.key===" "||e.key==="Enter"){e.preventDefault();toggle();} });
+        row.appendChild(box);
+        row.appendChild(el("div",null,"<b>"+esc(r.dim)+".</b> "+esc(r.desc)));
+        rb.appendChild(row);
+      });
+      panel.appendChild(rb);
+      // self rating
+      var sr=el("div","selfrate");
+      sr.appendChild(el("span","lab","Rate your own response:"));
+      var rbtns=el("div","rate-btns");
+      for(var s=1;s<=q.selfScaleMax;s++){ (function(v){
+        var b=el("button","rate-btn",String(v)); b.setAttribute("aria-pressed",String(st.selfScore===v));
+        b.addEventListener("click",function(){ st.selfScore=v;
+          Array.prototype.forEach.call(rbtns.children,function(x){ x.setAttribute("aria-pressed",String(parseInt(x.textContent,10)===v)); }); });
+        rbtns.appendChild(b);
+      })(s); }
+      sr.appendChild(rbtns);
+      sr.appendChild(el("span","selfnote","(out of "+q.selfScaleMax+")"));
+      panel.appendChild(sr);
+      panel.appendChild(el("p","selfnote","This response is scored by you, not by the tool. Comparing your answer to the model and rubric is the exercise — be honest about what you covered and what you would add."));
+      var foot1=el("div","qfoot"); foot1.appendChild(nextBtn(last)); panel.appendChild(foot1);
+    }
+  }
+}
+
+function chooseMC(q,optId){
+  if(mc[q.id]!==undefined) return;
+  mc[q.id]=optId; if(optId===q.correct) mcCorrect++;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("qpanel").classList.add("hidden");
+  var rp=document.getElementById("resultsPanel"); rp.classList.remove("hidden"); rp.innerHTML="";
+  rp.appendChild(el("h2",null,BOOK+"<span>Your Results</span>"));
+  rp.appendChild(el("p","score","Multiple Choice: "+mcCorrect+" / "+mcTotal+" correct"));
+  // open-ended self-assessment summary (kept separate; not merged into a machine score)
+  var openQ=CHALLENGE.questions.filter(function(q){return q.type==="open";});
+  openQ.forEach(function(q){
+    var st=openState[q.id];
+    var scoreTxt = (st&&st.selfScore!=null) ? (st.selfScore+" / "+q.selfScaleMax+" (self-assessed)") : "not self-rated";
+    var covered = st ? Object.keys(st.checks).filter(function(k){return st.checks[k];}).length : 0;
+    rp.appendChild(el("p","score","Open-Ended (self-assessed): "+scoreTxt));
+    rp.appendChild(el("p","sub","You marked "+covered+" of "+q.rubric.length+" rubric elements as covered. This item is scored by you, not the tool."));
+  });
+  var ea=document.getElementById("eaPanel"); ea.classList.remove("hidden"); ea.innerHTML="";
+  ea.appendChild(el("h2",null,BOOK+"<span>"+esc(CHALLENGE.expertAnalysis.heading)+"</span>"));
+  ea.appendChild(el("p","ea-sub",esc(CHALLENGE.expertAnalysis.subhead)));
+  CHALLENGE.expertAnalysis.paras.forEach(function(p){ ea.appendChild(el("p",null,esc(p))); });
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderStatic();
+renderQuestion();
+</script>
+</body>
+</html>
