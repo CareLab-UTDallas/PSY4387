@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Challenge — The Biology Isn't the Barrier</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --line2:#eceae4;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --level-bg:#fbe7e0; --level-ink:#b0472a;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --sel-line:#c9d3c2;
+    --focus:#2f6f4f; --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px;}
+
+  .head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px;}
+  .back-ic{flex:0 0 auto;margin-top:4px;opacity:.6;}
+  .head h1{margin:0;font-size:24px;letter-spacing:-.01em;font-weight:700;}
+  .tabrow{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 22px;padding-left:38px;font-size:14px;}
+  .lvl{background:var(--level-bg);color:var(--level-ink);font-weight:700;border-radius:8px;padding:4px 12px;}
+  .tabrow .t{color:var(--muted);padding:4px 0;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;margin-bottom:20px;}
+  .panel h2{margin:0 0 14px;font-size:17px;font-weight:700;}
+  .panel p{margin:0 0 14px;font-size:15.5px;line-height:1.6;}
+  .panel p:last-child{margin-bottom:0;}
+  .scenario p.quote{color:#3a3833;}
+
+  .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
+  .qhead h2{margin:0;font-size:17px;font-weight:700;}
+  .qtype{flex:0 0 auto;font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:7px;padding:5px 10px;}
+  .qprompt{font-size:15.5px;margin:0 0 14px;line-height:1.55;}
+
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin-bottom:18px;}
+  .do b{color:var(--ink);font-weight:700;}
+
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font:inherit;font-size:15px;line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:14px;}
+  .opt .txt{flex:1 1 auto;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;}
+  .opt:disabled{cursor:default;}
+  /* answered states */
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.62;}
+
+  .verdict{margin:16px 0 0;font-size:15px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14.5px;color:#44413b;line-height:1.6;}
+
+  .qfoot{display:flex;justify-content:flex-end;margin-top:20px;}
+  .btn{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;transition:.12s;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .results h2{display:flex;align-items:center;gap:9px;}
+  .results .score{font-size:15.5px;margin:0;}
+  .ea-sub{color:var(--muted);font-size:14px;margin:-6px 0 14px;}
+  .book{flex:0 0 auto;opacity:.7;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+  @media(max-width:560px){ .wrap{padding:18px 14px 44px;} .tabrow{padding-left:0;} .head h1{font-size:20px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg class="back-ic" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 5l-5 5 5 5" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1 id="title"></h1>
+  </div>
+  <div class="tabrow" id="tabrow"></div>
+
+  <!-- Scenario (persistent) -->
+  <section class="panel scenario" id="scenario"></section>
+
+  <!-- Question area -->
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <!-- Results + Expert Analysis (hidden until finished) -->
+  <section class="panel results hidden" id="resultsPanel"></section>
+  <section class="panel hidden" id="eaPanel"></section>
+</div>
+
+<script>
+// ===========================================================================
+// Transfer Challenge 6 (Module 6) — "The Biology Isn't the Barrier"
+// Scenario, three multiple-choice questions, options, correct answers, and
+// Expert Analysis are VERBATIM from the instructor screenshots
+// (Screenshot_2026-08-31_at_3_34_55 through 3_36_04). Answers are not stored
+// anywhere; the multiple-choice score is self-contained on this page.
+//
+// Correct answers per screenshots: Q1 = B (shown selected + "Correct!"),
+// Q2 = C, Q3 = B. Score screen shows "Multiple Choice: 3 / 3 correct".
+//
+// Verified against the Module 6 reading (ug-module-readings.md):
+//   - anhedonia as a "wanting" problem in the dopaminergic reward system;
+//     behavioral activation recalibrates the reward system through action.
+//   - the "biological vs psychological" split is a false choice; therapy and
+//     medication change overlapping circuits through "different doors."
+//   - the platform's Expert Analysis and options additionally name nucleus
+//     accumbens / ventral tegmental area / ventral striatum and BDNF; these are
+//     accurate and reproduced verbatim, though they reach slightly beyond the
+//     named Module 6 reading (which covers dopamine/reward, anhedonia, and
+//     neuroplasticity without those specific structures/BDNF by name).
+// ===========================================================================
+
+const CHALLENGE = {
+  title: "The Biology Isn't the Barrier",
+  level: "Level 3: Apply",
+  tabs: ["Mechanisms of Change", "Clinical Reasoning", "Intervention Selection"],
+
+  scenario: {
+    heading: "Clinical Scenario",
+    paras: [
+      "Dr. Patel is conducting an assessment with Michael, a 45-year-old accountant, who presents with a 6-month depressive episode: persistent low mood, profound anhedonia (he reports that nothing brings pleasure anymore), psychomotor slowing, hypersomnia, and difficulty concentrating at work. Michael has read extensively about depression and arrives with a clear position:",
+      "'I know my depression is biological — it's a chemical imbalance. My serotonin is low. That's just brain chemistry. Talking about feelings won't fix a brain chemistry problem. I need medication, not therapy.'",
+      "Michael's previous therapist had recommended behavioral activation, which Michael declined. His primary care physician has offered to prescribe an SSRI, which Michael is considering.",
+      "Dr. Patel notes that Michael's anhedonia is one of the most disabling features — he has stopped exercising, withdrawn from friends, and no longer engages in activities that previously brought him satisfaction. His activity level has declined sharply over the past six months."
+    ]
+  },
+
+  doThis: "Pick the single best option, choosing based on the reasoning it reflects — not just a familiar phrase. After you answer, read whether you were correct and why before advancing.",
+
+  questions: [
+    {
+      id: "q1",
+      prompt: "Michael's anhedonia — the loss of pleasure and motivation — is most directly linked to dysfunction in which biological system?",
+      options: [
+        { id: "a", text: "The HPA axis — elevated cortisol suppresses mood across all affect systems equally" },
+        { id: "b", text: "The dopaminergic reward circuitry, particularly the nucleus accumbens and ventral striatum, which are hypoactive in anhedonic depression" },
+        { id: "c", text: "The GABAergic inhibitory system, which reduces arousal and positive affect simultaneously" },
+        { id: "d", text: "The noradrenergic system, which regulates arousal and concentration but not reward processing specifically" }
+      ],
+      correct: "b",
+      explanation: "Anhedonia — the loss of pleasure and, especially, of the drive to pursue rewarding activities — maps most directly onto hypoactivity in the dopaminergic reward circuitry, not onto serotonin per se. This distinction matters clinically: the reward system's low 'wanting' signal is what leaves Michael unable to make himself start activities he expects to enjoy, and it points toward an intervention that re-engages that system through action."
+    },
+    {
+      id: "q2",
+      prompt: "Dr. Patel wants to explain to Michael why behavioral activation — specifically reintroducing valued activities — can address the biological pathway he described. Which explanation is MOST scientifically accurate?",
+      options: [
+        { id: "a", text: "Behavioral activation distracts Michael from depressive thoughts, reducing the cognitive load on serotonin-related systems" },
+        { id: "b", text: "Behavioral activation directly corrects low serotonin levels by stimulating 5-HT receptor sites during pleasurable activity" },
+        { id: "c", text: "Behavioral engagement with valued activities activates the dopaminergic reward circuitry that is hypoactive in depression, and sustained activity promotes BDNF release supporting neuroplasticity — both of which produce biological change through behavior rather than pharmacology" },
+        { id: "d", text: "Behavioral activation works exclusively through the HPA axis by reducing cortisol, which secondarily normalizes serotonin" }
+      ],
+      correct: "c",
+      explanation: "Behavioral activation targets the same reward circuitry that is underactive in depression, but it enters through behavior: reintroducing rewarding activities gradually restimulates the dopaminergic system, and sustained activity (including exercise) promotes BDNF, which supports neuroplasticity. This is a concrete instance of the module's core point — a psychological intervention is a biological intervention, producing measurable change through behavior rather than through a pill."
+    },
+    {
+      id: "q3",
+      prompt: "Michael believes SSRIs and behavioral activation work through entirely separate systems and that only medication addresses the biology. Which statement BEST captures the relationship between these two approaches at a biological level?",
+      options: [
+        { id: "a", text: "Michael is correct — SSRIs correct the serotonergic imbalance while behavioral activation produces change exclusively through learning and cognition, with no overlapping biological mechanisms" },
+        { id: "b", text: "Both produce overlapping changes in neural circuitry through different routes — SSRIs modulate serotonergic transmission and downstream neuroplasticity (BDNF), while behavioral activation engages dopaminergic reward pathways and also promotes BDNF-mediated neuroplasticity; combining them targets multiple pathways simultaneously" },
+        { id: "c", text: "Behavioral activation is superior to SSRIs for biological depression because it directly stimulates reward circuitry, whereas SSRIs only correct the chemical imbalance without engaging behavior change" },
+        { id: "d", text: "The two treatments are biologically identical — they activate the same pathways through different delivery mechanisms and therefore offer no additive benefit when combined" }
+      ],
+      correct: "b",
+      explanation: "The two approaches reach overlapping neural destinations by different routes: the SSRI works from the bottom up on serotonergic transmission and downstream plasticity, while behavioral activation works through behavior on the reward system and also supports BDNF-mediated neuroplasticity. Because they are neither identical nor entirely separate, combining them can target multiple pathways at once — which dissolves Michael's 'biological versus psychological' framing rather than picking a side."
+    }
+  ],
+
+  expertAnalysis: {
+    heading: "Expert Analysis",
+    subhead: "Model answer and clinical reasoning walkthrough",
+    paras: [
+      "Michael's framing — 'it's biological, so I need medication, not therapy' — reflects a common but scientifically outdated understanding of the biology-psychology distinction. All effective interventions for depression, whether pharmacological or behavioral, ultimately act through the brain. The relevant question is not whether an intervention is 'biological' but which biological pathways it engages.",
+      "Michael's anhedonia is the key clinical clue. Anhedonia reflects hypoactivity in the dopaminergic reward system — specifically the mesolimbic pathway involving the nucleus accumbens and ventral tegmental area — rather than serotonin dysregulation per se. SSRIs primarily modulate serotonergic transmission and are most effective for the mood and anxiety dimensions of depression, but their effect on anhedonia specifically is more modest. This matters because Michael's most disabling symptom (anhedonia) may be the one least well addressed by the SSRI he is prioritizing.",
+      "Behavioral activation targets the dopaminergic reward system directly through behavior: reintroducing activities that historically were rewarding gradually restimulates the reward circuitry that has become hypoactive through withdrawal and avoidance. Additionally, physical exercise — a BA-consistent activity — promotes BDNF (brain-derived neurotrophic factor) release, which supports hippocampal neuroplasticity. This is the same neuroplastic mechanism through which SSRIs produce antidepressant effects (SSRI effects on mood lag by weeks because they depend on this downstream neuroplasticity, not immediate receptor occupancy).",
+      "The pedagogical point for Michael: psychological interventions are biological interventions that act through behavior-brain interaction. 'Talking about feelings won't fix brain chemistry' is correct about supportive conversation in isolation — but behavioral activation is not primarily about talking about feelings. It is a structured behavioral protocol that produces measurable biological change through activity engagement. Combining an SSRI with behavioral activation targets serotonergic, dopaminergic, and neuroplastic pathways simultaneously — a rationale for combined treatment that is directly grounded in the biology Michael values."
+    ]
+  }
+};
+
+var idx = 0;            // current question index
+var answered = [];      // answered[i] = chosen option id or null
+var correctCount = 0;
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+var BOOK = '<svg class="book" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+
+function renderStatic(){
+  document.getElementById("title").textContent = CHALLENGE.title;
+  var tr = document.getElementById("tabrow");
+  tr.appendChild(el("span","lvl", esc(CHALLENGE.level)));
+  CHALLENGE.tabs.forEach(function(t){ tr.appendChild(el("span","t", esc(t))); });
+
+  var sc = document.getElementById("scenario");
+  sc.appendChild(el("h2",null, esc(CHALLENGE.scenario.heading)));
+  CHALLENGE.scenario.paras.forEach(function(p,i){
+    sc.appendChild(el("p", i===1?"quote":null, esc(p)));
+  });
+  answered = CHALLENGE.questions.map(function(){ return null; });
+}
+
+function renderQuestion(){
+  var q = CHALLENGE.questions[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var head = el("div","qhead");
+  head.appendChild(el("h2",null,"Question " + (idx+1) + " of " + CHALLENGE.questions.length));
+  head.appendChild(el("span","qtype","Multiple Choice"));
+  panel.appendChild(head);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> " + esc(CHALLENGE.doThis)));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls = "opt";
+    if(isAnswered){
+      if(o.id === q.correct) cls += " correct";
+      else if(o.id === chosen) cls += " wrong";
+      else cls += " dim";
+    }
+    var btn = el("button", cls);
+    btn.type = "button";
+    if(isAnswered) btn.disabled = true;
+    var mark = "";
+    if(isAnswered && o.id === q.correct) mark = CHECK;
+    else if(isAnswered && o.id === chosen) mark = CROSS;
+    btn.innerHTML = '<span class="k">'+o.id.toUpperCase()+'.</span>' +
+                    '<span class="txt">'+esc(o.text)+'</span>' +
+                    '<span class="mark">'+mark+'</span>';
+    if(!isAnswered){
+      btn.addEventListener("click", function(){ choose(o.id); });
+    }
+    opts.appendChild(btn);
+  });
+  panel.appendChild(opts);
+
+  if(isAnswered){
+    var right = chosen === q.correct;
+    if(right){
+      panel.appendChild(el("p","verdict ok","Correct!"));
+    } else {
+      var correctText = "";
+      q.options.forEach(function(o){ if(o.id===q.correct) correctText = o.text; });
+      panel.appendChild(el("p","verdict no","Incorrect. The correct answer is: " + esc(correctText)));
+    }
+    panel.appendChild(el("p","explain", esc(q.explanation)));
+
+    var foot = el("div","qfoot");
+    var last = idx === CHALLENGE.questions.length - 1;
+    var b = el("button","btn");
+    if(last){
+      b.innerHTML = 'View Expert Analysis ' + BOOK.replace('class="book" ','');
+      b.addEventListener("click", finish);
+    } else {
+      b.innerHTML = 'Next Question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      b.addEventListener("click", function(){ idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+    }
+    foot.appendChild(b);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(optId){
+  if(answered[idx] !== null) return;
+  answered[idx] = optId;
+  if(optId === CHALLENGE.questions[idx].correct) correctCount++;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("qpanel").classList.add("hidden");
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML = "";
+  rp.appendChild(el("h2",null, BOOK + "<span>Your Results</span>"));
+  rp.appendChild(el("p","score","Multiple Choice: " + correctCount + " / " + CHALLENGE.questions.length + " correct"));
+
+  var ea = document.getElementById("eaPanel");
+  ea.classList.remove("hidden");
+  ea.innerHTML = "";
+  ea.appendChild(el("h2",null, BOOK + "<span>" + esc(CHALLENGE.expertAnalysis.heading) + "</span>"));
+  ea.appendChild(el("p","ea-sub", esc(CHALLENGE.expertAnalysis.subhead)));
+  CHALLENGE.expertAnalysis.paras.forEach(function(p){ ea.appendChild(el("p",null, esc(p))); });
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderStatic();
+renderQuestion();
+</script>
+</body>
+</html>
