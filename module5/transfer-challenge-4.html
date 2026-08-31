@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Challenge — The Loop That Keeps Going</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --line2:#eceae4;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --level-bg:#fbe7e0; --level-ink:#b0472a;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --sel-line:#c9d3c2;
+    --focus:#2f6f4f; --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px;}
+
+  .head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px;}
+  .back-ic{flex:0 0 auto;margin-top:4px;opacity:.6;}
+  .head h1{margin:0;font-size:24px;letter-spacing:-.01em;font-weight:700;}
+  .tabrow{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 22px;padding-left:38px;font-size:14px;}
+  .lvl{background:var(--level-bg);color:var(--level-ink);font-weight:700;border-radius:8px;padding:4px 12px;}
+  .tabrow .t{color:var(--muted);padding:4px 0;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;margin-bottom:20px;}
+  .panel h2{margin:0 0 14px;font-size:17px;font-weight:700;}
+  .panel p{margin:0 0 14px;font-size:15.5px;line-height:1.6;}
+  .panel p:last-child{margin-bottom:0;}
+  .scenario p.quote{color:#3a3833;}
+
+  .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
+  .qhead h2{margin:0;font-size:17px;font-weight:700;}
+  .qtype{flex:0 0 auto;font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:7px;padding:5px 10px;}
+  .qprompt{font-size:15.5px;margin:0 0 14px;line-height:1.55;}
+
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin-bottom:18px;}
+  .do b{color:var(--ink);font-weight:700;}
+
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font:inherit;font-size:15px;line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:14px;}
+  .opt .txt{flex:1 1 auto;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;}
+  .opt:disabled{cursor:default;}
+  /* answered states */
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.62;}
+
+  .verdict{margin:16px 0 0;font-size:15px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14.5px;color:#44413b;line-height:1.6;}
+
+  .qfoot{display:flex;justify-content:flex-end;margin-top:20px;}
+  .btn{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;transition:.12s;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .results h2{display:flex;align-items:center;gap:9px;}
+  .results .score{font-size:15.5px;margin:0;}
+  .ea-sub{color:var(--muted);font-size:14px;margin:-6px 0 14px;}
+  .book{flex:0 0 auto;opacity:.7;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+  @media(max-width:560px){ .wrap{padding:18px 14px 44px;} .tabrow{padding-left:0;} .head h1{font-size:20px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg class="back-ic" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 5l-5 5 5 5" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1 id="title"></h1>
+  </div>
+  <div class="tabrow" id="tabrow"></div>
+
+  <!-- Scenario (persistent) -->
+  <section class="panel scenario" id="scenario"></section>
+
+  <!-- Question area -->
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <!-- Results + Expert Analysis (hidden until finished) -->
+  <section class="panel results hidden" id="resultsPanel"></section>
+  <section class="panel hidden" id="eaPanel"></section>
+</div>
+
+<script>
+// ===========================================================================
+// Transfer Challenge 4 (Module 5) — "The Loop That Keeps Going"
+// Scenario, three multiple-choice questions, options, correct answers, and
+// Expert Analysis are VERBATIM from instructor screenshots. Answers are not
+// stored anywhere. All three questions are standard multiple choice.
+//
+// Verified against the Module 5 reading (ug-module-readings.md):
+//   - interpersonal feedback loop; "who started it?" is the wrong question;
+//     "how does each person's behavior make the other's response more likely?"
+//   - circular causality; you can enter the circle at any point to change it
+//   - negative reinforcement as the engine of the loop; relief reinforces the
+//     avoider (both parties reinforced simultaneously)
+// ===========================================================================
+
+const CHALLENGE = {
+  title: "The Loop That Keeps Going",
+  level: "Level 4: Analyze",
+  tabs: ["Mechanisms of Maintenance", "Clinical Reasoning", "Treatment Planning"],
+
+  scenario: {
+    heading: "Clinical Scenario",
+    paras: [
+      "The Reyes family seeks therapy for their 14-year-old daughter, Lucia, who has refused to attend school for three months. During the intake session, the therapist observes the following sequence:",
+      "When Lucia expresses distress about school ('I can't face those kids'), her mother Elena immediately becomes visibly anxious and begins rapid problem-solving: 'What if we talked to the principal? What if I drove you to school and waited? What if we switched your lunch period?' Lucia, sensing Elena's escalating anxiety, withdraws and says 'Never mind — it's fine.' Elena, relieved, stops pressing. Lucia stays home the next day.",
+      "Interviewed individually, Lucia says: 'When I say I'm upset, mom starts panicking, and then I feel like I have to take care of her feelings. So I just stop talking.' Elena, interviewed separately, says: 'When she says it's fine, I feel so relieved. I don't want to make things worse by pushing her.'",
+      "This pattern has repeated daily for three months. Despite multiple individual attempts at problem-solving — new schedules, tutoring, changed classes — nothing has changed the attendance."
+    ]
+  },
+
+  doThis: "Pick the single best option, choosing based on the reasoning it reflects — not just a familiar phrase. After you answer, read whether you were correct and why before advancing.",
+
+  questions: [
+    {
+      id: "q1",
+      prompt: "Which interpersonal mechanism is MOST directly maintaining Lucia's school refusal in this system?",
+      options: [
+        { id: "a", text: "Lucia's negative self-referential cognitions about her social competence, which are never challenged because she avoids school" },
+        { id: "b", text: "A circular causality pattern in which Lucia's expressed distress triggers Elena's anxiety, Lucia withdraws to regulate Elena's affect, and the withdrawal is negatively reinforced for both parties simultaneously" },
+        { id: "c", text: "Elena's overprotection creating a secondary gain that makes school avoidance more rewarding than attendance" },
+        { id: "d", text: "Interpersonal complementarity — Elena's dominant, solution-focused style automatically elicits Lucia's passive, compliant response" }
+      ],
+      correct: "b",
+      explanation: "The maintaining mechanism is the circular loop, not any single person's trait. Lucia's distress triggers Elena's anxiety; Lucia withdraws ('never mind') to regulate Elena's affect; Elena is relieved and disengages. The withdrawal is negatively reinforced on both sides at once — Lucia escapes both school and the burden of managing Elena's feelings, and Elena's anxiety dissipates. That mutual, simultaneous reinforcement is what keeps the loop spinning."
+    },
+    {
+      id: "q2",
+      prompt: "When Lucia says 'never mind — it's fine' and Elena stops pressing, BOTH parties are simultaneously reinforced. What reinforcement process describes this pattern for Elena?",
+      options: [
+        { id: "a", text: "Positive reinforcement — Lucia's compliance is intrinsically rewarding to Elena" },
+        { id: "b", text: "Negative reinforcement — Elena's disengagement is reinforced by the removal of her own anxiety when Lucia appears settled" },
+        { id: "c", text: "Punishment — Lucia's withdrawal signals to Elena that her problem-solving approach has been incorrect" },
+        { id: "d", text: "Vicarious reinforcement — Elena learns from observing other parents that backing off reduces school refusal" }
+      ],
+      correct: "b",
+      explanation: "For Elena, the reinforcement is negative: her disengagement removes an unpleasant internal state — her own escalating anxiety — the moment Lucia appears settled. That relief makes her more likely to back off again next time. The reward is the ending of a bad feeling, not the arrival of a good one, which is the defining feature of negative reinforcement."
+    },
+    {
+      id: "q3",
+      prompt: "From a systems perspective, which intervention would MOST directly interrupt the circular causality maintaining the problem, and why?",
+      options: [
+        { id: "a", text: "Individual CBT for Lucia targeting her catastrophic thoughts about school peers, because the source of the avoidance is Lucia's cognition" },
+        { id: "b", text: "Parent training for Elena to set firmer behavioral limits on attendance, because parental consistency is the key variable maintaining the problem" },
+        { id: "c", text: "Coaching Elena to tolerate her own anxiety without seeking premature reassurance from Lucia, and simultaneously coaching Lucia to express distress without monitoring Elena's emotional state — breaking the feedback loop at both nodes simultaneously" },
+        { id: "d", text: "Medication evaluation for Lucia's anxiety to lower the threshold for attending school, reducing the triggering event that starts the cycle" }
+      ],
+      correct: "c",
+      explanation: "Because the causality is circular, an intervention at only one node lets the system pull that person back into the pattern. The intervention that interrupts the loop changes both nodes at once: Elena learns to tolerate her own anxiety without seeking relief through Lucia's reassurance, and Lucia learns that expressing distress won't destabilize Elena, so she no longer needs to withdraw. Collapsing the loop from both sides simultaneously is what breaks it."
+    }
+  ],
+
+  expertAnalysis: {
+    heading: "Expert Analysis",
+    subhead: "Model answer and clinical reasoning walkthrough",
+    paras: [
+      "This scenario demonstrates circular causality — one of the most important concepts in systemic and interpersonal theory — and illustrates why individual-level interventions so often fail to produce change in systemically maintained problems.",
+      "Linear causality asks: 'Why does Lucia avoid school?' and generates answers that point to Lucia (her anxiety, her cognitions, her coping). Circular causality asks: 'How does this pattern sustain itself across interactions?' and reveals that both participants are simultaneously cause and consequence of the other's behavior.",
+      "The maintaining loop runs as follows: Lucia expresses distress → Elena becomes anxious and problem-solves → Lucia, monitoring Elena's escalating distress, withdraws to regulate Elena's affect → Elena, relieved that Lucia appears calm, disengages → Lucia's withdrawal is negatively reinforced (she avoids both school and the aversive burden of managing Elena's emotions) → Elena's disengagement is negatively reinforced (her anxiety dissipates) → the next morning's school conversation begins under exactly the same conditions. Nothing changes because both participants' behaviors are being reinforced by the very loop they are caught in.",
+      "This analysis explains why interventions targeting only Lucia — individual therapy, new schedules, tutoring — have not worked. The system exerts homeostatic pressure that returns both participants to the established pattern regardless of individual efforts. The only intervention that can interrupt circular causality is one that simultaneously changes the behavior of both nodes: Elena must learn to tolerate her own anxiety without seeking relief from Lucia's reassurance, and Lucia must learn that expressing distress will not destabilize Elena, making it safe to remain in the distress rather than flee to school avoidance. These parallel changes collapse the feedback loop from both sides at once."
+    ]
+  }
+};
+
+var idx = 0;            // current question index
+var answered = [];      // answered[i] = chosen option id or null
+var correctCount = 0;
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+var BOOK = '<svg class="book" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+
+function renderStatic(){
+  document.getElementById("title").textContent = CHALLENGE.title;
+  var tr = document.getElementById("tabrow");
+  tr.appendChild(el("span","lvl", esc(CHALLENGE.level)));
+  CHALLENGE.tabs.forEach(function(t){ tr.appendChild(el("span","t", esc(t))); });
+
+  var sc = document.getElementById("scenario");
+  sc.appendChild(el("h2",null, esc(CHALLENGE.scenario.heading)));
+  CHALLENGE.scenario.paras.forEach(function(p,i){
+    sc.appendChild(el("p", i>0?"quote":null, esc(p)));
+  });
+  answered = CHALLENGE.questions.map(function(){ return null; });
+}
+
+function renderQuestion(){
+  var q = CHALLENGE.questions[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var head = el("div","qhead");
+  head.appendChild(el("h2",null,"Question " + (idx+1) + " of " + CHALLENGE.questions.length));
+  head.appendChild(el("span","qtype","Multiple Choice"));
+  panel.appendChild(head);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> " + esc(CHALLENGE.doThis)));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls = "opt";
+    if(isAnswered){
+      if(o.id === q.correct) cls += " correct";
+      else if(o.id === chosen) cls += " wrong";
+      else cls += " dim";
+    }
+    var btn = el("button", cls);
+    btn.type = "button";
+    if(isAnswered) btn.disabled = true;
+    var mark = "";
+    if(isAnswered && o.id === q.correct) mark = CHECK;
+    else if(isAnswered && o.id === chosen) mark = CROSS;
+    btn.innerHTML = '<span class="k">'+o.id.toUpperCase()+'.</span>' +
+                    '<span class="txt">'+esc(o.text)+'</span>' +
+                    '<span class="mark">'+mark+'</span>';
+    if(!isAnswered){
+      btn.addEventListener("click", function(){ choose(o.id); });
+    }
+    opts.appendChild(btn);
+  });
+  panel.appendChild(opts);
+
+  if(isAnswered){
+    var right = chosen === q.correct;
+    if(right){
+      panel.appendChild(el("p","verdict ok","Correct!"));
+    } else {
+      var correctText = "";
+      q.options.forEach(function(o){ if(o.id===q.correct) correctText = o.text; });
+      panel.appendChild(el("p","verdict no","Incorrect. The correct answer is: " + esc(correctText)));
+    }
+    panel.appendChild(el("p","explain", esc(q.explanation)));
+
+    var foot = el("div","qfoot");
+    var last = idx === CHALLENGE.questions.length - 1;
+    var b = el("button","btn");
+    if(last){
+      b.innerHTML = 'View Expert Analysis ' + BOOK.replace('class="book" ','');
+      b.addEventListener("click", finish);
+    } else {
+      b.innerHTML = 'Next Question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      b.addEventListener("click", function(){ idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+    }
+    foot.appendChild(b);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(optId){
+  if(answered[idx] !== null) return;
+  answered[idx] = optId;
+  if(optId === CHALLENGE.questions[idx].correct) correctCount++;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("qpanel").classList.add("hidden");
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML = "";
+  rp.appendChild(el("h2",null, BOOK + "<span>Your Results</span>"));
+  rp.appendChild(el("p","score","Multiple Choice: " + correctCount + " / " + CHALLENGE.questions.length + " correct"));
+
+  var ea = document.getElementById("eaPanel");
+  ea.classList.remove("hidden");
+  ea.innerHTML = "";
+  ea.appendChild(el("h2",null, BOOK + "<span>" + esc(CHALLENGE.expertAnalysis.heading) + "</span>"));
+  ea.appendChild(el("p","ea-sub", esc(CHALLENGE.expertAnalysis.subhead)));
+  CHALLENGE.expertAnalysis.paras.forEach(function(p){ ea.appendChild(el("p",null, esc(p))); });
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderStatic();
+renderQuestion();
+</script>
+</body>
+</html>
