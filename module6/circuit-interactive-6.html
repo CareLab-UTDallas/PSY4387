@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fear Circuit: A Guided Diagram</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --line2:#eceae4;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c5c3e;
+    --do-bg:#eef3fb; --do-line:#c9d9f0; --do-ink:#2f4a72;
+    /* node identity colors — muted, print-safe, distinguishable without relying on hue alone */
+    --alarm:#b0472a; --alarm-soft:#f7e4dd;
+    --brake:#3f6f57; --brake-soft:#e3efe7;
+    --context:#5b6aa0; --context-soft:#e6e9f4;
+    --stress:#9a6a2f; --stress-soft:#f4e9d8;
+    --focus:#2f6f4f; --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:72ch;}
+
+  .simban{display:flex;gap:10px;align-items:flex-start;background:var(--amber-bg);border:1px solid var(--amber-line);
+    color:var(--amber-ink);border-radius:12px;padding:11px 14px;font-size:13px;line-height:1.5;margin:16px 0 18px;}
+  .simban svg{flex:0 0 auto;margin-top:1px;}
+
+  .layout{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start;}
+  @media(max-width:860px){ .layout{grid-template-columns:1fr;} }
+
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:16px 16px 12px;}
+  .stage figcaption{margin:4px 4px 12px;color:var(--ink);font-size:12.5px;}
+  svg.diagram{width:100%;height:auto;display:block;}
+
+  /* diagram element styles */
+  .node{cursor:pointer;}
+  .node .plate{transition:filter .15s, stroke-width .15s;}
+  .node:focus-visible{outline:none;}
+  .node:focus-visible .plate{stroke:var(--focus);stroke-width:3;}
+  .node .ntitle{font-weight:700;font-size:15px;}
+  .node .nrole{font-size:12px;}
+  .node.on .plate{filter:brightness(.97);stroke-width:3;}
+  .edge{stroke-width:2.4;fill:none;}
+  .edge-lab{font-size:11.5px;fill:var(--ink);}
+  .stimulus,.body-out{font-size:12px;fill:var(--ink);}
+  .hint{font-size:12.5px;fill:var(--ink);}
+
+  .detail{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:20px 22px;min-height:220px;}
+  .detail .pre{color:var(--ink);font-size:13px;}
+  .detail .pre b{color:var(--ink);}
+  .detail h2{margin:2px 0 2px;font-size:19px;}
+  .detail .role-tag{display:inline-block;font-size:12px;font-weight:600;border-radius:7px;padding:3px 9px;margin:2px 0 12px;}
+  .detail p{margin:0 0 12px;font-size:14.5px;line-height:1.6;}
+  .detail p:last-child{margin-bottom:0;}
+  .detail .metaphor{background:#f5f3ef;border-radius:10px;padding:11px 13px;font-size:13.5px;color:#4a463f;}
+  .detail .metaphor b{color:var(--ink);}
+  .role-alarm{background:var(--alarm-soft);color:var(--alarm);}
+  .role-brake{background:var(--brake-soft);color:var(--brake);}
+  .role-context{background:var(--context-soft);color:var(--context);}
+  .role-stress{background:var(--stress-soft);color:var(--stress);}
+
+  .checklist{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0 0;}
+  .chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink);
+    border:1px solid var(--line);border-radius:20px;padding:5px 11px;background:#fff;}
+  .chk.done{color:var(--ok-ink);border-color:var(--ok-line);background:var(--ok-bg);}
+  .chk .dot{width:8px;height:8px;border-radius:50%;background:#cfcabf;}
+  .chk.done .dot{background:var(--ok-ink);}
+
+  .synth{margin-top:20px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .synth.locked{opacity:.55;}
+  .synth h3{margin:0 0 8px;font-size:16px;}
+  .synth p{margin:0 0 12px;font-size:14.5px;line-height:1.6;color:#333029;}
+  .synth .prompt{background:var(--do-bg);border:1px solid var(--do-line);color:var(--do-ink);
+    border-radius:10px;padding:11px 14px;font-size:13.5px;margin-bottom:12px;}
+  .synth textarea{width:100%;min-height:92px;resize:vertical;border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;font:inherit;font-size:14.5px;background:#fff;}
+  .synth textarea:focus{outline:none;border-color:var(--focus);}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:11px 18px;font-size:14.5px;font-weight:600;cursor:pointer;margin-top:12px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .model{margin-top:14px;background:var(--ok-bg);border:1px solid var(--ok-line);color:var(--ok-ink);
+    border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;}
+  .model .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:6px;}
+  .model b{font-weight:700;}
+  .selfnote{font-size:12px;color:var(--ink);margin-top:9px;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>The Fear Circuit: A Guided Diagram</h1>
+    <p class="sub">Three brain structures do most of the work in fear, and they act as a connected circuit rather than isolated parts. Click each node to learn what it does, then use what you find to answer the question underneath.</p>
+  </div>
+
+  <div class="simban">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.3" stroke="currentColor" stroke-width="1.4"/><path d="M10 6.4v4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.4" r=".5" fill="currentColor" stroke="currentColor"/></svg>
+    <div>This is a deliberately simplified schematic, not an anatomical map. The real fear circuitry involves more structures and connections than are shown here (the reading names the hypothalamus and other regions too), and the boxes are placed for clarity, not to mirror where these structures physically sit. Aim to own the roles and how they interact rather than to memorize an anatomy.</div>
+  </div>
+
+  <div class="layout">
+    <figure class="stage" style="margin:0;">
+      <svg class="diagram" viewBox="0 0 600 500" role="group" aria-label="Interactive fear-circuit diagram. Use Tab to move between structures and Enter or Space to open each one.">
+        <!-- edges (drawn first, under nodes) -->
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#9a958c"/>
+          </marker>
+          <marker id="arrow-brake" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#3f6f57"/>
+          </marker>
+        </defs>
+
+        <text class="hint" x="300" y="26" text-anchor="middle">Click a structure to open it &#183; <tspan id="openCount">0</tspan> of 4 opened</text>
+
+        <!-- incoming stimulus (top-left) into amygdala -->
+        <text class="stimulus" x="40" y="86">Sight / sound</text>
+        <text class="stimulus" x="40" y="102">(a possible threat)</text>
+        <line class="edge" x1="150" y1="96" x2="222" y2="150" stroke="#9a958c" marker-end="url(#arrow)"/>
+
+        <!-- PFC (top-right) -> amygdala : the brake -->
+        <line class="edge" x1="430" y1="150" x2="330" y2="168" stroke="#3f6f57" marker-end="url(#arrow-brake)"/>
+        <text class="edge-lab" x="424" y="126" text-anchor="end" fill="#3f6f57">sends calming</text>
+        <text class="edge-lab" x="424" y="141" text-anchor="end" fill="#3f6f57">signal (brake)</text>
+
+        <!-- amygdala -> body output : down the LEFT lane -->
+        <line class="edge" x1="235" y1="205" x2="150" y2="300" stroke="#9a958c" marker-end="url(#arrow)"/>
+        <text class="body-out" x="24" y="330">fires the alarm,</text>
+        <text class="body-out" x="24" y="346">the body reacts</text>
+        <text class="body-out" x="24" y="362">(heart, muscles,</text>
+        <text class="body-out" x="24" y="378">attention)</text>
+
+        <!-- amygdala -> HPA : down the RIGHT lane -->
+        <line class="edge" x1="290" y1="205" x2="392" y2="300" stroke="#9a958c" marker-end="url(#arrow)"/>
+        <text class="edge-lab" x="352" y="250">triggers stress</text>
+        <text class="edge-lab" x="352" y="265">hormones</text>
+
+        <!-- hippocampus (bottom) -> amygdala : supplies context, up the CENTER -->
+        <line class="edge" x1="262" y1="404" x2="262" y2="212" stroke="#9a958c" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+        <text class="edge-lab" x="360" y="424">supplies context</text>
+        <text class="edge-lab" x="360" y="439">(then / there / now)</text>
+        <line class="edge" x1="344" y1="420" x2="356" y2="420" stroke="#9a958c" stroke-dasharray="3 3"/>
+
+        <!-- NODE: Amygdala (center-upper) -->
+        <g class="node" id="node-amygdala" tabindex="0" role="button" aria-label="Amygdala, the alarm. Open for details.">
+          <rect class="plate" x="192" y="160" width="140" height="46" rx="12" fill="var(--alarm-soft)" stroke="var(--alarm)" stroke-width="2"/>
+          <text class="ntitle" x="262" y="181" text-anchor="middle" fill="var(--alarm)">Amygdala</text>
+          <text class="nrole" x="262" y="197" text-anchor="middle" fill="var(--alarm)">the alarm</text>
+        </g>
+
+        <!-- NODE: Prefrontal cortex (top-right) -->
+        <g class="node" id="node-pfc" tabindex="0" role="button" aria-label="Prefrontal cortex, the brake. Open for details.">
+          <rect class="plate" x="432" y="104" width="140" height="46" rx="12" fill="var(--brake-soft)" stroke="var(--brake)" stroke-width="2"/>
+          <text class="ntitle" x="502" y="125" text-anchor="middle" fill="var(--brake)">Prefrontal cortex</text>
+          <text class="nrole" x="502" y="141" text-anchor="middle" fill="var(--brake)">the brake</text>
+        </g>
+
+        <!-- NODE: HPA axis (right, lower-middle) -->
+        <g class="node" id="node-hpa" tabindex="0" role="button" aria-label="H P A axis, the body's stress switch. Open for details.">
+          <rect class="plate" x="392" y="300" width="184" height="46" rx="12" fill="var(--stress-soft)" stroke="var(--stress)" stroke-width="2"/>
+          <text class="ntitle" x="484" y="321" text-anchor="middle" fill="var(--stress)">HPA axis</text>
+          <text class="nrole" x="484" y="337" text-anchor="middle" fill="var(--stress)">the body's stress switch</text>
+        </g>
+
+        <!-- NODE: Hippocampus (center-bottom) -->
+        <g class="node" id="node-hippocampus" tabindex="0" role="button" aria-label="Hippocampus, the context supplier. Open for details.">
+          <rect class="plate" x="182" y="404" width="160" height="46" rx="12" fill="var(--context-soft)" stroke="var(--context)" stroke-width="2"/>
+          <text class="ntitle" x="262" y="425" text-anchor="middle" fill="var(--context)">Hippocampus</text>
+          <text class="nrole" x="262" y="441" text-anchor="middle" fill="var(--context)">the context supplier</text>
+        </g>
+      </svg>
+      <figcaption>Arrows show direction of influence. The green arrow is the prefrontal &ldquo;brake&rdquo; calming the alarm, and the dashed line is the hippocampus supplying context. In anxiety, the alarm tends to be too loud, the brake too weak, and the context signal unreliable.</figcaption>
+    </figure>
+
+    <div class="detail" id="detail" aria-live="polite">
+      <p class="pre">Select a structure in the diagram to read its role here. A good order is <b>amygdala &rarr; prefrontal cortex &rarr; hippocampus &rarr; HPA axis</b>, following how a threat signal actually moves.</p>
+      <div class="checklist" id="checklist" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div class="synth locked" id="synth" aria-hidden="true">
+    <h3>Put the circuit together</h3>
+    <p>You've opened all four structures. Now use them on a question.</p>
+    <div class="prompt"><b>Write first, then compare:</b> A client says, &ldquo;I <i>know</i> my flight is safe, so why does my body still panic on the runway?&rdquo; In two or three sentences, answer using the circuit. Name which structure is doing what, and say why knowing a fact doesn't automatically switch the fear off.</div>
+    <textarea id="answer" placeholder="Write your explanation using the amygdala, prefrontal cortex, and hippocampus…" aria-label="Your explanation"></textarea>
+    <div>
+      <button class="btn" id="revealBtn" disabled>Compare with a model explanation</button>
+    </div>
+    <div class="model hidden" id="model">
+      <div class="lab">A model explanation</div>
+      <p>The <b>amygdala</b> (the alarm) learned to treat flying as danger, and it fires fast, before the slower, thinking parts of the brain can weigh in. That speed is why the fear arrives even when the <b>prefrontal cortex</b> (the brake) holds accurate knowledge that flying is safe. The alarm route doesn't wait for the reasoning route, and it doesn't automatically update just because you looked up a statistic. Knowing something intellectually and feeling it in the body run on partly different systems, which is the gap the client describes as &ldquo;I know I'm safe, but I don't feel safe.&rdquo; The alarm changes mainly through repeated lived experience of safety rather than through facts alone, which is why exposure works by <i>doing</i> rather than only knowing.</p>
+      <p class="selfnote">This is a self-check, not a graded item. There is no single correct wording. Compare whether your explanation used the alarm's speed and the gap between knowing and feeling, and revise your mental model where it differs.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===========================================================================
+// Fear-circuit interactive (Module 6, activity 1 of 4).
+// Every role description, metaphor, and the model synthesis are drawn from the
+// Module 6 reading (ug-module-readings.md): amygdala = fast automatic alarm /
+// "smoke detector" / importance detector; PFC = manager/brake that sends a
+// calming signal once it judges safety; hippocampus = context supplier ("then/
+// there/now"), why fear returns in new settings; HPA axis = body's stress switch
+// (hypothalamus->pituitary->adrenals->cortisol), healthy on/off rhythm.
+// The "know it's safe but still panic" synthesis is the reading's own example of
+// why facts alone don't retrain the alarm. Diagram is explicitly a simplification.
+// No scoring; the synthesis is write-then-compare self-assessment.
+// ===========================================================================
+
+var NODES = {
+  amygdala: {
+    title: "Amygdala",
+    roleTag: "The alarm", roleClass: "role-alarm",
+    paras: [
+      "A small, almond-shaped structure that acts as a rapid threat detector, the launch point for fear and other strong reactions. It scans everything coming in through the senses and flags anything that might be a threat, fast, before deliberate appraisal.",
+      "Its speed evolved to react in a fraction of a second. In anxiety and trauma it becomes overprotective, sounding the alarm at things that aren't actually dangerous. It is better thought of as an importance detector than a pure 'fear center,' since it flags whatever seems significant."
+    ],
+    metaphor: "Picture an <b>overeager guard</b> who would rather sound a hundred false alarms than miss one real threat."
+  },
+  pfc: {
+    title: "Prefrontal cortex",
+    roleTag: "The brake", roleClass: "role-brake",
+    paras: [
+      "The large region at the front of the brain responsible for planning, weighing options, controlling impulses, and, importantly here, regulating emotion. One of its most important jobs is to keep the amygdala in check.",
+      "In a well-regulated brain, it evaluates the situation with context and sends a calming signal down to the amygdala, essentially applying the brakes once it judges a situation safe. In many anxiety and mood problems the pattern is an overactive alarm paired with too little steadying input from this brake. That braking connection can be strengthened, like a muscle, through repeated practice."
+    ],
+    metaphor: "Think of a <b>thoughtful supervisor</b> who can tell the overeager alarm, &ldquo;I hear you, but we're actually okay here.&rdquo;"
+  },
+  hippocampus: {
+    title: "Hippocampus",
+    roleTag: "The context supplier", roleClass: "role-context",
+    paras: [
+      "A structure essential for memory that is tied to context, the where and the when of an event. It lets the brain tell the difference between 'that danger was back then, in that place' and 'this is happening now, here,' stamping memories with a 'then and there' tag.",
+      "Because it tracks where you are, a fear calmed in one setting can come roaring back in a new one. This is the familiar experience of doing well in the therapist's office and then struggling in the outside world. That return is the hippocampus doing its job, and it is why new, calmer learning has to be practiced across many situations so it generalizes."
+    ],
+    metaphor: "Its context tag is what lets you recall an old car accident with a pang rather than the <b>full-body certainty that a crash is happening right now</b>."
+  },
+  hpa: {
+    title: "HPA axis",
+    roleTag: "The body's stress switch", roleClass: "role-stress",
+    paras: [
+      "The body's main stress-response system, named for the three players that pass the signal along like a relay. The hypothalamus signals the pituitary, which signals the adrenal glands to release stress hormones, most notably cortisol. It is designed to switch on quickly in an emergency and switch back off once the danger passes.",
+      "Under chronic stress the switch can get stuck 'on,' and prolonged elevated stress hormones are hard on the body and brain. The hippocampus is especially vulnerable to them. Many calming skills (slow breathing, relaxation, restorative sleep) are direct interventions that give this overworked system the repeated experience of switching off."
+    ],
+    metaphor: "In health it works like a <b>well-behaved thermostat</b>, on for the threat and then cleanly off again."
+  }
+};
+
+var OPEN_ORDER_HINT = ["amygdala","pfc","hippocampus","hpa"];
+var opened = {};
+
+function esc(s){return s;} // content is authored, not user-derived
+
+function openNode(key){
+  var n = NODES[key];
+  opened[key] = true;
+
+  // mark node active
+  ["amygdala","pfc","hippocampus","hpa"].forEach(function(k){
+    var g = document.getElementById("node-"+k);
+    if(g) g.classList.toggle("on", k===key);
+  });
+
+  var d = document.getElementById("detail");
+  d.innerHTML =
+    '<p class="pre">Structure <b>'+ (OPEN_ORDER_HINT.indexOf(key)+1) +' of 4</b> in the signal\'s path</p>' +
+    '<h2>'+ n.title +'</h2>' +
+    '<span class="role-tag '+ n.roleClass +'">'+ n.roleTag +'</span>' +
+    n.paras.map(function(p){return '<p>'+p+'</p>';}).join("") +
+    '<div class="metaphor">'+ n.metaphor +'</div>' +
+    '<div class="checklist" id="checklist"></div>';
+  renderChecklist();
+  updateCount();
+  maybeUnlockSynth();
+}
+
+function renderChecklist(){
+  var cl = document.getElementById("checklist");
+  if(!cl) return;
+  var labels = {amygdala:"Amygdala", pfc:"Prefrontal cortex", hippocampus:"Hippocampus", hpa:"HPA axis"};
+  cl.setAttribute("aria-hidden","false");
+  cl.innerHTML = OPEN_ORDER_HINT.map(function(k){
+    var done = !!opened[k];
+    return '<span class="chk'+(done?" done":"")+'"><span class="dot"></span>'+labels[k]+(done?" ✓":"")+'</span>';
+  }).join("");
+}
+
+function updateCount(){
+  var c = Object.keys(opened).length;
+  var el = document.getElementById("openCount");
+  if(el) el.textContent = c;
+}
+
+function maybeUnlockSynth(){
+  var all = OPEN_ORDER_HINT.every(function(k){return opened[k];});
+  if(!all) return;
+  var s = document.getElementById("synth");
+  s.classList.remove("locked");
+  s.setAttribute("aria-hidden","false");
+}
+
+// wire nodes
+["amygdala","pfc","hippocampus","hpa"].forEach(function(k){
+  var g = document.getElementById("node-"+k);
+  g.addEventListener("click", function(){ openNode(k); });
+  g.addEventListener("keydown", function(e){
+    if(e.key==="Enter" || e.key===" "){ e.preventDefault(); openNode(k); }
+  });
+});
+
+// synthesis compare
+var ta = document.getElementById("answer");
+var revealBtn = document.getElementById("revealBtn");
+ta.addEventListener("input", function(){ revealBtn.disabled = ta.value.trim().length===0; });
+revealBtn.addEventListener("click", function(){
+  document.getElementById("model").classList.remove("hidden");
+  revealBtn.disabled = true;
+  ta.readOnly = true;
+  ta.style.background = "#f3f1ec";
+});
+</script>
+</body>
+</html>
