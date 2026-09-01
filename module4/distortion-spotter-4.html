@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spot the Distortion</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:820px;margin:0 auto;padding:24px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:74ch;}
+
+  .legend{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);
+    border-radius:12px;padding:12px 15px;margin:14px 0 8px;font-size:13px;line-height:1.55;}
+  .legend b{font-weight:700;}
+  .legend .row{margin-top:6px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:14px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .qtop{font-size:13px;color:var(--muted);margin-bottom:10px;}
+  .scenario{font-size:13.5px;color:var(--ink);margin:0 0 6px;}
+  .thought{font-size:18px;font-weight:600;line-height:1.45;margin:0 0 4px;padding:14px 16px;
+    background:#f5f3ef;border-radius:12px;border-left:3px solid var(--accent);}
+  .do{font-size:13px;color:var(--muted);margin:12px 0 14px;}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  @media(max-width:560px){ .grid{grid-template-columns:1fr;} }
+  .opt{display:flex;flex-direction:column;gap:3px;text-align:left;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .nm{font-size:14.5px;font-weight:600;}
+  .opt .gl{font-size:12px;color:var(--muted);line-height:1.4;}
+  .opt:disabled{cursor:default;}
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .nm{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .nm{color:var(--wrong-ink);}
+  .opt.dim{opacity:.5;}
+
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#413d36;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .hintbtn{background:none;border:none;color:var(--accent-ink);font:inherit;font-size:13.5px;cursor:pointer;text-decoration:underline;padding:0;}
+  .hintbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .hintbox{margin-top:12px;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:10px;padding:10px 13px;font-size:13.5px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;
+    padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0;}
+  .results .score b{color:var(--accent-ink);}
+  .results .list{margin:16px 0 0;border-top:1px solid var(--line);padding-top:12px;}
+  .results .r{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .r:last-child{border-bottom:none;}
+  .results .r .ri{flex:0 0 auto;margin-top:1px;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Spot the Distortion</h1>
+    <p class="sub">The mind under stress bends the truth in a small number of predictable directions. Each round draws ten thoughts at random from a large bank, so you can try again for a fresh set. For each thought, name the distortion it shows. This is the same careful-reader skill from Module 1, turned inward on the claims your own mind makes.</p>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+  <section class="card results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// ===========================================================================
+// Spot the Distortion (Module 4). Categorization interaction, self-scored,
+// no write-then-compare reflection (per instructor decision).
+// The seven distortions and their glossary text are VERBATIM in substance from
+// the Module 4 reading's "Cognitive Distortions" list (ug-module-readings.md):
+// all-or-nothing, catastrophizing, mind reading, overgeneralization, mental
+// filtering, personalization, "should" statements.
+// A 100-item BANK sits below; each attempt draws DRAW (10) items at random, and
+// "Try again" reshuffles a fresh draw. Items are weighted toward subtle, realistic,
+// grain-of-truth thoughts rather than clean textbook cases. About 18 items carry an
+// 'also' field: they fairly show two distortions, so EITHER the primary 'answer' or
+// the 'also' id is scored correct, and the explanation names the primary.
+// The reading's key caveat (accuracy, not optimism; distortions are universal)
+// is surfaced in the legend and close.
+// ===========================================================================
+
+var DISTORTIONS = [
+  { id:"aon",  name:"All-or-nothing thinking", gloss:"Absolute, black-and-white terms with no middle ground." },
+  { id:"cat",  name:"Catastrophizing",          gloss:"Jumping to the worst outcome and treating it as likely." },
+  { id:"mr",   name:"Mind reading",             gloss:"Assuming you know what others think, usually harshly, without evidence." },
+  { id:"og",   name:"Overgeneralization",       gloss:"Taking one event as a never-ending pattern ('always,' 'never')." },
+  { id:"mf",   name:"Mental filtering",         gloss:"Zooming in on one negative detail, filtering out the positives." },
+  { id:"pers", name:"Personalization",          gloss:"Assuming you caused things that have little to do with you." },
+  { id:"should", name:"\u201cShould\u201d statements", gloss:"Rigid rules about how you or others must behave." }
+];
+
+// 100-item bank. Each attempt draws DRAW items at random (see init()).
+// Items with an 'also' field accept EITHER that distortion or the primary
+// 'answer' as correct; the explanation names the primary. All grounded in
+// the Module 4 reading's seven-distortion taxonomy.
+var BANK = [
+  {"scenario": "After six months sober, a person has one drink at a wedding.", "thought": "“Well, I've completely blown it. I'm right back where I started.”", "answer": "aon", "explain": "Six months of progress and one slip are collapsed into a single ruined category. All-or-nothing thinking erases the large middle ground where one lapse is a setback, not a return to zero.", "hint": "Is there really nothing between 'blown it' and 'perfect'?"},
+  {"scenario": "A person eats well all week, then has fast food on Friday.", "thought": "“My whole healthy week is basically pointless now.”", "answer": "aon", "explain": "One meal cancels an entire week in this reading. The all-or-nothing frame treats the week as pass/fail rather than as mostly-healthy with one exception.", "hint": "One data point is being allowed to overwrite five."},
+  {"scenario": "A recovering perfectionist gets edits back on a draft they worked hard on.", "thought": "“If it needed this many changes, it wasn't actually good work.”", "answer": "aon", "explain": "Needing edits and being good work are treated as mutually exclusive, when almost all good work gets substantial edits. The binary ('good' vs 'not good') is the distortion.", "hint": "Two boxes, no middle: is that how drafts actually work?"},
+  {"scenario": "A new manager makes a solid decision but fumbles how they announced it.", "thought": "“I handled that badly, so I'm clearly not management material.”", "answer": "aon", "explain": "One awkward rollout becomes a verdict on whether they belong in management at all. The primary shape is all-or-nothing (one flaw voids the whole), though it also overgeneralizes a single event into a permanent trait.", "hint": "A single rough moment is being scored as the whole job."},
+  {"scenario": "Someone gives a presentation that goes well except for one stumbled answer.", "thought": "“That one bad answer means the whole talk was a disaster.”", "answer": "aon", "also": "mf", "explain": "The talk is rated entirely by its worst moment. This is all-or-nothing (disaster vs success) and leans on mental filtering, since the many good minutes are dropped in favor of the one stumble.", "hint": "The whole is being graded by its single worst second."},
+  {"scenario": "A person notices their manager scheduled a 1:1 for tomorrow with no agenda.", "thought": "“This is it. They're going to let me go, and I'll never recover from this.”", "answer": "cat", "explain": "An ambiguous calendar invite is escalated to termination and permanent ruin, skipping the many ordinary reasons for a check-in. Catastrophizing runs straight to the worst case and treats it as likely.", "hint": "How many ordinary reasons for a 1:1 got skipped on the way to disaster?"},
+  {"scenario": "A parent's teenager is 30 minutes late and not answering texts.", "thought": "“Something terrible has happened. I know it.”", "answer": "cat", "explain": "Lateness plus a silent phone has many mundane explanations (dead battery, driving, lost track of time). Catastrophizing lands on tragedy and treats the fear as certainty. Note the grain of truth: worry here is understandable, but the leap to 'terrible' is the distortion.", "hint": "The worst explanation is being treated as the known one."},
+  {"scenario": "A person sends a slightly blunt email to a colleague, then rereads it.", "thought": "“They'll think I'm hostile, tell the team, and now everyone will see me as difficult.”", "answer": "cat", "explain": "One ordinary email spirals into a team-wide reputation collapse. The dominant move is catastrophizing (a chain to the worst outcome); it also mind-reads a specific hostile judgment into the colleague.", "hint": "Follow the escalating chain from one email to 'everyone.'"},
+  {"scenario": "Someone feels their heart flutter while lying in bed.", "thought": "“Something is really wrong with my heart. This could be serious.”", "answer": "cat", "explain": "An ordinary, common sensation is read as evidence of a dangerous condition. Catastrophizing skips the benign explanations (caffeine, anxiety, a normal skipped beat) for the alarming one. This is the exact engine the reading describes in panic.", "hint": "A common body sensation is being routed straight to 'serious.'"},
+  {"scenario": "A student gets one lower-than-hoped grade early in the semester.", "thought": "“There goes my GPA, then grad school, then any decent career.”", "answer": "cat", "explain": "One grade is chained all the way to a wrecked career. Catastrophizing builds a domino run to disaster from a single, recoverable event.", "hint": "Count the dominoes between one grade and 'no career.'"},
+  {"scenario": "A friend replies to a long message with just 'ok.'", "thought": "“They're annoyed with me. I can tell they think I'm too much.”", "answer": "mr", "explain": "A terse reply is read as a specific private judgment ('too much'). Mind reading treats a guess about someone's inner state as known fact, ignoring that people text tersely for a hundred reasons.", "hint": "A guess about their private opinion is being treated as certain."},
+  {"scenario": "During a meeting, a senior colleague frowns while looking at their laptop.", "thought": "“They think my idea is stupid.”", "answer": "mr", "explain": "The frown is attached to a judgment about the speaker, though it could easily be about an email, a spreadsheet, or a headache. Mind reading fills an ambiguous cue with a specific hostile thought.", "hint": "Whose thought is being assumed, and on what evidence?"},
+  {"scenario": "A person shares a vulnerable story and their friend is quiet afterward.", "thought": "“They're judging me. They think less of me now.”", "answer": "mr", "explain": "Silence after vulnerability is read as harsh judgment, when it might be the friend feeling moved, unsure what to say, or giving space. Mind reading picks the harshest available reading of another mind.", "hint": "Silence is being decoded as a specific verdict."},
+  {"scenario": "Someone waves at an acquaintance across the street and gets no wave back.", "thought": "“They're ignoring me on purpose. They must not like me.”", "answer": "mr", "explain": "Not being seen (glare, distraction, poor eyesight) is read as deliberate snubbing driven by dislike. Mind reading assumes both the intention and the feeling behind an ambiguous non-event.", "hint": "A non-response is being read as a chosen intention."},
+  {"scenario": "A person is quieter than usual at a dinner and their partner asks if they're okay.", "thought": "“They're asking because they think I'm being difficult and ruining the night.”", "answer": "mr", "explain": "A caring question is reinterpreted as a criticism the partner is secretly harboring. The core move is mind reading; it also personalizes, assuming the partner's concern is really about the person's failing.", "hint": "A concerned question is being rewritten as a hidden complaint."},
+  {"scenario": "A person's second date this month didn't lead to a third.", "thought": "“I always scare people off. This is just going to keep happening forever.”", "answer": "og", "explain": "Two outcomes become an eternal, universal pattern ('always,' 'forever'). Overgeneralization stretches a small, recent sample into a fixed law about the person's whole future.", "hint": "Listen for 'always' and 'forever' doing heavy lifting."},
+  {"scenario": "Someone's code fails a review for the second time this week.", "thought": "“I'm never going to be good at this. I don't have what it takes.”", "answer": "og", "explain": "Two review failures generalize to a permanent verdict about ability ('never,' 'don't have what it takes'). The reading flags 'never' as a warning sign that a single pattern is being treated as destiny.", "hint": "A short streak is being read as a permanent trait."},
+  {"scenario": "A person forgets a friend's birthday one year after remembering it for a decade.", "thought": "“I'm a terrible friend. I always let people down.”", "answer": "og", "also": "aon", "explain": "One lapse, against ten years of remembering, becomes 'always let people down.' The dominant shape is overgeneralization (one event to a lifelong pattern); it also has an all-or-nothing flavor, since a decade of good is voided by one miss.", "hint": "Ten years vs one year: which is being treated as the rule?"},
+  {"scenario": "After a difficult breakup, a person reflects on their relationships.", "thought": "“Every relationship I'm in falls apart. I'm just not built for love.”", "answer": "og", "explain": "A painful ending generalizes to 'every relationship' and an identity claim ('not built for love'). Overgeneralization turns specific, varied histories into one sweeping rule about the self.", "hint": "One ending is being scaled up to 'every' and 'ever.'"},
+  {"scenario": "A person's suggestion gets passed over in one meeting.", "thought": "“Nobody here ever listens to anything I say.”", "answer": "og", "explain": "A single overlooked suggestion becomes 'nobody ever listens to anything.' The absolutes ('nobody,' 'ever,' 'anything') mark the overgeneralization from one instance to a total pattern.", "hint": "Count the absolute words stacked on one event."},
+  {"scenario": "A person gets a performance review with eight strengths and two growth areas.", "thought": "“So basically they think I'm underperforming in two areas.”", "answer": "mf", "explain": "Eight strengths vanish and the two growth areas fill the whole screen. Mental filtering keeps only the negative slice and discards the positive majority as if it weren't there.", "hint": "Eight to two, and only the two are being kept."},
+  {"scenario": "At a party, nine people were warm and one seemed cool toward a person.", "thought": "“That party was rough. That one person clearly couldn't stand me.”", "answer": "mf", "also": "mr", "explain": "Nine warm interactions are filtered out so the evening is defined by the one cool person. The dominant move is mental filtering; it also mind-reads dislike into that single ambiguous person.", "hint": "Which interactions survived the summary, and which got dropped?"},
+  {"scenario": "A musician reads twenty kind comments and one harsh one on their video.", "thought": "“I can't stop thinking about that one comment. Maybe they're right.”", "answer": "mf", "explain": "Twenty positives are discounted and the single harsh comment dominates attention and belief. Mental filtering zooms in on the lone negative detail while everything supportive fades.", "hint": "Twenty to one, and the one is running the show."},
+  {"scenario": "A person had a mostly relaxing vacation with one stressful travel day.", "thought": "“That trip was so stressful. I need a vacation from my vacation.”", "answer": "mf", "explain": "One hard travel day colors the memory of an otherwise restful week. Mental filtering lets a single negative stretch define the whole, filtering out the many calm days.", "hint": "One bad day is being used to label the whole week."},
+  {"scenario": "A teacher gets glowing evaluations except for a few blunt lines.", "thought": "“Those few harsh comments are what I'll remember. That's the real feedback.”", "answer": "mf", "explain": "The person elevates the few harsh lines to 'the real feedback' and treats the praise as noise. Mental filtering assigns all the weight to the negative fragment.", "hint": "Why would the harsh lines be more 'real' than the rest?"},
+  {"scenario": "A person's friend seems down and distracted over coffee.", "thought": "“I must have done something to upset them.”", "answer": "pers", "explain": "The friend's mood is assumed to be caused by the person, without considering the friend might be tired, stressed about something unrelated, or unwell. Personalization takes ownership of a cause that likely has nothing to do with them.", "hint": "Who is being assumed responsible for the friend's mood?"},
+  {"scenario": "A team project misses its deadline after several people dropped tasks.", "thought": "“This is on me. If I'd just worked harder, we'd have made it.”", "answer": "pers", "explain": "A multi-person, multi-cause outcome is absorbed as personal fault. Personalization pulls a shared or external result onto oneself, ignoring everyone else's contribution and factors outside anyone's control.", "hint": "How many people's tasks are being folded into one person's fault?"},
+  {"scenario": "A person's child is struggling socially at a new school.", "thought": "“This is because I moved us here. I've damaged my kid.”", "answer": "pers", "also": "cat", "explain": "A common, often temporary adjustment is claimed as personal damage the parent caused. The core move is personalization (taking sole responsibility for a complex situation); it also catastrophizes, jumping to lasting harm.", "hint": "A hard adjustment is being pinned entirely on one decision."},
+  {"scenario": "During a presentation, an attendee gets up and leaves the room.", "thought": "“I've lost them. I'm boring people so much they're walking out.”", "answer": "pers", "explain": "Someone leaving (a call, a restroom, another meeting) is read as a personal indictment of the talk. Personalization assumes the exit is about the speaker; it also mind-reads boredom into the reason.", "hint": "Is the exit necessarily about the speaker at all?"},
+  {"scenario": "A person's partner comes home irritable after work.", "thought": "“They're mad at me. What did I do?”", "answer": "pers", "explain": "A partner's work-related mood is automatically routed to 'about me.' Personalization assumes one is the cause of another person's feelings when the far likelier source is outside the relationship.", "hint": "The likeliest cause (a hard workday) is being skipped for a personal one."},
+  {"scenario": "A person feels nervous before a routine dentist appointment.", "thought": "“I shouldn't be anxious about something this small. What's wrong with me?”", "answer": "should", "explain": "A rigid rule about what one is allowed to feel ('shouldn't be anxious') turns a normal reaction into a personal failing. 'Should' statements manufacture guilt or shame when reality doesn't obey the rule.", "hint": "A rule about what they're allowed to feel is firing."},
+  {"scenario": "A working parent takes an evening for themselves and feels uneasy.", "thought": "“I should always be there for my kids. Taking time for myself is selfish.”", "answer": "should", "explain": "An absolute rule ('should always be there') leaves no room for ordinary self-care and generates guilt. 'Should' statements set impossible standards and then punish the person for being human.", "hint": "Notice the rigid 'always' rule about how they must behave."},
+  {"scenario": "Someone learning an instrument isn't progressing as fast as they hoped.", "thought": "“I should be much better by now. Everyone else picks this up faster.”", "answer": "should", "explain": "A rule about the 'right' pace of progress creates a sense of failure. The dominant shape is a 'should' statement; it also involves an unfounded comparison-by-mind-reading about how quickly 'everyone else' learns.", "hint": "A rule about how fast they 'should' be is the engine here."},
+  {"scenario": "A person snaps at a family member during a stressful week and later reflects.", "thought": "“I should be able to stay patient no matter what. A good person wouldn't lose it.”", "answer": "should", "explain": "An absolute standard ('should stay patient no matter what') defines any lapse as evidence of being a bad person. 'Should' statements hold self and others to rigid rules and deliver harsh verdicts when the rules break.", "hint": "A 'no matter what' rule about behavior is being enforced."},
+  {"scenario": "A person is grieving a loss weeks later and still feels raw.", "thought": "“I should be over this by now. I'm handling it wrong.”", "answer": "should", "explain": "A timetable rule for grief ('should be over it') adds shame on top of pain. 'Should' statements impose an arbitrary standard and then treat a normal, variable process as being done incorrectly.", "hint": "There's a hidden rule about how long feelings are 'allowed' to last."},
+  {"scenario": "A person's text to a new friend goes unanswered for a day.", "thought": "“I came on too strong. I've ruined it before it even started.”", "answer": "cat", "explain": "A one-day gap becomes a ruined friendship caused by one's own overeagerness. Catastrophizing drives the leap to 'ruined'; mind reading supplies the unverified 'too strong' judgment.", "hint": "A single day of silence is being read as a final outcome."},
+  {"scenario": "A person receives constructive feedback from a mentor they respect.", "thought": "“If they're telling me this, they must be regretting taking me on.”", "answer": "mr", "explain": "Ordinary mentoring is read as secret regret. Mind reading assigns the mentor a hidden negative belief; the slide toward 'regretting taking me on' also carries catastrophizing.", "hint": "Helpful feedback is being decoded as a hidden verdict."},
+  {"scenario": "A person compares their behind-the-scenes life to a friend's social media.", "thought": "“Everyone else has it figured out. I'm the only one still struggling.”", "answer": "og", "also": "mr", "explain": "Curated highlights become proof that 'everyone' is fine and the person is uniquely failing. Overgeneralization ('everyone,' 'only one') dominates, with mind reading about others' inner lives.", "hint": "'Everyone' and 'only one' are being built from highlight reels."},
+  {"scenario": "A person makes a small talking-point error in an otherwise strong interview.", "thought": "“They definitely noticed that and it definitely cost me the job.”", "answer": "cat", "also": "mf", "explain": "One minor slip is treated as noticed, decisive, and disqualifying. Catastrophizing supplies the 'cost me the job' leap; mental filtering keeps the slip and drops the strong majority of the interview.", "hint": "One small error is being made the whole result."},
+  {"scenario": "A person's boss gives brief praise and moves on quickly.", "thought": "“That was just politeness. They don't actually rate my work.”", "answer": "mf", "explain": "Genuine praise is discounted as empty politeness so the negative belief survives. Mental filtering discards the positive; mind reading asserts the boss's 'real' opinion.", "hint": "Real praise is being explained away to protect a belief."},
+  {"scenario": "A person tried a new hobby and wasn't good at it on the first attempt.", "thought": "“I have no natural talent for this, so there's no point continuing.”", "answer": "aon", "also": "og", "explain": "A first attempt is treated as a verdict on talent, with only two options: naturally good or pointless. All-or-nothing dominates; overgeneralizing one attempt into a permanent lack of talent is also present.", "hint": "First try is being scored as final ability."},
+  {"scenario": "A person's request for a raise is deferred to next quarter.", "thought": "“That's a no. They'll never value me here.”", "answer": "og", "also": "aon", "explain": "A 'not yet' is read as a permanent 'never.' Overgeneralization stretches one deferral into a fixed future; the deferral is also treated in all-or-nothing terms (deferred equals rejected).", "hint": "'Next quarter' is being converted into 'never.'"},
+  {"scenario": "A person leaves a voicemail and doesn't hear back by evening.", "thought": "“They heard my voice and decided not to deal with me.”", "answer": "mr", "explain": "An ordinary delay becomes a deliberate, personal avoidance. Mind reading invents the other person's decision; personalization makes their silence about the caller.", "hint": "A delay is being read as a decision about them."},
+  {"scenario": "A generally healthy person has trouble sleeping for two nights.", "thought": "“My sleep is broken now. I'll be exhausted and useless for weeks.”", "answer": "cat", "explain": "Two rough nights are projected into weeks of dysfunction. Catastrophizing extrapolates a temporary, common disruption into a prolonged disaster.", "hint": "Two nights are being stretched into weeks."},
+  {"scenario": "A person notices a typo in an email they already sent to a client.", "thought": "“They'll think I'm careless and unprofessional, and it'll change how they see all my work.”", "answer": "cat", "explain": "A minor typo escalates to a lasting professional reputation shift. Catastrophizing builds the chain; mind reading asserts the client's specific judgment.", "hint": "A typo is being chained to 'all my work.'"},
+  {"scenario": "A person's friend cancels plans last minute citing being tired.", "thought": "“They're just tired of me, honestly. People always get sick of me eventually.”", "answer": "og", "explain": "One cancellation becomes proof of an inevitable pattern of people tiring of them. Overgeneralization ('always,' 'eventually') dominates; mind reading rewrites 'tired' into 'tired of me.'", "hint": "One cancellation is being read as an inevitable rule."},
+  {"scenario": "A person gives money to a cause but not as much as a wealthier friend.", "thought": "“My contribution is basically nothing. It doesn't even count.”", "answer": "aon", "explain": "A smaller-but-real contribution is placed in the 'nothing' box because it isn't the largest. All-or-nothing thinking makes anything short of the top count as zero.", "hint": "Not-the-most is being filed as 'nothing.'"},
+  {"scenario": "A person rereads a paragraph they wrote and finds it clumsy.", "thought": "“I'm just not a writer. I should give up on this.”", "answer": "og", "also": "aon", "explain": "One clumsy paragraph becomes an identity ('not a writer') and a reason to quit. Overgeneralization from a single passage dominates, with all-or-nothing framing of writing ability.", "hint": "One rough paragraph is being made an identity."},
+  {"scenario": "A person's joke lands flat in a group conversation.", "thought": "“Everyone thinks I'm awkward now. The whole vibe is ruined because of me.”", "answer": "pers", "explain": "A flat joke is treated as ruining the group's mood and confirming everyone's judgment. Personalization makes the person the cause of the 'whole vibe'; mind reading asserts what everyone now thinks.", "hint": "One flat joke is being blamed for the whole room."},
+  {"scenario": "A person is running five minutes late to meet a friend.", "thought": "“They'll be so annoyed. This is going to put the whole evening off.”", "answer": "cat", "explain": "Five minutes becomes a soured evening and a resentful friend. Catastrophizing inflates a trivial delay; mind reading supplies the friend's annoyance.", "hint": "Five minutes is being scaled to the 'whole evening.'"},
+  {"scenario": "A person receives a short 'we need to talk' text from their partner.", "thought": "“They want to break up. It's over.”", "answer": "cat", "explain": "An ambiguous message is read as a breakup with certainty. Catastrophizing lands on the worst outcome; mind reading assigns the partner an intention the text doesn't state.", "hint": "An ambiguous text is being decoded as the worst case."},
+  {"scenario": "A person keeps a workout streak going for weeks, then misses two days while sick.", "thought": "“The streak's dead. No point restarting, I'll just fail again.”", "answer": "aon", "explain": "A break for illness is treated as total failure with no way back. All-or-nothing dominates (streak alive vs dead); overgeneralizing 'fail again' also appears.", "hint": "A pause is being read as the end."},
+  {"scenario": "A person's home-cooked dinner for guests turns out fine but not impressive.", "thought": "“If it's not impressive, it's a failure. I embarrassed myself.”", "answer": "aon", "explain": "'Fine' is placed in the failure box because it isn't 'impressive.' All-or-nothing collapses the wide middle of acceptable outcomes into pass/fail.", "hint": "Only 'impressive' is being allowed to count as success."},
+  {"scenario": "A person is 80% packed for a trip but hasn't finished.", "thought": "“I'm so behind. I've barely started, honestly.”", "answer": "aon", "explain": "Being most of the way done is experienced as barely begun because it isn't complete. All-or-nothing erases partial progress.", "hint": "80% done is being felt as 0% done."},
+  {"scenario": "A recovering people-pleaser sets one boundary, then softens it slightly.", "thought": "“I caved. I'm hopeless at this and always will be.”", "answer": "og", "also": "aon", "explain": "A partial success (a boundary set, then softened) is scored as a total, permanent failure. Overgeneralization ('always') leads, with all-or-nothing framing of the attempt.", "hint": "A partial win is being counted as a permanent loss."},
+  {"scenario": "A person feels a headache coming on before an important day.", "thought": "“This is going to become a migraine and wreck everything tomorrow.”", "answer": "cat", "explain": "An early headache is projected into a day-ruining migraine. Catastrophizing treats the worst trajectory as the expected one.", "hint": "The worst version of the headache is being assumed."},
+  {"scenario": "A small business owner has one slow sales week.", "thought": "“This is the beginning of the end. I'm going to lose everything.”", "answer": "cat", "explain": "One slow week becomes financial ruin. Catastrophizing dominates; the leap to a permanent downward trend also overgeneralizes from a single week.", "hint": "One week is being read as a trend to catastrophe."},
+  {"scenario": "A person notices their partner has been quieter than usual for a few days.", "thought": "“They're falling out of love with me. This relationship is ending.”", "answer": "cat", "explain": "A few quiet days become the end of the relationship. Catastrophizing leads; mind reading assigns a specific inner change ('falling out of love').", "hint": "A quiet stretch is being read as the ending."},
+  {"scenario": "A student doesn't understand the first lecture of a hard course.", "thought": "“I'm going to fail this class and it'll tank my whole degree.”", "answer": "cat", "explain": "Not grasping lecture one is chained to failing the course and the degree. Catastrophizing extrapolates disaster from a normal early struggle.", "hint": "Week one confusion is being chained to 'whole degree.'"},
+  {"scenario": "A person makes a mistake on a form and has to resubmit it.", "thought": "“This is going to cause a huge problem. Everything's going to get delayed and it'll be a mess.”", "answer": "cat", "explain": "A routine resubmission becomes a cascading mess. Catastrophizing inflates an ordinary correction into a disaster.", "hint": "A resubmission is being inflated into 'a mess.'"},
+  {"scenario": "A person's manager gives feedback in a flat, neutral tone.", "thought": "“They're clearly disappointed in me. I can hear it.”", "answer": "mr", "explain": "A neutral tone is read as concealed disappointment. Mind reading fills a flat delivery with a specific negative emotion the person can't actually verify.", "hint": "A neutral tone is being decoded as disappointment."},
+  {"scenario": "A person walks into a room and two colleagues stop talking.", "thought": "“They were talking about me. They think something's off with me.”", "answer": "mr", "explain": "A pause in conversation is read as being about the person, negatively. Mind reading supplies the content of others' thoughts; personalization makes the pause about them.", "hint": "A natural pause is being read as about them."},
+  {"scenario": "A friend gives a short 'sounds good' to a big plan the person is excited about.", "thought": "“They think it's a bad idea and they're just humoring me.”", "answer": "mr", "explain": "A brief agreement is reinterpreted as concealed disapproval. Mind reading treats a guess about the friend's real opinion as fact.", "hint": "Agreement is being rewritten as hidden disapproval."},
+  {"scenario": "A person notices their new coworker eats lunch alone and hasn't chatted much.", "thought": "“They've decided they don't like me.”", "answer": "mr", "explain": "A quiet, possibly shy or busy coworker is assumed to have formed and settled a dislike. Mind reading invents both the judgment and its finality.", "hint": "Quiet is being read as a settled decision about them."},
+  {"scenario": "A person asks a question in a large class and hears a couple of quiet laughs.", "thought": "“They think my question was stupid. Everyone's judging me.”", "answer": "mr", "also": "og", "explain": "A couple of ambiguous laughs become a universal judgment. Mind reading assigns the specific thought ('stupid'); the jump to 'everyone' overgeneralizes.", "hint": "A couple of laughs are being read as 'everyone' judging."},
+  {"scenario": "A person bombs one job interview.", "thought": "“I'm terrible at interviews. I always freeze and blow it.”", "answer": "og", "explain": "One difficult interview becomes an 'always' pattern. Overgeneralization treats a single performance as a permanent trait.", "hint": "'Always' is doing the work from one interview."},
+  {"scenario": "A person's attempt to set up a group hangout falls through once.", "thought": "“Nobody ever wants to hang out with me. It's pointless to even try.”", "answer": "og", "explain": "One failed plan becomes 'nobody ever' and 'pointless.' Overgeneralization stretches a single logistics failure into a universal social rule.", "hint": "One failed plan is becoming 'nobody ever.'"},
+  {"scenario": "A person burns a meal they were cooking for the first time.", "thought": "“I can't cook. I ruin everything I try in the kitchen.”", "answer": "og", "also": "aon", "explain": "One burned first attempt becomes 'everything I try.' Overgeneralization leads; the absolute framing of cooking ability is also all-or-nothing.", "hint": "A first burned dish is becoming 'everything.'"},
+  {"scenario": "A person gets frustrated and raises their voice once during an argument.", "thought": "“I'm just an angry person. I always end up yelling.”", "answer": "og", "explain": "A single instance becomes a stable identity ('an angry person') and an 'always' pattern. Overgeneralization turns one moment into a defining trait.", "hint": "One raised voice is becoming an identity."},
+  {"scenario": "A person hosts a gathering that mostly goes well but runs out of one dish.", "thought": "“That was a letdown. I ran out of food, people probably left hungry.”", "answer": "mf", "also": "mr", "explain": "One shortfall defines an otherwise good event. Mental filtering keeps the negative detail; mind reading supplies 'people left hungry.'", "hint": "One shortfall is being made the headline."},
+  {"scenario": "A person's date went well except for one lull in the conversation.", "thought": "“There was that awkward silence. It probably didn't go well.”", "answer": "mf", "explain": "One lull outweighs an otherwise good date. Mental filtering elevates a single low moment above everything that worked.", "hint": "One silence is outweighing a whole good date."},
+  {"scenario": "A person finishes a race far better than last year but slower than a friend.", "thought": "“I was slow. It wasn't a good race.”", "answer": "mf", "also": "aon", "explain": "A large personal improvement is filtered out in favor of one unfavorable comparison. Mental filtering keeps the negative; the all-or-nothing 'not good' framing is also present.", "hint": "A big improvement is being dropped from the summary."},
+  {"scenario": "A manager praises a report highly and asks for one small fix.", "thought": "“So it wasn't good enough. There was a problem with it.”", "answer": "mf", "explain": "Strong praise is filtered out and the one small fix becomes 'a problem' that defines the report. Mental filtering fixes attention on the lone negative.", "hint": "One small fix is erasing the strong praise."},
+  {"scenario": "A person's team loses a pitch after a group effort.", "thought": "“They lost because of me. My part wasn't strong enough.”", "answer": "pers", "explain": "A shared outcome with many inputs is claimed as personal fault. Personalization pulls a group result onto oneself, discounting everyone else and external factors.", "hint": "A team result is being absorbed as one person's fault."},
+  {"scenario": "A person's elderly parent has a fall while the person was at work.", "thought": "“I should have been there. This is my fault.”", "answer": "pers", "also": "should", "explain": "An accident outside the person's control is claimed as personal responsibility. Personalization dominates; the 'should have been there' rule also marks a should statement.", "hint": "An event no one controlled is being pinned to them."},
+  {"scenario": "A person's friend is going through a rough patch and cancels often.", "thought": "“If I were a better friend, they'd want to see me more.”", "answer": "pers", "explain": "The friend's rough patch is reframed as a referendum on the person's worth as a friend. Personalization makes another's circumstances about oneself.", "hint": "The friend's hard time is being made about them."},
+  {"scenario": "A meeting the person organized has low attendance due to a scheduling clash.", "thought": "“Nobody came because nobody takes me seriously.”", "answer": "pers", "explain": "A scheduling clash is read as personal disrespect. Personalization claims the cause; mind reading asserts what the absent people think.", "hint": "A calendar clash is being read as disrespect for them."},
+  {"scenario": "A person is tired on a weekend and wants to rest instead of being productive.", "thought": "“I should be using this time better. Resting is lazy.”", "answer": "should", "explain": "A rigid productivity rule turns ordinary rest into laziness. 'Should' statements criminalize normal human needs and generate guilt.", "hint": "A rule about 'using time better' is firing on a rest day."},
+  {"scenario": "A person feels jealous of a friend's good news and is uncomfortable with it.", "thought": "“I shouldn't feel this way. A good person would just be happy for them.”", "answer": "should", "explain": "A rule about which feelings are allowed adds shame to a normal, passing emotion. 'Should' statements police feelings rather than examine them.", "hint": "A rule about allowed feelings is producing shame."},
+  {"scenario": "A new parent finds early parenthood harder and less joyful than expected.", "thought": "“I should be enjoying every moment. Something must be wrong with me.”", "answer": "should", "explain": "An idealized rule ('should enjoy every moment') turns a hard, normal adjustment into a personal defect. 'Should' statements impose impossible standards.", "hint": "'Every moment' is an impossible rule being enforced."},
+  {"scenario": "A person asks for help moving and feels bad about it.", "thought": "“I should be able to handle this on my own. Needing help is weak.”", "answer": "should", "explain": "A self-reliance rule reframes ordinary asking-for-help as weakness. 'Should' statements set rigid standards and punish normal interdependence.", "hint": "A 'handle it alone' rule is labeling help as weakness."},
+  {"scenario": "A person's message in a group chat gets no replies for a while.", "thought": "“That was a dumb thing to say. Everyone's ignoring it on purpose.”", "answer": "mr", "explain": "Chat silence is read as deliberate, judgmental ignoring. Mind reading supplies the intention; personalization makes the quiet about them.", "hint": "A quiet chat is being read as deliberate snubbing."},
+  {"scenario": "A person tries therapy for a month and doesn't feel dramatically better yet.", "thought": "“This isn't working. It's never going to work for someone like me.”", "answer": "og", "also": "cat", "explain": "An early, normal pace of change becomes proof it will 'never' work. Overgeneralization ('never,' 'someone like me') leads, with a catastrophic write-off of the future.", "hint": "One month is being read as 'never.'"},
+  {"scenario": "A person forgets one item at the grocery store.", "thought": "“My memory is going. I can't be trusted with anything anymore.”", "answer": "og", "explain": "A single forgotten item becomes a sweeping claim about memory and trustworthiness. Overgeneralization inflates one lapse into a global decline.", "hint": "One missed item is becoming 'anything.'"},
+  {"scenario": "A person receives a compliment on their outfit.", "thought": "“They're just being nice. They probably feel sorry for me.”", "answer": "mf", "explain": "A genuine compliment is filtered out and rewritten as pity. Mental filtering discards the positive; mind reading supplies the 'feel sorry for me' motive.", "hint": "A compliment is being converted into pity."},
+  {"scenario": "A person makes a good decision at work that happens to have a minor downside.", "thought": "“There's a downside, so it was the wrong call.”", "answer": "aon", "explain": "A net-good decision is labeled 'wrong' because it isn't downside-free. All-or-nothing treats any imperfection as total failure.", "hint": "Any downside is being read as 'wrong call.'"},
+  {"scenario": "A person's friend seems less enthusiastic than usual when they meet up.", "thought": "“They're bored of our friendship. I've become boring to them.”", "answer": "mr", "explain": "A friend's off-day energy is read as boredom with the person. Mind reading supplies the judgment; personalization makes the friend's mood about oneself.", "hint": "An off-day is being read as boredom with them."},
+  {"scenario": "A person overhears their name and a laugh across a room.", "thought": "“They're laughing at me. I must have done something humiliating.”", "answer": "mr", "explain": "An ambiguous laugh is read as ridicule tied to some humiliation. Mind reading assigns mockery; catastrophizing invents the humiliating cause.", "hint": "A laugh is being decoded as ridicule of them."},
+  {"scenario": "A person's post gets fewer likes than their usual.", "thought": "“People are losing interest in me. I'm becoming irrelevant.”", "answer": "og", "explain": "One lower-performing post becomes a trend of personal irrelevance. Overgeneralization leads; mind reading asserts what 'people' feel.", "hint": "One quiet post is becoming 'irrelevant.'"},
+  {"scenario": "A person makes a typo in a message to someone they like.", "thought": "“Now they think I'm careless and not that smart.”", "answer": "mr", "explain": "A trivial typo is read as producing a specific negative judgment. Mind reading treats an unverifiable guess about their impression as fact.", "hint": "A typo is being read as a verdict on intelligence."},
+  {"scenario": "A person declines an invitation because they're genuinely exhausted, then worries.", "thought": "“I should have gone. Now they'll stop inviting me and I'll end up with no one.”", "answer": "cat", "also": "should", "explain": "One reasonable 'no' spirals to social isolation. Catastrophizing drives the chain to 'no one'; the 'should have gone' rule adds a should statement.", "hint": "One 'no' is being chained to 'no one.'"},
+  {"scenario": "A person's colleague takes a day to reply to a work email.", "thought": "“They're annoyed with how I handled the project.”", "answer": "mr", "explain": "A normal reply delay is read as concealed annoyance about the person's work. Mind reading assigns a specific grievance with no evidence.", "hint": "A delay is being read as a specific grievance."},
+  {"scenario": "A person gives a wrong answer in a work discussion.", "thought": "“Everyone's reevaluating whether I belong on this team.”", "answer": "mr", "explain": "One wrong answer is read as prompting a team-wide reassessment. Mind reading supplies everyone's thoughts; catastrophizing inflates the stakes.", "hint": "One wrong answer is being read as a team referendum."},
+  {"scenario": "A person notices they're the only one who hasn't been promoted in their cohort.", "thought": "“I'm clearly the weak link. Everyone can see I don't measure up.”", "answer": "mr", "explain": "A single comparison becomes a public verdict of inadequacy. Mind reading asserts what 'everyone can see'; mental filtering ignores the many reasons timelines differ.", "hint": "One comparison is being read as everyone's verdict."},
+  {"scenario": "A person's kind gesture to a neighbor gets a lukewarm response.", "thought": "“They didn't appreciate it. I always misjudge these things.”", "answer": "og", "explain": "A lukewarm moment becomes an 'always' pattern of social misjudgment. Overgeneralization leads; mind reading asserts the neighbor's lack of appreciation.", "hint": "One tepid response is becoming 'always.'"},
+  {"scenario": "A person is learning to drive and stalls at a junction.", "thought": "“I'm a danger on the road. I should just give up before I hurt someone.”", "answer": "cat", "also": "should", "explain": "A normal learner's stall is escalated to being a danger who should quit. Catastrophizing leads; the 'should just give up' verdict adds a rigid rule.", "hint": "A stall is being read as 'a danger to others.'"},
+  {"scenario": "A person's boss reschedules their meeting twice.", "thought": "“I'm obviously not a priority. They don't respect my time or me.”", "answer": "mr", "explain": "Ordinary rescheduling is read as personal disrespect. Mind reading assigns the boss's attitude; personalization makes a busy calendar about the person's worth.", "hint": "Two reschedules are being read as disrespect."},
+  {"scenario": "A person shares an unpopular opinion and the group goes quiet.", "thought": "“I've alienated everyone. They all think less of me now.”", "answer": "mr", "explain": "A brief quiet becomes total alienation. Mind reading supplies everyone's lowered opinion; catastrophizing inflates 'quiet' into 'alienated everyone.'", "hint": "A pause is being read as alienating 'everyone.'"},
+  {"scenario": "A person tried their best on a task but the outcome was still poor.", "thought": "“If my best isn't good enough, then I'm just not good enough, period.”", "answer": "aon", "explain": "One poor outcome despite effort becomes a global verdict on the self. All-or-nothing ('not good enough, period') leads, with overgeneralization from a single result.", "hint": "One outcome is becoming a verdict on the whole self."},
+  {"scenario": "A person catches themselves procrastinating on an important task.", "thought": "“I have no discipline. I'll never get my life together.”", "answer": "og", "explain": "A moment of procrastination becomes a permanent character flaw and a hopeless future. Overgeneralization ('no discipline,' 'never') turns one behavior into destiny.", "hint": "One delay is becoming 'never.'"},
+];
+var DRAW = 10;  // items shown per attempt
+
+var idx=0, chosen=[], drawn=[], hintShown={};
+
+function shuffle(a){ for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a; }
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function dById(id){ for(var i=0;i<DISTORTIONS.length;i++){ if(DISTORTIONS[i].id===id) return DISTORTIONS[i]; } return null; }
+// An item is correct if the pick matches the primary answer OR its accepted second.
+function isCorrect(it, pick){ return pick===it.answer || (it.also && pick===it.also); }
+
+var CHECK='<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS='<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+function renderLegend(){
+  var box=document.getElementById("legend");
+  var rows = DISTORTIONS.map(function(d){ return '<b>'+esc(d.name)+':</b> '+esc(d.gloss); }).join(' &nbsp;&middot;&nbsp; ');
+  box.innerHTML = '<b>The seven distortions.</b> <div class="row">'+rows+'</div>';
+}
+
+// Draw DRAW fresh items at random from the 100-item BANK for this attempt.
+function drawItems(){
+  var pool = shuffle(BANK.map(function(_,i){return i;})).slice(0, Math.min(DRAW, BANK.length));
+  return pool.map(function(i){ return BANK[i]; });
+}
+
+function init(){ drawn=drawItems(); chosen=drawn.map(function(){return null;}); idx=0; hintShown={}; render(); }
+
+function renderProgress(){
+  document.getElementById("pbarfill").style.width=(idx/drawn.length*100)+"%";
+  document.getElementById("pcount").textContent="Thought "+Math.min(idx+1,drawn.length)+" of "+drawn.length;
+}
+
+function render(){
+  renderProgress();
+  var it=drawn[idx];
+  var panel=document.getElementById("cardPanel"); panel.innerHTML="";
+  var pick=chosen[idx], answered=pick!==null;
+
+  panel.appendChild(el("div","qtop","Thought "+(idx+1)+" of "+drawn.length));
+  panel.appendChild(el("p","scenario", esc(it.scenario)));
+  panel.appendChild(el("div","thought", esc(it.thought)));
+  panel.appendChild(el("div","do","Which distortion does this thought show?"));
+
+  var grid=el("div","grid");
+  DISTORTIONS.forEach(function(d){
+    var cls="opt";
+    if(answered){
+      // highlight every accepted answer green; a wrong pick shows red
+      var accepted = (d.id===it.answer) || (it.also && d.id===it.also);
+      if(accepted) cls+=" correct";
+      else if(d.id===pick) cls+=" wrong";
+      else cls+=" dim";
+    }
+    var b=el("button",cls);
+    b.type="button";
+    if(answered) b.disabled=true;
+    b.innerHTML='<span class="nm">'+esc(d.name)+'</span><span class="gl">'+esc(d.gloss)+'</span>';
+    if(!answered) b.addEventListener("click",function(){ choose(d.id); });
+    grid.appendChild(b);
+  });
+  panel.appendChild(grid);
+
+  if(!answered){
+    var foot=el("div","foot");
+    var hb=el("button","hintbtn", hintShown[idx]?"Hide hint":"Show a hint");
+    hb.addEventListener("click",function(){ hintShown[idx]=!hintShown[idx]; render(); });
+    foot.appendChild(hb); foot.appendChild(el("span","",""));
+    panel.appendChild(foot);
+    if(hintShown[idx]) panel.appendChild(el("div","hintbox", esc(it.hint)));
+  } else {
+    var right=isCorrect(it, pick);
+    // On dual items, a correct pick of the secondary gets a slightly different note.
+    var verdictText = right ? "Correct." : "Not quite.";
+    panel.appendChild(el("p","verdict "+(right?"ok":"no"), verdictText));
+    var nm=dById(it.answer).name;
+    var lead = "<b>"+esc(nm)+".</b> ";
+    if(it.also){
+      var altnm=dById(it.also).name;
+      lead = "<b>"+esc(nm)+"</b> (this one also fairly reads as <b>"+esc(altnm)+"</b>). ";
+    }
+    var ex=el("p","explain", lead + esc(it.explain));
+    ex.innerHTML+='<div class="src">Reading: Module 4, Cognitive Distortions</div>';
+    panel.appendChild(ex);
+    var foot=el("div","foot"); foot.appendChild(el("span","",""));
+    var last=idx===drawn.length-1;
+    var nb=el("button","btn");
+    nb.innerHTML=last?"See your results":'Next thought <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    nb.addEventListener("click",function(){ if(last){finish();}else{idx++;render();window.scrollTo({top:0,behavior:"smooth"});} });
+    foot.appendChild(nb); panel.appendChild(foot);
+  }
+}
+
+function choose(id){ if(chosen[idx]!==null) return; chosen[idx]=id; render(); }
+
+function finish(){
+  document.getElementById("pbarfill").style.width="100%";
+  document.getElementById("pcount").textContent="Complete";
+  document.getElementById("cardPanel").classList.add("hidden");
+  var correct=chosen.filter(function(c,i){return isCorrect(drawn[i], c);}).length;
+  var rp=document.getElementById("resultsPanel"); rp.classList.remove("hidden"); rp.innerHTML="";
+  rp.appendChild(el("h2",null,"Your results"));
+  rp.appendChild(el("p","score","You named <b>"+correct+" of "+drawn.length+"</b> correctly."));
+  var list=el("div","list");
+  drawn.forEach(function(it,i){
+    var right=isCorrect(it, chosen[i]), nm=dById(it.answer).name;
+    var label = nm + (it.also ? " / "+dById(it.also).name : "");
+    var r=el("div","r");
+    r.innerHTML='<span class="ri">'+(right?CHECK:CROSS)+'</span><span>'+esc(label)+(right?'':' \u2014 the thought was: '+esc(it.thought))+'</span>';
+    list.appendChild(r);
+  });
+  rp.appendChild(list);
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Try again with 10 new thoughts");
+  again.addEventListener("click",function(){ document.getElementById("cardPanel").classList.remove("hidden"); rp.classList.add("hidden"); init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); rp.appendChild(act);
+  rp.appendChild(el("p","selfnote","Each attempt draws ten thoughts at random from a larger bank, so a retry gives you new ones. A few thoughts fairly show two distortions at once; on those, either fair answer is counted as correct and the note names the primary one. Nothing is saved or sent. Remember the reading's caveat: the point of naming a distortion is accuracy, not forced positivity, and everyone uses these patterns. Spotting one is neutral and curious, not a verdict on you."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderLegend();
+init();
+</script>
+</body>
+</html>

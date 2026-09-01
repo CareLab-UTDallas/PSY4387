@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two Kinds of Downward: The Loop and the Arrow</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --do-bg:#eef3fb; --do-line:#c9d9f0; --do-ink:#2f4a72;
+    --s1:#7a86ad; --s1-soft:#eaedf5;
+    --s2:#9a7a4e; --s2-soft:#f2e9da;
+    --s3:#b06a3a; --s3-soft:#f6e6d9;
+    --s4:#a8483a; --s4-soft:#f6e0da;
+    --s5:#8f3b3f; --s5-soft:#f2dcde;
+    --l1:#5b6aa0; --l1-soft:#e6e9f4;
+    --l2:#8a6a2f; --l2-soft:#f4e9d8;
+    --l3:#8f3b3f; --l3-soft:#f2dcde;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:880px;margin:0 auto;padding:22px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .modebar{display:flex;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:16px 0 6px;width:100%;}
+  .modebar button{flex:1 1 0;border:none;background:#fff;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;text-align:center;line-height:1.3;}
+  .modebar button+button{border-left:1px solid var(--line);}
+  .modebar button[aria-pressed="true"]{background:var(--accent);color:#fff;}
+  .modebar button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .modebar .mb-sub{display:block;font-size:11.5px;opacity:.8;margin-top:2px;font-weight:400;}
+
+  .contrast{display:flex;gap:9px;align-items:flex-start;background:var(--amber-bg);border:1px solid var(--amber-line);
+    color:var(--amber-ink);border-radius:12px;padding:11px 14px;margin:0 0 14px;font-size:12.5px;line-height:1.5;}
+  .contrast svg{flex:0 0 auto;margin-top:1px;}
+
+  .controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin:6px 0 4px;justify-content:space-between;}
+  .segwrap{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .segwrap button{border:none;background:#fff;padding:9px 15px;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;}
+  .segwrap button+button{border-left:1px solid var(--line);}
+  .segwrap button[aria-pressed="true"]{background:var(--accent);color:#fff;}
+  .segwrap button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .scenario-pick{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);}
+  .scenario-pick select{font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:9px;padding:8px 11px;background:#fff;cursor:pointer;color:var(--ink);}
+  .scenario-pick select:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .diffnote{font-size:12.5px;color:var(--muted);margin:2px 0 12px;}
+
+  .setup{background:#f5f3ef;border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.55;margin:6px 0 14px;border-left:3px solid var(--accent);}
+  .setup b{color:var(--ink);}
+
+  .loopwrap{position:relative;}
+  .spiral{display:flex;flex-direction:column;gap:0;}
+  .stepwrap{display:flex;flex-direction:column;align-items:stretch;}
+  .rung{border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--panel-shadow);position:relative;}
+  .rung .mech{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin-bottom:5px;opacity:.85;}
+  .rung .txt{font-size:15px;line-height:1.5;}
+  .rung .txt b{font-weight:700;}
+  .rung.s1{background:var(--s1-soft);border-color:var(--s1);} .rung.s1 .mech{color:var(--s1);}
+  .rung.s2{background:var(--s2-soft);border-color:var(--s2);} .rung.s2 .mech{color:var(--s2);}
+  .rung.s3{background:var(--s3-soft);border-color:var(--s3);} .rung.s3 .mech{color:var(--s3);}
+  .rung.s4{background:var(--s4-soft);border-color:var(--s4);} .rung.s4 .mech{color:var(--s4);}
+  .rung.s5{background:var(--s5-soft);border-color:var(--s5);} .rung.s5 .mech{color:var(--s5);}
+  .indent0{margin-left:0;} .indent1{margin-left:20px;} .indent2{margin-left:40px;} .indent3{margin-left:60px;} .indent4{margin-left:74px;}
+  @media(max-width:560px){ .indent1,.indent2,.indent3,.indent4{margin-left:0;} }
+  .connector{align-self:center;color:var(--muted);height:26px;display:flex;align-items:center;}
+  .connector svg{display:block;}
+  .loopback{margin-top:10px;background:var(--s5-soft);border:1px dashed var(--s5);border-radius:12px;padding:11px 15px 11px 44px;font-size:13.5px;line-height:1.5;color:var(--ink);position:relative;}
+  .loopback.hidden{display:none;}
+  .loopback .curl{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--s5);}
+  .loopback b{font-weight:700;}
+
+  .nextbtn-wrap{margin-top:14px;display:flex;justify-content:center;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .btn.wide{width:100%;justify-content:center;}
+
+  .branch{margin-top:20px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .branch h3{margin:0 0 6px;font-size:17px;}
+  .branch p{margin:0 0 14px;font-size:14px;line-height:1.6;}
+  .branch .mechtag{display:inline-block;font-size:11.5px;font-weight:700;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:7px;padding:3px 9px;margin-bottom:10px;}
+  .tools{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:560px){ .tools{grid-template-columns:1fr;} }
+  .tool{text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .tool:hover:not(:disabled){border-color:#cfc9bf;}
+  .tool:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .tool .nm{font-size:14.5px;font-weight:600;display:block;margin-bottom:2px;}
+  .tool .gl{font-size:12.5px;color:var(--muted);line-height:1.45;}
+  .tool:disabled{cursor:default;}
+  .tool.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .tool.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .tool.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .tool.dim{opacity:.5;}
+  .outcome{margin-top:14px;border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;}
+  .outcome.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .outcome.no{background:var(--no-bg);color:var(--no-ink);}
+  .outcome b{font-weight:700;}
+  .rewind{margin-top:14px;background:var(--do-bg);border:1px solid var(--do-line);color:var(--do-ink);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;}
+  .rewind.hidden{display:none;}
+  .rewind b{font-weight:700;}
+
+  .arrowwrap .qtop{font-size:13px;color:var(--muted);margin-bottom:10px;}
+  .layerbox{border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--panel-shadow);}
+  .layerbox .ltag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:7px;padding:3px 9px;margin-bottom:7px;}
+  .layerbox .lthought{font-size:15px;line-height:1.5;}
+  .layerbox .lthought b{font-weight:700;}
+  .layerbox.l1{background:var(--l1-soft);border-color:var(--l1);} .layerbox.l1 .ltag{background:#fff;color:var(--l1);}
+  .layerbox.l2{background:var(--l2-soft);border-color:var(--l2);} .layerbox.l2 .ltag{background:#fff;color:var(--l2);}
+  .layerbox.l3{background:var(--l3-soft);border-color:var(--l3);} .layerbox.l3 .ltag{background:#fff;color:var(--l3);}
+  .arrowq{align-self:center;color:var(--muted);text-align:center;margin:2px 0;font-size:12.5px;}
+  .arrowq .qmark{display:block;font-size:13px;font-style:italic;color:var(--l2);margin-bottom:3px;}
+  .arrowq svg{display:block;margin:0 auto;}
+
+  .field{margin:12px 0 0;}
+  .field .prompt{font-size:13.5px;color:var(--ink);margin-bottom:7px;}
+  select.step{width:100%;font:inherit;font-size:14.5px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none'><path d='M5 7l5 5 5-5' stroke='%236b6862' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;}
+  select.step:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  select.step:disabled{opacity:1;}
+  select.step.ok{background-color:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink);}
+  select.step.no{background-color:var(--no-bg);border-color:var(--no-line);color:var(--no-ink);}
+  .fnote{margin-top:7px;font-size:13px;line-height:1.55;padding:9px 12px;border-radius:9px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+
+  .diy .field textarea{width:100%;font:inherit;font-size:14.5px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px;min-height:52px;resize:vertical;line-height:1.5;}
+  .diy .field textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .compare{margin-top:14px;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;}
+  .compare.hidden{display:none;}
+  .compare b{font-weight:700;}
+  .compare .modelrow{margin-top:8px;}
+  .compare .ml{font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--amber-ink);}
+
+  .whereto{margin-top:16px;background:#fff;border:1px dashed var(--accent);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;}
+  .whereto.hidden{display:none;}
+  .whereto .st{font-weight:700;color:var(--accent-ink);margin-bottom:4px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Two Kinds of Downward: The Loop and the Arrow</h1>
+    <p class="sub">Two ideas in this module both move &ldquo;downward,&rdquo; and they are easy to mix up. The <b>loop</b> is a self-perpetuating cycle that worsens over time: a belief shapes attention, attention finds &ldquo;evidence,&rdquo; and the evidence feeds the belief. The <b>downward arrow</b> is a way of tracing a single thought down through its layers to the core belief underneath. Use the toggle to work with each one. They are different tools for different jobs.</p>
+  </div>
+
+  <div class="modebar" role="group" aria-label="Choose an activity">
+    <button id="mm-loop" aria-pressed="true">The Loop<span class="mb-sub">a cycle that worsens over time</span></button>
+    <button id="mm-arrow" aria-pressed="false">The Downward Arrow<span class="mb-sub">tracing one thought to its core</span></button>
+  </div>
+  <div class="contrast" id="contrast"></div>
+
+  <div id="loopMode">
+    <div class="controls">
+      <div class="segwrap" role="group" aria-label="Difficulty">
+        <button id="mode-guided" aria-pressed="true">Guided</button>
+        <button id="mode-challenge" aria-pressed="false">Challenge</button>
+      </div>
+      <label class="scenario-pick">Scenario:
+        <select id="scenarioSel"></select>
+      </label>
+    </div>
+    <div class="diffnote" id="diffnote"></div>
+    <div class="setup" id="setup"></div>
+    <div class="loopwrap">
+      <div class="spiral" id="spiral"></div>
+      <div class="loopback hidden" id="loopback"></div>
+    </div>
+    <div class="nextbtn-wrap" id="nextWrap"></div>
+    <section class="branch hidden" id="branch" aria-live="polite"></section>
+  </div>
+
+  <div id="arrowMode" class="arrowwrap hidden">
+    <div class="controls">
+      <div class="segwrap" role="group" aria-label="Stage">
+        <button id="arr-guided" aria-pressed="true">Guided example</button>
+        <button id="arr-diy" aria-pressed="false">Your own thought</button>
+      </div>
+      <label class="scenario-pick" id="arrScenPickWrap">Example:
+        <select id="arrScenarioSel"></select>
+      </label>
+    </div>
+    <div class="diffnote" id="arrNote"></div>
+    <section id="arrPanel" aria-live="polite"></section>
+  </div>
+</div>
+
+<script>
+// ===========================================================================
+// Two Kinds of Downward (Module 4). One widget, two modes, so students feel the
+// difference between the self-perpetuating LOOP and the DOWNWARD-ARROW technique
+// rather than merging them (they share the word "downward" and both end at a core
+// belief, but one is a maintenance cycle over time and the other is a static probe
+// through belief layers at one moment).
+//
+// Grounded in ug-module-readings.md:
+//   - Three-layer architecture + downward-arrow method + the Marcus demonstration
+//     (automatic thought -> intermediate belief -> core belief; the therapist asks
+//     "and if that were true, what would it mean about you?").
+//   - The self-perpetuating cycle (belief -> biased attention -> interpretation ->
+//     avoidance/withdrawal -> belief strengthens), which the reading calls a
+//     "closed loop"; here the visual closes back on itself.
+// House conventions: correct = green, wrong = red; free text is never transmitted
+// or stored (stated to the user). Fully client-side.
+// ===========================================================================
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var TOOLS = {
+  restructuring:{ nm:"Cognitive restructuring", gl:"Catch the thought, weigh the evidence, build a fairer one." },
+  experiment:{ nm:"Behavioral experiment", gl:"Design a real-world test of the specific prediction and gather data." },
+  activation:{ nm:"Behavioral activation", gl:"Schedule small rewarding activity before motivation returns." },
+  exposure:{ nm:"Exposure", gl:"Approach the avoided thing gradually and stay to learn something new." }
+};
+var SCENARIOS = [
+  {
+    name:"Social anxiety (Devon-style)",
+    setup:"<b>The situation.</b> Devon dreads his group-project meetings. Follow how one belief spins a whole afternoon downward.",
+    rungs:[
+      {mech:"Core belief", txt:"Underneath it all sits a quiet conviction: <b>\u201cI'm fundamentally inadequate.\u201d</b>"},
+      {mech:"Biased attention", txt:"In the meeting, his attention locks onto his <b>pounding heart and any sign of disapproval</b>, skipping the neutral and friendly faces entirely."},
+      {mech:"Biased interpretation", txt:"He's left off a message thread. He reads it instantly as <b>\u201cthey think I'm worthless\u201d</b>, not \u201cthey forgot\u201d or \u201cit started while I was offline.\u201d"},
+      {mech:"Avoidance", txt:"He starts <b>skipping meetings</b>. Each skip brings a rush of relief, which rewards skipping and guarantees he never learns he could cope."},
+      {mech:"Belief strengthens", txt:"His teammates leave him off more messages. He takes it as <b>proof he's worthless</b>, and the original belief grows."}
+    ],
+    loopback:"That strengthened belief feeds straight back to the top. A mind now even more certain it's inadequate will watch even harder for disapproval tomorrow. The end of the cycle is the start of the next one. That feedback, the last step flowing back into the first, is what makes it a loop rather than a straight line down.",
+    branchMech:"Avoidance (skipping the meetings)",
+    branchPrompt:"The engine keeping this loop going is the avoidance: skipping means the feared prediction never gets tested. Which tool most directly pries open <em>this</em> point in the cycle?",
+    correct:"exposure",
+    outcomes:{
+      exposure:"<b>Yes.</b> A graded return to meetings, starting with lower-stakes contact, is exposure. It puts Devon back in the situation so the prediction \u201cthey'll ridicule me\u201d can finally be disconfirmed, and each attended meeting doubles as a behavioral experiment.",
+      restructuring:"<b>A reasonable start, but not the deepest lever here.</b> Weighing the evidence for \u201cthey think I'm worthless\u201d can loosen the thought, but talking alone leaves the head-gut gap. While he keeps avoiding, the belief keeps refilling. The avoidance is what needs interrupting.",
+      activation:"<b>Aimed at the wrong mechanism.</b> Behavioral activation targets depressive withdrawal from reward. Devon's core engine here is fear-driven avoidance of a specific feared situation, which is exposure territory.",
+      experiment:"<b>Close, and it works alongside the answer.</b> A behavioral experiment tests a prediction, and each returned meeting is one. But the core move that reverses the maintaining mechanism, deliberately re-approaching the avoided situation, is exposure."
+    },
+    rewind:"Run it in reverse: Devon attends one lower-stakes meeting, keeps his eyes up, and nobody ridicules him. That lived evidence is hard to dismiss. The belief loses a little grip, attention widens to the friendly faces, and the next meeting is slightly easier. The loop starts running the other way."
+  },
+  {
+    name:"Depression (Maya-style)",
+    setup:"<b>The situation.</b> Maya feels flat and exhausted. Watch how withdrawal deepens a low mood.",
+    rungs:[
+      {mech:"Core belief", txt:"A deep belief hums underneath: <b>\u201cI'm not good enough, and nothing will help.\u201d</b>"},
+      {mech:"Biased interpretation", txt:"A friend doesn't text back. She reads it as <b>\u201cnobody actually likes me\u201d</b> rather than \u201cthey're busy.\u201d"},
+      {mech:"Behavioral withdrawal", txt:"She stops going to classes and <b>drops the hobbies she used to enjoy</b>, waiting to feel motivated before doing anything."},
+      {mech:"Reward starvation", txt:"With the rewarding activities gone, her days collapse to bed and screen. <b>The sources of good feeling dry up</b>, so her mood sinks further."},
+      {mech:"Belief strengthens", txt:"The empty days feel like proof that <b>\u201cnothing is worth doing.\u201d</b> The belief that started it is now \u201cconfirmed.\u201d"}
+    ],
+    loopback:"That \u201cconfirmed\u201d belief loops back to the top and colors tomorrow before it starts. A mind now surer that nothing helps will read the next ambiguous moment even more darkly and withdraw even faster. The output of the cycle becomes its next input.",
+    branchMech:"Behavioral withdrawal (a shrinking, reward-starved life)",
+    branchPrompt:"The engine here is withdrawal: motivation never comes, so she does nothing, so she feels worse. Which tool best interrupts <em>this</em> point, given how depleted she is?",
+    correct:"activation",
+    outcomes:{
+      activation:"<b>Yes.</b> Behavioral activation schedules small, achievable activity before motivation returns, feeding back the reward that depression had starved her of. It asks little of a foggy mind, which is why therapists often start depression here.",
+      restructuring:"<b>Right level, harder entry point.</b> Examining \u201cnobody likes me\u201d matters, but a depleted, unfocused mind may not manage a detailed thought record yet. Starting with behavior respects her current capacity; cognitive work layers in as energy returns.",
+      exposure:"<b>Aimed at the wrong mechanism.</b> Exposure targets fear-driven avoidance of a feared situation. Maya's engine is depressive withdrawal from reward, which is behavioral activation's target.",
+      experiment:"<b>Useful, but not the first lever.</b> Each scheduled activity can double as a small experiment against \u201cthere's no point.\u201d But the core move that reverses the maintaining mechanism is re-engaging with rewarding activity: behavioral activation."
+    },
+    rewind:"Run it in reverse: Maya schedules a ten-minute walk on two mornings, before she feels like it. She manages it and notices a flicker of feeling slightly better. That's her first lived evidence that action can come before motivation. The next activity is a little easier, and the loop starts to run backward."
+  },
+  {
+    name:"Panic (body-sensation loop)",
+    setup:"<b>The situation.</b> Priya notices her heart racing while sitting at her desk. Watch a fast cycle build in seconds.",
+    rungs:[
+      {mech:"Trigger sensation", txt:"She feels her <b>heart speed up and a wave of dizziness</b>, ordinary sensations that everyone gets."},
+      {mech:"Catastrophic interpretation", txt:"She reads them as <b>\u201cI'm having a heart attack\u201d</b> or \u201cI'm losing control.\u201d"},
+      {mech:"Arousal climbs", txt:"That terrifying interpretation <b>floods her body with more arousal</b>, which produces more sensations."},
+      {mech:"Interpreted as more proof", txt:"The new sensations get read as <b>more evidence of catastrophe</b>, a fast, vicious cycle that can escalate to full panic in seconds."},
+      {mech:"Safety behavior + avoidance", txt:"She rushes out to \u201cbe safe,\u201d which brings relief and <b>teaches her the escape was necessary</b>, so she starts avoiding the places it happened."}
+    ],
+    loopback:"Here the loop is almost instant. More sensations feed a scarier interpretation, which feeds more sensations, spinning within seconds. And the escape at the end trains the next episode to start faster. The output keeps becoming the input.",
+    branchMech:"Catastrophic misinterpretation of body sensations",
+    branchPrompt:"At its root, panic is powered by misreading ordinary sensations as catastrophe. Which tool most directly targets <em>that</em> misinterpretation?",
+    correct:"experiment",
+    correctAlt:"exposure",
+    branchPromptChallenge:"What is the maintaining engine of panic, and which tool most directly targets it?",
+    outcomes:{
+      experiment:"<b>Yes.</b> The matched approach tests the catastrophic prediction directly: with interoceptive exposure, Priya deliberately brings on the feared sensations (breathing fast, spinning) and gathers first-hand data that they're uncomfortable but harmless. That lived test is a behavioral experiment aimed straight at the misinterpretation.",
+      exposure:"<b>Also right.</b> Interoceptive exposure, deliberately bringing on the feared sensations and staying with them, is exactly the matched tool. It works as a behavioral experiment against the catastrophic prediction. Either name captures the correct move here.",
+      restructuring:"<b>A helpful first step, not the whole fix.</b> Education about what the body's alarm response actually does can loosen the catastrophic thought. But panic usually needs a lived test of the sensations rather than discussion alone, to close the head-gut gap.",
+      activation:"<b>Aimed at the wrong mechanism.</b> Behavioral activation targets depressive withdrawal from reward. Panic's engine is catastrophic misinterpretation of sensations, addressed by exposure to those sensations as a behavioral experiment."
+    },
+    rewind:"Run it in reverse: guided by a plan, Priya deliberately brings on the racing-heart feeling and stays with it. Nothing catastrophic happens. Her body gathers new evidence that the sensations are harmless, the catastrophic reading loosens, and the fast cycle loses its fuel."
+  }
+];
+
+var ARROWS = [
+  {
+    name:"Marcus (the email typo)",
+    setup:"<b>Marcus, a graphic designer, in session.</b> This is the reading's own demonstration. We stay with the fear rather than debating whether it's true, and follow it down.",
+    at:"\u201cI made a typo in an email to my creative director. He'll think I'm careless.\u201d",
+    steps:[
+      {
+        layerTag:"Intermediate belief \u00b7 a rule or assumption",
+        prompt:"Downward arrow: \u201cSuppose he did think you were careless. What would that mean to you?\u201d",
+        answer:"b",
+        options:[
+          {id:"a", text:"\u201cHe probably won't even notice the typo.\u201d", correct:false,
+           why:"That's reassurance that argues with the thought. The downward arrow deliberately assumes the fear is true and asks what it would mean, rather than disputing it."},
+          {id:"b", text:"\u201cIt means I'm failing to meet the standards of my team.\u201d", correct:true,
+           why:"This moves down one level, from a situation-specific thought to a conditional rule about standards and failing. That's an intermediate belief."},
+          {id:"c", text:"\u201cIt means I am fundamentally incompetent.\u201d", correct:false,
+           why:"That's the bedrock core belief, one layer too deep to reach in a single step. The arrow moves one level at a time, through the rule first."}
+        ]
+      },
+      {
+        layerTag:"Core belief \u00b7 the bedrock schema",
+        prompt:"Downward arrow again: \u201cAnd if you were failing your team's standards, what would that mean about you?\u201d",
+        answer:"c",
+        options:[
+          {id:"a", text:"\u201cIt means I should double-check my emails from now on.\u201d", correct:false,
+           why:"That's a coping plan, not a deeper belief. The arrow is still descending toward the conviction underneath, not jumping to solutions."},
+          {id:"b", text:"\u201cIt means this one project might go badly.\u201d", correct:false,
+           why:"That stays at the surface, situation level. It moves sideways or back up rather than down toward the bedrock."},
+          {id:"c", text:"\u201cIt means I am fundamentally incompetent.\u201d", correct:true,
+           why:"This is the bedrock core belief, an absolute, global statement about the self. Marcus has carried this conviction for years, and his mind uses it to read ordinary events as dangerous."}
+        ]
+      }
+    ],
+    whereto:"With all three layers visible, you can choose where to work. Calming the surface thought (\u201cit was one typo\u201d) may help for a while. But if these thoughts keep regenerating, it's a sign the rule and the core belief underneath are still intact and still producing them, and that deeper work is where lasting relief tends to come from."
+  },
+  {
+    name:"The student (before class)",
+    setup:"<b>A student, right before class.</b> The reading's second example. Same technique, a different chain.",
+    at:"\u201cI'm going to say something stupid and everyone will notice.\u201d",
+    steps:[
+      {
+        layerTag:"Intermediate belief \u00b7 a rule or assumption",
+        prompt:"Downward arrow: \u201cSuppose you did look foolish and people noticed. What would that mean?\u201d",
+        answer:"a",
+        options:[
+          {id:"a", text:"\u201cIf I look foolish, people will reject me.\u201d", correct:true,
+           why:"This is a conditional if-then rule linking looking foolish to a consequence. That's the intermediate-belief layer."},
+          {id:"b", text:"\u201cEveryone says awkward things sometimes.\u201d", correct:false,
+           why:"That's a reassurance that disputes the fear. The downward arrow assumes the fear for a moment and follows it down instead."},
+          {id:"c", text:"\u201cI am fundamentally unlikable.\u201d", correct:false,
+           why:"That's the core belief at the bottom, one step too far. The arrow reaches it through the rule, not in a single jump."}
+        ]
+      },
+      {
+        layerTag:"Core belief \u00b7 the bedrock schema",
+        prompt:"Downward arrow again: \u201cAnd if people did reject you, what would that mean about you?\u201d",
+        answer:"b",
+        options:[
+          {id:"a", text:"\u201cIt means I should just stay quiet in class.\u201d", correct:false,
+           why:"That's an avoidance plan, not a deeper belief. The arrow is tracing conviction, not choosing a coping move yet."},
+          {id:"b", text:"\u201cIt means I am fundamentally unlikable.\u201d", correct:true,
+           why:"This is the bedrock: an absolute, global belief about the self. It's the lens that makes ordinary social moments feel threatening."},
+          {id:"c", text:"\u201cIt means that class is a tough crowd.\u201d", correct:false,
+           why:"That relocates the problem to the situation and stays at the surface, rather than descending to a belief about the self."}
+        ]
+      }
+    ],
+    whereto:"Seeing all three layers tells you how deep the work must go. Knock down the surface thought and, if the rule and the core belief are untouched, the same automatic thoughts will keep coming back. How deep a problem runs tells you how deep the work has to reach."
+  }
+];
+var ARROW_DIY = {
+  setup:"Pick one of your own recent automatic thoughts: a quick, alarming thought from an ordinary moment (a text left unanswered, a comment at work, a small mistake). Write it at the top, then follow the arrow down.",
+  model:{
+    at:"Example shape: a quick, situation-bound thought, e.g. \u201cShe didn't say hi back; she's annoyed with me.\u201d",
+    inter:"Example shape: a conditional rule it rests on, e.g. \u201cIf people are annoyed with me, I've done something wrong.\u201d",
+    core:"Example shape: an absolute belief about yourself, e.g. \u201cI'm a burden to the people around me.\u201d"
+  }
+};
+
+var topMode="loop";
+var loopDiff="guided", scenIdx=0, revealed=0, answered=false;
+var arrStage="guided", arrIdx=0, arrAnswers=[], arrDIY={revealed:false,text:{at:"",inter:"",core:""}};
+
+function setContrast(){
+  var c=document.getElementById("contrast");
+  var svg='<svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 3v14M6 13l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="4" r="1.6" fill="currentColor"/></svg>';
+  if(topMode==="loop"){
+    c.innerHTML=svg+"<div><b>Not the downward-arrow technique.</b> This is the self-perpetuating cycle, a loop that worsens over time as the belief gathers its own \u201cevidence.\u201d The downward arrow (other tab) is different: it digs through layers of belief at a single moment. Watch this one <b>curve back on itself</b> at the end.</div>";
+  } else {
+    c.innerHTML=svg+"<div><b>Not the loop.</b> The downward arrow traces one thought straight down through its layers (automatic thought \u2192 rule \u2192 core belief) at a single moment. It doesn't cycle or worsen over time; it's a probe that finds what sits underneath. The loop (other tab) is the cycle that feeds itself.</div>";
+  }
+}
+function switchTop(m){
+  topMode=m;
+  document.getElementById("mm-loop").setAttribute("aria-pressed", String(m==="loop"));
+  document.getElementById("mm-arrow").setAttribute("aria-pressed", String(m==="arrow"));
+  document.getElementById("loopMode").classList.toggle("hidden", m!=="loop");
+  document.getElementById("arrowMode").classList.toggle("hidden", m!=="arrow");
+  setContrast();
+  if(m==="loop"){ resetLoop(); } else { renderArrow(); }
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function fillScenarioSelect(){
+  var sel=document.getElementById("scenarioSel"); sel.innerHTML="";
+  SCENARIOS.forEach(function(s,i){ var o=document.createElement("option"); o.value=String(i); o.textContent=s.name; sel.appendChild(o); });
+  sel.value=String(scenIdx);
+  sel.addEventListener("change", function(){ scenIdx=parseInt(sel.value,10); resetLoop(); });
+}
+function setLoopDiff(m){
+  loopDiff=m;
+  document.getElementById("mode-guided").setAttribute("aria-pressed", String(m==="guided"));
+  document.getElementById("mode-challenge").setAttribute("aria-pressed", String(m==="challenge"));
+  document.getElementById("diffnote").textContent = (m==="guided")
+    ? "Guided: each rung names the mechanism at work, and the branch tells you which mechanism to match."
+    : "Challenge: the mechanisms are hidden. Read the cycle, infer what's keeping it going, and match the tool yourself.";
+  resetLoop();
+}
+function resetLoop(){
+  revealed=1; answered=false;
+  document.getElementById("branch").classList.add("hidden");
+  document.getElementById("loopback").classList.add("hidden");
+  document.getElementById("setup").innerHTML = SCENARIOS[scenIdx].setup;
+  renderSpiral();
+}
+var CONNECTOR='<div class="connector"><svg width="20" height="24" viewBox="0 0 20 24" fill="none"><path d="M10 2v16" stroke="#b8b2a8" stroke-width="1.6"/><path d="M5 14l5 6 5-6" stroke="#b8b2a8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+var CURL='<span class="curl"><svg width="24" height="40" viewBox="0 0 24 40" fill="none"><path d="M14 4C4 4 4 20 4 20c0 0 0 16 10 16" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M10 31l4 5 4-5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+
+function renderSpiral(){
+  var sc=SCENARIOS[scenIdx];
+  var host=document.getElementById("spiral"); host.innerHTML="";
+  for(var i=0;i<revealed;i++){
+    var r=sc.rungs[i];
+    var stepCls="s"+Math.min(i+1,5);
+    var indentCls="indent"+Math.min(i,4);
+    var rung=el("div","stepwrap");
+    var box=el("div","rung "+stepCls+" "+indentCls);
+    if(loopDiff==="guided"){ box.appendChild(el("div","mech", esc(r.mech))); }
+    box.appendChild(el("div","txt", r.txt));
+    rung.appendChild(box);
+    host.appendChild(rung);
+    if(i<revealed-1){ var c=el("div"); c.innerHTML=CONNECTOR; host.appendChild(c); }
+  }
+  var full = revealed>=sc.rungs.length;
+  var lb=document.getElementById("loopback");
+  if(full){ lb.classList.remove("hidden"); lb.innerHTML=CURL+"<b>The loop closes.</b> "+esc(sc.loopback); }
+  else { lb.classList.add("hidden"); }
+  var nw=document.getElementById("nextWrap"); nw.innerHTML="";
+  if(revealed < sc.rungs.length){
+    var b=el("button","btn secondary", (revealed===1?"Follow it down \u2193":"Deeper \u2193"));
+    b.addEventListener("click", function(){ revealed++; renderSpiral(); window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"}); });
+    nw.appendChild(b);
+  } else if(!answered){
+    var b2=el("button","btn wide","Where can we break this loop?");
+    b2.addEventListener("click", function(){ showBranch(); });
+    nw.appendChild(b2);
+  }
+}
+function isRightTool(sc, k){ return k===sc.correct || (sc.correctAlt && k===sc.correctAlt); }
+function showBranch(){
+  var sc=SCENARIOS[scenIdx];
+  var box=document.getElementById("branch"); box.classList.remove("hidden"); box.innerHTML="";
+  box.appendChild(el("h3",null,"Break the loop"));
+  if(loopDiff==="guided"){
+    box.appendChild(el("div","mechtag","Mechanism to target: "+esc(sc.branchMech)));
+    box.appendChild(el("p", sc.branchPrompt));
+  } else {
+    box.appendChild(el("p", sc.branchPromptChallenge || sc.branchPrompt));
+  }
+  var grid=el("div","tools");
+  Object.keys(TOOLS).forEach(function(k){
+    var t=TOOLS[k];
+    var btn=el("button","tool"); btn.type="button";
+    btn.innerHTML='<span class="nm">'+esc(t.nm)+'</span><span class="gl">'+esc(t.gl)+'</span>';
+    btn.addEventListener("click", function(){ pickTool(k); });
+    grid.appendChild(btn);
+  });
+  box.appendChild(grid); box._grid=grid;
+  window.scrollTo({top:box.offsetTop-10,behavior:"smooth"});
+}
+function pickTool(k){
+  if(answered) return; answered=true;
+  var sc=SCENARIOS[scenIdx];
+  var box=document.getElementById("branch");
+  var right=isRightTool(sc,k);
+  var buttons=box._grid.querySelectorAll(".tool");
+  var keys=Object.keys(TOOLS);
+  buttons.forEach(function(btn,i){
+    btn.disabled=true; var key=keys[i];
+    if(key===k){ btn.classList.add(right?"correct-pick":"wrong-pick"); }
+    else if(isRightTool(sc,key) && !right){ btn.classList.add("show-correct"); }
+    else if(!isRightTool(sc,key)){ btn.classList.add("dim"); }
+  });
+  var out=el("div","outcome "+(right?"ok":"no")); out.innerHTML=sc.outcomes[k]; box.appendChild(out);
+  if(right){ var rw=el("div","rewind"); rw.innerHTML="<b>Now watch it reverse.</b> "+esc(sc.rewind); box.appendChild(rw); }
+  var act=el("div","actions");
+  if(!right){
+    var tryAgain=el("button","btn secondary","Try a different tool");
+    tryAgain.addEventListener("click", function(){ answered=false; showBranch(); });
+    act.appendChild(tryAgain);
+  }
+  var another=el("button","btn"+(right?"":" secondary"), "Run another loop");
+  another.addEventListener("click", function(){
+    scenIdx=(scenIdx+1)%SCENARIOS.length;
+    document.getElementById("scenarioSel").value=String(scenIdx);
+    resetLoop(); window.scrollTo({top:0,behavior:"smooth"});
+  });
+  act.appendChild(another); box.appendChild(act);
+  box.appendChild(el("p","selfnote","Every technique in this module is, at bottom, a different way of prying open this loop. The skill is matching the tool to the mechanism actually keeping the cycle going, rather than reaching for a favorite. Nothing here is saved or sent."));
+  window.scrollTo({top:box.offsetTop-10,behavior:"smooth"});
+}
+
+function fillArrowSelect(){
+  var sel=document.getElementById("arrScenarioSel"); sel.innerHTML="";
+  ARROWS.forEach(function(a,i){ var o=document.createElement("option"); o.value=String(i); o.textContent=a.name; sel.appendChild(o); });
+  sel.value=String(arrIdx);
+  sel.addEventListener("change", function(){ arrIdx=parseInt(sel.value,10); arrAnswers=[]; renderArrow(); });
+}
+function setArrStage(s){
+  arrStage=s;
+  document.getElementById("arr-guided").setAttribute("aria-pressed", String(s==="guided"));
+  document.getElementById("arr-diy").setAttribute("aria-pressed", String(s==="diy"));
+  document.getElementById("arrScenPickWrap").style.visibility = (s==="guided")?"visible":"hidden";
+  document.getElementById("arrNote").textContent = (s==="guided")
+    ? "Guided example: assume the fear is true for a moment and choose what it would mean, one layer at a time, down to the core belief."
+    : "Your own thought: write a thought and trace it down yourself. Nothing you type is saved or sent.";
+  renderArrow();
+}
+var ARROWDOWN='<div class="arrowq"><span class="qmark">\u201cand if that were true, what would it mean?\u201d</span><svg width="20" height="26" viewBox="0 0 20 26" fill="none"><path d="M10 2v18" stroke="#9a7a4e" stroke-width="1.7"/><path d="M4 15l6 7 6-7" stroke="#9a7a4e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+
+function renderArrow(){ if(arrStage==="guided"){ renderArrowGuided(); } else { renderArrowDIY(); } }
+function renderArrowGuided(){
+  var a=ARROWS[arrIdx];
+  if(!arrAnswers.length) arrAnswers=a.steps.map(function(){return null;});
+  var panel=document.getElementById("arrPanel"); panel.innerHTML=""; panel.className="";
+  panel.appendChild(el("div","setup", a.setup));
+  var box0=el("div","layerbox l1");
+  box0.appendChild(el("span","ltag","Automatic thought \u00b7 the surface"));
+  box0.appendChild(el("div","lthought", esc(a.at)));
+  panel.appendChild(box0);
+  for(var si=0; si<a.steps.length; si++){
+    var conn=el("div"); conn.innerHTML=ARROWDOWN; panel.appendChild(conn);
+    var step=a.steps[si], chosen=arrAnswers[si];
+    var lcls=(si===a.steps.length-1)?"l3":"l2";
+    var lb=el("div","layerbox "+lcls);
+    lb.appendChild(el("span","ltag", esc(step.layerTag)));
+    var fld=el("div","field");
+    fld.appendChild(el("div","prompt", step.prompt));
+    var sel=document.createElement("select"); sel.className="step";
+    var ph=document.createElement("option"); ph.value=""; ph.textContent="Choose what it would mean\u2026"; ph.disabled=true; ph.selected=chosen===null; sel.appendChild(ph);
+    step.options.forEach(function(o){ var op=document.createElement("option"); op.value=o.id; op.textContent=o.text.replace(/\u201c|\u201d/g,'"'); if(chosen===o.id) op.selected=true; sel.appendChild(op); });
+    if(chosen!==null){
+      sel.disabled=true;
+      var ch=step.options.filter(function(o){return o.id===chosen;})[0];
+      sel.classList.add(ch&&ch.correct?"ok":"no");
+    } else {
+      (function(idxLocal){ sel.addEventListener("change", function(){ arrAnswers[idxLocal]=sel.value; renderArrow(); window.scrollTo({top:document.getElementById("arrPanel").offsetTop-10,behavior:"smooth"}); }); })(si);
+    }
+    fld.appendChild(sel);
+    if(chosen!==null){
+      var ch2=step.options.filter(function(o){return o.id===chosen;})[0];
+      var ok=ch2&&ch2.correct;
+      var note=el("div","fnote "+(ok?"ok":"no"));
+      if(ok){ note.innerHTML="<b>Yes.</b> "+esc(ch2.why); }
+      else{
+        var right=step.options.filter(function(o){return o.correct;})[0];
+        note.innerHTML="<b>Not the next layer down.</b> "+esc(ch2.why)+" <br><b>The faithful step:</b> \u201c"+esc(right.text.replace(/\u201c|\u201d/g,''))+"\u201d";
+      }
+      fld.appendChild(note);
+    }
+    lb.appendChild(fld); panel.appendChild(lb);
+    if(chosen===null) break;
+  }
+  var allDone = arrAnswers.every(function(x){return x!==null;});
+  if(allDone){
+    var w=el("div","whereto");
+    w.innerHTML='<div class="st">Now you can choose where to work</div>'+esc(a.whereto);
+    panel.appendChild(w);
+  }
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var nb=el("button","btn secondary","Try your own thought \u2192");
+  nb.addEventListener("click", function(){ setArrStage("diy"); });
+  foot.appendChild(nb); panel.appendChild(foot);
+}
+function renderArrowDIY(){
+  var panel=document.getElementById("arrPanel"); panel.innerHTML=""; panel.className="diy";
+  panel.appendChild(el("div","setup", ARROW_DIY.setup));
+  var fields=[
+    ["at","Automatic thought \u00b7 the surface","l1","Write your quick, situation-bound thought.","e.g. She didn't reply; she's upset with me."],
+    ["inter","Intermediate belief \u00b7 the rule underneath","l2","If that were true, what would it mean? Write the rule it rests on.","e.g. If people are upset with me, I've done wrong."],
+    ["core","Core belief \u00b7 the bedrock","l3","And if THAT were true, what would it mean about you? Write the deep belief.","e.g. I'm a burden to people."]
+  ];
+  fields.forEach(function(f,i){
+    if(i>0){ var conn=el("div"); conn.innerHTML=ARROWDOWN; panel.appendChild(conn); }
+    var lb=el("div","layerbox "+f[2]);
+    lb.appendChild(el("span","ltag", f[1]));
+    var fld=el("div","field");
+    fld.appendChild(el("div","prompt", f[3]));
+    var ta=document.createElement("textarea"); ta.value=arrDIY.text[f[0]]; ta.placeholder=f[4];
+    (function(key){ ta.addEventListener("input", function(){ arrDIY.text[key]=ta.value; }); })(f[0]);
+    fld.appendChild(ta); lb.appendChild(fld); panel.appendChild(lb);
+  });
+  var cmp=el("div","compare"+(arrDIY.revealed?"":" hidden"));
+  cmp.innerHTML="<b>Compare with a model shape.</b> There's no single right answer, and this isn't scored. Use these to check that each line sits one layer deeper than the one above."+
+    '<div class="modelrow"><div class="ml">Automatic thought</div>'+esc(ARROW_DIY.model.at)+'</div>'+
+    '<div class="modelrow"><div class="ml">Intermediate belief</div>'+esc(ARROW_DIY.model.inter)+'</div>'+
+    '<div class="modelrow"><div class="ml">Core belief</div>'+esc(ARROW_DIY.model.core)+'</div>';
+  panel.appendChild(cmp);
+  var foot=el("div","foot");
+  var rb=el("button","btn secondary", arrDIY.revealed?"Hide model":"Compare with a model");
+  rb.addEventListener("click", function(){ arrDIY.revealed=!arrDIY.revealed; renderArrow(); });
+  foot.appendChild(rb);
+  var back=el("button","btn","Back to the guided example");
+  back.addEventListener("click", function(){ setArrStage("guided"); });
+  foot.appendChild(back); panel.appendChild(foot);
+  panel.appendChild(el("p","selfnote","This runs entirely on your own screen. Nothing you type is saved, sent, or made visible to anyone else, including your instructor. When you close or refresh the page, it's gone."));
+}
+
+document.getElementById("mm-loop").addEventListener("click", function(){ switchTop("loop"); });
+document.getElementById("mm-arrow").addEventListener("click", function(){ switchTop("arrow"); });
+document.getElementById("mode-guided").addEventListener("click", function(){ setLoopDiff("guided"); });
+document.getElementById("mode-challenge").addEventListener("click", function(){ setLoopDiff("challenge"); });
+document.getElementById("arr-guided").addEventListener("click", function(){ setArrStage("guided"); });
+document.getElementById("arr-diy").addEventListener("click", function(){ setArrStage("diy"); });
+
+fillScenarioSelect();
+fillArrowSelect();
+setContrast();
+setLoopDiff("guided");
+</script>
+</body>
+</html>

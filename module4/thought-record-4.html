@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build a Thought Record</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --do-bg:#eef3fb; --do-line:#c9d9f0; --do-ink:#2f4a72;
+    --sit:#5b6aa0; --sit-soft:#e6e9f4;
+    --at:#8a6a2f;  --at-soft:#f4e9d8;
+    --fb:#b0472a;  --fb-soft:#f7e4dd;
+    --bal:#3f6f57; --bal-soft:#e3efe7;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:80ch;}
+
+  .privacy{display:flex;gap:9px;align-items:flex-start;background:var(--ok-bg);border:1px solid var(--ok-line);
+    color:var(--ok-ink);border-radius:12px;padding:11px 14px;margin:12px 0 4px;font-size:13px;line-height:1.5;}
+  .privacy svg{flex:0 0 auto;margin-top:1px;}
+
+  .steps-legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px;}
+  .slg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:5px 11px;background:#fff;}
+  .slg .n{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:12px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .qtop{font-size:13px;color:var(--muted);margin-bottom:12px;}
+
+  .rowlabel{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:7px;padding:3px 9px;margin-bottom:7px;}
+  .rl-sit{background:var(--sit-soft);color:var(--sit);}
+  .rl-at{background:var(--at-soft);color:var(--at);}
+  .rl-fb{background:var(--fb-soft);color:var(--fb);}
+  .rl-dist{background:#efe6f2;color:#6d4a86;}
+  .rl-bal{background:var(--bal-soft);color:var(--bal);}
+
+  .given{background:#f5f3ef;border-radius:12px;padding:13px 15px;font-size:15px;line-height:1.5;margin-bottom:4px;border-left:3px solid var(--sit);}
+  .field{margin:16px 0 0;}
+  .field .prompt{font-size:13.5px;color:var(--ink);margin-bottom:7px;}
+  select{width:100%;font:inherit;font-size:14.5px;color:var(--ink);background:#fff;border:1px solid var(--line);
+    border-radius:10px;padding:11px 13px;cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none'><path d='M5 7l5 5 5-5' stroke='%236b6862' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;}
+  select:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  select:disabled{cursor:default;opacity:1;}
+  select.ok{background-color:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink);}
+  select.no{background-color:var(--no-bg);border-color:var(--no-line);color:var(--no-ink);}
+
+  .fnote{margin-top:7px;font-size:13px;line-height:1.55;padding:9px 12px;border-radius:9px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote.exit{background:var(--amber-bg);color:var(--amber-ink);border:1px solid var(--amber-line);}
+  .fnote.exit .exhead{display:flex;align-items:center;gap:7px;font-weight:700;margin-bottom:5px;}
+  .fnote.exit .exhead svg{flex:0 0 auto;}
+  .miniloop{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:10px 0 2px;}
+  @media(max-width:520px){ .miniloop{grid-template-columns:1fr;} }
+  .miniloop .mlcard{border-radius:9px;padding:9px 11px;font-size:12px;line-height:1.45;}
+  .miniloop .mlcard.tight{background:var(--no-bg);border:1px solid var(--no-line);color:var(--no-ink);}
+  .miniloop .mlcard.calm{background:var(--ok-bg);border:1px solid var(--ok-line);color:var(--ok-ink);}
+  .miniloop .mlcard .mlh{font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;}
+  .fnote b{font-weight:700;}
+
+  .filled{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:14.5px;margin-top:2px;}
+  .filled.done{background:var(--bal-soft);border-color:var(--bal-line);}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  /* DIY row */
+  .diy .field textarea{width:100%;font:inherit;font-size:14.5px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px;min-height:60px;resize:vertical;line-height:1.5;}
+  .diy .field textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .diy .guide{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.5;}
+  .compare{margin-top:14px;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;}
+  .compare.hidden{display:none;}
+  .compare b{font-weight:700;}
+  .compare .modelrow{margin-top:8px;}
+  .compare .ml{font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--amber-ink);}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.6;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Build a Thought Record</h1>
+    <p class="sub">A thought record is the core tool of cognitive restructuring, a simple worksheet that turns a swirling, believable thought into an object you can examine. You'll complete several rows using dropdowns, then build one or two of your own. The steps stay the same each time: catch the thought, name the feeling and what it drives, spot the distortion, and write a fairer, more accurate thought.</p>
+  </div>
+
+  <div class="privacy">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 2.5l6 2.2v4.1c0 3.6-2.5 6.9-6 8.2-3.5-1.3-6-4.6-6-8.2V4.7l6-2.2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.3 10.2l1.9 1.9 3.6-3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><b>Nothing here is recorded.</b> Everything you select or type stays in your browser on your own screen. Nothing is saved, sent, or transmitted anywhere, and no one, including your instructor, can see what you write. When you close or refresh the page, it's gone.</div>
+  </div>
+
+  <div class="steps-legend" aria-hidden="true">
+    <span class="slg"><span class="n" style="background:var(--sit)">1</span>Situation</span>
+    <span class="slg"><span class="n" style="background:var(--at)">2</span>Automatic thought</span>
+    <span class="slg"><span class="n" style="background:var(--fb)">3</span>Feeling &amp; behavior</span>
+    <span class="slg"><span class="n" style="background:#6d4a86">4</span>Distortion</span>
+    <span class="slg"><span class="n" style="background:var(--bal)">5</span>Balanced thought</span>
+  </div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+  <section class="card results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// ===========================================================================
+// Build a Thought Record (Module 4). A guided thought-record / ABCD worksheet.
+// Columns follow the reading's thought record (ug-module-readings.md,
+// "Cognitive Restructuring"): situation, automatic thought, feeling (+behavior),
+// and a balanced alternative, with an added step to name the cognitive distortion
+// (the reading's seven-distortion list). Guided rows use dropdowns with correctness
+// feedback (green = correct, red = wrong, per house convention). The final rows are
+// do-it-yourself with free-text plus a model answer to self-compare against.
+// Fully client-side: nothing is transmitted or stored (stated to the user).
+// No write-then-compare scoring beyond the guided dropdowns; DIY rows are self-checked.
+// ===========================================================================
+
+// Distortion options reused across rows (the reading's seven).
+var DISTORTIONS = [
+  {id:"aon",  name:"All-or-nothing thinking"},
+  {id:"cat",  name:"Catastrophizing"},
+  {id:"mr",   name:"Mind reading"},
+  {id:"og",   name:"Overgeneralization"},
+  {id:"mf",   name:"Mental filtering"},
+  {id:"pers", name:"Personalization"},
+  {id:"should", name:"\u201cShould\u201d statements"}
+];
+function distName(id){ for(var i=0;i<DISTORTIONS.length;i++){ if(DISTORTIONS[i].id===id) return DISTORTIONS[i].name; } return id; }
+
+// Guided rows. Each field: a prompt, an options array [{text, correct?, why}], where
+// exactly one option is correct. The "dist" field uses the shared distortion list,
+// with `answer` giving the correct id (and optional `also`).
+var ROWS = [
+  {
+    situation:"You text a close friend an excited message about some news. A full day passes with no reply.",
+    at:{
+      prompt:"Step 2. Which automatic thought best fits this situation? (The quick interpretation that fires first.)",
+      options:[
+        {id:"a", text:"\u201cThey're probably busy; I'll hear back soon.\u201d", correct:false, exit:true,
+         why:"That's already a balanced thought, not the hot automatic one. The automatic thought is the alarming interpretation that fires first, before any reasoning.",
+         exitNote:"You reached for the balanced thought first, before the alarming one. Hold onto that, because it's the whole skill this record is building. In a real moment, when that fair reading arrives first, the spiral never gets going: there's no hurt to drive withdrawal, no withdrawal to seem like proof, nothing for the belief to feed on. For now, so the record can show you the full move, pick the automatic thought that would fire first for most people, and we'll practice getting from it to the balanced one you already found."},
+        {id:"b", text:"\u201cThey're ignoring me. They must be tired of me.\u201d", correct:true,
+         why:"This is the fast, alarming interpretation that arrives on its own and feels like fact. That's what an automatic thought is."},
+        {id:"c", text:"\u201cText messaging is an unreliable way to share news.\u201d", correct:false,
+         why:"That's a general opinion, not the in-the-moment interpretation driving a feeling."}
+      ]
+    },
+    fb:{
+      prompt:"Step 3. Given that thought, which feeling-and-behavior pairing follows?",
+      options:[
+        {id:"a", text:"Hurt and anxiety \u2192 you reread the message, then go quiet and don't follow up.", correct:true,
+         why:"The thought 'they're tired of me' produces hurt and anxiety, which drive withdrawal. Feeling and behavior follow from the interpretation."},
+        {id:"b", text:"Calm relief \u2192 you happily move on with your day.", correct:false,
+         why:"That doesn't follow from 'they're ignoring me.' The alarming thought produces distress, not relief."},
+        {id:"c", text:"Pride \u2192 you tell more people your news.", correct:false,
+         why:"This doesn't match the hurt that 'they're tired of me' would produce."}
+      ]
+    },
+    dist:{
+      prompt:"Step 4. Which distortion is this thought mainly showing?",
+      answer:"mr",
+      why:"Reading a specific private judgment ('tired of me') into an ambiguous silence, treated as fact, is mind reading. A day's delay has many ordinary explanations."
+    },
+    bal:{
+      prompt:"Step 5. Which is the most balanced, accurate rewrite? (Fairer, rather than merely cheerier.)",
+      options:[
+        {id:"a", text:"\u201cEveryone loves my news and I'm being silly.\u201d", correct:false,
+         why:"That's forced positivity, not accuracy. The goal is a fair reading, not a cheerful one."},
+        {id:"b", text:"\u201cA one-day delay usually means someone is busy. I don't have evidence they're upset, and I can check in if it continues.\u201d", correct:true,
+         why:"This weighs the actual evidence and lands on a fair, workable reading, which may still leave some uncertainty. That's cognitive restructuring."},
+        {id:"c", text:"\u201cThey clearly don't care, so I shouldn't bother them again.\u201d", correct:false,
+         why:"That just restates the distortion as if it were settled. It isn't fairer or more accurate."}
+      ]
+    }
+  },
+  {
+    situation:"You get your midterm back with a B-. You had hoped for an A.",
+    at:{
+      prompt:"Step 2. Which is the automatic thought here?",
+      options:[
+        {id:"a", text:"\u201cThis one grade was disappointing; let me see what to adjust.\u201d", correct:false, exit:true,
+         why:"That's a balanced response, not the raw automatic thought that fires first.",
+         exitNote:"Notice what you did: you went straight to the calm, workable reading. That's exactly where the thought record is trying to get you, and when it comes first in real life the downward spiral simply doesn't start. To see the full skill, though, pick the automatic thought that tends to fire first, and we'll trace how someone gets from that hot thought to the balanced one you reached for."},
+        {id:"b", text:"\u201cI'm just not smart enough for this. I'll never succeed here.\u201d", correct:true,
+         why:"This is the fast, absolute, self-defining interpretation that arrives on its own, felt as fact."},
+        {id:"c", text:"\u201cGrading can be subjective sometimes.\u201d", correct:false,
+         why:"A general observation, not the hot thought producing the feeling."}
+      ]
+    },
+    fb:{
+      prompt:"Step 3. Which feeling-and-behavior pairing follows from that thought?",
+      options:[
+        {id:"a", text:"Discouragement \u2192 you study less and start avoiding the class.", correct:true,
+         why:"'Not smart enough' produces discouragement, which drives withdrawal, which then worsens results. That is the self-perpetuating cycle running in everyday life."},
+        {id:"b", text:"Motivation \u2192 you calmly plan your next steps.", correct:false,
+         why:"That would follow from a balanced thought, not from 'I'll never succeed.'"},
+        {id:"c", text:"Indifference \u2192 you don't think about it at all.", correct:false,
+         why:"The thought is emotionally charged, so indifference doesn't fit."}
+      ]
+    },
+    dist:{
+      prompt:"Step 4. Which distortion is doing the most work?",
+      answer:"og", also:"aon",
+      why:"One grade becomes 'never' and a fixed trait ('not smart enough'), which is overgeneralization. It also has an all-or-nothing flavor (anything short of an A means failure), so either is a fair read."
+    },
+    bal:{
+      prompt:"Step 5. Which is the balanced, accurate rewrite?",
+      options:[
+        {id:"a", text:"\u201cI'm actually brilliant and this grade means nothing.\u201d", correct:false,
+         why:"Forced positivity your mind won't believe. Accuracy, not cheerfulness, is the aim."},
+        {id:"b", text:"\u201cThis one grade was disappointing. What specifically went wrong, and what can I change next time?\u201d", correct:true,
+         why:"This is accurate and workable: it keeps you engaged instead of shutting you down, and it's more truthful than either the harsh verdict or empty reassurance."},
+        {id:"c", text:"\u201cI'm probably going to fail the whole course.\u201d", correct:false,
+         why:"That's catastrophizing, not a fairer reading."}
+      ]
+    }
+  },
+  {
+    situation:"At a meeting, you share an idea. A senior colleague glances at their laptop and doesn't respond before the group moves on.",
+    at:{
+      prompt:"Step 2. Which is the automatic thought?",
+      options:[
+        {id:"a", text:"\u201cThey think my idea was stupid.\u201d", correct:true,
+         why:"A fast interpretation of an ambiguous cue (a glance) as a specific judgment, felt as fact. That's the automatic thought."},
+        {id:"b", text:"\u201cPeople check laptops in meetings for all sorts of reasons.\u201d", correct:false, exit:true,
+         why:"That's a balanced reframe, not the hot automatic thought.",
+         exitNote:"That's the fair, evidence-weighed reading, and you got to it on your own. When it lands first in a real meeting, the spiral has nothing to run on: no embarrassment, no going quiet, no \u201cproof\u201d that you don't belong. So you can see the whole move, pick the automatic thought that would fire first for most people, and we'll practice getting back to the balanced one you already have."},
+        {id:"c", text:"\u201cI should email the idea later so it's on record.\u201d", correct:false,
+         why:"That's a plan, not the interpretation driving the feeling."}
+      ]
+    },
+    fb:{
+      prompt:"Step 3. Which feeling-and-behavior pairing follows?",
+      options:[
+        {id:"a", text:"Embarrassment \u2192 you stay quiet for the rest of the meeting.", correct:true,
+         why:"'They think it's stupid' produces embarrassment, which drives you to withhold further ideas, a small avoidance."},
+        {id:"b", text:"Confidence \u2192 you speak up even more.", correct:false,
+         why:"That doesn't follow from the embarrassing interpretation."},
+        {id:"c", text:"Boredom \u2192 you stop paying attention.", correct:false,
+         why:"The thought is about being judged, which produces anxiety, not boredom."}
+      ]
+    },
+    dist:{
+      prompt:"Step 4. Which distortion is this mainly?",
+      answer:"mr",
+      why:"Assigning a specific thought ('stupid') to someone based on a glance, with no real evidence, is mind reading. The glance could be about an email, a spreadsheet, or a headache."
+    },
+    bal:{
+      prompt:"Step 5. Which is the balanced rewrite?",
+      options:[
+        {id:"a", text:"\u201cEveryone secretly loved it.\u201d", correct:false,
+         why:"Mind reading in the other direction, and still not evidence-based."},
+        {id:"b", text:"\u201cA glance at a laptop tells me almost nothing about what they thought. If I want to know, I can follow up.\u201d", correct:true,
+         why:"This names the lack of evidence and offers a real way to find out, which is the fair, accurate reading."},
+        {id:"c", text:"\u201cI clearly can't contribute anything useful here.\u201d", correct:false,
+         why:"That escalates the distortion into overgeneralization; it's not fairer."}
+      ]
+    }
+  }
+];
+
+// Do-it-yourself rows: free text, with a model answer to self-compare (not scored).
+var DIY = [
+  {
+    situation:"Think of a recent moment when your mood dropped: a text left on read, a piece of feedback, a mistake you replayed. Use that as your situation.",
+    model:{
+      at:"Example shape: a fast, absolute interpretation felt as fact, e.g. \u201cI always mess these things up.\u201d",
+      fb:"Example shape: name the feeling and what it made you do or avoid, e.g. \u201cShame \u2192 I put off replying.\u201d",
+      dist:"Example shape: name which of the seven it fits, e.g. overgeneralization ('always') or mind reading.",
+      bal:"Example shape: a fair, evidence-weighed rewrite that may still be a little negative, e.g. \u201cI got this one wrong. That's specific and fixable, not proof of a pattern.\u201d"
+    }
+  }
+];
+
+var idx=0;             // 0..ROWS.length-1 are guided; then DIY rows; then results
+var answers=[];        // per guided row: {at, fb, dist, bal} chosen ids
+var TOTAL = ROWS.length + DIY.length;
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function init(){
+  answers = ROWS.map(function(){ return {at:null, fb:null, dist:null, bal:null, exitAt:null}; });
+  diyState = DIY.map(function(){ return {revealed:false, text:{at:"",fb:"",dist:"",bal:""}}; });
+  idx=0; render();
+}
+var diyState=[];
+
+function renderProgress(){
+  document.getElementById("pbarfill").style.width=(idx/TOTAL*100)+"%";
+  document.getElementById("pcount").textContent="Row "+Math.min(idx+1,TOTAL)+" of "+TOTAL;
+}
+
+function render(){
+  renderProgress();
+  if(idx < ROWS.length){ renderGuided(); }
+  else { renderDIY(idx - ROWS.length); }
+}
+
+// Build a dropdown field for an options-based step.
+// isExitStep = true only for the automatic-thought step, where picking the
+// adaptive (balanced) option triggers a teaching fork instead of locking: it shows
+// how that healthy instinct interrupts the spiral, then invites the student to pick
+// the automatic thought so the record can still teach the full move.
+function optionField(rowi, key, field, chosenId, isExitStep){
+  var wrap=el("div","field");
+  wrap.appendChild(el("div","prompt", field.prompt));
+  var sel=document.createElement("select");
+
+  // Is the CURRENT pending selection an unresolved exit pick? (stored separately)
+  var pendingExit = isExitStep ? (answers[rowi].exitAt || null) : null;
+  var answered = chosenId!==null;
+  var showExit = !answered && pendingExit!==null;
+
+  var ph=document.createElement("option"); ph.value=""; ph.textContent="Choose\u2026"; ph.disabled=true;
+  ph.selected = chosenId===null && pendingExit===null; sel.appendChild(ph);
+  field.options.forEach(function(o){
+    var op=document.createElement("option"); op.value=o.id; op.textContent=o.text.replace(/\u201c|\u201d/g,'"');
+    if(chosenId===o.id || (showExit && pendingExit===o.id)) op.selected=true;
+    sel.appendChild(op);
+  });
+
+  if(answered){
+    sel.disabled=true;
+    var chosen=field.options.filter(function(o){return o.id===chosenId;})[0];
+    sel.classList.add(chosen && chosen.correct ? "ok":"no");
+  } else {
+    // Enabled: a change either commits a normal answer or opens the exit fork.
+    sel.addEventListener("change", function(){
+      var picked=field.options.filter(function(o){return o.id===sel.value;})[0];
+      if(isExitStep && picked && picked.exit){
+        answers[rowi].exitAt = sel.value;   // record but do NOT commit -> step stays unresolved
+      } else {
+        answers[rowi].exitAt = null;
+        answers[rowi][key]=sel.value;       // commit
+      }
+      render(); window.scrollTo({top:document.getElementById("cardPanel").offsetTop-10,behavior:"smooth"});
+    });
+    if(showExit){ sel.classList.add("no"); }
+  }
+  wrap.appendChild(sel);
+
+  if(answered){
+    var chosenA=field.options.filter(function(o){return o.id===chosenId;})[0];
+    var ok = chosenA && chosenA.correct;
+    var note=el("div","fnote "+(ok?"ok":"no"));
+    if(ok){ note.innerHTML="<b>Yes.</b> "+esc(chosenA.why); }
+    else {
+      var right=field.options.filter(function(o){return o.correct;})[0];
+      note.innerHTML="<b>Not the strongest choice.</b> "+esc(chosenA.why)+" <br><b>The fitting one:</b> \u201c"+esc(right.text.replace(/\u201c|\u201d/g,''))+"\u201d";
+    }
+    wrap.appendChild(note);
+  } else if(showExit){
+    var exOpt=field.options.filter(function(o){return o.id===pendingExit;})[0];
+    var branch=el("div","fnote exit");
+    var svg='<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h9M9 6l4 4-4 4M16 4v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    branch.innerHTML='<div class="exhead">'+svg+'You found the exit</div>'+esc(exOpt.exitNote)+
+      '<div class="miniloop">'+
+        '<div class="mlcard tight"><div class="mlh">If the hot thought wins first</div>The alarming reading drives a feeling, the feeling drives withdrawal, the withdrawal looks like proof, and the belief tightens. The spiral turns.</div>'+
+        '<div class="mlcard calm"><div class="mlh">If the balanced thought lands first</div>There\u2019s no alarm to drive a feeling, nothing to withdraw from, no \u201cproof\u201d for the belief. The spiral never starts. That\u2019s the interruption.</div>'+
+      '</div>'+
+      '<div style="margin-top:8px;font-size:12.5px;">Pick the automatic thought above to keep going. Reaching the balanced thought is the last step of the record, and getting there on purpose is exactly what you\u2019ll practice.</div>';
+    wrap.appendChild(branch);
+  }
+  return wrap;
+}
+
+// Distortion dropdown (shared list), with answer + optional also.
+function distField(rowi, field, chosenId){
+  var wrap=el("div","field");
+  wrap.appendChild(el("div","prompt", field.prompt));
+  var sel=document.createElement("select");
+  var ph=document.createElement("option"); ph.value=""; ph.textContent="Choose a distortion\u2026"; ph.disabled=true; ph.selected=chosenId===null; sel.appendChild(ph);
+  DISTORTIONS.forEach(function(d){
+    var op=document.createElement("option"); op.value=d.id; op.textContent=d.name;
+    if(chosenId===d.id) op.selected=true;
+    sel.appendChild(op);
+  });
+  var answered=chosenId!==null;
+  var isRight = answered && (chosenId===field.answer || (field.also && chosenId===field.also));
+  if(answered){
+    sel.disabled=true; sel.classList.add(isRight?"ok":"no");
+  } else {
+    sel.addEventListener("change", function(){ answers[rowi].dist=sel.value; render(); window.scrollTo({top:document.getElementById("cardPanel").offsetTop-10,behavior:"smooth"}); });
+  }
+  wrap.appendChild(sel);
+  if(answered){
+    var note=el("div","fnote "+(isRight?"ok":"no"));
+    if(isRight){
+      var lead = field.also ? "<b>Yes.</b> " : "<b>Yes.</b> ";
+      note.innerHTML=lead+esc(field.why);
+    } else {
+      var nm=distName(field.answer)+(field.also?" (or "+distName(field.also)+")":"");
+      note.innerHTML="<b>Not quite.</b> The primary distortion here is <b>"+esc(nm)+"</b>. "+esc(field.why);
+    }
+    wrap.appendChild(note);
+  }
+  return wrap;
+}
+
+function renderGuided(){
+  var row=ROWS[idx], a=answers[idx];
+  var panel=document.getElementById("cardPanel"); panel.innerHTML="";
+  panel.appendChild(el("div","qtop","Guided row "+(idx+1)+" of "+ROWS.length));
+
+  // Step 1: situation (given)
+  panel.appendChild(el("span","rowlabel rl-sit","1 \u00b7 Situation"));
+  panel.appendChild(el("div","given", esc(row.situation)));
+
+  // Step 2: automatic thought (unlocks first). This is the exit-fork step.
+  panel.appendChild(el("span","rowlabel rl-at","2 \u00b7 Automatic thought"));
+  panel.appendChild(optionField(idx,"at",row.at,a.at,true));
+
+  // Step 3 unlocks after step 2 answered
+  if(a.at!==null){
+    panel.appendChild(el("span","rowlabel rl-fb","3 \u00b7 Feeling &amp; behavior"));
+    panel.appendChild(optionField(idx,"fb",row.fb,a.fb));
+  }
+  // Step 4 unlocks after step 3
+  if(a.fb!==null){
+    panel.appendChild(el("span","rowlabel rl-dist","4 \u00b7 Distortion"));
+    panel.appendChild(distField(idx,row.dist,a.dist));
+  }
+  // Step 5 unlocks after step 4
+  if(a.dist!==null){
+    panel.appendChild(el("span","rowlabel rl-bal","5 \u00b7 Balanced thought"));
+    panel.appendChild(optionField(idx,"bal",row.bal,a.bal));
+  }
+
+  // Footer: Next appears once all four are answered
+  var allDone = a.at!==null && a.fb!==null && a.dist!==null && a.bal!==null;
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var nb=el("button","btn");
+  var lastGuided = idx===ROWS.length-1;
+  nb.innerHTML = (lastGuided? "Build your own \u2192" : "Next row \u2192");
+  nb.disabled=!allDone;
+  nb.addEventListener("click", function(){ idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  foot.appendChild(nb);
+  panel.appendChild(foot);
+}
+
+function renderDIY(di){
+  var d=DIY[di], st=diyState[di];
+  var panel=document.getElementById("cardPanel"); panel.innerHTML="";
+  panel.appendChild(el("div","qtop","Your own row "+(di+1)+" of "+DIY.length));
+  panel.classList.add("diy");
+
+  panel.appendChild(el("span","rowlabel rl-sit","1 \u00b7 Situation"));
+  panel.appendChild(el("div","given", esc(d.situation)));
+
+  var fields=[
+    ["at","2 \u00b7 Automatic thought","rl-at","Write the quick interpretation that fired first, in your own words.","What went through your mind?"],
+    ["fb","3 \u00b7 Feeling &amp; behavior","rl-fb","Name the feeling and what it made you do or avoid.","e.g. anxious \u2192 I put it off"],
+    ["dist","4 \u00b7 Distortion","rl-dist","Name which of the seven distortions it fits (you can look at the list up top).","e.g. catastrophizing"],
+    ["bal","5 \u00b7 Balanced thought","rl-bal","Write a fairer, evidence-weighed rewrite. It can still be a little negative, just more accurate.","A fair, workable version"]
+  ];
+  fields.forEach(function(f){
+    panel.appendChild(el("span","rowlabel "+f[2], f[1]));
+    var wrap=el("div","field");
+    wrap.appendChild(el("div","prompt", f[3]));
+    var ta=document.createElement("textarea"); ta.value=st.text[f[0]]; ta.placeholder=f[4];
+    ta.addEventListener("input", function(){ st.text[f[0]]=ta.value; });
+    wrap.appendChild(ta);
+    panel.appendChild(wrap);
+  });
+
+  // Compare-to-model (self-check), revealed on demand
+  var cmp=el("div","compare"+(st.revealed?"":" hidden"));
+  cmp.innerHTML =
+    "<b>Compare with a model shape.</b> There's no single right answer, and this isn't scored. Use these to check whether each of your entries is doing its job."+
+    '<div class="modelrow"><div class="ml">Automatic thought</div>'+esc(d.model.at)+'</div>'+
+    '<div class="modelrow"><div class="ml">Feeling &amp; behavior</div>'+esc(d.model.fb)+'</div>'+
+    '<div class="modelrow"><div class="ml">Distortion</div>'+esc(d.model.dist)+'</div>'+
+    '<div class="modelrow"><div class="ml">Balanced thought</div>'+esc(d.model.bal)+'</div>';
+  panel.appendChild(cmp);
+
+  var foot=el("div","foot");
+  var rb=el("button","btn secondary", st.revealed?"Hide model":"Compare with a model");
+  rb.addEventListener("click", function(){ st.revealed=!st.revealed; render(); });
+  foot.appendChild(rb);
+  var nb=el("button","btn");
+  var lastDIY = di===DIY.length-1;
+  nb.innerHTML = lastDIY? "Finish" : "Next \u2192";
+  nb.addEventListener("click", function(){ idx++; if(idx>=TOTAL){ finish(); } else { render(); } window.scrollTo({top:0,behavior:"smooth"}); });
+  foot.appendChild(nb);
+  panel.appendChild(foot);
+}
+
+function finish(){
+  document.getElementById("pbarfill").style.width="100%";
+  document.getElementById("pcount").textContent="Complete";
+  document.getElementById("cardPanel").classList.add("hidden");
+  // Score the guided rows only (4 steps each).
+  var correct=0, total=0;
+  ROWS.forEach(function(row,i){
+    var a=answers[i];
+    ["at","fb","bal"].forEach(function(k){
+      total++;
+      var chosen=row[k].options.filter(function(o){return o.id===a[k];})[0];
+      if(chosen && chosen.correct) correct++;
+    });
+    total++; // dist
+    if(a.dist===row.dist.answer || (row.dist.also && a.dist===row.dist.also)) correct++;
+  });
+  var rp=document.getElementById("resultsPanel"); rp.classList.remove("hidden"); rp.innerHTML="";
+  rp.appendChild(el("h2",null,"Nice work"));
+  rp.appendChild(el("p","score","On the guided rows, you chose the fitting option <b>"+correct+" of "+total+"</b> times."));
+  rp.appendChild(el("p",null,"The skill you just practiced is portable: catch the thought, name the feeling and what it drives, spot the distortion, and write a fairer thought. Done often enough, in real moments, it becomes a background habit, which is where the lasting change lives. Your own rows are yours alone; nothing you wrote was saved or sent."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Start over");
+  again.addEventListener("click", function(){ document.getElementById("cardPanel").classList.remove("hidden"); rp.classList.add("hidden"); init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); rp.appendChild(act);
+  rp.appendChild(el("p","selfnote","Reminder: this worksheet runs entirely on your own screen. Nothing you selected or typed was recorded, transmitted, or made visible to anyone else."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

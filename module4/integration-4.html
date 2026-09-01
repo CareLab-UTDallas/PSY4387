@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Putting It Together: One Patient, Three Tools</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --do-bg:#eef3fb; --do-line:#c9d9f0; --do-ink:#2f4a72;
+    /* stage accents */
+    --arrow:#5b6aa0; --arrow-soft:#e6e9f4;
+    --loop:#a8483a;  --loop-soft:#f6e0da;
+    --record:#3f6f57; --record-soft:#e3efe7;
+    --after:#8a6d2f; --after-soft:#f4e9d8;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .patient{display:flex;gap:11px;align-items:flex-start;background:#f5f3ef;border-radius:12px;padding:13px 15px;margin:12px 0 6px;border-left:3px solid var(--accent);font-size:14px;line-height:1.55;}
+  .patient .pi{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+  .patient b{color:var(--ink);}
+
+  /* stage rail */
+  .rail{display:flex;gap:0;margin:16px 0 4px;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .rail button{flex:1 1 0;border:none;background:#fff;padding:11px 8px;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer;line-height:1.25;text-align:center;position:relative;}
+  .rail button+button{border-left:1px solid var(--line);}
+  .rail button .rn{display:block;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+  .rail button .rt{display:block;font-weight:600;font-size:13px;}
+  .rail button[aria-selected="true"]{background:var(--accent);color:#fff;}
+  .rail button[aria-selected="true"] .rn{opacity:.9;}
+  .rail button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .rail button:disabled{color:#b7b2a9;cursor:not-allowed;}
+  .rail button .lock{font-size:10px;opacity:.6;}
+
+  .progressline{font-size:12.5px;color:var(--muted);margin:8px 0 14px;}
+
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .stage h2{margin:0 0 3px;font-size:19px;}
+  .stage .lead{font-size:14px;color:var(--muted);margin:0 0 14px;line-height:1.55;}
+  .stagetag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:7px;padding:3px 9px;margin-bottom:9px;}
+  .st-arrow{background:var(--arrow-soft);color:var(--arrow);}
+  .st-loop{background:var(--loop-soft);color:var(--loop);}
+  .st-record{background:var(--record-soft);color:var(--record);}
+  .st-after{background:var(--after-soft);color:var(--after);}
+
+  /* connect-back banner: how this stage links to the others */
+  .connect{display:flex;gap:9px;align-items:flex-start;background:var(--do-bg);border:1px solid var(--do-line);color:var(--do-ink);border-radius:12px;padding:11px 14px;margin:0 0 16px;font-size:13px;line-height:1.55;}
+  .connect svg{flex:0 0 auto;margin-top:1px;}
+  .connect b{font-weight:700;}
+
+  /* arrow stage: three layers */
+  .layerbox{border:1px solid var(--line);border-radius:14px;padding:13px 15px;}
+  .layerbox+.arrowq{margin-top:2px;}
+  .layerbox .ltag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:7px;padding:3px 8px;margin-bottom:6px;}
+  .layerbox .lthought{font-size:15px;line-height:1.5;} .layerbox .lthought b{font-weight:700;}
+  .layerbox.l1{background:var(--arrow-soft);border-color:var(--arrow);} .layerbox.l1 .ltag{background:#fff;color:var(--arrow);}
+  .layerbox.l2{background:var(--after-soft);border-color:var(--after);} .layerbox.l2 .ltag{background:#fff;color:var(--after);}
+  .layerbox.l3{background:var(--loop-soft);border-color:var(--loop);} .layerbox.l3 .ltag{background:#fff;color:var(--loop);}
+  .arrowq{text-align:center;color:var(--muted);margin:2px 0;font-size:12.5px;}
+  .arrowq .qmark{display:block;font-size:12.5px;font-style:italic;color:var(--after);margin-bottom:2px;}
+  .arrowq svg{display:block;margin:0 auto;}
+
+  /* loop stage */
+  .looprung{border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin-bottom:0;}
+  .looprung .rm{font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--loop);margin-bottom:3px;}
+  .looprung .rx{font-size:14px;line-height:1.5;} .looprung .rx b{font-weight:700;}
+  .loopconn{text-align:center;color:#c3a49b;height:22px;line-height:22px;}
+  .loopclose{margin-top:8px;background:var(--loop-soft);border:1px dashed var(--loop);border-radius:12px;padding:10px 14px 10px 40px;font-size:13px;line-height:1.5;position:relative;}
+  .loopclose .curl{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--loop);}
+  .loopclose b{font-weight:700;}
+
+  /* record stage: a compact filled thought record */
+  .trtable{border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .trrow{display:grid;grid-template-columns:130px 1fr;border-top:1px solid var(--line);}
+  .trrow:first-child{border-top:none;}
+  .trrow .tc{padding:10px 13px;font-size:13.5px;line-height:1.45;}
+  .trrow .tk{background:#f7f5f1;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);display:flex;align-items:center;}
+  @media(max-width:520px){ .trrow{grid-template-columns:1fr;} .trrow .tk{border-bottom:1px solid var(--line);} }
+
+  .takeaway{margin-top:16px;background:#fff;border:1px dashed var(--accent);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;}
+  .takeaway .st{font-weight:700;color:var(--accent-ink);margin-bottom:3px;}
+
+  /* after stage: a small choose-what-she-does check */
+  .afterq{margin-top:14px;}
+  .afterq .prompt{font-size:14px;margin-bottom:10px;line-height:1.5;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .afternote{margin-top:12px;border-radius:11px;padding:12px 14px;font-size:13.5px;line-height:1.6;}
+  .afternote.ok{background:var(--ok-bg);color:var(--ok-ink);} .afternote.no{background:var(--no-bg);color:var(--no-ink);}
+  .afternote b{font-weight:700;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Putting It Together: One Patient, Three Tools</h1>
+    <p class="sub">You've practiced the downward arrow, the self-perpetuating loop, and the thought record as separate skills. A clinician uses them as one motion. Follow a single patient through the sequence: the arrow finds the core belief, the loop shows how that belief keeps itself alive, and the thought record becomes the tool she takes home to interrupt it. The last stage shows what that looks like on an ordinary day, months later, with no therapist in the room.</p>
+  </div>
+
+  <div class="patient">
+    <div class="pi">R</div>
+    <div><b>Meet Renata.</b> She started a new job three months ago and came to therapy because she feels a constant, low-grade dread about her work. She rereads her emails many times before sending, avoids asking questions, and has started hiding unfinished work from her manager. When her manager gives neutral or even positive feedback, she hears criticism. She's exhausted, and she's convinced she's about to be found out.</div>
+  </div>
+
+  <div class="rail" id="rail" role="tablist"></div>
+  <div class="progressline" id="progressline"></div>
+
+  <section class="stage" id="stage" role="tabpanel" aria-live="polite"></section>
+</div>
+
+<script>
+// ===========================================================================
+// Putting It Together (Module 4). The connective-tissue activity: one continuous
+// patient walked through the clinician's sequence, with each stage naming how it
+// links to the others, so students feel the three techniques as one method rather
+// than three worksheets. Does NOT re-teach each technique in full; it sequences
+// them and makes the connections overt, then shows transfer to everyday life.
+//
+// New patient (Renata, workplace impostor/"not good enough") so nothing repeats the
+// other activities' cases. Grounded in ug-module-readings.md: the "I am not good
+// enough / incompetent" schema that makes a person "notice their failures, discount
+// their successes, and read neutral feedback as criticism"; the downward-arrow
+// method; the self-perpetuating cycle; and the thought record columns (situation,
+// automatic thought, feeling, evidence for/against, balanced alternative).
+// One graded check in the final stage (correct = green, wrong = red). Fully
+// client-side; the closing note states nothing is transmitted.
+// ===========================================================================
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var STAGES = [
+  {key:"arrow", railNum:"Stage 1", railTitle:"The arrow", tag:"st-arrow", tagText:"Assessment \u00b7 the downward arrow",
+   h:"Find the core belief", lead:"First the clinician traces one ordinary thought down to the belief underneath, one layer at a time."},
+  {key:"loop", railNum:"Stage 2", railTitle:"The loop", tag:"st-loop", tagText:"Formulation \u00b7 the self-perpetuating loop",
+   h:"See how the belief keeps itself alive", lead:"That core belief isn't just sitting there. It runs a daily cycle that manufactures its own evidence."},
+  {key:"record", railNum:"Stage 3", railTitle:"The record", tag:"st-record", tagText:"Take-home tool \u00b7 the thought record",
+   h:"Give her a tool to interrupt it", lead:"The thought record is what Renata takes home. It's where she catches a hot thought and works it to a fairer one."},
+  {key:"after", railNum:"Stage 4", railTitle:"After therapy", tag:"st-after", tagText:"Everyday life \u00b7 months later",
+   h:"What it looks like on a Tuesday", lead:"Months on, the skill has quietly become a habit she runs on her own, without a worksheet or a therapist."}
+];
+
+var maxUnlocked = 0;  // stages unlock in sequence
+var cur = 0;
+var afterAnswered = false, afterPick = null;
+
+function renderRail(){
+  var rail=document.getElementById("rail"); rail.innerHTML="";
+  STAGES.forEach(function(s,i){
+    var b=el("button");
+    b.setAttribute("role","tab");
+    b.setAttribute("aria-selected", String(i===cur));
+    var locked = i>maxUnlocked;
+    b.disabled=locked;
+    b.innerHTML='<span class="rn">'+esc(s.railNum)+'</span><span class="rt">'+esc(s.railTitle)+(locked?' <span class="lock">\u25cf</span>':'')+'</span>';
+    if(!locked){ b.addEventListener("click", function(){ cur=i; render(); }); }
+    rail.appendChild(b);
+  });
+}
+
+function connectBanner(html){
+  var c=el("div","connect");
+  c.innerHTML='<svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M8 6l-3 4 3 4M12 6l3 4-3 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div>'+html+'</div>';
+  return c;
+}
+
+var ARROWDOWN='<div class="arrowq"><span class="qmark">\u201cand if that were true, what would it mean?\u201d</span><svg width="18" height="22" viewBox="0 0 20 24" fill="none"><path d="M10 2v16" stroke="#8a6d2f" stroke-width="1.7"/><path d="M4 13l6 7 6-7" stroke="#8a6d2f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+
+function render(){
+  renderRail();
+  var s=STAGES[cur];
+  document.getElementById("progressline").textContent = "Stage "+(cur+1)+" of "+STAGES.length+"  \u00b7  "+s.railTitle;
+  var host=document.getElementById("stage"); host.innerHTML="";
+  host.appendChild(el("span","stagetag "+s.tag, s.tagText));
+  host.appendChild(el("h2",null,s.h));
+  host.appendChild(el("p","lead",s.lead));
+
+  if(s.key==="arrow") renderArrow(host);
+  else if(s.key==="loop") renderLoop(host);
+  else if(s.key==="record") renderRecord(host);
+  else renderAfter(host);
+
+  // footer nav
+  var foot=el("div","foot");
+  var back=el("button","btn secondary","\u2190 Back");
+  back.disabled = cur===0;
+  back.addEventListener("click", function(){ if(cur>0){ cur--; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+  foot.appendChild(back);
+  var next=el("button","btn");
+  if(cur < STAGES.length-1){
+    next.innerHTML = "Next: "+STAGES[cur+1].railTitle+" \u2192";
+    // gate leaving the "after" stage's question is only on the last stage; earlier stages advance freely
+    next.addEventListener("click", function(){ maxUnlocked=Math.max(maxUnlocked,cur+1); cur++; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  } else {
+    next.innerHTML = "Start over";
+    next.classList.add("secondary");
+    next.addEventListener("click", function(){ cur=0; maxUnlocked=0; afterAnswered=false; afterPick=null; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  }
+  foot.appendChild(next);
+  host.appendChild(foot);
+}
+
+function renderArrow(host){
+  host.appendChild(connectBanner("This is the same downward arrow you practiced, now as step one of a plan. What it finds at the bottom becomes the belief you'll watch drive the loop in the next stage."));
+  var box1=el("div","layerbox l1");
+  box1.appendChild(el("span","ltag","Automatic thought \u00b7 the surface"));
+  box1.appendChild(el("div","lthought","\u201cMy manager asked to \u2018quickly chat about the report.\u2019 I'm in trouble.\u201d"));
+  host.appendChild(box1);
+  host.appendChild(mkArrowQ());
+  var box2=el("div","layerbox l2");
+  box2.appendChild(el("span","ltag","Intermediate belief \u00b7 the rule"));
+  box2.appendChild(el("div","lthought","\u201cIf my work isn't flawless, I'll be exposed as not belonging here.\u201d"));
+  host.appendChild(box2);
+  host.appendChild(mkArrowQ());
+  var box3=el("div","layerbox l3");
+  box3.appendChild(el("span","ltag","Core belief \u00b7 the bedrock"));
+  box3.appendChild(el("div","lthought","<b>\u201cI'm not good enough. I'm a fraud, and it's only a matter of time.\u201d</b>"));
+  host.appendChild(box3);
+  var t=el("div","takeaway");
+  t.innerHTML='<div class="st">What the clinician now has</div>Three sessions of reassurance about the report would have missed this. The arrow shows that a dozen different worries all rest on one bedrock belief, <b>\u201cI\u2019m not good enough.\u201d</b> That belief is the thing to work on, and the next stage shows why it\u2019s so stubborn.';
+  host.appendChild(t);
+}
+function mkArrowQ(){ var d=el("div"); d.innerHTML=ARROWDOWN; return d.firstChild; }
+
+function renderLoop(host){
+  host.appendChild(connectBanner("The belief the arrow just found (<b>\u201cI'm not good enough\u201d</b>) sits at the top of this loop. Watch it manufacture its own proof, which is why you can't just argue Renata out of it."));
+  var rungs=[
+    {m:"Core belief (from the arrow)", x:"<b>\u201cI'm not good enough\u201d</b> sets the lens for the day."},
+    {m:"Biased attention", x:"She scans every interaction for signs of disapproval and barely registers the routine \u201cthanks, looks good.\u201d"},
+    {m:"Biased interpretation", x:"A neutral \u201ccan we chat about the report?\u201d is read instantly as <b>\u201cI'm in trouble.\u201d</b>"},
+    {m:"Safety behavior + avoidance", x:"She rereads emails ten times, hides unfinished work, and stops asking questions. Each avoidance brings relief, which trains her to do it again."},
+    {m:"Belief strengthens", x:"Hiding her work means she never gets the feedback that would disconfirm the fear, so \u201cI'm not good enough\u201d feels truer than ever."}
+  ];
+  rungs.forEach(function(r,i){
+    var box=el("div","looprung");
+    box.appendChild(el("div","rm", esc(r.m)));
+    box.appendChild(el("div","rx", r.x));
+    host.appendChild(box);
+    if(i<rungs.length-1){ var c=el("div","loopconn"); c.innerHTML="\u2193"; host.appendChild(c); }
+  });
+  var lc=el("div","loopclose");
+  lc.innerHTML='<span class="curl"><svg width="22" height="34" viewBox="0 0 24 40" fill="none"><path d="M14 4C4 4 4 20 4 20c0 0 0 16 10 16" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M10 31l4 5 4-5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><b>The loop closes.</b> The strengthened belief feeds back to the top, so tomorrow she scans even harder. This is why reassurance bounces off: her whole system is organized to keep producing evidence of not being good enough. To change it, you have to get inside the loop.';
+  host.appendChild(lc);
+  var t=el("div","takeaway");
+  t.innerHTML='<div class="st">Where to break in</div>The most reachable point is the interpretation step, where a neutral message becomes \u201cI\u2019m in trouble.\u201d That\u2019s a thought, caught in the moment, and there\u2019s a tool built exactly for that. It\u2019s what she takes home next.';
+  host.appendChild(t);
+}
+
+function renderRecord(host){
+  host.appendChild(connectBanner("The thought record targets the interpretation step of the loop you just saw. It's the take-home version of the whole method: catch the hot thought, weigh it, and reach the balanced one on purpose."));
+  host.appendChild(el("p","lead","Here's the record Renata fills in after the \u201ccan we chat about the report?\u201d message, using the columns from the reading."));
+  var rows=[
+    ["Situation","My manager messaged: \u201ccan we chat about the report?\u201d"],
+    ["Automatic thought","\u201cI'm in trouble. I've messed up and I'm about to be exposed.\u201d"],
+    ["Feeling &amp; behavior","Dread and a racing heart. Urge to reread everything and delay replying."],
+    ["Evidence for","She wants to talk about the report rather than just approve it."],
+    ["Evidence against","She's asked to \u201cchat\u201d about plenty of things that turned out fine. She's given positive feedback before. \u201cChat\u201d isn't \u201cproblem.\u201d"],
+    ["Balanced thought","\u201cA chat about the report probably means questions or ideas, not a verdict on me. I'll find out what it's about instead of assuming the worst.\u201d"]
+  ];
+  var tbl=el("div","trtable");
+  rows.forEach(function(r){
+    var row=el("div","trrow");
+    row.appendChild(el("div","tc tk", r[0]));
+    row.appendChild(el("div","tc", r[1]));
+    tbl.appendChild(row);
+  });
+  host.appendChild(tbl);
+  var t=el("div","takeaway");
+  t.innerHTML='<div class="st">Why this is the take-home piece</div>The arrow and the loop are things the clinician mostly does with her in session. The record is hers. She can run it on any hot thought, any day, which is what lets the work continue after therapy ends. Notice it also feeds a behavioral experiment: \u201cI\u2019ll find out what it\u2019s about\u201d is a small real-world test of the prediction.';
+  host.appendChild(t);
+}
+
+var AFTER = {
+  prompt:"Eight months later, Renata is off therapy. Her manager drops a message: \u201cGot a few thoughts on your draft, let's talk tomorrow.\u201d The old dread flickers. Which response shows she has internalized the method, rather than just white-knuckling it?",
+  options:[
+    {id:"a", text:"She tells herself firmly, \u201cStop being so negative. Everything is fine, there's nothing to worry about.\u201d", correct:false,
+     why:"This is forced positivity, and the reading is clear that simply insisting \u201cthere's nothing to worry about\u201d rarely works, because it argues with the feeling instead of examining it. It's white-knuckling, not the method."},
+    {id:"b", text:"She notices the thought \u201cI'm in trouble,\u201d recognizes it as her old \u201cnot good enough\u201d belief talking, weighs what \u201ca few thoughts\u201d actually tends to mean, and decides to go in curious rather than bracing for a verdict.", correct:true,
+     why:"This is the whole method run silently and on her own: she catches the automatic thought, links it to the core belief the arrow found, does a quick mental thought record, and even sets up a small experiment by going in curious. That's what internalized skill looks like."},
+    {id:"c", text:"She reworks the entire draft overnight so there can't possibly be any criticism, then barely sleeps.", correct:false,
+     why:"That's the safety behavior from the loop, in a new outfit. Over-preparing to prevent any possible criticism keeps the loop intact and never lets her learn the feedback was survivable."}
+  ]
+};
+
+function renderAfter(host){
+  host.appendChild(connectBanner("Sequencing the three tools leaves her with a habit of mind rather than a worksheet she fills in forever. The arrow taught her what belief is talking, the loop taught her how it traps her, and the record taught her the move. Now she runs all three in her head."));
+  var wrap=el("div","afterq");
+  wrap.appendChild(el("div","prompt", AFTER.prompt));
+  var opts=el("div","opts");
+  AFTER.options.forEach(function(o){
+    var b=el("button","opt"); b.type="button"; b.textContent=o.text.replace(/\u201c|\u201d/g,'"');
+    if(afterAnswered){
+      b.disabled=true;
+      if(o.id===afterPick){ b.classList.add(o.correct?"correct-pick":"wrong-pick"); }
+      else if(o.correct){ b.classList.add("show-correct"); }
+      else { b.classList.add("dim"); }
+    } else {
+      b.addEventListener("click", function(){ afterPick=o.id; afterAnswered=true; render(); });
+    }
+    opts.appendChild(b);
+  });
+  wrap.appendChild(opts);
+  if(afterAnswered){
+    var chosen=AFTER.options.filter(function(o){return o.id===afterPick;})[0];
+    var note=el("div","afternote "+(chosen.correct?"ok":"no"));
+    note.innerHTML=(chosen.correct?"<b>Yes.</b> ":"<b>Not this one.</b> ")+esc(chosen.why);
+    wrap.appendChild(note);
+    if(chosen.correct){
+      var t=el("div","takeaway");
+      t.innerHTML='<div class="st">That\u2019s the goal of the whole method</div>Therapy worked itself out of a job. The three tools stopped being exercises and became the way Renata reads her own mind under pressure. When people say cognitive therapy \u201cteaches you to be your own therapist,\u201d this is the concrete thing they mean.';
+      wrap.appendChild(t);
+    }
+  }
+  host.appendChild(wrap);
+  host.appendChild(el("p","selfnote","This walkthrough runs entirely on your own screen. Nothing you select is saved, sent, or shared with anyone, including your instructor."));
+}
+
+renderRail();
+render();
+</script>
+</body>
+</html>

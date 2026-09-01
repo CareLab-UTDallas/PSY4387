@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two Maps of Cognition</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c5c3e;
+    --do-bg:#eef3fb; --do-line:#c9d9f0; --do-ink:#2f4a72;
+    /* three-layer colors */
+    --surf:#5b6aa0; --surf-soft:#e6e9f4;
+    --rule:#8a6a2f; --rule-soft:#f4e9d8;
+    --bed:#b0472a; --bed-soft:#f7e4dd;
+    /* triangle corners */
+    --th:#5b6aa0; --th-soft:#e6e9f4;
+    --fe:#b0472a; --fe-soft:#f7e4dd;
+    --be:#3f6f57; --be-soft:#e3efe7;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:80ch;}
+
+  .toggle-row{display:flex;gap:9px;margin:16px 0 6px;flex-wrap:wrap;}
+  .tbtn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 16px;cursor:pointer;
+    font:inherit;font-size:14px;color:var(--ink);transition:.12s;}
+  .tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .tbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .dobox{background:var(--do-bg);border:1px solid var(--do-line);color:var(--do-ink);border-radius:12px;
+    padding:11px 14px;font-size:13.5px;line-height:1.55;margin:8px 0 4px;}
+  .dobox b{font-weight:700;}
+  .doneflag{display:inline-block;margin-left:8px;font-size:12px;color:var(--ok-ink);font-weight:600;}
+
+  .layout{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start;margin-top:16px;}
+  @media(max-width:880px){ .layout{grid-template-columns:1fr;} }
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:18px 18px 14px;}
+  .stage figcaption{margin:8px 4px 0;color:var(--ink);font-size:12.5px;line-height:1.5;}
+  svg.diagram{width:100%;height:auto;display:block;}
+
+  .node{cursor:pointer;}
+  .node .plate{transition:filter .15s;}
+  .node:focus-visible{outline:none;}
+  .node:focus-visible .plate{stroke:var(--focus);stroke-width:3;}
+  .node.on .plate{filter:brightness(.96);stroke-width:3;}
+  .nlabel{font-weight:700;font-size:14px;}
+  .nsub{font-size:11.5px;}
+  .edge{stroke-width:2.2;fill:none;}
+  .edge-lab{font-size:11px;fill:var(--ink);}
+  .cap{font-size:11.5px;fill:var(--ink);}
+
+  .detail{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:20px 22px;min-height:240px;}
+  .detail .pre{color:var(--ink);font-size:13.5px;}
+  .detail .pre b{color:var(--ink);}
+  .detail h2{margin:2px 0 2px;font-size:18px;}
+  .detail .tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:7px;padding:3px 9px;margin:4px 0 12px;}
+  .detail p{margin:0 0 12px;font-size:14px;line-height:1.6;}
+  .detail p:last-child{margin-bottom:0;}
+  .detail .ex{background:#f5f3ef;border-radius:10px;padding:11px 13px;font-size:13.5px;color:#413d36;}
+  .detail .ex b{color:var(--ink);}
+  .tag-surf{background:var(--surf-soft);color:var(--surf);} .tag-rule{background:var(--rule-soft);color:var(--rule);} .tag-bed{background:var(--bed-soft);color:var(--bed);}
+  .tag-th{background:var(--th-soft);color:var(--th);} .tag-fe{background:var(--fe-soft);color:var(--fe);} .tag-be{background:var(--be-soft);color:var(--be);}
+
+  .checklist{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;}
+  .chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink);border:1px solid var(--line);
+    border-radius:20px;padding:5px 11px;background:#fff;}
+  .chk.done{color:var(--ok-ink);border-color:var(--ok-line);background:var(--ok-bg);}
+  .chk .dot{width:8px;height:8px;border-radius:50%;background:#cfcabf;}
+  .chk.done .dot{background:var(--ok-ink);}
+
+  .arrowwalk{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:18px 20px;}
+  .arrowwalk.locked{opacity:.55;}
+  .arrowwalk h3{margin:0 0 8px;font-size:16px;}
+  .arrowwalk p{margin:0 0 10px;font-size:14px;line-height:1.6;}
+  .aw-step{border-left:3px solid var(--accent);padding:8px 0 8px 13px;margin:0 0 10px;font-size:14px;line-height:1.55;}
+  .aw-step .q{color:var(--muted);font-style:italic;}
+  .aw-step .a{font-weight:600;}
+  .aw-more{background:none;border:1px solid var(--line);border-radius:9px;padding:9px 15px;cursor:pointer;font:inherit;font-size:13.5px;color:var(--ink);}
+  .aw-more:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .selfnote{font-size:12px;color:var(--muted);margin-top:10px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Two Maps of Cognition</h1>
+    <p class="sub">This module gives you two lenses on the cognitive level. One runs top to bottom (how deep a thought goes), the other runs in a loop (how thoughts, feelings, and behaviors drive each other). Do both, since together they explain how deep the work must go and where you can enter it.</p>
+  </div>
+
+  <div class="toggle-row" role="group" aria-label="Choose a map">
+    <button class="tbtn" id="tab-layers" aria-pressed="true">Three layers of thought<span class="doneflag hidden" id="done-layers">✓ explored</span></button>
+    <button class="tbtn" id="tab-triangle" aria-pressed="false">Thought&ndash;feeling&ndash;behavior triangle<span class="doneflag hidden" id="done-triangle">✓ explored</span></button>
+  </div>
+  <div class="dobox" id="dobox"></div>
+
+  <div class="layout">
+    <figure class="stage" style="margin:0;">
+      <div id="svg-holder"></div>
+      <figcaption id="cap"></figcaption>
+    </figure>
+    <div class="detail" id="detail" aria-live="polite"></div>
+  </div>
+
+  <!-- three-layer only: downward-arrow walkthrough -->
+  <div class="arrowwalk locked hidden" id="arrowwalk" aria-hidden="true"></div>
+</div>
+
+<script>
+// ===========================================================================
+// Two Maps of Cognition (Module 4). A single interactive with a toggle between
+// two diagrams the reading treats as central:
+//   (1) the three-layer "vertical architecture" of cognition (automatic thought /
+//       intermediate belief / core belief), with the downward-arrow walkthrough;
+//   (2) the thought-feeling-behavior triangle (enter from any corner).
+// All node text, the Marcus downward-arrow example, and the "late friend"
+// triangle walk are drawn from the Module 4 reading (ug-module-readings.md):
+// "The Architecture of Cognition", "The Downward Arrow Technique", and
+// "The Thought-Feeling-Behavior Triangle". No scoring; this is an explore-and-read
+// interactive (no write-then-compare, per instructor decision). Instructions tell
+// students to do both maps.
+// ===========================================================================
+
+var LAYERS = {
+  order: ["surface","rules","bedrock"],
+  nodes: {
+    surface: {
+      label:"Automatic thoughts", sub:"the surface", tag:"Surface", tagClass:"tag-surf",
+      paras:[
+        "The rapid, involuntary stream of words or images that pop into your mind in response to a specific situation. Fast, brief, and usually accepted as fact rather than checked.",
+        "Example: a colleague is slow to reply to an email and the thought arrives, 'they are ignoring me.' Easiest layer to reach, which is why so much therapy starts here."
+      ],
+      ex:"<b>Marcus:</b> he made a minor typo in an email and thinks, 'my director will think I'm careless.'"
+    },
+    rules: {
+      label:"Intermediate beliefs", sub:"the rules", tag:"Middle", tagClass:"tag-rule",
+      paras:[
+        "The rules, assumptions, and values we use to navigate the world, usually in an 'if-then' or 'I must' shape. They feel like reasonable strategies for staying safe, but they set the traps that automatic thoughts spring.",
+        "One level down from the surface. When you break one of your own hidden rules, it fires off a wave of automatic thoughts and difficult feelings."
+      ],
+      ex:"<b>Marcus:</b> 'If I make a mistake, I am failing to meet the standards of my team.'"
+    },
+    bedrock: {
+      label:"Core beliefs (schemas)", sub:"the bedrock", tag:"Bedrock", tagClass:"tag-bed",
+      paras:[
+        "Deep, absolute convictions about the self, others, or the world, treated as simply true ('I am defective,' 'others will always let me down'). The lenses through which all incoming information is filtered.",
+        "Usually formed early, they feel like facts and are stubborn because the person's whole way of noticing and remembering is organized to confirm them. Changing one takes repeated, vivid, contradicting experience."
+      ],
+      ex:"<b>Marcus:</b> follow the arrow down and you reach, 'I am fundamentally incompetent.'"
+    }
+  }
+};
+
+var TRIANGLE = {
+  order: ["thought","feeling","behavior"],
+  nodes: {
+    thought: {
+      label:"Thoughts", sub:"", tag:"Thought", tagClass:"tag-th",
+      paras:[
+        "The interpretation you place on a situation. Often the easiest corner to reach and examine, which is why much of this module lives here.",
+        "Change only the thought and the whole triangle rotates differently, even with the same event."
+      ],
+      ex:"<b>Late friend:</b> 'they don't actually care about me' (versus 'they're probably stuck in traffic')."
+    },
+    feeling: {
+      label:"Feelings", sub:"", tag:"Feeling", tagClass:"tag-fe",
+      paras:[
+        "The emotional response the interpretation produces. Feelings are never 'wrong'; they are real responses that make sense given how the situation is being read.",
+        "The feeling then nudges a behavior, which is how the loop keeps turning."
+      ],
+      ex:"<b>Late friend:</b> the thought 'they don't care' produces hurt, maybe a flash of anger."
+    },
+    behavior: {
+      label:"Behaviors", sub:"", tag:"Behavior", tagClass:"tag-be",
+      paras:[
+        "What you do (or avoid) as a result, which then produces consequences that feed new thoughts. This is a second door into the loop: change the behavior and it ripples to thoughts and feelings.",
+        "Behavioral activation, experiments, and exposure all enter here."
+      ],
+      ex:"<b>Late friend:</b> you are cold and withdrawn when they arrive; confused, they pull back, which you read as fresh proof they don't care."
+    }
+  }
+};
+
+var mode = "layers";
+var opened = { layers:{}, triangle:{} };
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+
+/* ---------- SVGs ---------- */
+function layersSVG(){
+  return ''+
+  '<svg class="diagram" viewBox="0 0 560 360" role="group" aria-label="Three-layer architecture of cognition. Tab between layers, Enter to open.">'+
+    '<defs><marker id="dn" viewBox="0 0 12 12" refX="6" refY="9" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L6 10 L11 1 z" fill="#8a5a25"/></marker></defs>'+
+    '<text class="cap" x="280" y="24" text-anchor="middle">Surface at top, bedrock at bottom.</text>'+
+    // surface
+    '<g class="node" id="ly-surface" tabindex="0" role="button" aria-label="Automatic thoughts, the surface. Open.">'+
+      '<rect class="plate" x="120" y="44" width="320" height="60" rx="12" fill="var(--surf-soft)" stroke="var(--surf)" stroke-width="2"/>'+
+      '<text class="nlabel" x="280" y="70" text-anchor="middle" fill="var(--surf)">Automatic thoughts</text>'+
+      '<text class="nsub" x="280" y="88" text-anchor="middle" fill="var(--surf)">the surface \u00b7 fast, feels like fact</text>'+
+    '</g>'+
+    '<line class="edge" fill="none" x1="280" y1="110" x2="280" y2="138" stroke="#8a5a25" marker-end="url(#dn)"/>'+
+    '<text class="edge-lab" x="296" y="128">\u201cwhat would that mean?\u201d</text>'+
+    // rules
+    '<g class="node" id="ly-rules" tabindex="0" role="button" aria-label="Intermediate beliefs, the rules. Open.">'+
+      '<rect class="plate" x="120" y="146" width="320" height="60" rx="12" fill="var(--rule-soft)" stroke="var(--rule)" stroke-width="2"/>'+
+      '<text class="nlabel" x="280" y="172" text-anchor="middle" fill="var(--rule)">Intermediate beliefs</text>'+
+      '<text class="nsub" x="280" y="190" text-anchor="middle" fill="var(--rule)">the rules \u00b7 if-then, I must</text>'+
+    '</g>'+
+    '<line class="edge" fill="none" x1="280" y1="212" x2="280" y2="240" stroke="#8a5a25" marker-end="url(#dn)"/>'+
+    '<text class="edge-lab" x="296" y="230">\u201c\u2026and about you?\u201d</text>'+
+    // bedrock
+    '<g class="node" id="ly-bedrock" tabindex="0" role="button" aria-label="Core beliefs, the bedrock. Open.">'+
+      '<rect class="plate" x="120" y="248" width="320" height="60" rx="12" fill="var(--bed-soft)" stroke="var(--bed)" stroke-width="2"/>'+
+      '<text class="nlabel" x="280" y="274" text-anchor="middle" fill="var(--bed)">Core beliefs (schemas)</text>'+
+      '<text class="nsub" x="280" y="292" text-anchor="middle" fill="var(--bed)">the bedrock \u00b7 absolute, self-defining</text>'+
+    '</g>'+
+    '<text class="cap" x="280" y="336" text-anchor="middle">Surface thoughts regenerate if the layer below is intact.</text>'+
+  '</svg>';
+}
+
+function triangleSVG(){
+  return ''+
+  '<svg class="diagram" viewBox="0 0 460 380" role="group" aria-label="Thought-feeling-behavior triangle. Tab between corners, Enter to open.">'+
+    '<defs><marker id="tri" viewBox="0 0 12 12" refX="9" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 z" fill="#8a857c"/></marker></defs>'+
+    '<text class="cap" x="230" y="24" text-anchor="middle">The corners drive each other in a loop. Enter from any corner.</text>'+
+    // edges: three arcs on one common circle (centroid 230,175; r 118), clockwise
+    '<path class="edge" fill="none" d="M281.7 69.2 A118 118 0 0 1 346.8 158.5" stroke="#9a958c" marker-end="url(#tri)"/>'+
+    '<path class="edge" fill="none" d="M315.2 257 A118 118 0 0 1 144.8 257" stroke="#9a958c" marker-end="url(#tri)"/>'+
+    '<path class="edge" fill="none" d="M113.2 158.5 A118 118 0 0 1 178.3 69.2" stroke="#9a958c" marker-end="url(#tri)"/>'+
+    // Thought (top)
+    '<g class="node" id="tr-thought" tabindex="0" role="button" aria-label="Thoughts corner. Open.">'+
+      '<rect class="plate" x="150" y="56" width="160" height="52" rx="12" fill="var(--th-soft)" stroke="var(--th)" stroke-width="2"/>'+
+      '<text class="nlabel" x="230" y="87" text-anchor="middle" fill="var(--th)">Thoughts</text>'+
+    '</g>'+
+    // Feeling (bottom-right)
+    '<g class="node" id="tr-feeling" tabindex="0" role="button" aria-label="Feelings corner. Open.">'+
+      '<rect class="plate" x="300" y="196" width="150" height="52" rx="12" fill="var(--fe-soft)" stroke="var(--fe)" stroke-width="2"/>'+
+      '<text class="nlabel" x="375" y="227" text-anchor="middle" fill="var(--fe)">Feelings</text>'+
+    '</g>'+
+    // Behavior (bottom-left)
+    '<g class="node" id="tr-behavior" tabindex="0" role="button" aria-label="Behaviors corner. Open.">'+
+      '<rect class="plate" x="10" y="196" width="150" height="52" rx="12" fill="var(--be-soft)" stroke="var(--be)" stroke-width="2"/>'+
+      '<text class="nlabel" x="85" y="227" text-anchor="middle" fill="var(--be)">Behaviors</text>'+
+    '</g>'+
+    '<text class="cap" x="230" y="366" text-anchor="middle">Insight alone often is not enough. Work more than one corner.</text>'+
+  '</svg>';
+}
+
+function currentData(){ return mode==="layers" ? LAYERS : TRIANGLE; }
+function nodePrefix(){ return mode==="layers" ? "ly-" : "tr-"; }
+
+function renderDiagram(){
+  document.getElementById("svg-holder").innerHTML = mode==="layers" ? layersSVG() : triangleSVG();
+  document.getElementById("cap").textContent = mode==="layers"
+    ? "A vertical map. Click each layer to read what it is, then use the downward-arrow walkthrough below."
+    : "A loop, not a ladder. Click each corner to read its role and see how the same event can rotate two ways.";
+  wireNodes();
+}
+
+function wireNodes(){
+  var d=currentData();
+  d.order.forEach(function(k){
+    var g=document.getElementById(nodePrefix()+k);
+    if(!g) return;
+    g.addEventListener("click",function(){ openNode(k); });
+    g.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openNode(k); } });
+    if(opened[mode][k]) g.classList.add("on");
+  });
+}
+
+function openNode(k){
+  var d=currentData(), n=d.nodes[k];
+  opened[mode][k]=true;
+  d.order.forEach(function(kk){ var g=document.getElementById(nodePrefix()+kk); if(g) g.classList.toggle("on", kk===k); });
+  var det=document.getElementById("detail");
+  det.innerHTML =
+    '<span class="tag '+n.tagClass+'">'+n.tag+'</span>'+
+    '<h2>'+n.label+(n.sub?' <span style="font-weight:400;color:var(--muted);font-size:14px">('+n.sub+')</span>':'')+'</h2>'+
+    n.paras.map(function(p){return '<p>'+p+'</p>';}).join('')+
+    '<div class="ex">'+n.ex+'</div>'+
+    '<div class="checklist" id="checklist"></div>';
+  renderChecklist();
+  maybeUnlockArrow();
+  maybeMarkDone();
+}
+
+function renderChecklist(){
+  var cl=document.getElementById("checklist"); if(!cl) return;
+  var d=currentData();
+  cl.innerHTML = d.order.map(function(k){
+    var done=!!opened[mode][k];
+    return '<span class="chk'+(done?" done":"")+'"><span class="dot"></span>'+d.nodes[k].label+(done?" \u2713":"")+'</span>';
+  }).join('');
+}
+
+function allOpened(m){ return currentDataFor(m).order.every(function(k){ return opened[m][k]; }); }
+function currentDataFor(m){ return m==="layers"?LAYERS:TRIANGLE; }
+
+function maybeMarkDone(){
+  ["layers","triangle"].forEach(function(m){
+    if(allOpened(m)) document.getElementById("done-"+m).classList.remove("hidden");
+  });
+}
+
+/* ---------- downward-arrow walkthrough (layers only) ---------- */
+var ARROW_STEPS = [
+  { q:"Surface automatic thought", a:"\u201cMy director will think I'm careless.\u201d" },
+  { q:"and if that were true, what would it mean? \u2192 intermediate rule", a:"\u201cIt means I am failing to meet the standards of my team.\u201d" },
+  { q:"and what would that say about your standing? \u2192 deeper rule", a:"\u201cIt means I am not cut out for this kind of high-pressure work.\u201d" },
+  { q:"and what would that say about you as a person? \u2192 bedrock core belief", a:"\u201cIt means I am fundamentally incompetent.\u201d" }
+];
+var arrowShown = 1;
+
+function renderArrow(){
+  var box=document.getElementById("arrowwalk");
+  if(mode!=="layers"){ box.classList.add("hidden"); box.setAttribute("aria-hidden","true"); return; }
+  box.classList.remove("hidden"); box.setAttribute("aria-hidden","false");
+  var unlocked = allOpened("layers");
+  box.classList.toggle("locked", !unlocked);
+  var steps = ARROW_STEPS.slice(0, arrowShown).map(function(s){
+    return '<div class="aw-step"><div class="q">'+s.q+'</div><div class="a">'+s.a+'</div></div>';
+  }).join('');
+  var moreBtn = (unlocked && arrowShown<ARROW_STEPS.length)
+    ? '<button class="aw-more" id="awMore">Take the next step down \u2193</button>' : '';
+  var intro = unlocked
+    ? "Follow the same automatic thought down to the bedrock, the way the reading's clinician does with Marcus. Draw one arrow at a time."
+    : "Open all three layers above to unlock this walkthrough.";
+  box.innerHTML = '<h3>The downward-arrow technique</h3><p>'+intro+'</p>'+steps+moreBtn+
+    (unlocked && arrowShown===ARROW_STEPS.length ? '<p class="selfnote">Notice: the clinician never argues with the thought. They set aside whether it is true and gently follow it down, so the real work of testing the core belief can begin.</p>' : '');
+  var mb=document.getElementById("awMore");
+  if(mb) mb.addEventListener("click",function(){ arrowShown++; renderArrow(); });
+}
+
+function maybeUnlockArrow(){ if(mode==="layers") renderArrow(); }
+
+/* ---------- do-box + mode switch ---------- */
+function renderDoBox(){
+  document.getElementById("dobox").innerHTML = mode==="layers"
+    ? "<b>Do this:</b> Click all three layers to read what each is, then use the downward-arrow walkthrough below to trace one thought from the surface to the bedrock. Then switch to the triangle."
+    : "<b>Do this:</b> Click all three corners to see how a thought produces a feeling, a feeling a behavior, and a behavior new thoughts. Notice how changing only the thought rotates the whole loop. You've now done both maps.";
+}
+
+function setMode(m){
+  mode=m;
+  document.getElementById("tab-layers").setAttribute("aria-pressed", String(m==="layers"));
+  document.getElementById("tab-triangle").setAttribute("aria-pressed", String(m==="triangle"));
+  renderDoBox();
+  renderDiagram();
+  // reset detail to a prompt for this mode
+  document.getElementById("detail").innerHTML =
+    '<p class="pre">Select a '+(m==="layers"?"layer":"corner")+' in the diagram to read about it here.'+
+    (m==="layers"?' A natural order is surface \u2192 rules \u2192 bedrock.':' Try thought \u2192 feeling \u2192 behavior.')+'</p>'+
+    '<div class="checklist" id="checklist"></div>';
+  renderChecklist();
+  renderArrow();
+}
+
+document.getElementById("tab-layers").addEventListener("click",function(){ setMode("layers"); });
+document.getElementById("tab-triangle").addEventListener("click",function(){ setMode("triangle"); });
+
+setMode("layers");
+</script>
+</body>
+</html>
