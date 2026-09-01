@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treatment Explorer: Same Circuit, Different Doors</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c5c3e;
+    --do-bg:#eef3fb; --do-line:#c9d9f0; --do-ink:#2f4a72;
+    --topdown:#5b6aa0; --topdown-soft:#e6e9f4;
+    --bottomup:#9a6a2f; --bottomup-soft:#f4e9d8;
+    --med:#3f6f57; --med-soft:#e3efe7;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:76ch;}
+
+  .thesis{display:flex;gap:10px;align-items:flex-start;background:var(--ok-bg);border:1px solid var(--ok-line);
+    color:var(--ok-ink);border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.55;margin:14px 0 18px;}
+  .thesis svg{flex:0 0 auto;margin-top:1px;}
+
+  .caserow{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;}
+  .casebtn{flex:1 1 220px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:13px 15px;
+    text-align:left;cursor:pointer;font:inherit;transition:.12s;color:var(--ink);}
+  .casebtn:hover{border-color:#cfc9bf;}
+  .casebtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .casebtn[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;}
+  .casebtn .cn{font-weight:600;font-size:15px;}
+  .casebtn .cd{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.45;}
+
+  .case{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;margin-bottom:18px;}
+  .case h2{margin:0 0 3px;font-size:19px;}
+  .case .who{color:var(--muted);font-size:13.5px;margin:0 0 12px;}
+  .case .presenting{font-size:14.5px;line-height:1.6;margin:0 0 4px;}
+  .case .circuit{margin-top:14px;background:#f5f3ef;border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;color:#413d36;}
+  .case .circuit b{color:var(--ink);}
+  .case .circuit .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:6px;}
+
+  .doors-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:22px 2px 12px;}
+  .doors-h h3{margin:0;font-size:16px;}
+  .doors-h .note{font-size:12.5px;color:var(--muted);}
+  .doors{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  @media(max-width:820px){ .doors{grid-template-columns:1fr;} }
+  .door{border:1px solid var(--line);border-radius:14px;background:#fff;padding:0;overflow:hidden;display:flex;flex-direction:column;}
+  .door .dtop{padding:12px 15px 10px;border-bottom:1px solid var(--line);}
+  .door .dir{display:inline-block;font-size:11.5px;font-weight:700;border-radius:7px;padding:3px 9px;margin-bottom:8px;}
+  .door.topdown .dir{background:var(--topdown-soft);color:var(--topdown);}
+  .door.bottomup .dir{background:var(--bottomup-soft);color:var(--bottomup);}
+  .door.med .dir{background:var(--med-soft);color:var(--med);}
+  .door .dname{font-weight:600;font-size:14.5px;}
+  .door .dbody{padding:12px 15px;font-size:13px;line-height:1.55;color:#413d36;flex:1 1 auto;}
+  .door .dbody .k{font-weight:600;color:var(--ink);}
+  .door .dbody p{margin:0 0 9px;}
+  .door .dbody p:last-child{margin-bottom:0;}
+  .door .enters{padding:10px 15px;border-top:1px solid var(--line);background:#faf9f6;font-size:12.5px;color:var(--muted);}
+  .door .enters b{color:var(--ink);font-weight:600;}
+
+  .converge{margin-top:16px;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);
+    border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;}
+  .converge b{font-weight:700;}
+
+  .reflect{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .reflect h3{margin:0 0 8px;font-size:16px;}
+  .reflect .prompt{background:var(--do-bg);border:1px solid var(--do-line);color:var(--do-ink);
+    border-radius:10px;padding:11px 14px;font-size:13.5px;margin-bottom:12px;}
+  .reflect textarea{width:100%;min-height:84px;resize:vertical;border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;font:inherit;font-size:14.5px;background:#fff;}
+  .reflect textarea:focus{outline:none;border-color:var(--focus);}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;
+    padding:11px 18px;font-size:14.5px;font-weight:600;cursor:pointer;margin-top:12px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .model{margin-top:14px;background:var(--ok-bg);border:1px solid var(--ok-line);color:var(--ok-ink);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;}
+  .model .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:6px;}
+  .selfnote{font-size:12px;color:var(--muted);margin-top:9px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Treatment Explorer: Same Circuit, Different Doors</h1>
+    <p class="sub">Different treatments can change the same underlying brain circuit by entering through different doors. Pick a case, then compare how each treatment reaches an overlapping destination. Some work top-down, some bottom-up, some pharmacologically.</p>
+  </div>
+
+  <div class="thesis">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.3" stroke="currentColor" stroke-width="1.4"/><path d="M6.4 10.4l2.3 2.3 4.9-5.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div>This comparison does not crown a winner. It shows the module's central claim, that therapy and medication often change the same circuits by entering through different doors, so asking whether a problem is biological or psychological sets up a false choice. These sketches are simplified, and the routes overlap more than three tidy columns can show.</div>
+  </div>
+
+  <div class="caserow" id="caserow" role="group" aria-label="Choose a case"></div>
+
+  <div id="caseView"></div>
+
+  <div class="reflect" id="reflect">
+    <h3>Find the common thread</h3>
+    <div class="prompt"><b>Write first, then compare:</b> Across the treatments for the case you're viewing, write one sentence naming what they have in common at the level of the brain circuit, and one phrase naming how their <i>entry points</i> differ.</div>
+    <textarea id="answer" placeholder="The common thread across these treatments is… but they differ in that…" aria-label="Your common-thread sentence"></textarea>
+    <div><button class="btn" id="revealBtn" disabled>Compare with a model answer</button></div>
+    <div class="model hidden" id="model"></div>
+  </div>
+</div>
+
+<script>
+// ===========================================================================
+// Treatment Explorer (Module 6, activity 3 of 4) — "same circuit, different doors".
+// Grounded in the Module 6 reading (ug-module-readings.md):
+//   - Depression/Devon: anhedonia as a "wanting" problem in the dopaminergic
+//     reward system; behavioral activation recalibrates the reward system through
+//     action; SSRIs act on serotonin + downstream neuroplasticity; medication can
+//     "open a window of plasticity". Therapy and medication "different doors".
+//   - Panic/anxiety: fear circuitry (amygdala alarm / PFC brake); top-down
+//     (reappraisal) vs bottom-up (paced breathing) both settle the same circuit;
+//     GABA/benzodiazepines boost the brake chemically.
+//   - Trauma: fear circuitry + hippocampal context failure; exposure drives
+//     new inhibitory learning (neuroplasticity/LTP); reconsolidation can update
+//     the memory's emotional charge; SSRIs commonly used, acting via plasticity.
+// Composite patients are portraits, not real people. The reading's depression
+// composite is named Devon; these three are renamed composites (Renata, Talia,
+// Andre) in the same spirit, to avoid reusing names from other course activities.
+// No scoring; reflection is write-then-compare self-assessment.
+// ===========================================================================
+
+var CASES = {
+  depression: {
+    name: "Renata", who: "composite patient, depression with prominent anhedonia",
+    tab: "Depression", tabDesc: "Low mood, no motivation, withdrawal from everything rewarding",
+    presenting: "Renata describes a heavy, gray flatness. She's stopped seeing friends, dropped hobbies she loved, sleeps poorly, and can't make herself do even small tasks. She says, \u201cI know I\u2019d probably feel better if I got out and did things. I just can\u2019t make myself want to.\u201d",
+    circuit: "That last sentence is the clue. This is a <b>motivation (\u201cwanting\u201d) problem</b> more than a pleasure problem, rooted in an underactive <b>dopamine reward system</b>. Every day of withdrawal further strengthens the circuits of inactivity and starves the reward system of the positive experiences it needs to come back online. Poor sleep undermines the brain\u2019s nightly consolidation, and months of stress may have left the HPA axis dysregulated.",
+    doors: [
+      { cls:"topdown", dir:"Through behavior (top-down and action)", name:"Behavioral activation",
+        body:"<p>Schedule and do small rewarding activities <span class='k'>before</span> motivation returns, rather than waiting to feel like it.</p><p>Each completed activity is a small deposit of positive experience the reward system can learn from. The motivation tends to follow the behavior rather than precede it.</p>",
+        enters:"<b>Entry point:</b> the reward system, reached through action, gently retraining the dopamine circuitry that recalibrates through doing." },
+      { cls:"med", dir:"Pharmacological", name:"SSRI (with a prescriber)",
+        body:"<p>Acts primarily on <span class='k'>serotonin</span> transmission, and its antidepressant effect depends on <span class='k'>downstream neuroplasticity</span>, which is why mood effects lag by weeks rather than appearing immediately.</p><p>Can be understood not as an admission of weakness but as possibly opening a window of plasticity that makes the behavioral changes easier to build.</p>",
+        enters:"<b>Entry point:</b> neurotransmitter systems and the plasticity they support, a different door into overlapping change." },
+      { cls:"bottomup", dir:"Through the body", name:"Sleep and routine as treatment",
+        body:"<p>Protect the sleep that consolidates new learning and lets the stress system reset, and build predictable, restorative routines.</p><p>Treated here as real intervention on the HPA axis and consolidation rather than a comfort add-on.</p>",
+        enters:"<b>Entry point:</b> the body\u2019s stress and consolidation systems, supporting every other change." }
+    ],
+    converge: "<b>Where the doors meet.</b> All three support the same shift, a reward system coming back online and a brain doing the plasticity that recovery requires. Behavioral activation enters through action, the SSRI through neurotransmitters and downstream plasticity, and sleep through consolidation and the stress system. Combining them targets several routes to the same destination at once.",
+    model: "<div class='lab'>A model answer</div><p><b>Common thread.</b> Every treatment acts on the same reward and plasticity story, restarting an underactive reward system and supporting the neuroplastic change that lets new, healthier patterns take hold. <b>Different entry points.</b> Behavioral activation enters through action, the SSRI through serotonin and downstream plasticity, and sleep and routine through the body\u2019s consolidation and stress systems. That is same circuit, different doors, and it is why the biological-versus-psychological split is a false choice.</p><p class='selfnote'>Self-check, not graded. Compare whether your sentence named a shared circuit-level destination and distinguished the routes.</p>"
+  },
+  panic: {
+    name: "Talia", who: "composite patient, panic and acute anxiety",
+    tab: "Panic and anxiety", tabDesc: "A too-loud alarm and a too-weak brake in the fear circuit",
+    presenting: "Talia has panic attacks that seem to strike \u201cout of nowhere.\u201d Her heart pounds, her chest tightens, and she becomes convinced she\u2019s having a heart attack, which spikes the fear further, in a spiral. She\u2019s started avoiding places where an attack would be embarrassing.",
+    circuit: "In the <b>fear circuit</b>, the <b>amygdala</b> (alarm) is firing too easily, and the <b>prefrontal cortex</b> (brake) is too weak or too flooded to quiet it in the moment. Her catastrophic interpretation of normal bodily sensations feeds the alarm, so the circuit keeps the fear alive instead of settling it.",
+    doors: [
+      { cls:"topdown", dir:"Top-down", name:"Cognitive reappraisal",
+        body:"<p>Notice the catastrophic thought (\u201cI\u2019m having a heart attack\u201d) and replace it with an accurate one (\u201cthis is panic, intensely uncomfortable but not dangerous, and it will pass\u201d).</p><p>The new meaning sends a calming signal down to quiet the amygdala. It requires the thinking brain to be online enough to use it.</p>",
+        enters:"<b>Entry point:</b> the prefrontal brake, strengthening top-down regulation of the alarm." },
+      { cls:"bottomup", dir:"Bottom-up", name:"Paced breathing and grounding",
+        body:"<p>Slow the breath and ground in the senses to nudge the body from the stress state toward calm, a manual override when the thinking brain is too flooded to reason.</p><p>Often comes <span class='k'>first</span>, to bring arousal back into the zone where top-down work can land.</p>",
+        enters:"<b>Entry point:</b> the body and nervous system, settling the alarm directly, from the bottom up." },
+      { cls:"med", dir:"Pharmacological", name:"GABA-acting medication",
+        body:"<p>Some anti-anxiety medications work by boosting the effect of <span class='k'>GABA</span>, the brain\u2019s main inhibitory (\u201cbrake\u201d) messenger.</p><p>Strengthens the \u201cstop\u201d side of the balance chemically, the same braking function that reappraisal and breathing build behaviorally.</p>",
+        enters:"<b>Entry point:</b> the brain\u2019s inhibitory chemistry, another route to a stronger brake." }
+    ],
+    converge: "<b>Where the doors meet.</b> Every option is trying to rebalance one circuit, turning the alarm down and the brake up. Reappraisal does it top-down, breathing does it bottom-up, and GABA-acting medication does it chemically. Exposure (not shown) does both directions at once. One circuit, several doors.",
+    model: "<div class='lab'>A model answer</div><p><b>Common thread.</b> All of these rebalance the same fear circuit, quieting an overactive amygdala alarm and strengthening the prefrontal brake. <b>Different entry points.</b> Reappraisal enters top-down (through meaning), paced breathing enters bottom-up (through the body), and GABA-acting medication enters through the brain\u2019s inhibitory chemistry. Same circuit, different doors.</p><p class='selfnote'>Self-check, not graded. Compare whether you named the shared circuit and separated top-down, bottom-up, and pharmacological routes.</p>"
+  },
+  trauma: {
+    name: "Andre", who: "composite patient, post-traumatic stress",
+    tab: "Trauma and PTSD", tabDesc: "Memories that intrude as if the danger were happening now",
+    presenting: "Andre survived a serious accident. Now certain sounds and places make it feel like the event is happening again, full-body and present-tense, not like an ordinary memory. He\u2019s jumpy, sleeps badly, and steers around anything that might trigger a flashback.",
+    circuit: "Under extreme stress, the <b>hippocampus</b> can be overwhelmed, so traumatic memories get stored <b>without their proper context tags</b>. The memory then intrudes as though the danger were present, not filed as \u201cthen and there.\u201d Meanwhile the <b>amygdala</b> alarm is primed and the <b>prefrontal</b> brake is under-recruited. The wound-up, high-alert state of PTSD is a nervous system that learned danger very well and hasn\u2019t yet had the experiences it needs to learn safety.",
+    doors: [
+      { cls:"topdown", dir:"New learning (neuroplasticity)", name:"Exposure-based work",
+        body:"<p>In a safe, structured way, approach trauma reminders so the body directly registers, over and over, that the feared danger isn\u2019t occurring now.</p><p>Builds a new <span class='k'>competing safety pathway</span> that inhibits the old fear learning, neuroplasticity and LTP at work in the fear circuit. Practiced across contexts so it generalizes.</p>",
+        enters:"<b>Entry point:</b> new inhibitory learning, driving plasticity that outcompetes the old danger circuit." },
+      { cls:"bottomup", dir:"Updating the memory", name:"Reconsolidation-informed work",
+        body:"<p>When a memory is genuinely, emotionally reactivated in safety, it briefly becomes editable, and new information of present safety can be written in before it re-saves.</p><p>Helps <span class='k'>re-file</span> the memory with accurate context (\u201cit happened then, and I\u2019m safe now\u201d), softening its emotional charge rather than only overriding it.</p>",
+        enters:"<b>Entry point:</b> the memory itself, updating its emotional content during a labile window." },
+      { cls:"med", dir:"Pharmacological", name:"SSRI (with a prescriber)",
+        body:"<p>Commonly used in PTSD, acting on <span class='k'>serotonin</span> and, through downstream <span class='k'>neuroplasticity</span>, supporting the brain\u2019s capacity to do the new safety learning.</p><p>A different door into the same rebalancing of an over-alarmed circuit.</p>",
+        enters:"<b>Entry point:</b> neurotransmitter systems and the plasticity that new learning depends on." }
+    ],
+    converge: "<b>Where the doors meet.</b> Each approach is helping an over-alarmed fear circuit learn safety and re-file the past as past, whether by building a competing pathway (exposure), editing the memory during a reconsolidation window, or supporting plasticity pharmacologically. The destination overlaps, and the doors differ.",
+    model: "<div class='lab'>A model answer</div><p><b>Common thread.</b> All of these help the same over-alarmed circuit learn safety and re-file the trauma memory as \u201cover now,\u201d relying on the brain\u2019s neuroplasticity. <b>Different entry points.</b> Exposure enters through new inhibitory learning, reconsolidation-informed work enters through the reactivated memory itself, and an SSRI enters through neurotransmitters and downstream plasticity. Same circuit, different doors.</p><p class='selfnote'>Self-check, not graded. Compare whether you named the shared safety-learning destination and distinguished the routes.</p>"
+  }
+};
+
+var ORDER = ["panic","depression","trauma"];
+var current = "panic";
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+
+function renderCaseButtons(){
+  var row = document.getElementById("caserow");
+  row.innerHTML="";
+  ORDER.forEach(function(key){
+    var c = CASES[key];
+    var b = el("button","casebtn");
+    b.type="button";
+    b.setAttribute("aria-pressed", String(key===current));
+    b.innerHTML = '<div class="cn">'+c.tab+'</div><div class="cd">'+c.tabDesc+'</div>';
+    b.addEventListener("click", function(){ current=key; renderAll(); });
+    row.appendChild(b);
+  });
+}
+
+function renderCase(){
+  var c = CASES[current];
+  var v = document.getElementById("caseView");
+  v.innerHTML="";
+
+  var cs = el("div","case");
+  cs.innerHTML =
+    '<h2>'+c.name+'</h2>' +
+    '<p class="who">'+c.who+'</p>' +
+    '<p class="presenting">'+c.presenting+'</p>' +
+    '<div class="circuit"><div class="lab">What\u2019s happening in the circuit</div>'+c.circuit+'</div>';
+  v.appendChild(cs);
+
+  var dh = el("div","doors-h");
+  dh.innerHTML = '<h3>Three doors into the same circuit</h3><span class="note">color = direction of entry</span>';
+  v.appendChild(dh);
+
+  var doors = el("div","doors");
+  c.doors.forEach(function(d){
+    var card = el("div","door "+d.cls);
+    card.innerHTML =
+      '<div class="dtop"><span class="dir">'+d.dir+'</span><div class="dname">'+d.name+'</div></div>' +
+      '<div class="dbody">'+d.body+'</div>' +
+      '<div class="enters">'+d.enters+'</div>';
+    doors.appendChild(card);
+  });
+  v.appendChild(doors);
+
+  v.appendChild(el("div","converge", c.converge));
+}
+
+function renderModel(){
+  var m = document.getElementById("model");
+  m.classList.add("hidden");
+  m.innerHTML = CASES[current].model;
+  var ta = document.getElementById("answer");
+  ta.value=""; ta.readOnly=false; ta.style.background="#fff";
+  document.getElementById("revealBtn").disabled = true;
+}
+
+function renderAll(){ renderCaseButtons(); renderCase(); renderModel(); }
+
+// reflection compare
+document.addEventListener("DOMContentLoaded", function(){});
+renderAll();
+var ta = document.getElementById("answer");
+var rb = document.getElementById("revealBtn");
+ta.addEventListener("input", function(){ rb.disabled = ta.value.trim().length===0; });
+rb.addEventListener("click", function(){
+  document.getElementById("model").classList.remove("hidden");
+  rb.disabled=true; ta.readOnly=true; ta.style.background="#f3f1ec";
+});
+</script>
+</body>
+</html>

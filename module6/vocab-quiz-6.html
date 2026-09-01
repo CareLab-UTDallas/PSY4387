@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biology Vocabulary: Self-Test</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:2px 0 16px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .term-tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:2px 0 6px;line-height:1.4;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;
+    border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;
+    line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;margin-left:auto;}
+  .opt:disabled{cursor:default;}
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.6;}
+
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;}
+  .hintbtn{background:none;border:none;color:var(--accent-ink);font:inherit;font-size:13.5px;cursor:pointer;text-decoration:underline;padding:0;}
+  .hintbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .hintbox{margin-top:12px;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);
+    border-radius:10px;padding:10px 13px;font-size:13.5px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  /* results */
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;}
+  .results .score b{color:var(--accent-ink);}
+  .results .breakdown{margin:16px 0 0;border-top:1px solid var(--line);padding-top:14px;}
+  .results .brow{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .bi{flex:0 0 auto;margin-top:1px;}
+  .results .bt{flex:1 1 auto;}
+  .results .bt .bterm{font-weight:600;}
+  .results .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Biology Vocabulary: Self-Test</h1>
+    <p class="sub">Eight questions on the core Module 6 terms. Biological terms are easy to recognize but hard to produce, so this tests whether you can actually use each one rather than only recognize it. Pick an answer to see whether it's right and why.</p>
+  </div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <section class="panel results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// ===========================================================================
+// Biology vocabulary self-test (Module 6, activity 2 of 4).
+// Correct-answer definitions and explanations are drawn from the Module 6
+// reading's IN PLAIN LANGUAGE glossary boxes and body text (ug-module-readings.md):
+// amygdala, prefrontal cortex, hippocampus, HPA axis, neuroplasticity, LTP,
+// dopamine/anhedonia, top-down vs bottom-up. Distractors are common
+// misconceptions the reading explicitly warns against (e.g. "biological =
+// permanent", "chemical imbalance is the whole story", amygdala = pure fear
+// center, PFC vs amygdala as good-vs-bad).
+// Self-scored: the score covers only these machine-checkable items. No open
+// responses are graded here.
+// ===========================================================================
+
+var QUIZ = [
+  {
+    term: "Amygdala",
+    prompt: "Which description best fits the amygdala's role in the fear circuit?",
+    options: [
+      { id:"a", text:"A slow, deliberate reasoner that weighs evidence before deciding whether to be afraid" },
+      { id:"b", text:"A fast, automatic threat (and importance) detector that can fire before deliberate appraisal" },
+      { id:"c", text:"The structure that files memories with their time-and-place context" },
+      { id:"d", text:"The gland that releases cortisol into the bloodstream" }
+    ],
+    correct:"b",
+    explain:"The amygdala acts as a rapid, automatic detector, the launch point for fear, that flags possible threats before the thinking brain has weighed in. It is better described as an importance detector than a pure 'fear center.'",
+    hint:"Think about which structure works fastest and least deliberately.",
+    src:"Module 6, The Brain's Alarm System"
+  },
+  {
+    term: "Prefrontal cortex",
+    prompt: "In a well-regulated brain, what is the prefrontal cortex doing in relation to the amygdala?",
+    options: [
+      { id:"a", text:"Speeding the alarm up so the body reacts sooner" },
+      { id:"b", text:"Storing the emotional memory of the threat" },
+      { id:"c", text:"Evaluating the situation and sending a calming signal down to apply the brakes" },
+      { id:"d", text:"Replacing emotion with pure logic by shutting the amygdala off entirely" }
+    ],
+    correct:"c",
+    explain:"The prefrontal cortex is the 'manager' or brake. Once it judges a situation safe, it sends a calming signal to the amygdala. The goal is not to silence the alarm but to keep it accurate and proportionate, the two systems working as a team.",
+    hint:"The reading calls it the brake, not the off-switch.",
+    src:"Module 6, The Brain's Manager"
+  },
+  {
+    term: "Hippocampus",
+    prompt: "A client is calm about dogs in your office but panics near a dog on the street. Which structure best explains why the calmer learning didn't automatically transfer?",
+    options: [
+      { id:"a", text:"The hippocampus, which ties new learning to the context where it happened" },
+      { id:"b", text:"The HPA axis, which released too little cortisol in the office" },
+      { id:"c", text:"The amygdala, which permanently deleted the fear in the office" },
+      { id:"d", text:"The prefrontal cortex, which can only work indoors" }
+    ],
+    correct:"a",
+    explain:"Because the hippocampus files learning with its context, calmer learning can stay tied to the room where it happened and not transfer to a new setting. That return of fear is not backsliding. It is why new learning must be practiced across many situations to generalize.",
+    hint:"Which structure tracks the 'where and when' of a memory?",
+    src:"Module 6, The Memory Mapmaker and Why the Same Fear Comes Back"
+  },
+  {
+    term: "HPA axis",
+    prompt: "What does the HPA axis do, and what goes wrong under chronic stress?",
+    options: [
+      { id:"a", text:"It stores traumatic memories, and under stress it deletes them" },
+      { id:"b", text:"It's the body's stress-response relay (ending in cortisol release), and under chronic stress the switch can get stuck 'on'" },
+      { id:"c", text:"It's the brain's main calming neurotransmitter, and under stress it runs out" },
+      { id:"d", text:"It's the reward pathway, and under stress it produces too much motivation" }
+    ],
+    correct:"b",
+    explain:"The HPA axis is the body's stress switch, a relay from hypothalamus to pituitary to adrenals that releases cortisol, designed to turn on for a threat and cleanly off afterward. Under chronic stress it can stay on too long, and prolonged stress hormones are hard on the body and brain (the hippocampus especially).",
+    hint:"It's a hormone relay, not a memory or a neurotransmitter.",
+    src:"Module 6, The Body's Stress Switch"
+  },
+  {
+    term: "Neuroplasticity",
+    prompt: "Which statement about neuroplasticity matches the module's message?",
+    options: [
+      { id:"a", text:"The brain is essentially fixed by adulthood, so therapy can only teach coping around permanent wiring" },
+      { id:"b", text:"The brain physically changes in response to experience throughout life, which is why therapy can work at all" },
+      { id:"c", text:"Neuroplasticity means old fear memories are fully erased once new learning occurs" },
+      { id:"d", text:"Only medication, not experience, can produce physical change in the brain" }
+    ],
+    correct:"b",
+    explain:"Neuroplasticity is the brain's capacity to physically change with experience across adulthood. It is the biological basis of all learning, and the reason therapy (structured learning) can reshape neural pathways. New learning usually competes with old learning rather than erasing it.",
+    hint:"The module's hope rests on this one.",
+    src:"Module 6, How Experience Rewires the Brain"
+  },
+  {
+    term: "Long-term potentiation",
+    prompt: "Long-term potentiation (LTP) is best described as:",
+    options: [
+      { id:"a", text:"A hormone that floods the body during fight-or-flight" },
+      { id:"b", text:"The strengthening of the connection between neurons that fire together repeatedly" },
+      { id:"c", text:"The permanent deletion of unused neural connections" },
+      { id:"d", text:"A brain scan technique for diagnosing depression" }
+    ],
+    correct:"b",
+    explain:"LTP is a cellular mechanism behind learning. When neurons fire together repeatedly, the synapse linking them strengthens, making that pathway easier to trigger next time. Practice changes the brain, and therapy is guided practice.",
+    hint:"'Neurons that fire together, wire together.'",
+    src:"Module 6, cellular learning and the LTP glossary"
+  },
+  {
+    term: "Dopamine and anhedonia",
+    prompt: "A depressed client says, 'If I could make myself do it, I might even enjoy it, but I can't make myself start.' Which reading of this is most consistent with the module?",
+    options: [
+      { id:"a", text:"A pleasure ('liking') problem, where the capacity to enjoy is gone, so activities are pointless" },
+      { id:"b", text:"A motivation ('wanting') problem in the dopamine reward system, which recalibrates through action" },
+      { id:"c", text:"A serotonin shortage that only medication can correct" },
+      { id:"d", text:"A sign the client is not really trying and needs to be confronted" }
+    ],
+    correct:"b",
+    explain:"Dopamine is more about the drive to pursue ('wanting') than pleasure itself ('liking'). Anhedonia here is largely a wanting problem in an underactive reward system. That is why behavioral activation asks people to do rewarding activities before motivation returns, because the reward system recalibrates through action and motivation tends to follow the behavior.",
+    hint:"The reading draws a sharp line between 'wanting' and 'liking.'",
+    src:"Module 6, Dopamine and the Worked Illustration (Devon)"
+  },
+  {
+    term: "Top-down vs bottom-up",
+    prompt: "Which pairing correctly matches the direction of influence to the technique?",
+    options: [
+      { id:"a", text:"Top-down means slowing the breath to calm the body, and bottom-up means reappraising a catastrophic thought" },
+      { id:"b", text:"Top-down means reappraising a catastrophic thought, and bottom-up means slowing the breath to settle the body" },
+      { id:"c", text:"Both terms mean the same thing and are interchangeable" },
+      { id:"d", text:"Top-down means medication, and bottom-up means therapy" }
+    ],
+    correct:"b",
+    explain:"Top-down regulation is the thinking brain calming the emotional brain, for example reappraising a thought. Bottom-up starts with the body and nervous system, for example slowed breathing or grounding. Neither is better, and skilled clinicians use both. Exposure works in both directions at once.",
+    hint:"'Top' is the thinking brain, and 'bottom' is the body.",
+    src:"Module 6, Two Directions of Influence"
+  }
+];
+
+var idx = 0;
+var answered = [];   // chosen id or null
+var hintShown = {};
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK='<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS='<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+function init(){ answered = QUIZ.map(function(){return null;}); renderProgress(); renderQuestion(); }
+
+function renderProgress(){
+  var pct = (idx) / QUIZ.length * 100;
+  document.getElementById("pbarfill").style.width = pct + "%";
+  document.getElementById("pcount").textContent = "Question " + Math.min(idx+1,QUIZ.length) + " of " + QUIZ.length;
+}
+
+function renderQuestion(){
+  renderProgress();
+  var q = QUIZ[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var top = el("div","qtop");
+  top.appendChild(el("span","qn","Question " + (idx+1) + " of " + QUIZ.length));
+  top.appendChild(el("span","term-tag", esc(q.term)));
+  panel.appendChild(top);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> Choose the option that reflects the reading's meaning of the term rather than a familiar word. You'll see whether it's right and why before moving on."));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls="opt";
+    if(isAnswered){
+      if(o.id===q.correct) cls+=" correct";
+      else if(o.id===chosen) cls+=" wrong";
+      else cls+=" dim";
+    }
+    var b = el("button",cls);
+    b.type="button";
+    if(isAnswered) b.disabled=true;
+    var mark="";
+    if(isAnswered && o.id===q.correct) mark=CHECK;
+    else if(isAnswered && o.id===chosen) mark=CROSS;
+    b.innerHTML='<span class="k">'+o.id.toUpperCase()+'.</span><span class="txt">'+esc(o.text)+'</span><span class="mark">'+mark+'</span>';
+    if(!isAnswered) b.addEventListener("click",function(){ choose(o.id); });
+    opts.appendChild(b);
+  });
+  panel.appendChild(opts);
+
+  if(!isAnswered){
+    var foot = el("div","foot");
+    var hb = el("button","hintbtn", hintShown[idx] ? "Hide hint" : "Show a hint");
+    hb.addEventListener("click", function(){ hintShown[idx]=!hintShown[idx]; renderQuestion(); });
+    foot.appendChild(hb);
+    foot.appendChild(el("span","",""));
+    panel.appendChild(foot);
+    if(hintShown[idx]) panel.appendChild(el("div","hintbox", esc(q.hint)));
+  } else {
+    var right = chosen===q.correct;
+    panel.appendChild(el("p","verdict "+(right?"ok":"no"), right ? "Correct." : "Not quite."));
+    var ex = el("p","explain", esc(q.explain));
+    ex.innerHTML += '<div class="src">Reading: ' + esc(q.src) + '</div>';
+    panel.appendChild(ex);
+
+    var foot = el("div","foot");
+    foot.appendChild(el("span","",""));
+    var last = idx===QUIZ.length-1;
+    var nb = el("button","btn");
+    nb.innerHTML = last ? 'See your results' : 'Next question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    nb.addEventListener("click", function(){
+      if(last){ finish(); } else { idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); }
+    });
+    foot.appendChild(nb);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(id){
+  if(answered[idx]!==null) return;
+  answered[idx]=id;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("pbarfill").style.width = "100%";
+  document.getElementById("pcount").textContent = "Complete";
+  document.getElementById("qpanel").classList.add("hidden");
+  var correct = answered.filter(function(a,i){return a===QUIZ[i].correct;}).length;
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML="";
+  rp.appendChild(el("h2",null,"Your results"));
+  rp.appendChild(el("p","score","You answered <b>"+correct+" of "+QUIZ.length+"</b> correctly."));
+
+  var bd = el("div","breakdown");
+  QUIZ.forEach(function(q,i){
+    var right = answered[i]===q.correct;
+    var row = el("div","brow");
+    row.innerHTML = '<span class="bi">'+(right?CHECK:CROSS)+'</span>' +
+      '<span class="bt"><span class="bterm">'+esc(q.term)+'</span>'+(right?'':' (revisit in the reading: '+esc(q.src)+')')+'</span>';
+    bd.appendChild(row);
+  });
+  rp.appendChild(bd);
+
+  var act = el("div","actions");
+  var again = el("button","btn secondary","Retake the self-test");
+  again.addEventListener("click", function(){ idx=0; answered=QUIZ.map(function(){return null;}); hintShown={};
+    document.getElementById("qpanel").classList.remove("hidden"); rp.classList.add("hidden"); renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again);
+  rp.appendChild(act);
+
+  rp.appendChild(el("p","selfnote","This self-test scores only these multiple-choice items, and your score is not saved or sent anywhere. Terms you missed are the ones to produce from memory next time. Recognizing a definition is easier than generating one, and self-testing shows you which is which."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

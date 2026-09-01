@@ -180,7 +180,7 @@
     <!-- Stage 1 patient toggle -->
     <div class="toggle hidden" id="toggle">
       <h4>Explore with a different patient</h4>
-      <p>Same clinical situation, different patient. The mechanism, techniques, and clinical reasoning stay identical &mdash; only the patient details and communication style adapt. Consider what you would change before clicking.</p>
+      <p>Same clinical situation, different patient. The mechanism, techniques, and clinical reasoning stay identical while the patient details and communication style adapt. Consider what you would change before clicking.</p>
       <div class="toggle-btns" id="toggleBtns"></div>
     </div>
 
@@ -400,24 +400,24 @@ const SESSION = {
 // Per-gap coaching feedback, grounded in the Module 6 reading + exposure/inhibitory-learning practice.
 const GAP_FEEDBACK = {
   2: { // neuroplasticity as mechanism of change
-    lookFor: "A response that names neuroplasticity as the reason change is possible and makes clear that exposure builds a NEW 'dogs can be safe' pathway rather than deleting the old memory — the old learning is not erased, it is outcompeted.",
-    why: "The module's central hopeful claim is that the brain is an organ built to change: learning physically strengthens synapses (long-term potentiation), so a new, calmer pathway can be built alongside the old fear learning. Framing exposure as new learning (not erasure) sets up an honest, accurate account the patient can believe in and matches inhibitory-learning theory.",
-    watchFor: "Don't promise the old memory or fear is 'gone' or 'cured' — that overclaims and sets up the patient to read a normal return of fear as failure. Keep it as building and strengthening a competing pathway."
+    lookFor: "A response that names neuroplasticity as the reason change is possible and makes clear that exposure builds a new 'dogs can be safe' pathway rather than deleting the old memory. The old learning is not erased. It is outcompeted.",
+    why: "The brain is an organ built to change. Learning physically strengthens synapses (long-term potentiation), so a new, calmer pathway can be built alongside the old fear learning. Framing exposure as new learning rather than erasure gives the patient an honest, accurate account she can believe in, and it matches inhibitory-learning theory.",
+    watchFor: "Don't promise the old memory or fear is 'gone' or 'cured.' That overclaims, and it sets up the patient to read a normal return of fear as failure. Keep it as building and strengthening a competing pathway."
   },
   3: { // return of fear / practice across contexts
-    lookFor: "A response that answers the return-of-fear question honestly — yes, the old pathway can reactivate in a new or surprising context — and then gives the rationale for practicing across many situations so the new learning generalizes.",
-    why: "Because new learning tends to be filed with the context where it happened (the hippocampus's doing), a fear calmed in one setting can return in another. The reading frames this not as backsliding but as the expected next step: repeated practice across varied contexts is what makes the calmer pathway robust and general.",
-    watchFor: "Don't reassure that the fear will never come back, and don't treat its return as a sign the work failed. The trail/pathway metaphor works because it keeps the old path present while the new one is widened with use."
+    lookFor: "A response that answers the return-of-fear question honestly (yes, the old pathway can reactivate in a new or surprising context) and then gives the rationale for practicing across many situations so the new learning generalizes.",
+    why: "New learning tends to be filed with the context where it happened (the hippocampus's doing), so a fear calmed in one setting can return in another. The reading frames this as the expected next step rather than backsliding. Repeated practice across varied contexts is what makes the calmer pathway strong and general.",
+    watchFor: "Don't reassure that the fear will never come back, and don't treat its return as a sign the work failed. The trail and pathway metaphor works because it keeps the old path present while the new one is widened with use."
   },
   5: { // neuroimaging evidence -> readiness
     lookFor: "A response that cites the measurable brain change from exposure (more prefrontal regulation, less amygdala reactivity on scans) to bolster credibility, then pivots to gauging the patient's readiness or motivation to begin.",
-    why: "Naming that the change is physically real and visible on scans makes the rationale concrete and motivating — the patient is 'not just white-knuckling it.' Used this way, imaging supports the mechanism story and treatment motivation, then hands off to planning.",
-    watchFor: "Keep the brain-scan claim at the group/mechanism level. The reading is explicit that a scan can't diagnose an individual or read a person's thoughts, so don't imply you could scan this patient to prove or track her progress. Use the science to build willingness, not to dazzle or overclaim."
+    why: "Naming that the change is physically real and visible on scans makes the rationale concrete and motivating, so the patient is not white-knuckling it. Used this way, imaging supports the mechanism story and treatment motivation, then hands off to planning.",
+    watchFor: "Keep the brain-scan claim at the group and mechanism level. The reading is explicit that a scan can't diagnose an individual or read a person's thoughts, so don't imply you could scan this patient to prove or track her progress. Use the science to build willingness, not to dazzle or overclaim."
   },
   6: { // reinforce reframe + bridge to planning
     lookFor: "A response that affirms the patient's own reframe (she is rewiring a circuit, not merely suffering), turns that understanding into a coping resource she can use mid-exposure, and bridges to concrete next steps (planning the first item on the hierarchy).",
-    why: "Consolidating the reframe converts psychoeducation into something usable: when anxiety spikes during exposure, the patient can remind herself what is happening in her brain. Bridging to the hierarchy keeps the session moving from 'why' to 'what we'll do,' where the actual new learning gets built.",
-    watchFor: "Don't let the session stall in explanation. The value now is making the understanding portable and collaboratively moving into planning — securing her buy-in rather than lecturing further."
+    why: "Consolidating the reframe converts psychoeducation into something usable. When anxiety spikes during exposure, the patient can remind herself what is happening in her brain. Bridging to the hierarchy keeps the session moving from 'why' to 'what we'll do,' where the actual new learning gets built.",
+    watchFor: "Don't let the session stall in explanation. The value now is making the understanding portable and collaboratively moving into planning, securing her buy-in rather than lecturing further."
   }
 };
 
@@ -468,7 +468,7 @@ function renderHeader(){
   var ab = document.getElementById("adaptBanner");
   if(stage===1 && p.banner){
     ab.classList.remove("hidden");
-    ab.innerHTML = '<div><b>AI-adapted for: '+esc(p.banner)+'.</b> The mechanism, techniques, and clinical reasoning are unchanged — only the patient details and communication style adapt. Amber annotations refer to the original phrasing.</div>' +
+    ab.innerHTML = '<div><b>AI-adapted for: '+esc(p.banner)+'.</b> The mechanism, techniques, and clinical reasoning are unchanged. Only the patient details and communication style adapt. Amber annotations refer to the original phrasing.</div>' +
       '<button class="back" type="button" id="backOrig">Back to original</button>';
     document.getElementById("backOrig").addEventListener("click", function(){
       patientKey = "baseline"; renderHeader(); renderChat(); renderToggle();
