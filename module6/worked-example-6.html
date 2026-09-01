@@ -645,4 +645,17 @@ function setStage(s){
 renderHeader(); renderInstr(); renderChat(); renderToggle(); updateStatus(); renderBottomNav();
 </script>
 </body>
+  <script>
+(function () {
+  function postHeight() {
+    var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    parent.postMessage({ type: "resize-iframe", height: h }, "*");
+  }
+  window.addEventListener("load", postHeight);
+  window.addEventListener("resize", postHeight);
+  if (window.ResizeObserver) { new ResizeObserver(postHeight).observe(document.body); }
+  else { setInterval(postHeight, 500); }
+  document.addEventListener("click", function () { setTimeout(postHeight, 300); });
+})();
+</script>
 </html>
