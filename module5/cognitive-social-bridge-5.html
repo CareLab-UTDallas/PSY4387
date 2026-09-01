@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Where the Cognitive Meets the Social</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --cog:#5b6aa0; --cog-soft:#e6e9f4;   /* cognitive / inside one head */
+    --soc:#3f6f57; --soc-soft:#e3efe7;   /* social / between people */
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .bridge{display:flex;gap:9px;align-items:flex-start;background:var(--amber-bg);border:1px solid var(--amber-line);
+    color:var(--amber-ink);border-radius:12px;padding:12px 15px;margin:12px 0 4px;font-size:13px;line-height:1.55;}
+  .bridge svg{flex:0 0 auto;margin-top:1px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:14px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .qtop{font-size:13px;color:var(--muted);margin-bottom:12px;}
+  .setup{background:#f5f3ef;border-radius:12px;padding:13px 15px;font-size:14.5px;line-height:1.55;margin-bottom:6px;border-left:3px solid var(--accent);}
+  .setup b{color:var(--ink);}
+
+  .layer{border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-top:14px;}
+  .layer.cog{background:var(--cog-soft);border-color:var(--cog);}
+  .layer.soc{background:var(--soc-soft);border-color:var(--soc);}
+  .layer .ltag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:7px;padding:3px 9px;margin-bottom:8px;}
+  .layer.cog .ltag{background:#fff;color:var(--cog);}
+  .layer.soc .ltag{background:#fff;color:var(--soc);}
+  .layer .lbody{font-size:14px;line-height:1.55;}
+  .layer .lbody b{font-weight:700;}
+
+  .field{margin:14px 0 0;}
+  .field .prompt{font-size:13.5px;color:var(--ink);margin-bottom:7px;}
+  select{width:100%;font:inherit;font-size:14.5px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none'><path d='M5 7l5 5 5-5' stroke='%236b6862' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;}
+  select:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  select:disabled{opacity:1;}
+  select.ok{background-color:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink);}
+  select.no{background-color:var(--no-bg);border-color:var(--no-line);color:var(--no-ink);}
+  .fnote{margin-top:7px;font-size:13px;line-height:1.55;padding:9px 12px;border-radius:9px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+
+  .synth{margin-top:16px;background:#fff;border:1px dashed var(--accent);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;}
+  .synth.hidden{display:none;}
+  .synth .st{font-weight:700;color:var(--accent-ink);margin-bottom:4px;}
+  .synth .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  @media(max-width:560px){ .synth .pair{grid-template-columns:1fr;} }
+  .synth .pc{border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.5;}
+  .synth .pc.cog{background:var(--cog-soft);} .synth .pc.soc{background:var(--soc-soft);}
+  .synth .pc .h{font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;}
+  .synth .pc.cog .h{color:var(--cog);} .synth .pc.soc .h{color:var(--soc);}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.6;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Where the Cognitive Meets the Social</h1>
+    <p class="sub">In Module 4 you built the thought record and learned to spot distortions inside one person's head. This module widens the lens: those same cognitive patterns are often maintained, and even created, by the loops between people. For each case, name the distortion in the person's head and the mechanism in the loop around them, then see how a mechanism-first clinician picks tools at both levels, choosing by what is keeping the problem going rather than by any brand.</p>
+  </div>
+
+  <div class="bridge">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M4 10c0-3 2-5 5-5M16 10c0 3-2 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    <div>Some of the most powerful change happens at the boundary between the cognitive and the social. The thought record works inside one head; the feedback loop works between people. Skilled practice moves between them, following the person rather than a favorite theory.</div>
+  </div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+  <section class="card results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// ===========================================================================
+// Where the Cognitive Meets the Social (Module 5). Bridge activity connecting the
+// Module 4 thought record + cognitive distortions to the Module 5 interpersonal
+// loop, in service of mechanism-first tool selection.
+// Grounded in ug-module-readings.md: Module 4 states the cognitive patterns are
+// "maintained and even created by relationships," with change "at the boundary
+// between the cognitive and the social." Module 5 supplies the interpersonal
+// mechanisms (feedback loop, negative reinforcement, avoidance/safety behavior,
+// family-system function). Each case asks the student to (1) name the distortion
+// in one person's head, (2) name the interpersonal mechanism in the loop, then
+// reveals a paired, mechanism-matched plan at both levels.
+// Correct = green, wrong = red (house convention). Fully client-side; nothing sent.
+// ===========================================================================
+
+var DISTORTIONS = [
+  {id:"aon",name:"All-or-nothing thinking"},{id:"cat",name:"Catastrophizing"},
+  {id:"mr",name:"Mind reading"},{id:"og",name:"Overgeneralization"},
+  {id:"mf",name:"Mental filtering"},{id:"pers",name:"Personalization"},
+  {id:"should",name:"\u201cShould\u201d statements"}
+];
+// Interpersonal mechanisms from Module 5.
+var MECHS = [
+  {id:"loop",name:"Interpersonal feedback loop"},
+  {id:"negreinf",name:"Negative reinforcement (relief-driven)"},
+  {id:"safety",name:"Safety behavior / accommodation"},
+  {id:"sysfunc",name:"System function (symptom does a job)"}
+];
+function nameOf(list,id){ for(var i=0;i<list.length;i++){ if(list[i].id===id) return list[i].name; } return id; }
+
+var CASES = [
+  {
+    setup:"<b>Theo and Nadia.</b> Theo has social anxiety. His partner Nadia, out of love, makes the excuses and cancels plans whenever he gets anxious, so he never has to face the thing he fears.",
+    cog:{
+      body:"Inside Theo's head, an invitation triggers the automatic thought <b>\u201cif I go, I'll humiliate myself and they'll see I don't belong.\u201d</b> He treats a guess about others' judgment as a settled fact.",
+      prompt:"Which distortion is running inside Theo's head?",
+      answer:"mr",
+      why:"Treating an unverified prediction about others' judgment as fact is mind reading. It's the cognitive layer the thought record would target."
+    },
+    soc:{
+      body:"Between them, a loop turns: Theo hints he'd rather not go, Nadia cancels, Theo feels a rush of <b>relief</b>, which teaches his brain that avoiding was right, so his urge to avoid grows and Nadia cancels quicker next time.",
+      prompt:"Which interpersonal mechanism is keeping the loop alive?",
+      answer:"negreinf", also:"safety",
+      why:"The relief when Nadia cancels is negative reinforcement delivered inside a feedback loop; Nadia's canceling also functions as an accommodation (a safety behavior on Theo's behalf). Either read names the maintaining engine."
+    },
+    plan:{
+      cog:"<b>Cognitive tool:</b> a thought record on \u201cthey'll see I don't belong,\u201d weighing the actual evidence to loosen the mind-reading thought.",
+      soc:"<b>Interpersonal tool:</b> change one half of the loop. Nadia gently stops making the excuses and instead stays beside Theo while he does the hard thing, removing the relief that fed the avoidance. That doubles as exposure for Theo.",
+      synth:"Notice the move: the distortion is addressed inside Theo's head, and the loop is addressed between the two of them. Neither alone is as strong as both. The tools were chosen by the mechanism in play, not by a school of therapy."
+    }
+  },
+  {
+    setup:"<b>A worried parent and an adult child.</b> An adult child, Sam, has panic symptoms. Sam's mother phones several times a day to check Sam is okay, and Sam has come to rely on those calls to feel safe.",
+    cog:{
+      body:"Inside Sam's head, an ordinary body sensation becomes <b>\u201csomething is seriously wrong, this could be a medical emergency.\u201d</b> The sensation is read as catastrophe.",
+      prompt:"Which distortion is running inside Sam's head?",
+      answer:"cat",
+      why:"Reading an ordinary sensation as a looming emergency is catastrophizing, the classic cognitive engine of panic."
+    },
+    soc:{
+      body:"Between them, Sam's anxiety prompts a reassurance-seeking call, the mother reassures, Sam feels <b>momentary relief</b>, and both learn to repeat the pattern. The reassurance quietly confirms that the sensations were dangerous enough to need checking.",
+      prompt:"Which interpersonal mechanism is keeping this going?",
+      answer:"safety", also:"negreinf",
+      why:"The reassurance calls are a safety behavior (accommodation) that prevents Sam from learning the sensations are harmless; the relief they bring is negative reinforcement inside the loop. Either names the maintaining mechanism."
+    },
+    plan:{
+      cog:"<b>Cognitive tool:</b> education plus a thought record on \u201cthis is an emergency,\u201d and an interoceptive experiment that brings on the feared sensations to gather first-hand evidence they're harmless.",
+      soc:"<b>Interpersonal tool:</b> with everyone's agreement, gradually reduce the reassurance calls (dropping the accommodation), so Sam can learn to tolerate the sensations without the crutch.",
+      synth:"The cognitive layer updates the catastrophic belief; the interpersonal layer removes the accommodation that was blocking the learning. Same mechanism-first logic, applied at two levels."
+    }
+  },
+  {
+    setup:"<b>A couple caught in pursue-withdraw.</b> When Ana feels distant from Ben, she presses for reassurance and closeness. Ben, feeling crowded, pulls back, which makes Ana press harder.",
+    cog:{
+      body:"Inside Ana's head, Ben's quiet evening becomes <b>\u201che's losing interest in me; if he really cared he'd show it.\u201d</b> A neutral mood is read as a verdict, with a rule about how caring must look.",
+      prompt:"Which distortion is most active in Ana's head?",
+      answer:"mr", also:"should",
+      why:"Reading Ben's quiet as 'losing interest' is mind reading; the rule 'if he cared he'd show it' adds a should statement. Either is a fair read of the cognitive layer."
+    },
+    soc:{
+      body:"Between them, the classic loop turns: Ana pursues, Ben withdraws, which raises Ana's anxiety so she pursues harder, which makes Ben withdraw further. <b>Who \u201cstarted it\u201d is impossible to say.</b>",
+      prompt:"Which interpersonal mechanism best names what's happening between them?",
+      answer:"loop",
+      why:"This is a textbook interpersonal feedback loop with circular causality: each person's behavior is both a response to and a trigger for the other's."
+    },
+    plan:{
+      cog:"<b>Cognitive tool:</b> a thought record helps Ana check \u201che's losing interest\u201d against the evidence and soften the rule about how care must be shown.",
+      soc:"<b>Interpersonal tool:</b> because each person owns half the loop, either can change their part. Ben can offer a small reliable signal of closeness before Ana pursues; Ana can name the fear rather than press. Changing one half shifts the whole cycle.",
+      synth:"The distortion lives in Ana's head; the pattern lives between them. Working only on Ana's thoughts leaves the loop intact; working only on the loop leaves her belief refilling it. The boundary between cognitive and social is exactly where the leverage is."
+    }
+  }
+];
+
+var idx=0, answers=[];
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function init(){ answers=CASES.map(function(){return {cog:null, soc:null};}); idx=0; render(); }
+
+function renderProgress(){
+  document.getElementById("pbarfill").style.width=(idx/CASES.length*100)+"%";
+  document.getElementById("pcount").textContent="Case "+Math.min(idx+1,CASES.length)+" of "+CASES.length;
+}
+
+function dropdown(list, chosenId, ansId, alsoId, onChange){
+  var sel=document.createElement("select");
+  var ph=document.createElement("option"); ph.value=""; ph.textContent="Choose\u2026"; ph.disabled=true; ph.selected=chosenId===null; sel.appendChild(ph);
+  list.forEach(function(o){ var op=document.createElement("option"); op.value=o.id; op.textContent=o.name; if(chosenId===o.id) op.selected=true; sel.appendChild(op); });
+  if(chosenId!==null){
+    sel.disabled=true;
+    var right = chosenId===ansId || (alsoId && chosenId===alsoId);
+    sel.classList.add(right?"ok":"no");
+  } else {
+    sel.addEventListener("change", function(){ onChange(sel.value); });
+  }
+  return sel;
+}
+
+function render(){
+  renderProgress();
+  var c=CASES[idx], a=answers[idx];
+  var panel=document.getElementById("cardPanel"); panel.innerHTML="";
+  panel.appendChild(el("div","qtop","Case "+(idx+1)+" of "+CASES.length));
+  panel.appendChild(el("div","setup", c.setup));
+
+  // Cognitive layer
+  var cog=el("div","layer cog");
+  cog.appendChild(el("span","ltag","Inside one head \u00b7 cognitive"));
+  cog.appendChild(el("div","lbody", c.cog.body));
+  var cf=el("div","field");
+  cf.appendChild(el("div","prompt", c.cog.prompt));
+  cf.appendChild(dropdown(DISTORTIONS, a.cog, c.cog.answer, c.cog.also, function(v){ a.cog=v; render(); }));
+  if(a.cog!==null){
+    var right = a.cog===c.cog.answer || (c.cog.also && a.cog===c.cog.also);
+    var nm = nameOf(DISTORTIONS, c.cog.answer)+(c.cog.also?" (or "+nameOf(DISTORTIONS,c.cog.also)+")":"");
+    var note=el("div","fnote "+(right?"ok":"no"));
+    note.innerHTML = right ? ("<b>Yes.</b> "+esc(c.cog.why)) : ("<b>Not quite.</b> The distortion here is <b>"+esc(nm)+"</b>. "+esc(c.cog.why));
+    cf.appendChild(note);
+  }
+  cog.appendChild(cf);
+  panel.appendChild(cog);
+
+  // Social layer unlocks after cognitive answered
+  if(a.cog!==null){
+    var soc=el("div","layer soc");
+    soc.appendChild(el("span","ltag","Between people \u00b7 social"));
+    soc.appendChild(el("div","lbody", c.soc.body));
+    var sf=el("div","field");
+    sf.appendChild(el("div","prompt", c.soc.prompt));
+    sf.appendChild(dropdown(MECHS, a.soc, c.soc.answer, c.soc.also, function(v){ a.soc=v; render(); }));
+    if(a.soc!==null){
+      var rightS = a.soc===c.soc.answer || (c.soc.also && a.soc===c.soc.also);
+      var nmS = nameOf(MECHS, c.soc.answer)+(c.soc.also?" (or "+nameOf(MECHS,c.soc.also)+")":"");
+      var noteS=el("div","fnote "+(rightS?"ok":"no"));
+      noteS.innerHTML = rightS ? ("<b>Yes.</b> "+esc(c.soc.why)) : ("<b>Not quite.</b> The mechanism here is <b>"+esc(nmS)+"</b>. "+esc(c.soc.why));
+      sf.appendChild(noteS);
+    }
+    soc.appendChild(sf);
+    panel.appendChild(soc);
+  }
+
+  // Synthesis (matched plan) unlocks after both answered
+  if(a.cog!==null && a.soc!==null){
+    var syn=el("div","synth");
+    syn.innerHTML =
+      '<div class="st">The mechanism-matched plan</div>'+
+      '<div>Because the problem lives at two levels, the plan works at two levels, each tool chosen by the mechanism it targets:</div>'+
+      '<div class="pair">'+
+        '<div class="pc cog"><div class="h">Cognitive level</div>'+c.plan.cog+'</div>'+
+        '<div class="pc soc"><div class="h">Social level</div>'+c.plan.soc+'</div>'+
+      '</div>'+
+      '<div style="margin-top:10px;">'+c.plan.synth+'</div>';
+    panel.appendChild(syn);
+  }
+
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var ready = a.cog!==null && a.soc!==null;
+  var last = idx===CASES.length-1;
+  var nb=el("button","btn"); nb.disabled=!ready;
+  nb.innerHTML = last ? "See the through-line" : "Next case \u2192";
+  nb.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+  foot.appendChild(nb);
+  panel.appendChild(foot);
+}
+
+function finish(){
+  document.getElementById("pbarfill").style.width="100%";
+  document.getElementById("pcount").textContent="Complete";
+  document.getElementById("cardPanel").classList.add("hidden");
+  var cog=0, soc=0;
+  CASES.forEach(function(c,i){
+    var a=answers[i];
+    if(a.cog===c.cog.answer || (c.cog.also && a.cog===c.cog.also)) cog++;
+    if(a.soc===c.soc.answer || (c.soc.also && a.soc===c.soc.also)) soc++;
+  });
+  var rp=document.getElementById("resultsPanel"); rp.classList.remove("hidden"); rp.innerHTML="";
+  rp.appendChild(el("h2",null,"The through-line"));
+  rp.appendChild(el("p","score","You named the distortion in <b>"+cog+" of "+CASES.length+"</b> cases and the interpersonal mechanism in <b>"+soc+" of "+CASES.length+"</b>."));
+  rp.appendChild(el("p",null,"What matters is not which brand of therapy to apply. It is to ask what specific process is keeping the problem going, and to choose the tool that targets it. Cognitive patterns are often maintained, and even created, by the loops between people, so the strongest work usually happens at the boundary between the cognitive and the social, addressing the distortion inside the head and the pattern between people at once."));
+  rp.appendChild(el("p",null,"That is mechanism-based, process-focused practice: the thought record you built in Module 4 and the feedback loop you learned here are two tools in one kit, selected by the mechanism in front of you."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Start over");
+  again.addEventListener("click", function(){ document.getElementById("cardPanel").classList.remove("hidden"); rp.classList.add("hidden"); init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); rp.appendChild(act);
+  rp.appendChild(el("p","selfnote","This activity runs entirely on your own screen. Nothing you selected was saved, sent, or made visible to anyone else."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

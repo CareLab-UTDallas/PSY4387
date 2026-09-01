@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Loop That Builds Itself</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c5c3e;
+    --do-bg:#eef3fb; --do-line:#c9d9f0; --do-ink:#2f4a72;
+    --pa:#b0472a; --pa-soft:#f7e4dd;
+    --pb:#5b6aa0; --pb-soft:#e6e9f4;
+    --relief:#8a6a2f; --relief-soft:#f4e9d8;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:1060px;margin:0 auto;padding:22px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:80ch;}
+
+  .setup{background:#f5f3ef;border-radius:12px;padding:13px 15px;margin:14px 0 6px;font-size:13.5px;color:#413d36;line-height:1.6;}
+  .setup b{color:var(--ink);}
+  .dobox{background:var(--do-bg);border:1px solid var(--do-line);color:var(--do-ink);border-radius:12px;
+    padding:11px 14px;font-size:13.5px;line-height:1.55;margin:8px 0 4px;}
+  .dobox b{font-weight:700;}
+
+  .layout{display:grid;grid-template-columns:1.05fr .95fr;gap:22px;align-items:start;margin-top:16px;}
+  @media(max-width:880px){ .layout{grid-template-columns:1fr;} }
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:16px;}
+  svg.loop{width:100%;height:auto;display:block;}
+  .seg{cursor:pointer;}
+  .seg .plate{transition:filter .15s;}
+  .seg:focus-visible{outline:none;}
+  .seg:focus-visible .plate{stroke:var(--focus) !important;stroke-width:3;}
+  .seg.on .plate{filter:brightness(.95);stroke-width:3;}
+  .seg-lab{font-size:12.5px;font-weight:600;}
+  .seg-who{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;}
+  .loop-cap{font-size:11.5px;fill:var(--ink);}
+  .edge{fill:none;stroke:#9a958c;stroke-width:2.2;}
+
+  .detail{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;min-height:230px;}
+  .detail .pre{color:var(--ink);font-size:13.5px;}
+  .detail .who{display:inline-block;font-size:11.5px;font-weight:700;border-radius:7px;padding:3px 9px;margin-bottom:10px;}
+  .who-pa{background:var(--pa-soft);color:var(--pa);}
+  .who-pb{background:var(--pb-soft);color:var(--pb);}
+  .who-relief{background:var(--relief-soft);color:var(--relief);}
+  .detail h2{margin:0 0 8px;font-size:17px;}
+  .detail p{margin:0 0 12px;font-size:14px;line-height:1.6;}
+  .detail p:last-child{margin-bottom:0;}
+  .detail .mech{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.55;}
+  .detail .mech b{color:var(--amber-ink);}
+
+  .checklist{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;}
+  .chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:5px 10px;background:#fff;}
+  .chk.done{color:var(--ok-ink);border-color:var(--ok-line);background:var(--ok-bg);}
+  .chk .dot{width:8px;height:8px;border-radius:50%;background:#cfcabf;}
+  .chk.done .dot{background:var(--ok-ink);}
+
+  .interrupt{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:18px 20px;}
+  .interrupt.locked{opacity:.55;}
+  .interrupt h3{margin:0 0 8px;font-size:16px;}
+  .interrupt p{margin:0 0 12px;font-size:14px;line-height:1.6;}
+  .cutbtn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 15px;cursor:pointer;font:inherit;font-size:14px;color:var(--ink);transition:.12s;margin:0 8px 8px 0;}
+  .cutbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .cutbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .cutout{margin-top:12px;background:var(--ok-bg);border:1px solid var(--ok-line);color:var(--ok-ink);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;}
+  .cutout.hidden{display:none;}
+  .cutout b{font-weight:700;}
+  .selfnote{font-size:12px;color:var(--muted);margin-top:10px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>The Loop That Builds Itself</h1>
+    <p class="sub">Relationships run in circles, not straight lines. Click each step of this loop to see how two people, each making a reasonable choice, build a trap neither of them intended. Then find where the loop can be interrupted.</p>
+  </div>
+
+  <div class="setup">
+    <b>The situation.</b> Theo feels intensely anxious in social situations. His partner, Nadia, has learned to smooth things over for him out of love. When they are invited to a party, Nadia makes the excuses. Neither of them can see the loop, because from the inside it just feels like caring for each other.
+  </div>
+
+  <div class="dobox" id="dobox"><b>Do this:</b> Click each of the four steps in order to read what happens and why. As you go, watch the loop tighten. Once you've seen all four, a short interrupt exercise unlocks below.</div>
+
+  <div class="layout">
+    <figure class="stage" style="margin:0;">
+      <div id="svg-holder"></div>
+    </figure>
+    <div class="detail" id="detail" aria-live="polite">
+      <p class="pre">Click a step in the loop to read it here. Start at the top with Theo's anxiety and follow the arrows clockwise.</p>
+      <div class="checklist" id="checklist"></div>
+    </div>
+  </div>
+
+  <div class="interrupt locked" id="interrupt" aria-hidden="true"></div>
+</div>
+
+<script>
+// ===========================================================================
+// The Loop That Builds Itself (Module 5). A clickable circular feedback loop,
+// explore-and-read (no write-then-compare, per instructor decision).
+// The Theo-and-Nadia loop, the "each behavior rewards the other's" mechanism,
+// and the "change your own half" interrupt are drawn from the Module 5 reading
+// (ug-module-readings.md): "The Interpersonal Feedback Loop" and the section on
+// changing one's own contribution. Negative reinforcement is named where the
+// reading names it (Theo's relief; Nadia's calmer evening).
+// ===========================================================================
+
+var STEPS = {
+  order: ["anx","cancel","relief","quicker"],
+  nodes: {
+    anx: {
+      who:"Theo", whoClass:"who-pa",
+      title:"Theo feels anxious and hints he'd rather not go",
+      paras:[
+        "A party invitation arrives. Theo's anxiety rises, and he hints that he would rather stay home. This is where the straight-line story would stop, 'Theo is anxious', but the anxiety is only one point on a circle."
+      ],
+      mech:"<b>Where it starts (sort of):</b> in a real feedback loop there is no clean start. This is just a convenient place to enter the circle."
+    },
+    cancel: {
+      who:"Nadia", whoClass:"who-pb",
+      title:"Nadia cancels for both of them",
+      paras:[
+        "Wanting to protect Theo, Nadia makes the excuses and cancels. She does this out of love; she hates watching him suffer. From the inside it simply feels like caring."
+      ],
+      mech:"<b>Reasonable choice:</b> Nadia's kindness is genuine. But it is about to become one of the rewards that feeds the pattern, without either of them deciding to build a trap."
+    },
+    relief: {
+      who:"the payoff", whoClass:"who-relief",
+      title:"Theo feels a rush of relief",
+      paras:[
+        "The dreaded event is off the table, and Theo's dread evaporates. That relief feels wonderful in the moment, which teaches his brain that avoiding was the right move.",
+        "Because Theo never goes, he never gets to learn that he could have survived the party, that people would not have laughed, that the anxiety would rise and then fall on its own."
+      ],
+      mech:"<b>Negative reinforcement:</b> the removal of dread is a powerful reward, delivered by Nadia's cancellation. Relief trains avoidance hard and fast."
+    },
+    quicker: {
+      who:"both", whoClass:"who-relief",
+      title:"Next time, the urge to avoid is stronger, and Nadia cancels quicker",
+      paras:[
+        "Theo's urge to avoid grows. Nadia, meanwhile, has learned that canceling makes Theo calmer and their evening more pleasant, so she is quicker to cancel next time.",
+        "Each person's behavior rewards the other's, and the loop tightens. The trap built itself, one reasonable choice at a time."
+      ],
+      mech:"<b>The loop closes:</b> Theo's relief rewards his avoidance; Nadia's calmer evening rewards her canceling. Around it goes, and 'Who started it?' is the wrong question."
+    }
+  }
+};
+
+var opened = {};
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+
+function loopSVG(){
+  return ''+
+  '<svg class="loop" viewBox="0 0 460 440" role="group" aria-label="Theo and Nadia feedback loop. Tab between the four steps, Enter to open.">'+
+    '<defs><marker id="lp" viewBox="0 0 12 12" refX="9" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 z" fill="#8a857c"/></marker></defs>'+
+    '<text class="loop-cap" x="230" y="22" text-anchor="middle">Each step rewards the next. Follow the arrows clockwise.</text>'+
+    // clockwise arrows between the four nodes
+    '<path class="edge" fill="none" d="M278 112.2 A118 118 0 0 1 337.8 172" stroke="#9a958c" marker-end="url(#lp)"/>'+
+    '<path class="edge" fill="none" d="M337.8 268 A118 118 0 0 1 278 327.8" stroke="#9a958c" marker-end="url(#lp)"/>'+
+    '<path class="edge" fill="none" d="M182 327.8 A118 118 0 0 1 122.2 268" stroke="#9a958c" marker-end="url(#lp)"/>'+
+    '<path class="edge" fill="none" d="M122.2 172 A118 118 0 0 1 182 112.2" stroke="#9a958c" marker-end="url(#lp)"/>'+
+    // top: anxiety (Theo)
+    '<g class="seg" id="seg-anx" tabindex="0" role="button" aria-label="Theo feels anxious. Open.">'+
+      '<rect class="plate" x="150" y="44" width="160" height="56" rx="12" fill="var(--pa-soft)" stroke="var(--pa)" stroke-width="2"/>'+
+      '<text class="seg-who" x="230" y="66" text-anchor="middle" fill="var(--pa)">Theo</text>'+
+      '<text class="seg-lab" x="230" y="84" text-anchor="middle" fill="var(--pa)">feels anxious</text>'+
+    '</g>'+
+    // right: cancel (Nadia)
+    '<g class="seg" id="seg-cancel" tabindex="0" role="button" aria-label="Nadia cancels. Open.">'+
+      '<rect class="plate" x="326" y="192" width="128" height="56" rx="12" fill="var(--pb-soft)" stroke="var(--pb)" stroke-width="2"/>'+
+      '<text class="seg-who" x="390" y="214" text-anchor="middle" fill="var(--pb)">Nadia</text>'+
+      '<text class="seg-lab" x="390" y="232" text-anchor="middle" fill="var(--pb)">cancels</text>'+
+    '</g>'+
+    // bottom: relief (payoff)
+    '<g class="seg" id="seg-relief" tabindex="0" role="button" aria-label="Theo feels relief. Open.">'+
+      '<rect class="plate" x="150" y="340" width="160" height="56" rx="12" fill="var(--relief-soft)" stroke="var(--relief)" stroke-width="2"/>'+
+      '<text class="seg-who" x="230" y="362" text-anchor="middle" fill="var(--relief)">the payoff</text>'+
+      '<text class="seg-lab" x="230" y="380" text-anchor="middle" fill="var(--relief)">Theo feels relief</text>'+
+    '</g>'+
+    // left: stronger urge / quicker cancel (both)
+    '<g class="seg" id="seg-quicker" tabindex="0" role="button" aria-label="Urge grows, Nadia cancels quicker. Open.">'+
+      '<rect class="plate" x="6" y="192" width="128" height="56" rx="12" fill="#efe9df" stroke="#8a5a25" stroke-width="2"/>'+
+      '<text class="seg-who" x="70" y="210" text-anchor="middle" fill="#8a5a25">both</text>'+
+      '<text class="seg-lab" x="70" y="227" text-anchor="middle" fill="#8a5a25">urge grows,</text>'+
+      '<text class="seg-lab" x="70" y="242" text-anchor="middle" fill="#8a5a25">cancels quicker</text>'+
+    '</g>'+
+    '<text class="loop-cap" x="230" y="426" text-anchor="middle">The trap built itself, one reasonable choice at a time.</text>'+
+  '</svg>';
+}
+
+function renderLoop(){
+  document.getElementById("svg-holder").innerHTML = loopSVG();
+  STEPS.order.forEach(function(k){
+    var g=document.getElementById("seg-"+k);
+    g.addEventListener("click",function(){ openStep(k); });
+    g.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openStep(k); } });
+    if(opened[k]) g.classList.add("on");
+  });
+}
+
+function openStep(k){
+  var n=STEPS.nodes[k];
+  opened[k]=true;
+  STEPS.order.forEach(function(kk){ var g=document.getElementById("seg-"+kk); if(g) g.classList.toggle("on", kk===k); });
+  var det=document.getElementById("detail");
+  det.innerHTML =
+    '<span class="who '+n.whoClass+'">'+n.who+'</span>'+
+    '<h2>'+n.title+'</h2>'+
+    n.paras.map(function(p){return '<p>'+p+'</p>';}).join('')+
+    '<div class="mech">'+n.mech+'</div>'+
+    '<div class="checklist" id="checklist"></div>';
+  renderChecklist();
+  maybeUnlock();
+}
+
+function renderChecklist(){
+  var cl=document.getElementById("checklist"); if(!cl) return;
+  var labels={anx:"Anxiety", cancel:"Nadia cancels", relief:"Relief", quicker:"Loop tightens"};
+  cl.innerHTML = STEPS.order.map(function(k){
+    var done=!!opened[k];
+    return '<span class="chk'+(done?" done":"")+'"><span class="dot"></span>'+labels[k]+(done?" \u2713":"")+'</span>';
+  }).join('');
+}
+
+var CUTS = [
+  { id:"pa", label:"Change Theo's half",
+    text:"<b>Theo changes his half.</b> Theo can work on facing the party instead of hinting to avoid it, so the relief-through-escape is no longer delivered. This is possible, but it asks the more anxious person to do the hardest thing first, and it may need support to get started." },
+  { id:"pb", label:"Change Nadia's half",
+    text:"<b>Nadia changes her half.</b> Nadia can gently decline to make the excuses and instead stay beside Theo while he does the hard thing himself. That single change removes one of the rewards feeding his avoidance. She is not being cruel; she is refusing to play her old part in the machine. Because each person is only responsible for their own half, this can start the change even if Theo is not ready yet." },
+  { id:"both", label:"Wait for both to change at once",
+    text:"<b>Waiting for both at once.</b> Tempting, but you do not have to wait. The whole point of a feedback loop is that changing either half shifts the circle. Holding out for a simultaneous grand change usually means nothing changes, because each person keeps waiting for the other." }
+];
+
+function maybeUnlock(){
+  var all = STEPS.order.every(function(k){ return opened[k]; });
+  var box=document.getElementById("interrupt");
+  box.setAttribute("aria-hidden", String(!all));
+  box.classList.toggle("locked", !all);
+  if(!all){
+    box.innerHTML = '<h3>Where can the loop be interrupted?</h3><p>Open all four steps above to unlock this.</p>';
+    return;
+  }
+  if(box.dataset.built==="1") return;
+  box.dataset.built="1";
+  box.innerHTML = '<h3>Where can the loop be interrupted?</h3>'+
+    '<p>A loop can be broken at any point, and it does not take both people at once. Try each option to see how it plays out, then notice which one the reading treats as the usual place change begins.</p>'+
+    '<div id="cutbtns"></div><div class="cutout hidden" id="cutout"></div>'+
+    '<p class="selfnote">There is no score here. The point is to see that one person changing their own contribution can start to shift a pattern the two of them built together.</p>';
+  var bb=document.getElementById("cutbtns");
+  CUTS.forEach(function(c){
+    var b=el("button","cutbtn", c.label); b.type="button"; b.setAttribute("aria-pressed","false");
+    b.addEventListener("click",function(){
+      Array.prototype.forEach.call(bb.querySelectorAll(".cutbtn"), function(x){ x.setAttribute("aria-pressed","false"); });
+      b.setAttribute("aria-pressed","true");
+      var out=document.getElementById("cutout"); out.classList.remove("hidden"); out.innerHTML=c.text;
+    });
+    bb.appendChild(b);
+  });
+}
+
+renderLoop();
+renderChecklist();
+</script>
+</body>
+</html>
