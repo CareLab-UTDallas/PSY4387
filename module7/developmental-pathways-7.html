@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Many Roads, Different Seeds</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --equi:#5b6aa0; --equi-soft:#e6e9f4;
+    --multi:#3f6f57; --multi-soft:#e3efe7;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .stagetabs{display:flex;gap:0;margin:16px 0 6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .stagetabs button{flex:1 1 0;border:none;background:#fff;padding:11px 10px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.25;}
+  .stagetabs button+button{border-left:1px solid var(--line);}
+  .stagetabs button[aria-selected="true"]{background:var(--accent);color:#fff;}
+  .stagetabs button:disabled{color:#b7b2a9;cursor:not-allowed;}
+  .stagetabs button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .stagetabs .sn{display:block;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+  .stagetabs .stt{display:block;font-weight:600;font-size:13px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:12px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .qtop{font-size:13px;color:var(--muted);margin-bottom:10px;}
+  .vignette{background:#f5f3ef;border-radius:12px;padding:13px 15px;font-size:14.5px;line-height:1.55;margin-bottom:6px;border-left:3px solid var(--accent);}
+  .vignette b{color:var(--ink);}
+  .prompt{font-size:13.5px;color:var(--ink);margin:14px 0 8px;}
+
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.4;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt .ot{font-weight:600;}
+  .opt .od{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4;}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+
+  .fnote{margin-top:12px;font-size:13.5px;line-height:1.6;padding:11px 13px;border-radius:10px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+
+  /* equifinality/multifinality panel */
+  .empanel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;}
+  @media(max-width:600px){ .empanel{grid-template-columns:1fr;} }
+  .empanel .col{border-radius:12px;padding:14px 15px;}
+  .empanel .col.equi{background:var(--equi-soft);border:1px solid var(--equi);}
+  .empanel .col.multi{background:var(--multi-soft);border:1px solid var(--multi);}
+  .empanel .col h4{margin:0 0 6px;font-size:14px;}
+  .empanel .col.equi h4{color:var(--equi);} .empanel .col.multi h4{color:var(--multi);}
+  .empanel .col p{margin:0 0 8px;font-size:13px;line-height:1.55;}
+  .empanel .roads{font-size:12.5px;line-height:1.6;}
+  .empanel .roads .r{padding:5px 9px;background:#fff;border-radius:8px;margin-bottom:5px;}
+
+  .synth{margin-top:16px;background:#fff;border:1px dashed var(--accent);border-radius:12px;padding:15px 16px;font-size:14px;line-height:1.62;}
+  .synth .st{font-weight:700;color:var(--accent-ink);margin-bottom:5px;}
+  .handshake{margin-top:12px;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:11px;padding:12px 14px;font-size:13.5px;line-height:1.6;}
+  .handshake b{font-weight:700;}
+  .sortitem{border:1px solid var(--line);border-radius:12px;padding:14px 15px;margin-top:12px;background:#fff;}
+  .sortitem .si-text{font-size:14px;line-height:1.5;margin-bottom:10px;}
+  .si-btns{display:flex;gap:9px;flex-wrap:wrap;}
+  .si-btn{flex:1 1 0;min-width:130px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;transition:border-color .12s;}
+  .si-btn:hover:not(:disabled){border-color:#cfc9bf;}
+  .si-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .si-btn:disabled{cursor:default;}
+  .si-btn.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .si-btn.wrong-pick{background:var(--no-bg);border-color:var(--no-line);color:var(--no-ink);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .si-btn.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .si-btn.dim{opacity:.5;}
+  .payoffbox{margin-top:14px;border:1px dashed var(--accent);border-radius:12px;padding:15px 16px;}
+  .payoffbox .q-prompt{font-size:14px;color:var(--ink);margin:0 0 10px;line-height:1.5;font-weight:600;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 6px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.62;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Many Roads, Different Seeds</h1>
+    <p class="sub">Development rarely runs on a single cause. The same hardship can grow into very different outcomes, and the same diagnosis can be reached by completely different routes. This activity builds the developmental vocabulary that explains why, then draws the conclusion those ideas point to, the reason a clinician has to treat the person's actual processes rather than the label on the file.</p>
+  </div>
+
+  <div class="stagetabs" id="tabs" role="tablist"></div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+  <section class="card results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// ===========================================================================
+// Many Roads, Different Seeds (Module 7). Merges plan items 2D (equifinality/
+// multifinality callback to Module 1) and 3D (developmental vocabulary:
+// pathways, ACEs, developmental cascade, sensitive period, resilience). Two
+// stages: (A) apply the six concepts to short vignettes (multiple choice, green/
+// red); (B) the equifinality/multifinality synthesis that "shakes hands with
+// Module 1" and states the treat-mechanisms-not-labels thesis.
+//
+// Grounded in ug-module-readings.md (Module 7):
+//   - Equifinality (three roads to depression: early loss / academic pressure /
+//     medical illness) and multifinality (same adversity, different outcomes).
+//   - ACEs: dose-response, population-level risk NOT individual prophecy.
+//   - Developmental cascade: linked steps, break the chain at any point.
+//   - Sensitive period: window of heightened openness, not an all-or-nothing
+//     critical deadline; "harder later" is not "impossible later."
+//   - Resilience: "ordinary magic," a buildable process; the single most
+//     consistent protective factor is at least one stable, caring relationship.
+//   - The explicit thesis: "This is Module 7 reaching all the way back to shake
+//     hands with Module 1," the developmental argument for mechanism-based,
+//     individualized treatment.
+// House convention: correct = green, wrong = red; mark the correct answer when
+// wrong. Fully client-side; nothing transmitted (stated to the user).
+// ===========================================================================
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+// Stage A: concept-application items. Each vignette maps to one target concept;
+// options are the six concepts; explanation names why, and why the near-misses miss.
+var CONCEPTS = [
+  {id:"equi",  name:"Equifinality"},
+  {id:"multi", name:"Multifinality"},
+  {id:"aces",  name:"ACEs (dose-response risk)"},
+  {id:"cascade", name:"Developmental cascade"},
+  {id:"sensitive", name:"Sensitive period"},
+  {id:"resilience", name:"Resilience"}
+];
+function cname(id){ for(var i=0;i<CONCEPTS.length;i++){ if(CONCEPTS[i].id===id) return CONCEPTS[i].name; } return id; }
+
+var ITEMS = [
+  {
+    vignette:"Three adults arrive at the same severe depression. One reached it after an early parental loss, one through years of relentless academic pressure and harsh self-standards, and one after a medical illness that flattened their energy and shrank their world.",
+    prompt:"Which developmental principle does this illustrate?",
+    answer:"equi",
+    why:"Different starting points and different paths lead to the same endpoint. That is equifinality, and its clinical punchline is direct: because the same diagnosis can have very different causes, these three may need quite different treatments.",
+    near:{multi:"Multifinality is the mirror image (one start, many ends). Here it is many starts converging on one end."}
+  },
+  {
+    vignette:"Two children grow up in the same unstable, high-adversity household. One develops severe anxiety as an adult. The other becomes strikingly capable and compassionate, builds a stable family, and struggles very little.",
+    prompt:"Which principle is at work?",
+    answer:"multi",
+    why:"The same starting point leads to different endpoints. That is multifinality: the same seed lands in different soil and grows into different plants, which is why you can never read a person's future off a single risk factor.",
+    near:{equi:"Equifinality is the reverse (many roads, one destination). Here one shared start branches into different outcomes."}
+  },
+  {
+    vignette:"A large study finds that as the number of different childhood adversities a person experienced rises, so does their statistical risk for a wide range of adult mental and physical health problems. More adversities, higher average risk.",
+    prompt:"This dose-response finding is the core of which concept?",
+    answer:"aces",
+    why:"This is the ACEs research and its dose-response relationship: more is worse, on average, across large groups. The crucial caution is that this is population-level risk, not a prophecy for any individual, since many people with heavy adversity still thrive.",
+    near:{cascade:"A cascade is about linked steps spilling across domains over time. This item is about accumulated risk across a population, which is the ACEs finding."}
+  },
+  {
+    vignette:"A child starts school slightly behind in reading. School turns frustrating, motivation drops, the gap widens, friendships strain, self-esteem falls, and years later anxiety appears. No single step was catastrophic. Each consequence became the cause of the next.",
+    prompt:"Which concept names this chain?",
+    answer:"cascade",
+    why:"Effects spill across domains and across time, each one becoming the cause of the next, like falling dominoes. That is a developmental cascade, and its hopeful corollary is that breaking the chain at almost any point can redirect the trajectory.",
+    near:{aces:"ACEs is about the accumulated dose of adversities and later risk. This item is specifically about one difficulty feeding the next in a chain, which is a cascade."}
+  },
+  {
+    vignette:"Young children pick up a new language with an ease that adults working just as hard rarely match, because early childhood is a window when the brain is especially open to language. The window does not slam shut forever, but the same experience leaves a deeper mark at some ages than others.",
+    prompt:"Which concept does this describe?",
+    answer:"sensitive",
+    why:"A sensitive period is a stretch when the brain and mind are especially open to a particular kind of experience, so it lands with unusual weight. It is not an all-or-nothing critical deadline, and the brain stays changeable throughout life, so harder later is not impossible later.",
+    near:{cascade:"A cascade is about linked effects over time. This item is about the timing window itself, which is the sensitive period."}
+  },
+  {
+    vignette:"A researcher studying children who met serious adversity and still came through functioning well concludes it is not a rare superpower but 'ordinary magic,' the normal result of ordinary protective systems, and that the single most consistent ingredient is at least one stable, caring relationship.",
+    prompt:"Which concept is being described?",
+    answer:"resilience",
+    why:"Resilience is the capacity to adapt well in the face of serious adversity. It is not a fixed trait a few are born with but a buildable process, and the strongest protective factor in the whole literature is one reliable, caring relationship, which ties straight back to attachment.",
+    near:{multi:"Multifinality explains why the same adversity yields different outcomes. Resilience names the buildable capacity and protective factors behind the better outcomes."}
+  }
+];
+
+var stage="apply";       // "apply" then "synthesis"
+var idx=0;
+var picks=[];            // per item chosen concept id
+var applyDone=false;
+
+function init(){
+  picks=ITEMS.map(function(){return null;});
+  synthSorts=[null,null]; synthPayoff=null;
+  stage="apply"; idx=0; applyDone=false;
+  document.getElementById("resultsPanel").classList.add("hidden");
+  document.getElementById("cardPanel").classList.remove("hidden");
+  render();
+}
+
+function renderTabs(){
+  var host=document.getElementById("tabs"); host.innerHTML="";
+  var tabs=[["apply","Stage 1","Apply the ideas"],["synthesis","Stage 2","The bigger point"]];
+  tabs.forEach(function(t){
+    var b=el("button");
+    b.setAttribute("role","tab");
+    b.setAttribute("aria-selected", String(stage===t[0]));
+    var locked = (t[0]==="synthesis" && !applyDone);
+    b.disabled=locked;
+    b.innerHTML='<span class="sn">'+esc(t[1])+'</span><span class="stt">'+esc(t[2])+'</span>';
+    if(!locked){ b.addEventListener("click", function(){ stage=t[0]; if(stage==="apply"&&idx>=ITEMS.length) idx=ITEMS.length-1; render(); }); }
+    host.appendChild(b);
+  });
+}
+
+function renderProgress(){
+  if(stage==="apply"){
+    document.getElementById("pbarfill").style.width=(idx/ITEMS.length*100)+"%";
+    document.getElementById("pcount").textContent="Concept "+Math.min(idx+1,ITEMS.length)+" of "+ITEMS.length;
+  } else {
+    document.getElementById("pbarfill").style.width="100%";
+    document.getElementById("pcount").textContent="The synthesis";
+  }
+}
+
+function render(){
+  renderTabs(); renderProgress();
+  if(stage==="apply") renderApply(); else renderSynthesis();
+}
+
+function renderApply(){
+  var it=ITEMS[idx], chosen=picks[idx];
+  var panel=document.getElementById("cardPanel"); panel.innerHTML="";
+  panel.appendChild(el("div","qtop","Stage 1 \u00b7 concept "+(idx+1)+" of "+ITEMS.length));
+  panel.appendChild(el("div","vignette", it.vignette));
+  panel.appendChild(el("div","prompt", it.prompt));
+  var opts=el("div","opts");
+  CONCEPTS.forEach(function(cc){
+    var b=el("button","opt"); b.type="button";
+    b.innerHTML='<span class="ot">'+esc(cc.name)+'</span>';
+    if(chosen!==null){
+      b.disabled=true;
+      if(cc.id===chosen){ b.classList.add(cc.id===it.answer?"correct-pick":"wrong-pick"); }
+      else if(cc.id===it.answer){ b.classList.add("show-correct"); }
+      else { b.classList.add("dim"); }
+    } else {
+      b.addEventListener("click", function(){ picks[idx]=cc.id; render(); });
+    }
+    opts.appendChild(b);
+  });
+  panel.appendChild(opts);
+
+  if(chosen!==null){
+    var right=chosen===it.answer;
+    var note=el("div","fnote "+(right?"ok":"no"));
+    var lead = right ? "<b>Yes.</b> " : ("<b>Not quite.</b> This is <b>"+esc(cname(it.answer))+"</b>. ");
+    var extra = "";
+    if(!right && it.near && it.near[chosen]){ extra=" "+esc(it.near[chosen]); }
+    note.innerHTML=lead+esc(it.why)+extra;
+    panel.appendChild(note);
+  }
+
+  var foot=el("div","foot");
+  var back=el("button","btn secondary","\u2190 Back");
+  back.disabled = idx===0;
+  back.addEventListener("click", function(){ if(idx>0){ idx--; render(); } });
+  foot.appendChild(back);
+  var next=el("button","btn");
+  var answered = chosen!==null;
+  var last = idx===ITEMS.length-1;
+  next.disabled=!answered;
+  next.innerHTML = last ? "Go to the bigger point \u2192" : "Next \u2192";
+  next.addEventListener("click", function(){
+    if(last){ applyDone=true; stage="synthesis"; render(); window.scrollTo({top:0,behavior:"smooth"}); }
+    else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); }
+  });
+  foot.appendChild(next);
+  panel.appendChild(foot);
+}
+
+// Synthesis stage: two small sorts (place a case as equifinality or multifinality),
+// then the payoff question the student answers to draw the Module 1 handshake.
+var SYNTH_SORTS = [
+  {
+    text:"A clinic sees three people with the same panic disorder. One developed it after a car accident, one after a long stretch of overwork and poor sleep, one after a health scare with no clear trigger since.",
+    answer:"equi",
+    why:"Different roads reaching the same destination is equifinality. The shared diagnosis hides three different causal histories, so they may well need different treatments."
+  },
+  {
+    text:"Two siblings grow up with the same chronically ill parent and the same instability. One becomes anxious and avoidant as an adult, the other becomes a steady, capable caregiver who copes well.",
+    answer:"multi",
+    why:"The same starting point branching into different outcomes is multifinality. The shared adversity did not dictate a single result, because everything else in each life shaped where it led."
+  }
+];
+var synthSorts=[null,null];
+var SYNTH_PAYOFF = {
+  prompt:"Hold both principles at once: a given cause does not fix the outcome, and a given outcome does not reveal the cause. What follows for how a clinician should treat the person in front of them?",
+  answer:"b",
+  options:[
+    {id:"a", text:"Find the one root cause in the person's past and treat that.", correct:false,
+     why:"This is the trap the two principles rule out. Because causation is distributed rather than single, hunting for the one dramatic cause misreads how development actually works."},
+    {id:"b", text:"Treat the actual processes maintaining the problem in this person, rather than the label.", correct:true,
+     why:"Exactly. If cause and diagnosis mapped cleanly, you could treat the label. Because they do not, you have to understand the actual processes at work in the actual person. That is the developmental version of the mechanism-first stance from Module 1."},
+    {id:"c", text:"Match the treatment to the diagnosis using a standard protocol for that label.", correct:false,
+     why:"Equifinality is the direct problem here: two people with the same label may have arrived by different routes and be stuck in different processes, so the label alone cannot pick the treatment."}
+  ]
+};
+var synthPayoff=null;
+
+function renderSynthesis(){
+  var panel=document.getElementById("cardPanel"); panel.innerHTML="";
+  panel.appendChild(el("div","qtop","Stage 2 \u00b7 build the conclusion"));
+  panel.appendChild(el("p","prompt","You have the six ideas. Now put the two that carry the argument to work. Sort each case, then draw the conclusion yourself."));
+
+  // reference chips (compact reminders, not the full paragraph)
+  var em=el("div","empanel");
+  em.innerHTML=
+    '<div class="col equi"><h4>Equifinality</h4><p>Different roads, same destination.</p></div>'+
+    '<div class="col multi"><h4>Multifinality</h4><p>Same seed, different plants.</p></div>';
+  panel.appendChild(em);
+
+  // two sort items
+  SYNTH_SORTS.forEach(function(item, i){
+    var box=el("div","sortitem");
+    box.appendChild(el("div","si-text", item.text));
+    var chosen=synthSorts[i];
+    var btns=el("div","si-btns");
+    [["equi","Equifinality"],["multi","Multifinality"]].forEach(function(opt){
+      var b=el("button","si-btn"); b.type="button"; b.textContent=opt[1];
+      if(chosen!==null){
+        b.disabled=true;
+        if(opt[0]===chosen){ b.classList.add(chosen===item.answer?"correct-pick":"wrong-pick"); }
+        else if(opt[0]===item.answer){ b.classList.add("show-correct"); }
+        else { b.classList.add("dim"); }
+      } else {
+        b.addEventListener("click", function(){ synthSorts[i]=opt[0]; render(); });
+      }
+      btns.appendChild(b);
+    });
+    box.appendChild(btns);
+    if(chosen!==null){
+      var right=chosen===item.answer;
+      var note=el("div","fnote "+(right?"ok":"no"));
+      note.innerHTML=(right?"<b>Yes.</b> ":"<b>Not quite.</b> This is <b>"+(item.answer==="equi"?"equifinality":"multifinality")+"</b>. ")+esc(item.why);
+      box.appendChild(note);
+    }
+    panel.appendChild(box);
+  });
+
+  // payoff question unlocks after both sorts answered
+  var bothSorted = synthSorts[0]!==null && synthSorts[1]!==null;
+  if(bothSorted){
+    var pbox=el("div","payoffbox");
+    pbox.appendChild(el("div","q-prompt", SYNTH_PAYOFF.prompt));
+    var opts=el("div","opts");
+    SYNTH_PAYOFF.options.forEach(function(o){
+      var b=el("button","opt"); b.type="button";
+      b.innerHTML='<span class="ot">'+esc(o.text)+'</span>';
+      if(synthPayoff!==null){
+        b.disabled=true;
+        if(o.id===synthPayoff){ b.classList.add(o.correct?"correct-pick":"wrong-pick"); }
+        else if(o.correct){ b.classList.add("show-correct"); }
+        else { b.classList.add("dim"); }
+      } else {
+        b.addEventListener("click", function(){ synthPayoff=o.id; render(); });
+      }
+      opts.appendChild(b);
+    });
+    pbox.appendChild(opts);
+    if(synthPayoff!==null){
+      var ch=SYNTH_PAYOFF.options.filter(function(o){return o.id===synthPayoff;})[0];
+      var note=el("div","fnote "+(ch.correct?"ok":"no"));
+      note.innerHTML=(ch.correct?"<b>Yes.</b> ":"<b>Not this one.</b> ")+esc(ch.why);
+      pbox.appendChild(note);
+      if(ch.correct){
+        var hs=el("div","handshake");
+        hs.innerHTML='<b>You just drew the conclusion the whole course is built on.</b> This is Module 7 reaching back to shake hands with Module 1. Equifinality and multifinality are the developmental science behind the mechanism-first, person-first stance, and the same lens is hopeful: cascades can be interrupted at any point, sensitive periods reopen the case for early support without closing it later, and resilience is built from protective factors you can strengthen, starting with one stable, caring relationship.';
+        pbox.appendChild(hs);
+      }
+    }
+    panel.appendChild(pbox);
+  }
+
+  var foot=el("div","foot");
+  var back=el("button","btn secondary","\u2190 Back to the concepts");
+  back.addEventListener("click", function(){ stage="apply"; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  foot.appendChild(back);
+  var done=el("button","btn","See how you did");
+  done.disabled = !(bothSorted && synthPayoff!==null);
+  done.addEventListener("click", function(){ finish(); });
+  foot.appendChild(done);
+  panel.appendChild(foot);
+}
+
+function finish(){
+  document.getElementById("cardPanel").classList.add("hidden");
+  var correct=0;
+  ITEMS.forEach(function(it,i){ if(picks[i]===it.answer) correct++; });
+  var rp=document.getElementById("resultsPanel"); rp.classList.remove("hidden"); rp.innerHTML="";
+  rp.appendChild(el("h2",null,"The developmental argument"));
+  rp.appendChild(el("p","score","You matched <b>"+correct+" of "+ITEMS.length+"</b> concepts to their vignettes."));
+  rp.appendChild(el("p",null,"These six ideas are not loose vocabulary. Equifinality and multifinality explain why cause and diagnosis do not line up, which is the developmental case for treating mechanisms rather than labels. Cascades explain how small early differences compound, and why the chain can be broken at any point. Sensitive periods explain why timing matters without writing anyone off. ACEs take early adversity seriously without turning risk into prophecy. And resilience names the buildable capacity that lets people meet hardship and come through, most reliably through one steady relationship."));
+  rp.appendChild(el("p",null,"Held together, they are the reason the person in front of you cannot be read off a label. You have to find the actual processes maintaining the problem in this actual life, which is exactly where the program began."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Start over");
+  again.addEventListener("click", function(){ init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); rp.appendChild(act);
+  rp.appendChild(el("p","selfnote","This activity scores only the concept matches, and nothing is saved or sent. Every choice stays on your own screen."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

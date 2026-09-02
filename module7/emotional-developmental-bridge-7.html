@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Present and the Story That Made It</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --emo:#a8683a; --emo-soft:#f4e7db;    /* present / emotional */
+    --dev:#5b6aa0; --dev-soft:#e6e9f4;    /* developmental / origin */
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .bridge{display:flex;gap:9px;align-items:flex-start;background:var(--amber-bg);border:1px solid var(--amber-line);
+    color:var(--amber-ink);border-radius:12px;padding:12px 15px;margin:12px 0 4px;font-size:13px;line-height:1.55;}
+  .bridge svg{flex:0 0 auto;margin-top:1px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:14px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .qtop{font-size:13px;color:var(--muted);margin-bottom:12px;}
+  .setup{background:#f5f3ef;border-radius:12px;padding:13px 15px;font-size:14.5px;line-height:1.55;margin-bottom:6px;border-left:3px solid var(--accent);}
+  .setup b{color:var(--ink);}
+
+  .layer{border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-top:14px;}
+  .layer.emo{background:var(--emo-soft);border-color:var(--emo);}
+  .layer.dev{background:var(--dev-soft);border-color:var(--dev);}
+  .layer .ltag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:7px;padding:3px 9px;margin-bottom:8px;}
+  .layer.emo .ltag{background:#fff;color:var(--emo);}
+  .layer.dev .ltag{background:#fff;color:var(--dev);}
+  .layer .lbody{font-size:14px;line-height:1.55;}
+  .layer .lbody b{font-weight:700;}
+
+  .field{margin:14px 0 0;}
+  .field .prompt{font-size:13.5px;color:var(--ink);margin-bottom:7px;}
+  select{width:100%;font:inherit;font-size:14.5px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none'><path d='M5 7l5 5 5-5' stroke='%236b6862' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;}
+  select:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  select:disabled{opacity:1;}
+  select.ok{background-color:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink);}
+  select.no{background-color:var(--no-bg);border-color:var(--no-line);color:var(--no-ink);}
+  .fnote{margin-top:7px;font-size:13px;line-height:1.55;padding:9px 12px;border-radius:9px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+
+  .synth{margin-top:16px;background:#fff;border:1px dashed var(--accent);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;}
+  .synth.hidden{display:none;}
+  .synth .st{font-weight:700;color:var(--accent-ink);margin-bottom:4px;}
+  .synth .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  @media(max-width:560px){ .synth .pair{grid-template-columns:1fr;} }
+  .synth .pc{border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.5;}
+  .synth .pc.emo{background:var(--emo-soft);} .synth .pc.dev{background:var(--dev-soft);}
+  .synth .pc .h{font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;}
+  .synth .pc.emo .h{color:var(--emo);} .synth .pc.dev .h{color:var(--dev);}
+  .synth .relrow{margin-top:10px;background:var(--ok-bg);border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.55;color:var(--ok-ink);}
+  .synth .relrow .h{font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;color:var(--ok-ink);}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.6;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>The Present and the Story That Made It</h1>
+    <p class="sub">Two questions circle each other in every real case. The emotional question is what this person does with their feelings, moment to moment. The developmental question is how they came to handle feelings this way. For each case, name the present-moment regulation strategy and the developmental origin that shaped it, then see how a plan works at both levels at once, using the therapy relationship itself as part of the treatment.</p>
+  </div>
+
+  <div class="bridge">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M4 10c0-3 2-5 5-5M16 10c0 3-2 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    <div>Present-moment emotion and lifelong development are two views of one continuous story. A strategy that looks puzzling in the present often makes complete sense as a childhood adaptation that has outlived the situation it was built for.</div>
+  </div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+  <section class="card results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// ===========================================================================
+// The Present and the Story That Made It (Module 7). Emotional <-> developmental
+// bridge. Two layers per case: (1) EMOTIONAL, name the present-moment regulation
+// strategy (Gross's chain / reappraisal / suppression / rumination / reassurance-
+// seeking-as-safety-behavior); (2) DEVELOPMENTAL, name the attachment/origin
+// pattern that shaped it. Then a paired plan reveals, with the alliance as a
+// corrective relational experience updating the working model plus present-moment
+// regulation skills.
+//
+// Grounded in ug-module-readings.md (Module 7):
+//   - Gross process model; reappraisal vs suppression; rumination.
+//   - Attachment (Bowlby/Ainsworth); secure / anxious / avoidant / disorganized;
+//     the internal working model; adaptations that were intelligent in childhood
+//     and outlive their usefulness.
+//   - Co-regulation -> self-regulation; the therapeutic relationship as a
+//     "corrective relational experience" that can update an old working model,
+//     tying back to the Module 3 alliance.
+// House convention: correct = green, wrong = red; dual-accept where genuinely
+// ambiguous. Fresh patients (Maren, Darius, Colette) to avoid the reading's own
+// M7 cases (Priya, Theo, Devon, Aaron) and every prior activity patient.
+// Fully client-side; nothing transmitted (stated to the user).
+// ===========================================================================
+
+// Present-moment regulation strategies (emotional layer options).
+var STRATS = [
+  {id:"reappraisal", name:"Cognitive reappraisal"},
+  {id:"suppression", name:"Expressive suppression"},
+  {id:"rumination",  name:"Rumination"},
+  {id:"reassurance", name:"Reassurance-seeking (a safety behavior)"},
+  {id:"avoidance",   name:"Situation-selection avoidance / withdrawal"}
+];
+// Developmental origins (developmental layer options).
+var ORIGINS = [
+  {id:"anxious",  name:"Anxious attachment (comfort came unpredictably)"},
+  {id:"avoidant", name:"Avoidant attachment (needs were met with rejection)"},
+  {id:"secure",   name:"Secure attachment (distress was reliably met)"},
+  {id:"lowclarity", name:"Low emotional clarity (feelings were never named at home)"},
+  {id:"goodnessfit", name:"Temperament / goodness-of-fit mismatch"}
+];
+function nameOf(list,id){ for(var i=0;i<list.length;i++){ if(list[i].id===id) return list[i].name; } return id; }
+
+var CASES = [
+  {
+    setup:"<b>Maren</b>, thirty-four, comes in because partners keep telling her she is \u201chard to reach.\u201d When her partner is upset with her, she goes quiet, keeps a level voice, and later cannot say what she felt. She insists she is \u201cfine\u201d even as the tension sits in her body for days.",
+    emo:{
+      body:"In the moment, Maren holds a flat, composed face over real distress and says she is fine, while the feeling keeps her stress response switched on for days afterward.",
+      prompt:"Which present-moment regulation strategy is Maren mainly using?",
+      answer:"suppression",
+      why:"Holding back the outward signs of an emotion that is already here, keeping a level voice and a still face while the storm continues inside, is expressive suppression. It hides the feeling without reducing it and carries the somatic tax the reading describes."
+    },
+    dev:{
+      body:"Maren grew up in a home where showing upset reliably brought coldness or dismissal, so she learned early to handle everything alone and to keep her needs out of view.",
+      prompt:"Which developmental origin best fits how Maren learned to do this?",
+      answer:"avoidant", also:"lowclarity",
+      why:"When bids for comfort are met with rejection, a child adapts by downplaying needs and self-reliance, the avoidant pattern. Her difficulty naming feelings also points to low emotional clarity from a home where feelings were not talked about. Either read names a real root."
+    },
+    plan:{
+      emo:"<b>Present-moment work:</b> build emotional awareness first (naming the feeling before it runs her), then practice letting an emotion show and move through in small, bounded ways rather than clamping it down.",
+      dev:"<b>Developmental frame:</b> treat the self-reliant flatness as an intelligent old adaptation to a home where needs were unwelcome, not a character flaw, which makes it something that can be updated.",
+      rel:"<b>The relationship as treatment:</b> a therapist who stays warm and unruffled when Maren does show feeling gives her repeated evidence that distress can be met rather than punished, gently loosening the old working model, the corrective relational experience from the alliance work in Module 3."
+    }
+  },
+  {
+    setup:"<b>Darius</b>, twenty-nine, seeks help for anxiety in his relationship. When his partner takes a few hours to reply, he feels a hard spike of dread, sends a flurry of messages to check they are not upset, and feels briefly better each time they answer, then worse again by evening.",
+    emo:{
+      body:"Darius manages a spike of relational dread by repeatedly checking that his partner is not upset. Each reassurance brings a short wave of relief, then the dread returns.",
+      prompt:"Which present-moment strategy is Darius leaning on?",
+      answer:"reassurance",
+      why:"Repeated checking to relieve relational anxiety is reassurance-seeking, which functions as a safety behavior. The brief relief is exactly what reinforces it, and it prevents him from learning he can tolerate ordinary distance."
+    },
+    dev:{
+      body:"Darius grew up with a caregiver who was warm and attentive on good days but unreachable on hard ones, so he could never predict when comfort would be there. He learned to watch closely for signs of withdrawal and to make his distress loud and persistent.",
+      prompt:"Which developmental origin fits Darius most closely?",
+      answer:"anxious",
+      why:"When comfort comes unpredictably, a child learns to amplify distress and monitor the caregiver constantly, never sure they will stay, the anxious pattern. His reassurance-seeking is that childhood strategy still running in an adult relationship that no longer requires it."
+    },
+    plan:{
+      emo:"<b>Present-moment work:</b> reappraise ordinary distance (\u201cbusy is not the same as leaving\u201d) instead of catastrophizing it, and practice tolerating a delayed reply without checking, so his nervous system can learn the distance is survivable.",
+      dev:"<b>Developmental frame:</b> name the reassurance-seeking as a once-necessary way of securing unreliable care, an intelligent adaptation that has outlived the situation it was built for.",
+      rel:"<b>The relationship as treatment:</b> a therapist who is consistently responsive and reliable over time disconfirms his prediction of abandonment, offering the steady co-regulation he missed early on and helping his working model update from the inside."
+    }
+  },
+  {
+    setup:"<b>Colette</b>, forty, comes in exhausted after a demotion at work. She spends her evenings replaying the meeting where it happened, asking herself over and over why she is not good enough and what is wrong with her, and she has stopped seeing the friends who used to lift her.",
+    emo:{
+      body:"In the evenings Colette circles the same unanswerable questions about the demotion, \u201cwhy am I not good enough, what is wrong with me,\u201d without moving toward anything, and she has withdrawn from the people who help.",
+      prompt:"Which present-moment strategy is doing the most damage for Colette?",
+      answer:"rumination",
+      why:"Passively and repetitively dwelling on distress and its causes, circling unanswerable \u201cwhy\u201d questions without moving toward a solution, is rumination. It refuels low mood and drains the energy she would need to act, and it lives at the attention step of the chain."
+    },
+    dev:{
+      body:"Colette was raised by steady, responsive caregivers and generally trusts that people are there for her. This current spiral followed a real and painful career setback rather than a lifelong relational pattern.",
+      prompt:"What does Colette's developmental background most likely reflect here?",
+      answer:"secure",
+      why:"Reliably met distress in childhood tends to produce secure attachment, and Colette's history fits that. This is an important read clinically: her rumination is a present-moment strategy driven by a real recent loss, not the surfacing of an insecure working model, which points the work toward the strategy itself rather than an attachment repair."
+    },
+    plan:{
+      emo:"<b>Present-moment work:</b> interrupt the rumination behaviorally by re-engaging absorbing, values-based activity and reconnecting with friends, the behavioral-activation logic, and coach the difference between a useful \u201chow can I address this?\u201d question and a useless \u201cwhy is this happening to me?\u201d one.",
+      dev:"<b>Developmental frame:</b> because her foundation is secure, the work does not need to rebuild a relational template. It can focus squarely on the maintaining strategy and the real loss underneath it.",
+      rel:"<b>The relationship as treatment:</b> the alliance still matters as steady co-regulation while she grieves the setback, but here it supports the present-moment work rather than having to rewrite an old model. Matching the depth of relational work to what the person actually needs is itself the skill."
+    }
+  }
+];
+
+var idx=0, answers=[];
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function init(){ answers=CASES.map(function(){return {emo:null, dev:null};}); idx=0; render(); }
+
+function renderProgress(){
+  document.getElementById("pbarfill").style.width=(idx/CASES.length*100)+"%";
+  document.getElementById("pcount").textContent="Case "+Math.min(idx+1,CASES.length)+" of "+CASES.length;
+}
+
+function dropdown(list, chosenId, ansId, alsoId, onChange){
+  var sel=document.createElement("select");
+  var ph=document.createElement("option"); ph.value=""; ph.textContent="Choose\u2026"; ph.disabled=true; ph.selected=chosenId===null; sel.appendChild(ph);
+  list.forEach(function(o){ var op=document.createElement("option"); op.value=o.id; op.textContent=o.name; if(chosenId===o.id) op.selected=true; sel.appendChild(op); });
+  if(chosenId!==null){
+    sel.disabled=true;
+    var right = chosenId===ansId || (alsoId && chosenId===alsoId);
+    sel.classList.add(right?"ok":"no");
+  } else {
+    sel.addEventListener("change", function(){ onChange(sel.value); });
+  }
+  return sel;
+}
+
+function render(){
+  renderProgress();
+  var c=CASES[idx], a=answers[idx];
+  var panel=document.getElementById("cardPanel"); panel.innerHTML="";
+  panel.appendChild(el("div","qtop","Case "+(idx+1)+" of "+CASES.length));
+  panel.appendChild(el("div","setup", c.setup));
+
+  // Emotional layer
+  var emo=el("div","layer emo");
+  emo.appendChild(el("span","ltag","The present \u00b7 emotional"));
+  emo.appendChild(el("div","lbody", c.emo.body));
+  var ef=el("div","field");
+  ef.appendChild(el("div","prompt", c.emo.prompt));
+  ef.appendChild(dropdown(STRATS, a.emo, c.emo.answer, c.emo.also, function(v){ a.emo=v; render(); }));
+  if(a.emo!==null){
+    var right = a.emo===c.emo.answer || (c.emo.also && a.emo===c.emo.also);
+    var nm = nameOf(STRATS, c.emo.answer)+(c.emo.also?" (or "+nameOf(STRATS,c.emo.also)+")":"");
+    var note=el("div","fnote "+(right?"ok":"no"));
+    note.innerHTML = right ? ("<b>Yes.</b> "+esc(c.emo.why)) : ("<b>Not quite.</b> The strategy here is <b>"+esc(nm)+"</b>. "+esc(c.emo.why));
+    ef.appendChild(note);
+  }
+  emo.appendChild(ef);
+  panel.appendChild(emo);
+
+  // Developmental layer unlocks after emotional answered
+  if(a.emo!==null){
+    var dev=el("div","layer dev");
+    dev.appendChild(el("span","ltag","The origin \u00b7 developmental"));
+    dev.appendChild(el("div","lbody", c.dev.body));
+    var df=el("div","field");
+    df.appendChild(el("div","prompt", c.dev.prompt));
+    df.appendChild(dropdown(ORIGINS, a.dev, c.dev.answer, c.dev.also, function(v){ a.dev=v; render(); }));
+    if(a.dev!==null){
+      var rightD = a.dev===c.dev.answer || (c.dev.also && a.dev===c.dev.also);
+      var nmD = nameOf(ORIGINS, c.dev.answer)+(c.dev.also?" (or "+nameOf(ORIGINS,c.dev.also)+")":"");
+      var noteD=el("div","fnote "+(rightD?"ok":"no"));
+      noteD.innerHTML = rightD ? ("<b>Yes.</b> "+esc(c.dev.why)) : ("<b>Not quite.</b> The best fit here is <b>"+esc(nmD)+"</b>. "+esc(c.dev.why));
+      df.appendChild(noteD);
+    }
+    dev.appendChild(df);
+    panel.appendChild(dev);
+  }
+
+  // Synthesis unlocks after both
+  if(a.emo!==null && a.dev!==null){
+    var syn=el("div","synth");
+    syn.innerHTML =
+      '<div class="st">The two levels, one plan</div>'+
+      '<div>Because the present strategy and its developmental origin are two views of one story, the plan works at both levels, and the relationship itself does real work:</div>'+
+      '<div class="pair">'+
+        '<div class="pc emo"><div class="h">Present-moment level</div>'+c.plan.emo+'</div>'+
+        '<div class="pc dev"><div class="h">Developmental level</div>'+c.plan.dev+'</div>'+
+      '</div>'+
+      '<div class="relrow"><div class="h">The relationship as treatment</div>'+c.plan.rel.replace(/<b>The relationship as treatment:<\/b> /,'')+'</div>';
+    panel.appendChild(syn);
+  }
+
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var ready = a.emo!==null && a.dev!==null;
+  var last = idx===CASES.length-1;
+  var nb=el("button","btn"); nb.disabled=!ready;
+  nb.innerHTML = last ? "See the through-line" : "Next case \u2192";
+  nb.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+  foot.appendChild(nb);
+  panel.appendChild(foot);
+}
+
+function finish(){
+  document.getElementById("pbarfill").style.width="100%";
+  document.getElementById("pcount").textContent="Complete";
+  document.getElementById("cardPanel").classList.add("hidden");
+  var emo=0, dev=0;
+  CASES.forEach(function(c,i){
+    var a=answers[i];
+    if(a.emo===c.emo.answer || (c.emo.also && a.emo===c.emo.also)) emo++;
+    if(a.dev===c.dev.answer || (c.dev.also && a.dev===c.dev.also)) dev++;
+  });
+  var rp=document.getElementById("resultsPanel"); rp.classList.remove("hidden"); rp.innerHTML="";
+  rp.appendChild(el("h2",null,"The through-line"));
+  rp.appendChild(el("p","score","You named the present strategy in <b>"+emo+" of "+CASES.length+"</b> cases and the developmental origin in <b>"+dev+" of "+CASES.length+"</b>."));
+  rp.appendChild(el("p",null,"Two questions carried each case: what is this person doing with their feelings now, and how did they come to do it this way. The emotional lens answered the first, the developmental lens answered the second, and together they pointed at a plan built around the person rather than a label. Notice how often the childhood strategy was intelligent when it formed and simply outlived the situation it was built for."));
+  rp.appendChild(el("p",null,"Notice too what the relationship did. For a person whose regulation was never reliably modeled, the alliance is not a backdrop to the real work. Being met consistently is itself part of the treatment, the corrective relational experience that lets an old working model start to update. That is the same alliance you studied in Module 3, now doing developmental work."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Start over");
+  again.addEventListener("click", function(){ document.getElementById("cardPanel").classList.remove("hidden"); rp.classList.add("hidden"); init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); rp.appendChild(act);
+  rp.appendChild(el("p","selfnote","This activity runs entirely on your own screen. Nothing you select was saved, sent, or made visible to anyone else."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

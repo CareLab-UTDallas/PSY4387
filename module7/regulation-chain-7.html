@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Regulation Chain</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --mix-bg:#f4eee2; --mix-line:#dcc9a0; --mix-ink:#8a6d2f;
+    /* the five chain points, cool-to-warm as the emotion builds */
+    --p1:#5b7a9a; --p1-soft:#e7edf3;
+    --p2:#5f8f86; --p2-soft:#e4eeeb;
+    --p3:#8a7f3f; --p3-soft:#f0ecda;
+    --p4:#a8683a; --p4-soft:#f4e7db;
+    --p5:#a8483a; --p5-soft:#f6e0da;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:940px;margin:0 auto;padding:22px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .scenariobar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:16px 0 6px;}
+  .scenario-pick{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);}
+  .scenario-pick select{font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:9px;padding:8px 11px;background:#fff;cursor:pointer;color:var(--ink);}
+  .scenario-pick select:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .setup{background:#f5f3ef;border-radius:12px;padding:13px 15px;font-size:14.5px;line-height:1.55;margin:6px 0 6px;border-left:3px solid var(--accent);}
+  .setup b{color:var(--ink);}
+
+  .prompt-line{font-size:14px;margin:16px 0 12px;line-height:1.5;}
+  .prompt-line b{font-weight:700;}
+
+  /* the chain: five points left to right, arrow between */
+  .chain{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:2px 2px 8px;}
+  .cpoint{flex:1 1 0;min-width:150px;display:flex;flex-direction:column;}
+  .cnode{border:1px solid var(--line);border-radius:13px;padding:12px 12px 13px;background:#fff;cursor:pointer;text-align:left;font:inherit;color:var(--ink);height:100%;display:flex;flex-direction:column;gap:5px;transition:border-color .12s, box-shadow .12s, background .12s;}
+  .cnode:hover:not(:disabled){border-color:#cfc9bf;box-shadow:var(--panel-shadow);}
+  .cnode:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .cnode:disabled{cursor:default;}
+  .cnode .step-k{font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;}
+  .cnode .step-name{font-size:14px;font-weight:600;line-height:1.25;}
+  .cnode .step-desc{font-size:12px;color:var(--muted);line-height:1.4;}
+  .cpoint.pp1 .cnode .step-k{color:var(--p1);} .cpoint.pp1 .cnode{background:var(--p1-soft);}
+  .cpoint.pp2 .cnode .step-k{color:var(--p2);} .cpoint.pp2 .cnode{background:var(--p2-soft);}
+  .cpoint.pp3 .cnode .step-k{color:var(--p3);} .cpoint.pp3 .cnode{background:var(--p3-soft);}
+  .cpoint.pp4 .cnode .step-k{color:var(--p4);} .cpoint.pp4 .cnode{background:var(--p4-soft);}
+  .cpoint.pp5 .cnode .step-k{color:var(--p5);} .cpoint.pp5 .cnode{background:var(--p5-soft);}
+  .cnode.chosen{box-shadow:0 0 0 2px var(--accent) inset;border-color:var(--accent);}
+  .cnode.dimmed{opacity:.55;}
+  .carrow{align-self:center;flex:0 0 14px;display:flex;align-items:center;justify-content:center;color:#c3bcb0;padding:0 1px;}
+  .carrow svg{display:block;}
+  .chain-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:2px 4px 0;}
+
+  .earlylate{font-size:12px;color:var(--muted);margin:10px 2px 0;line-height:1.5;font-style:italic;}
+
+  /* strategy picker for the chosen point */
+  .picker{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:18px 20px;}
+  .picker.hidden{display:none;}
+  .picker h3{margin:0 0 3px;font-size:16px;}
+  .picker .pdesc{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5;}
+  .choices{display:flex;flex-direction:column;gap:10px;}
+  .choice{text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .choice:hover:not(:disabled){border-color:#cfc9bf;}
+  .choice:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .choice:disabled{cursor:default;}
+  .choice .cx-strat{font-weight:600;}
+  .choice.pick-ok{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .choice.pick-mix{background:var(--mix-bg);border-color:var(--mix-line);box-shadow:0 0 0 2px var(--mix-ink) inset;}
+  .choice.pick-no{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .choice.dim{opacity:.5;}
+
+  .outcome{margin-top:14px;border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;}
+  .outcome.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .outcome.mix{background:var(--mix-bg);color:var(--mix-ink);}
+  .outcome.no{background:var(--no-bg);color:var(--no-ink);}
+  .outcome b{font-weight:700;}
+  .outcome .lab{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:6px;padding:2px 7px;margin-bottom:6px;}
+  .outcome.ok .lab{background:#fff;color:var(--ok-ink);}
+  .outcome.mix .lab{background:#fff;color:var(--mix-ink);}
+  .outcome.no .lab{background:#fff;color:var(--no-ink);}
+
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .tally{margin-top:18px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;line-height:1.6;}
+  .tally.hidden{display:none;}
+  .tally b{color:var(--ink);}
+
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>The Regulation Chain</h1>
+    <p class="sub">An emotion is not a single event that fires or does not. It unfolds as a short story in a sequence, and there are five points along that sequence where a person can step in and change how it ends. Pick a point in one person's chain, choose a strategy there, and watch how it plays out. The model is a map, not a verdict, so most points have a version that helps and a version that quietly backfires.</p>
+  </div>
+
+  <div class="scenariobar">
+    <div class="scenario-pick">Case:
+      <select id="scenarioSel"></select>
+    </div>
+    <div class="scenario-pick" style="color:var(--muted);">Interventions tried: <b id="triedCount" style="color:var(--ink);margin-left:4px;">0</b></div>
+  </div>
+
+  <div class="setup" id="setup"></div>
+  <div class="prompt-line" id="promptLine"></div>
+
+  <div class="chain" id="chain" role="group" aria-label="The five points of the emotion chain"></div>
+  <div class="chain-scale" aria-hidden="true"><span>earlier in the chain</span><span>later in the chain</span></div>
+  <div class="earlylate" id="earlyLate"></div>
+
+  <section class="picker hidden" id="picker" aria-live="polite"></section>
+
+  <div class="tally hidden" id="tally"></div>
+</div>
+
+<script>
+// ===========================================================================
+// The Regulation Chain (Module 7). Gross's process model of emotion regulation
+// as an interactive: five sequential points (situation selection, situation
+// modification, attentional deployment, cognitive change, response modulation),
+// each with an adaptive and a maladaptive strategy. The student chooses a point,
+// then a strategy at that point, and sees how it plays out.
+//
+// Grounded in ug-module-readings.md (Module 7):
+//   - Gross (1998) process model; the five families of strategies, one per point.
+//   - "the earlier in the chain you intervene, the more efficiently you can shape
+//     the emotion, but the earliest tools are also the ones most easily abused
+//     into avoidance."
+//   - Reappraisal (cognitive change, early-ish, physiologically cheap) vs
+//     expressive suppression (response modulation, late, the "somatic tax").
+//   - Rumination as the maladaptive form of attentional deployment.
+//   - The model is "a map, not a verdict"; regulatory flexibility matters more
+//     than any single strategy.
+// House convention: adaptive = green (ok), maladaptive = red (no); a third
+// "depends / mixed" verdict = amber (mix) for genuinely context-dependent moves.
+// Fresh cases (Nadia-the-nurse, Elias, Rosa) to avoid the reading's own M7
+// composites (Aaron, Devon, Priya, Theo) and all prior activity patients.
+// Fully client-side; nothing transmitted (stated to the user).
+// ===========================================================================
+
+// The five chain points, in order.
+var POINTS = [
+  {id:"sel",  k:"Point 1", name:"Situation selection", desc:"Choose which situations to enter or avoid."},
+  {id:"mod",  k:"Point 2", name:"Situation modification", desc:"Enter, but change something to make it manageable."},
+  {id:"att",  k:"Point 3", name:"Attentional deployment", desc:"Point your attention within the situation."},
+  {id:"cog",  k:"Point 4", name:"Cognitive change", desc:"Change the meaning you assign to it."},
+  {id:"resp", k:"Point 5", name:"Response modulation", desc:"Alter the response once the emotion is here."}
+];
+
+// Each scenario: a setup and, for EACH of the five points, two strategies
+// (an adaptive and a maladaptive one) with a verdict and an outcome explanation.
+// verdict: "ok" (adaptive), "no" (maladaptive), "mix" (genuinely depends).
+var SCENARIOS = [
+  {
+    name:"Nadia, before a feedback meeting",
+    setup:"<b>Nadia</b> is a nurse who has been told her manager wants to meet to \u201cgo over some things\u201d this afternoon. Her stomach drops and she starts bracing for criticism. Trace her emotion along the chain and choose where, and how, she might step in.",
+    points:{
+      sel:[
+        {strat:"Ask to reschedule for a day she feels steadier, once, so she can prepare", verdict:"mix",
+         out:"Situation selection can be wise or avoidant, and this one genuinely depends. A single reschedule to prepare is reasonable. If it becomes a pattern of dodging every hard meeting, it hardens into the avoidance that brings relief now and a smaller working life later."},
+        {strat:"Call in sick to avoid the meeting entirely", verdict:"no",
+         out:"This is situation selection collapsing into blanket avoidance. It delivers immediate relief, which is exactly what reinforces it, and it guarantees she never learns the meeting was survivable. Early-chain tools are the most efficient and the most easily abused into avoidance."}
+      ],
+      mod:[
+        {strat:"Ask a trusted colleague to debrief with her right afterward", verdict:"ok",
+         out:"Situation modification at its best: she enters the situation but adds a small, real support that makes approach possible, without hiding from the meeting itself."},
+        {strat:"Bring pages of notes to read from and rehearse every sentence in advance", verdict:"no",
+         out:"This is the safety-behavior version of situation modification. The props lower anxiety in the moment but quietly prevent her from discovering she did not need them, so the fear never gets a chance to fall on its own."}
+      ],
+      att:[
+        {strat:"Keep her attention on what the manager is actually saying, rather than scanning for signs of disapproval", verdict:"ok",
+         out:"Adaptive attentional deployment. Aiming attention at the real content rather than threat-scanning keeps the alarm from feeding on ambiguous cues."},
+        {strat:"Spend the afternoon replaying every past mistake and asking \u201cwhy do I always mess things up?\u201d", verdict:"no",
+         out:"This is rumination, the maladaptive form of attentional deployment. It parks her attention on distress and grinds it in circles, refuels low mood, and answers questions that have no answers. It feels like preparing. It is spinning."}
+      ],
+      cog:[
+        {strat:"Consider that \u201cgo over some things\u201d has many meanings, and a review is not automatically a verdict on her", verdict:"ok",
+         out:"Cognitive change through reappraisal, working upstream at the meaning step before the full wave builds. Same facts, a fairer reading, and because it lands early it is physiologically cheaper than fighting the feeling later."},
+        {strat:"Decide it definitely means she is about to be written up, and prepare for the worst", verdict:"no",
+         out:"This is cognitive change in the wrong direction, locking in a catastrophic interpretation. Reappraisal is not forced cheerfulness, but nor is it choosing the darkest available reading and treating it as fact."}
+      ],
+      resp:[
+        {strat:"If her heart races in the meeting, use a slow exhale to steady her voice", verdict:"ok",
+         out:"Adaptive response modulation, a bottom-up move that calms the body directly once the emotion is already here. It changes the response without pretending the feeling is absent."},
+        {strat:"Keep a completely flat face and level voice while panicking inside", verdict:"no",
+         out:"This is expressive suppression. It hides the outward signs but does little to reduce the inner experience, keeps her stress response switched on (the somatic tax), and leaves the manager unable to read her. A late-chain move that tends to cost more than it saves."}
+      ]
+    }
+  },
+  {
+    name:"Elias, after a short reply from a friend",
+    setup:"<b>Elias</b> texts a close friend about weekend plans and gets back a one-word reply hours later. A cold worry rises: \u201cthey\u2019re annoyed with me.\u201d Follow the chain and pick where he might intervene.",
+    points:{
+      sel:[
+        {strat:"Decide not to text that friend again for a while to avoid the discomfort", verdict:"no",
+         out:"Situation selection sliding into avoidance. Withdrawing from the friendship to dodge a feeling brings momentary relief and slowly shrinks the relationship, and it never tests whether anything was actually wrong."},
+        {strat:"Choose to raise it in person next time they meet rather than over text", verdict:"ok",
+         out:"Adaptive situation selection: he is not avoiding the issue, he is choosing a setting where it can go better. That is steering wisely rather than steering away."}
+      ],
+      mod:[
+        {strat:"Add a light, direct follow-up: \u201call good? happy to plan whenever\u201d", verdict:"ok",
+         out:"Situation modification that makes the exchange more workable without props or hiding. A small change to the situation that opens a real answer."},
+        {strat:"Draft and delete ten versions, then send nothing and watch the phone all evening", verdict:"no",
+         out:"The safety-behavior and avoidance version, dressed up as care. Endless drafting and monitoring lowers anxiety for seconds at a time while keeping him locked to the threat and learning nothing."}
+      ],
+      att:[
+        {strat:"Notice the worry, then return his attention to the evening he is actually in", verdict:"ok",
+         out:"Adaptive attentional deployment, gently shifting attention off the distressing loop rather than feeding it."},
+        {strat:"Reread the one-word reply over and over, mining it for hidden coldness", verdict:"no",
+         out:"Rumination at the attention step: parking on the ambiguous cue and grinding it. The more he rereads, the darker his interpretation tilts, which is exactly how rumination manufactures its own evidence."}
+      ],
+      cog:[
+        {strat:"Recall that a busy day, not anger, most often explains a short reply, and he can check if it continues", verdict:"ok",
+         out:"Reappraisal at the cognitive-change step. He weighs the evidence and lands on a fair, plausible reading of an ambiguous event, which heads off the wave before it builds."},
+        {strat:"Reassure himself firmly that \u201ceverything is completely fine, there is nothing to worry about\u201d", verdict:"mix",
+         out:"This is where reappraisal and empty positivity part ways. Insisting \u201cnothing is wrong\u201d without weighing the actual evidence is forced cheerfulness, and the reading warns it rarely holds. A genuine reappraisal considers the evidence rather than papering over the worry."}
+      ],
+      resp:[
+        {strat:"Take a few slow breaths to let the spike of worry settle", verdict:"ok",
+         out:"Adaptive response modulation, calming the body once the feeling has arrived, with no hidden cost."},
+        {strat:"Force a neutral mood and pretend to himself he does not care at all", verdict:"no",
+         out:"Expressive suppression again. Clamping down on the feeling does not turn down the inner experience. It keeps the stress system switched on while he tells himself a story of not caring."}
+      ]
+    }
+  },
+  {
+    name:"Rosa, the night before a presentation",
+    setup:"<b>Rosa</b> has a big presentation tomorrow. As she tries to sleep, her mind races and her chest tightens. Walk her emotion along the chain and choose an intervention point.",
+    points:{
+      sel:[
+        {strat:"Pull out of the presentation and ask someone else to cover it", verdict:"no",
+         out:"Situation selection as full avoidance. Handing off the presentation removes tonight's anxiety and, with it, any chance to learn she could do it, while narrowing what her role can be."},
+        {strat:"Decide to run one practice pass tomorrow morning when she is rested, rather than now", verdict:"ok",
+         out:"Adaptive situation selection about timing, not avoidance. She is choosing when to engage so the engagement goes better."}
+      ],
+      mod:[
+        {strat:"Set out her notes and outfit so the morning is calmer, then stop", verdict:"ok",
+         out:"Clean situation modification: a small change that lowers tomorrow's load without becoming a crutch she leans on in the room."},
+        {strat:"Plan to read the entire talk word for word so she never has to look up", verdict:"no",
+         out:"A safety behavior masquerading as preparation. Reading every word to avoid any eye contact props her up while preventing her from discovering she could manage without the script."}
+      ],
+      att:[
+        {strat:"Rest her attention on her slow breathing to let sleep come", verdict:"ok",
+         out:"Adaptive attentional deployment, and a classic use of attention to settle the body at night."},
+        {strat:"Replay every way the talk could go wrong, again and again", verdict:"no",
+         out:"Rumination and worry braided together at the attention step. Rehearsing catastrophes keeps the alarm circuits lit and sleep further away, with no forward progress."}
+      ],
+      cog:[
+        {strat:"Reframe the talk as sharing something she knows with people who want the information, not a test of her worth", verdict:"ok",
+         out:"Reappraisal that changes the meaning of the event upstream. A fairer reading lowers the arousal before it peaks, which is why cognitive change is such an efficient place to intervene."},
+        {strat:"Tell herself that stumbling once will prove she does not belong in the role", verdict:"no",
+         out:"Cognitive change running the wrong way, hardening a catastrophic all-or-nothing meaning. This is the interpretation that most needs testing, not adopting."}
+      ],
+      resp:[
+        {strat:"Use a long, slow exhale to bring her racing heart down so she can rest", verdict:"ok",
+         out:"Adaptive response modulation, a bottom-up calming of the body once arousal is already high."},
+        {strat:"Lie rigidly still and try to force the anxiety to disappear by sheer will", verdict:"no",
+         out:"This is suppression aimed at her own inner state. Clamping down does not reduce the feeling. It keeps the body braced and the stress response on, which is the opposite of what lets sleep arrive."}
+      ]
+    }
+  }
+];
+
+var scenIdx=0;
+var chosenPoint=null;   // point id currently open in the picker
+var resolved={};        // pointId -> chosen strategy index (0 adaptive/1 maladaptive), per scenario
+var tried=0;
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function fillScenario(){
+  var sel=document.getElementById("scenarioSel"); sel.innerHTML="";
+  SCENARIOS.forEach(function(s,i){ var o=document.createElement("option"); o.value=String(i); o.textContent=s.name; sel.appendChild(o); });
+  sel.value=String(scenIdx);
+  sel.addEventListener("change", function(){ scenIdx=parseInt(sel.value,10); resetScenario(); });
+}
+
+function resetScenario(){
+  chosenPoint=null; resolved={}; tried=0;
+  document.getElementById("triedCount").textContent="0";
+  document.getElementById("setup").innerHTML=SCENARIOS[scenIdx].setup;
+  document.getElementById("promptLine").innerHTML="<b>Where in the chain could this person step in?</b> Pick any point to see the strategies available there. You can try as many points as you like.";
+  document.getElementById("earlyLate").textContent="A rough rule from the reading: the earlier you intervene, the more efficiently you can shape the emotion, but the earliest tools are also the ones most easily bent into avoidance. There is no single right point, so try a few.";
+  document.getElementById("picker").classList.add("hidden");
+  document.getElementById("tally").classList.add("hidden");
+  renderChain();
+}
+
+var CARROW='<svg width="14" height="20" viewBox="0 0 14 20" fill="none"><path d="M3 4l7 6-7 6" stroke="#c3bcb0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function renderChain(){
+  var host=document.getElementById("chain"); host.innerHTML="";
+  POINTS.forEach(function(p,i){
+    var col=el("div","cpoint pp"+(i+1));
+    var b=el("button","cnode"+(chosenPoint===p.id?" chosen":"")+(resolved[p.id]!==undefined?"":""));
+    b.type="button";
+    b.innerHTML='<span class="step-k">'+esc(p.k)+'</span>'+
+                '<span class="step-name">'+esc(p.name)+'</span>'+
+                '<span class="step-desc">'+esc(p.desc)+'</span>';
+    b.addEventListener("click", function(){ openPoint(p.id); });
+    col.appendChild(b);
+    host.appendChild(col);
+    if(i<POINTS.length-1){ var a=el("div","carrow"); a.innerHTML=CARROW; host.appendChild(a); }
+  });
+}
+
+function openPoint(pid){
+  chosenPoint=pid;
+  renderChain();
+  var sc=SCENARIOS[scenIdx];
+  var p=POINTS.filter(function(x){return x.id===pid;})[0];
+  var strategies=sc.points[pid];
+  var picker=document.getElementById("picker"); picker.classList.remove("hidden"); picker.innerHTML="";
+  picker.appendChild(el("h3",null, p.name));
+  picker.appendChild(el("div","pdesc", "Point "+(POINTS.indexOf(p)+1)+" of 5. "+p.desc+" Which move would this be?"));
+  var wrap=el("div","choices");
+  var already = resolved[pid];
+  strategies.forEach(function(s,si){
+    var c=el("button","choice"); c.type="button";
+    c.innerHTML='<span class="cx-strat">'+esc(s.strat)+'</span>';
+    if(already!==undefined){
+      c.disabled=true;
+      if(si===already){ c.classList.add(s.verdict==="ok"?"pick-ok":(s.verdict==="mix"?"pick-mix":"pick-no")); }
+      else { c.classList.add("dim"); }
+    } else {
+      c.addEventListener("click", function(){ pickStrategy(pid, si); });
+    }
+    wrap.appendChild(c);
+  });
+  picker.appendChild(wrap);
+
+  if(already!==undefined){
+    var s=strategies[already];
+    var out=el("div","outcome "+(s.verdict==="ok"?"ok":(s.verdict==="mix"?"mix":"no")));
+    var lab = s.verdict==="ok" ? "Adaptive here" : (s.verdict==="mix" ? "It depends" : "Backfires here");
+    out.innerHTML='<span class="lab">'+lab+'</span><br>'+esc(s.out);
+    picker.appendChild(out);
+  }
+
+  var act=el("div","actions");
+  var close=el("button","btn secondary","Try a different point");
+  close.addEventListener("click", function(){ chosenPoint=null; document.getElementById("picker").classList.add("hidden"); renderChain(); window.scrollTo({top:document.getElementById("chain").offsetTop-10,behavior:"smooth"}); });
+  act.appendChild(close);
+  var another=el("button","btn secondary","Try another case");
+  another.addEventListener("click", function(){ scenIdx=(scenIdx+1)%SCENARIOS.length; document.getElementById("scenarioSel").value=String(scenIdx); resetScenario(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(another);
+  picker.appendChild(act);
+
+  window.scrollTo({top:picker.offsetTop-10,behavior:"smooth"});
+}
+
+function pickStrategy(pid, si){
+  if(resolved[pid]!==undefined) return;
+  resolved[pid]=si;
+  tried++;
+  document.getElementById("triedCount").textContent=String(Object.keys(resolved).length);
+  openPoint(pid);        // re-render picker with outcome
+  updateTally();
+}
+
+function updateTally(){
+  var count=Object.keys(resolved).length;
+  var t=document.getElementById("tally");
+  if(count>=3){
+    t.classList.remove("hidden");
+    var adaptive=0, mal=0, dep=0;
+    var sc=SCENARIOS[scenIdx];
+    Object.keys(resolved).forEach(function(pid){
+      var v=sc.points[pid][resolved[pid]].verdict;
+      if(v==="ok")adaptive++; else if(v==="mix")dep++; else mal++;
+    });
+    t.innerHTML="<b>You have explored "+count+" of the five points.</b> The lesson of the chain is not that one point is the right one. It is that a foggy problem (\u201cshe is too anxious\u201d) becomes a set of precise, targetable moments, each opened with a different tool. Skilled practice reads where a particular person keeps getting stuck and matches the tool to that spot, and values flexibility across the chain over any single favorite strategy."+
+      "<div class=\"selfnote\">This activity scores nothing and saves nothing. Every choice you made stays on your own screen. Nothing is transmitted or seen by anyone else.</div>";
+  }
+}
+
+fillScenario();
+resetScenario();
+</script>
+</body>
+</html>
