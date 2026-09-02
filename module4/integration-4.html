@@ -118,6 +118,25 @@
   .btn:disabled{opacity:.5;cursor:default;}
   .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
   .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  /* interactive-stage elements */
+  .layerbox.lq{padding-bottom:14px;}
+  .lq .field{margin-top:8px;}
+  .q-prompt{font-size:13.5px;color:var(--ink);margin:0 0 8px;line-height:1.5;}
+  .ig-select{width:100%;font:inherit;font-size:14px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none'><path d='M5 7l5 5 5-5' stroke='%236b6862' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;}
+  .ig-select:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .ig-select:disabled{opacity:1;}
+  .ig-select.ok{background-color:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink);}
+  .ig-select.no{background-color:var(--no-bg);border-color:var(--no-line);color:var(--no-ink);}
+  .field .fnote{margin-top:8px;font-size:13px;line-height:1.55;padding:9px 12px;border-radius:9px;}
+  .field .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .field .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .field .fnote b{font-weight:700;}
+  .looprung.lq{border-style:solid;border-color:var(--accent);}
+  .looprung.lq .q-prompt{margin-top:6px;}
+  .rec-q{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:13px 15px;background:#fff;}
+  .ltag-inline{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:7px;padding:3px 8px;margin-bottom:8px;background:var(--record-soft);color:var(--record);}
   .hidden{display:none !important;}
   @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
 </style>
@@ -221,86 +240,248 @@ function render(){
   var next=el("button","btn");
   if(cur < STAGES.length-1){
     next.innerHTML = "Next: "+STAGES[cur+1].railTitle+" \u2192";
-    // gate leaving the "after" stage's question is only on the last stage; earlier stages advance freely
+    // gate advancing until this stage's task is complete
+    var canAdvance = (s.key==="arrow") ? arrowDone()
+                   : (s.key==="loop") ? loopDone()
+                   : (s.key==="record") ? recordDone()
+                   : true;
+    next.disabled = !canAdvance;
     next.addEventListener("click", function(){ maxUnlocked=Math.max(maxUnlocked,cur+1); cur++; render(); window.scrollTo({top:0,behavior:"smooth"}); });
   } else {
     next.innerHTML = "Start over";
     next.classList.add("secondary");
-    next.addEventListener("click", function(){ cur=0; maxUnlocked=0; afterAnswered=false; afterPick=null; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+    next.addEventListener("click", function(){ cur=0; maxUnlocked=0; afterAnswered=false; afterPick=null; arrowAns=[null,null]; loopAns={interp:null,close:null}; recordAns={balanced:null,doubles:null}; render(); window.scrollTo({top:0,behavior:"smooth"}); });
   }
   foot.appendChild(next);
   host.appendChild(foot);
 }
 
+// --- Stage interaction state ---
+// arrow: student descends the arrow via dropdowns (rebuilds it, not reads it)
+var arrowSteps = [
+  {
+    tag:"Intermediate belief \u00b7 the rule",
+    prompt:"Renata's surface thought is \u201cmy manager asked to \u2018quickly chat about the report\u2019 \u2014 I'm in trouble.\u201d Run the downward arrow: if that were true, what would it mean to her?",
+    answer:"b",
+    options:[
+      {id:"a", text:"\u201cShe probably just has a quick question.\u201d", correct:false,
+       why:"That argues with the thought instead of following it down. The arrow assumes the fear for a moment and asks what it would mean."},
+      {id:"b", text:"\u201cIf my work isn't flawless, I'll be exposed as not belonging here.\u201d", correct:true,
+       why:"This drops one level, from a situation-specific thought to a conditional rule about flawlessness and belonging. That's the intermediate belief."},
+      {id:"c", text:"\u201cI am not good enough, full stop.\u201d", correct:false,
+       why:"That's the bedrock core belief, one layer too deep to reach in a single step. The arrow moves through the rule first."}
+    ]
+  },
+  {
+    tag:"Core belief \u00b7 the bedrock",
+    prompt:"Arrow again: and if she really were failing to belong, what would that mean about her?",
+    answer:"c",
+    options:[
+      {id:"a", text:"\u201cI should double-check my work more carefully.\u201d", correct:false,
+       why:"That's a coping plan, not a deeper belief. The arrow is still descending toward the conviction underneath."},
+      {id:"b", text:"\u201cThis one report might go badly.\u201d", correct:false,
+       why:"That stays at the surface. It moves sideways rather than down toward the bedrock."},
+      {id:"c", text:"\u201cI'm not good enough. I'm a fraud, and it's only a matter of time.\u201d", correct:true,
+       why:"An absolute, global statement about the self. That's the bedrock core belief the whole plan will target."}
+    ]
+  }
+];
+var arrowAns = [null, null];
+
+// loop: student places the mechanism at the interpretation step and predicts the closing feedback
+var loopQ = {
+  prompt:"You've put Renata's core belief (\u201cI'm not good enough\u201d) at the top of the loop. A neutral message, \u201ccan we chat about the report?\u201d, arrives. Which reading does the belief drive at the interpretation step?",
+  answer:"b",
+  options:[
+    {id:"a", text:"\u201cProbably just routine feedback.\u201d", correct:false,
+     why:"That's a fair, neutral reading. If Renata could reach it, the loop would not tighten. The belief at the top pulls her interpretation somewhere darker."},
+    {id:"b", text:"\u201cI'm in trouble. I've messed up and I'm about to be exposed.\u201d", correct:true,
+     why:"The core belief acts as a lens, so an ambiguous message gets read as threat. That biased interpretation is what drives the avoidance next."},
+    {id:"c", text:"\u201cMy manager clearly values my input.\u201d", correct:false,
+     why:"The belief 'I'm not good enough' does not produce this reading. A darker interpretation is what keeps this particular loop turning."}
+  ],
+  close:{
+    prompt:"She then rereads emails, hides unfinished work, and stops asking questions, each move bringing a little relief. What does that avoidance do to the loop?",
+    answer:"a",
+    options:[
+      {id:"a", text:"It closes the loop: hiding her work means the feared prediction never gets tested, so \u201cnot good enough\u201d feels truer tomorrow.", correct:true,
+       why:"Exactly. The relief reinforces the avoidance, and because she never gets disconfirming feedback, the belief strengthens and feeds back to the top. That's why reassurance from outside bounces off."},
+      {id:"b", text:"It breaks the loop: avoiding the feared thing lets the anxiety fade for good.", correct:false,
+       why:"The relief is real but temporary, and it's exactly what traps her. Avoidance feels like it helps while it quietly keeps the loop running."},
+      {id:"c", text:"It has no effect on the belief either way.", correct:false,
+       why:"It has a large effect. Each avoidance denies her the evidence that would loosen the belief, so the loop tightens rather than staying neutral."}
+    ]
+  }
+};
+var loopAns = {interp:null, close:null};
+
+// record: student completes the two columns that carry the work (balanced thought + what it doubles as)
+var recordGiven = [
+  ["Situation","My manager messaged: \u201ccan we chat about the report?\u201d"],
+  ["Automatic thought","\u201cI'm in trouble. I've messed up and I'm about to be exposed.\u201d"],
+  ["Feeling &amp; behavior","Dread and a racing heart. Urge to reread everything and delay replying."]
+];
+var recordQ = {
+  balanced:{
+    prompt:"Renata has weighed the evidence (she's been asked to \u201cchat\u201d about fine things before, \u201cchat\u201d isn't \u201cproblem,\u201d and she's had positive feedback). Which is the balanced thought that belongs in the last row?",
+    answer:"b",
+    options:[
+      {id:"a", text:"\u201cEverything is fine and there is absolutely nothing to worry about.\u201d", correct:false,
+       why:"That's forced positivity, not a weighed reading. A balanced thought stays fair to the evidence rather than papering over the worry."},
+      {id:"b", text:"\u201cA chat about the report probably means questions or ideas, not a verdict on me. I'll find out what it's about instead of assuming the worst.\u201d", correct:true,
+       why:"Fair, evidence-based, and workable. It leaves room for uncertainty while refusing the catastrophic reading, which is what cognitive restructuring produces."},
+      {id:"c", text:"\u201cShe's definitely found a serious problem and I should brace for it.\u201d", correct:false,
+       why:"That just restates the automatic thought as if it were settled. It isn't more accurate, only more alarming."}
+    ]
+  },
+  doubles:{
+    prompt:"That balanced thought ends with \u201cI'll find out what it's about.\u201d Beyond restructuring, what else is that line doing?",
+    answer:"c",
+    options:[
+      {id:"a", text:"It's a safety behavior that lowers her anxiety for now.", correct:false,
+       why:"A safety behavior avoids the feared thing. This does the opposite: it moves her toward finding out, which is approach, not avoidance."},
+      {id:"b", text:"It's expressive suppression of the worry.", correct:false,
+       why:"Suppression hides a feeling. This line commits her to an action that will gather real information instead."},
+      {id:"c", text:"It sets up a behavioral experiment: a small real-world test of the prediction \u201cI'm in trouble.\u201d", correct:true,
+       why:"Going in to find out, rather than assuming, tests the catastrophic prediction against reality. The record has quietly produced an experiment, which is how the take-home tool keeps working after therapy."}
+    ]
+  }
+};
+var recordAns = {balanced:null, doubles:null};
+
+// Helper: a reusable single-question dropdown block with green/red feedback.
+// qobj = {prompt, answer, options:[{id,text,correct,why}]}; getAns/setAns via closures.
+function questionBlock(host, qobj, current, onPick, tagLabel){
+  if(tagLabel){ host.appendChild(el("span","ltag-inline", tagLabel)); }
+  var fld=el("div","field");
+  fld.appendChild(el("div","q-prompt", qobj.prompt));
+  var sel=document.createElement("select"); sel.className="ig-select";
+  var ph=document.createElement("option"); ph.value=""; ph.textContent="Choose\u2026"; ph.disabled=true; ph.selected=current===null; sel.appendChild(ph);
+  qobj.options.forEach(function(o){ var op=document.createElement("option"); op.value=o.id; op.textContent=o.text.replace(/\u201c|\u201d/g,'"'); if(current===o.id)op.selected=true; sel.appendChild(op); });
+  if(current!==null){
+    sel.disabled=true;
+    var ch=qobj.options.filter(function(o){return o.id===current;})[0];
+    sel.classList.add(ch&&ch.correct?"ok":"no");
+  } else {
+    sel.addEventListener("change", function(){ onPick(sel.value); });
+  }
+  fld.appendChild(sel);
+  if(current!==null){
+    var ch2=qobj.options.filter(function(o){return o.id===current;})[0];
+    var ok=ch2&&ch2.correct;
+    var note=el("div","fnote "+(ok?"ok":"no"));
+    if(ok){ note.innerHTML="<b>Yes.</b> "+esc(ch2.why); }
+    else{ var right=qobj.options.filter(function(o){return o.correct;})[0];
+      note.innerHTML="<b>Not the strongest choice.</b> "+esc(ch2.why)+" <br><b>The fitting one:</b> \u201c"+esc(right.text.replace(/\u201c|\u201d/g,''))+"\u201d"; }
+    fld.appendChild(note);
+  }
+  host.appendChild(fld);
+}
+
 function renderArrow(host){
-  host.appendChild(connectBanner("This is the same downward arrow you practiced, now as step one of a plan. What it finds at the bottom becomes the belief you'll watch drive the loop in the next stage."));
+  host.appendChild(connectBanner("This is the same downward arrow you practiced, now as step one of a plan. Run it yourself: what it finds at the bottom becomes the belief you'll place into the loop next."));
   var box1=el("div","layerbox l1");
   box1.appendChild(el("span","ltag","Automatic thought \u00b7 the surface"));
   box1.appendChild(el("div","lthought","\u201cMy manager asked to \u2018quickly chat about the report.\u2019 I'm in trouble.\u201d"));
   host.appendChild(box1);
+
+  // step 1 unlocks; step 2 unlocks after step 1 answered
   host.appendChild(mkArrowQ());
-  var box2=el("div","layerbox l2");
-  box2.appendChild(el("span","ltag","Intermediate belief \u00b7 the rule"));
-  box2.appendChild(el("div","lthought","\u201cIf my work isn't flawless, I'll be exposed as not belonging here.\u201d"));
-  host.appendChild(box2);
-  host.appendChild(mkArrowQ());
-  var box3=el("div","layerbox l3");
-  box3.appendChild(el("span","ltag","Core belief \u00b7 the bedrock"));
-  box3.appendChild(el("div","lthought","<b>\u201cI'm not good enough. I'm a fraud, and it's only a matter of time.\u201d</b>"));
-  host.appendChild(box3);
-  var t=el("div","takeaway");
-  t.innerHTML='<div class="st">What the clinician now has</div>Three sessions of reassurance about the report would have missed this. The arrow shows that a dozen different worries all rest on one bedrock belief, <b>\u201cI\u2019m not good enough.\u201d</b> That belief is the thing to work on, and the next stage shows why it\u2019s so stubborn.';
-  host.appendChild(t);
+  var b2=el("div","layerbox l2 lq");
+  b2.appendChild(el("span","ltag", arrowSteps[0].tag));
+  questionBlock(b2, arrowSteps[0], arrowAns[0], function(v){ arrowAns[0]=v; render(); });
+  host.appendChild(b2);
+
+  if(arrowAns[0]!==null){
+    host.appendChild(mkArrowQ());
+    var b3=el("div","layerbox l3 lq");
+    b3.appendChild(el("span","ltag", arrowSteps[1].tag));
+    questionBlock(b3, arrowSteps[1], arrowAns[1], function(v){ arrowAns[1]=v; render(); });
+    host.appendChild(b3);
+  }
+
+  if(arrowAns[0]!==null && arrowAns[1]!==null){
+    var t=el("div","takeaway");
+    t.innerHTML='<div class="st">What the clinician now has</div>You just traced a dozen possible worries down to one bedrock belief, <b>\u201cI\u2019m not good enough.\u201d</b> Three sessions of reassurance about the report would have missed it. That belief is the thing to work on, and the next stage shows why it is so stubborn.';
+    host.appendChild(t);
+  }
 }
 function mkArrowQ(){ var d=el("div"); d.innerHTML=ARROWDOWN; return d.firstChild; }
+function arrowDone(){ return arrowAns[0]!==null && arrowAns[1]!==null; }
 
 function renderLoop(host){
-  host.appendChild(connectBanner("The belief the arrow just found (<b>\u201cI'm not good enough\u201d</b>) sits at the top of this loop. Watch it manufacture its own proof, which is why you can't just argue Renata out of it."));
-  var rungs=[
+  host.appendChild(connectBanner("The belief you just found (<b>\u201cI'm not good enough\u201d</b>) sits at the top of this loop. Assemble the rest: decide what it does at each step, and watch why you can't just argue Renata out of it."));
+  // fixed top rungs (given), then the student decides the interpretation + closing
+  var topRungs=[
     {m:"Core belief (from the arrow)", x:"<b>\u201cI'm not good enough\u201d</b> sets the lens for the day."},
-    {m:"Biased attention", x:"She scans every interaction for signs of disapproval and barely registers the routine \u201cthanks, looks good.\u201d"},
-    {m:"Biased interpretation", x:"A neutral \u201ccan we chat about the report?\u201d is read instantly as <b>\u201cI'm in trouble.\u201d</b>"},
-    {m:"Safety behavior + avoidance", x:"She rereads emails ten times, hides unfinished work, and stops asking questions. Each avoidance brings relief, which trains her to do it again."},
-    {m:"Belief strengthens", x:"Hiding her work means she never gets the feedback that would disconfirm the fear, so \u201cI'm not good enough\u201d feels truer than ever."}
+    {m:"Biased attention", x:"She scans every interaction for signs of disapproval and barely registers the routine \u201cthanks, looks good.\u201d"}
   ];
-  rungs.forEach(function(r,i){
+  topRungs.forEach(function(r,i){
     var box=el("div","looprung");
     box.appendChild(el("div","rm", esc(r.m)));
     box.appendChild(el("div","rx", r.x));
     host.appendChild(box);
-    if(i<rungs.length-1){ var c=el("div","loopconn"); c.innerHTML="\u2193"; host.appendChild(c); }
+    var c=el("div","loopconn"); c.innerHTML="\u2193"; host.appendChild(c);
   });
-  var lc=el("div","loopclose");
-  lc.innerHTML='<span class="curl"><svg width="22" height="34" viewBox="0 0 24 40" fill="none"><path d="M14 4C4 4 4 20 4 20c0 0 0 16 10 16" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M10 31l4 5 4-5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><b>The loop closes.</b> The strengthened belief feeds back to the top, so tomorrow she scans even harder. This is why reassurance bounces off: her whole system is organized to keep producing evidence of not being good enough. To change it, you have to get inside the loop.';
-  host.appendChild(lc);
-  var t=el("div","takeaway");
-  t.innerHTML='<div class="st">Where to break in</div>The most reachable point is the interpretation step, where a neutral message becomes \u201cI\u2019m in trouble.\u201d That\u2019s a thought, caught in the moment, and there\u2019s a tool built exactly for that. It\u2019s what she takes home next.';
-  host.appendChild(t);
+
+  // interpretation decision
+  var ib=el("div","looprung lq");
+  ib.appendChild(el("div","rm","Biased interpretation \u2014 your call"));
+  questionBlock(ib, loopQ, loopAns.interp, function(v){ loopAns.interp=v; render(); });
+  host.appendChild(ib);
+
+  if(loopAns.interp!==null){
+    var c2=el("div","loopconn"); c2.innerHTML="\u2193"; host.appendChild(c2);
+    var ab=el("div","looprung");
+    ab.appendChild(el("div","rm","Safety behavior + avoidance"));
+    ab.appendChild(el("div","rx","She rereads emails ten times, hides unfinished work, and stops asking questions. Each avoidance brings relief."));
+    host.appendChild(ab);
+    var c3=el("div","loopconn"); c3.innerHTML="\u2193"; host.appendChild(c3);
+    var cb=el("div","looprung lq");
+    cb.appendChild(el("div","rm","What does that do to the loop?"));
+    questionBlock(cb, loopQ.close, loopAns.close, function(v){ loopAns.close=v; render(); });
+    host.appendChild(cb);
+  }
+
+  if(loopAns.interp!==null && loopAns.close!==null){
+    var lc=el("div","loopclose");
+    lc.innerHTML='<span class="curl"><svg width="22" height="34" viewBox="0 0 24 40" fill="none"><path d="M14 4C4 4 4 20 4 20c0 0 0 16 10 16" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M10 31l4 5 4-5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><b>The loop closes.</b> The strengthened belief feeds back to the top, so tomorrow she scans even harder. To change it, you have to get inside the loop, at the interpretation step you just identified.';
+    host.appendChild(lc);
+    var t=el("div","takeaway");
+    t.innerHTML='<div class="st">Where to break in</div>The most reachable point is that interpretation step, where a neutral message became \u201cI\u2019m in trouble.\u201d That is a thought, caught in the moment, and there is a tool built exactly for it. It is what she takes home next.';
+    host.appendChild(t);
+  }
 }
+function loopDone(){ return loopAns.interp!==null && loopAns.close!==null; }
 
 function renderRecord(host){
-  host.appendChild(connectBanner("The thought record targets the interpretation step of the loop you just saw. It's the take-home version of the whole method: catch the hot thought, weigh it, and reach the balanced one on purpose."));
-  host.appendChild(el("p","lead","Here's the record Renata fills in after the \u201ccan we chat about the report?\u201d message, using the columns from the reading."));
-  var rows=[
-    ["Situation","My manager messaged: \u201ccan we chat about the report?\u201d"],
-    ["Automatic thought","\u201cI'm in trouble. I've messed up and I'm about to be exposed.\u201d"],
-    ["Feeling &amp; behavior","Dread and a racing heart. Urge to reread everything and delay replying."],
-    ["Evidence for","She wants to talk about the report rather than just approve it."],
-    ["Evidence against","She's asked to \u201cchat\u201d about plenty of things that turned out fine. She's given positive feedback before. \u201cChat\u201d isn't \u201cproblem.\u201d"],
-    ["Balanced thought","\u201cA chat about the report probably means questions or ideas, not a verdict on me. I'll find out what it's about instead of assuming the worst.\u201d"]
-  ];
+  host.appendChild(connectBanner("The thought record targets the interpretation step you just found. It's the take-home version of the whole method: catch the hot thought, weigh it, and reach the balanced one on purpose. The first rows are filled. You complete the two that carry the work."));
   var tbl=el("div","trtable");
-  rows.forEach(function(r){
+  recordGiven.forEach(function(r){
     var row=el("div","trrow");
     row.appendChild(el("div","tc tk", r[0]));
     row.appendChild(el("div","tc", r[1]));
     tbl.appendChild(row);
   });
   host.appendChild(tbl);
-  var t=el("div","takeaway");
-  t.innerHTML='<div class="st">Why this is the take-home piece</div>The arrow and the loop are things the clinician mostly does with her in session. The record is hers. She can run it on any hot thought, any day, which is what lets the work continue after therapy ends. Notice it also feeds a behavioral experiment: \u201cI\u2019ll find out what it\u2019s about\u201d is a small real-world test of the prediction.';
-  host.appendChild(t);
+
+  var qb=el("div","rec-q");
+  questionBlock(qb, recordQ.balanced, recordAns.balanced, function(v){ recordAns.balanced=v; render(); }, "Balanced thought \u00b7 you complete this row");
+  host.appendChild(qb);
+
+  if(recordAns.balanced!==null){
+    var qb2=el("div","rec-q");
+    questionBlock(qb2, recordQ.doubles, recordAns.doubles, function(v){ recordAns.doubles=v; render(); }, "And what it doubles as");
+    host.appendChild(qb2);
+  }
+
+  if(recordAns.balanced!==null && recordAns.doubles!==null){
+    var t=el("div","takeaway");
+    t.innerHTML='<div class="st">Why this is the take-home piece</div>The arrow and the loop are things the clinician mostly does with her in session. The record is hers. She can run it on any hot thought, any day, and as you just saw it can double as a behavioral experiment, which is what lets the work continue after therapy ends.';
+    host.appendChild(t);
+  }
 }
+function recordDone(){ return recordAns.balanced!==null && recordAns.doubles!==null; }
 
 var AFTER = {
   prompt:"Eight months later, Renata is off therapy. Her manager drops a message: \u201cGot a few thoughts on your draft, let's talk tomorrow.\u201d The old dread flickers. Which response shows she has internalized the method, rather than just white-knuckling it?",
@@ -313,6 +494,7 @@ var AFTER = {
      why:"That's the safety behavior from the loop, in a new outfit. Over-preparing to prevent any possible criticism keeps the loop intact and never lets her learn the feedback was survivable."}
   ]
 };
+
 
 function renderAfter(host){
   host.appendChild(connectBanner("Sequencing the three tools leaves her with a habit of mind rather than a worksheet she fills in forever. The arrow taught her what belief is talking, the loop taught her how it traps her, and the record taught her the move. Now she runs all three in her head."));
