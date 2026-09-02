@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Challenge — Mechanism Mismatch</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --line2:#eceae4;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --level-bg:#fbe7e0; --level-ink:#b0472a;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --sel-line:#c9d3c2;
+    --focus:#2f6f4f; --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px;}
+
+  .head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px;}
+  .back-ic{flex:0 0 auto;margin-top:4px;opacity:.6;}
+  .head h1{margin:0;font-size:24px;letter-spacing:-.01em;font-weight:700;}
+  .tabrow{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 22px;padding-left:38px;font-size:14px;}
+  .lvl{background:var(--level-bg);color:var(--level-ink);font-weight:700;border-radius:8px;padding:4px 12px;}
+  .tabrow .t{color:var(--muted);padding:4px 0;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;margin-bottom:20px;}
+  .panel h2{margin:0 0 14px;font-size:17px;font-weight:700;}
+  .panel p{margin:0 0 14px;font-size:15.5px;line-height:1.6;}
+  .panel p:last-child{margin-bottom:0;}
+  .scenario p.quote{color:#3a3833;}
+
+  .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
+  .qhead h2{margin:0;font-size:17px;font-weight:700;}
+  .qtype{flex:0 0 auto;font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:7px;padding:5px 10px;}
+  .qprompt{font-size:15.5px;margin:0 0 14px;line-height:1.55;}
+
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin-bottom:18px;}
+  .do b{color:var(--ink);font-weight:700;}
+
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font:inherit;font-size:15px;line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:14px;}
+  .opt .txt{flex:1 1 auto;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;}
+  .opt:disabled{cursor:default;}
+  /* answered states */
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.62;}
+
+  .verdict{margin:16px 0 0;font-size:15px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14.5px;color:#44413b;line-height:1.6;}
+
+  .qfoot{display:flex;justify-content:flex-end;margin-top:20px;}
+  .btn{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;transition:.12s;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .results h2{display:flex;align-items:center;gap:9px;}
+  .results .score{font-size:15.5px;margin:0;}
+  .ea-sub{color:var(--muted);font-size:14px;margin:-6px 0 14px;}
+  .book{flex:0 0 auto;opacity:.7;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+  @media(max-width:560px){ .wrap{padding:18px 14px 44px;} .tabrow{padding-left:0;} .head h1{font-size:20px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg class="back-ic" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 5l-5 5 5 5" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1 id="title"></h1>
+  </div>
+  <div class="tabrow" id="tabrow"></div>
+
+  <!-- Scenario (persistent) -->
+  <section class="panel scenario" id="scenario"></section>
+
+  <!-- Question area -->
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <!-- Results + Expert Analysis (hidden until finished) -->
+  <section class="panel results hidden" id="resultsPanel"></section>
+  <section class="panel hidden" id="eaPanel"></section>
+</div>
+
+<script>
+// ===========================================================================
+// Transfer Challenge 6 (Module 6) — "The Biology Isn't the Barrier"
+// Scenario, three multiple-choice questions, options, correct answers, and
+// Expert Analysis are VERBATIM from the instructor screenshots
+// (Screenshot_2026-08-31_at_3_34_55 through 3_36_04). Answers are not stored
+// anywhere; the multiple-choice score is self-contained on this page.
+//
+// Correct answers per screenshots: Q1 = B (shown selected + "Correct!"),
+// Q1 = A, Q2 = C, Q3 = B. Score screen shows "Multiple Choice: 3 / 3 correct".
+//
+// Verified against the Module 6 reading (ug-module-readings.md):
+//   - anhedonia as a "wanting" problem in the dopaminergic reward system;
+//     behavioral activation recalibrates the reward system through action.
+//   - the "biological vs psychological" split is a false choice; therapy and
+//     medication change overlapping circuits through "different doors."
+//   - the platform's Expert Analysis and options additionally name nucleus
+//     accumbens / ventral tegmental area / ventral striatum and BDNF; these are
+//     accurate and reproduced verbatim, though they reach slightly beyond the
+//     named Module 6 reading (which covers dopamine/reward, anhedonia, and
+//     neuroplasticity without those specific structures/BDNF by name).
+// ===========================================================================
+
+const CHALLENGE = {
+  title: "Mechanism Mismatch",
+  level: "Level 4: Analyze",
+  tabs: ["Mechanisms of Change", "Outcome Monitoring", "Clinical Adjustment"],
+
+  scenario: {
+    heading: "Clinical Scenario",
+    paras: [
+      "Dr. Chen is treating Priya, a 32-year-old software engineer, for generalized anxiety disorder using a mechanism-informed approach. The treatment hypothesis was: IF worry and rumination (maintenance mechanisms) are targeted THEN cognitive defusion techniques (intervention) will activate flexible attention allocation (change mechanism) THEN anxiety symptoms will decrease.",
+      "After 8 sessions of ACT-based treatment focusing on cognitive defusion, the outcome data presents a puzzling pattern:",
+      "Symptom measures: GAD-7 scores have decreased from 18 (severe) to 9 (mild)\u2014a clinically significant improvement. Priya reports feeling \u201cmuch better\u201d and her sleep has normalized.",
+      "Process measures: The Cognitive Fusion Questionnaire (CFQ) scores have remained essentially unchanged (42 at baseline, 39 at session 8; minimal reliable change). The Acceptance and Action Questionnaire (AAQ-II) shows similarly stable scores. These measures suggest the targeted mechanism\u2014cognitive fusion\u2014has not meaningfully shifted.",
+      "Session recordings reviewed for adherence show Dr. Chen is delivering cognitive defusion exercises with high fidelity. Priya engages actively in session but reports difficulty practicing defusion between sessions."
+    ]
+  },
+
+  doThis: "Pick the single best option, choosing based on the reasoning it reflects \u2014 not just a familiar phrase. After you answer, read whether you were correct and why before advancing.",
+
+  questions: [
+    {
+      id: "q1",
+      prompt: "Which explanation for the mechanism-outcome mismatch is MOST consistent with the available data?",
+      options: [
+        { id: "a", text: "The symptom improvement is due to non-specific therapeutic factors (alliance, hope, structured attention) rather than the targeted mechanism of cognitive defusion" },
+        { id: "b", text: "The CFQ and AAQ-II are not valid measures and should be replaced" },
+        { id: "c", text: "Priya is fabricating symptom improvement to please Dr. Chen" },
+        { id: "d", text: "Eight sessions is insufficient time for any mechanism of change to operate" }
+      ],
+      correct: "a",
+      explanation: "The data show a real symptom drop (GAD-7 18 to 9) while the targeted process measures (CFQ, AAQ-II) barely move and fidelity is high. The most consistent reading is that non-specific factors, the alliance, hope, and structured attention to the problem, are carrying a meaningful share of the improvement, since research consistently shows common factors account for a substantial portion of change. The other options overreach: two stable, validated measures moving together is not evidence they are invalid, there is no reason to assume Priya is fabricating, and the reading itself notes that eight sessions with no mechanism movement is notable rather than simply too short."
+    },
+    {
+      id: "q2",
+      prompt: "What should Dr. Chen do NEXT given this data pattern?",
+      options: [
+        { id: "a", text: "Terminate treatment since symptoms have improved, regardless of mechanism change" },
+        { id: "b", text: "Continue the same approach because symptom improvement is the ultimate goal" },
+        { id: "c", text: "Investigate whether improvement is maintained by assessing relapse risk, and consider whether a different mechanism may be driving change" },
+        { id: "d", text: "Switch immediately to a completely different treatment modality" }
+      ],
+      correct: "c",
+      explanation: "The mechanism-informed move is neither to declare victory on symptoms alone nor to abandon a partly working treatment. It is to investigate: check whether the gains are durable by assessing relapse risk, and consider that a mechanism other than cognitive fusion may actually be driving the change. Terminating or continuing unchanged both ignore the mismatch, and an immediate wholesale switch discards an approach that may be helping while throwing away the information the process data just provided."
+    },
+    {
+      id: "q3",
+      prompt: "From a mechanism-informed perspective, why might symptom improvement without mechanism change be clinically concerning for long-term outcomes?",
+      options: [
+        { id: "a", text: "It suggests the treatment is too expensive for the benefits achieved" },
+        { id: "b", text: "Without shifting the maintaining mechanism, the conditions for relapse remain intact, making symptom return more likely when non-specific factors attenuate" },
+        { id: "c", text: "It indicates the diagnosis was incorrect from the beginning" },
+        { id: "d", text: "It proves that process measures should never be used in clinical practice" }
+      ],
+      correct: "b",
+      explanation: "Improvement driven mainly by non-specific factors tends to be less durable than improvement driven by mechanism change, because when the maintaining mechanism stays intact, the vulnerability to relapse persists. When the alliance and structured attention naturally attenuate after treatment ends, the conditions that produced the anxiety are still in place, so symptoms are more likely to return. It is analogous to blood pressure that normalizes on medication while the underlying cardiovascular risk factors remain unchanged."
+    }
+  ],
+
+  expertAnalysis: {
+    heading: "Expert Analysis",
+    subhead: "Model answer and clinical reasoning walkthrough",
+    paras: [
+      "This case highlights one of the most important concepts in mechanism-informed clinical practice: the distinction between symptom change and mechanism change, and why monitoring both matters.",
+      "The pattern observed\u2014symptom improvement without corresponding mechanism change\u2014has several possible explanations that are not mutually exclusive:",
+      "1. Non-specific factors: The therapeutic relationship, validation, hope instillation, and structured attention to problems can produce meaningful symptom reduction independent of specific intervention techniques. Research consistently shows that common factors account for a substantial portion of therapeutic change.",
+      "2. Wrong mechanism hypothesis: Cognitive fusion may not be the primary maintaining mechanism for Priya's GAD. Intolerance of uncertainty, metacognitive beliefs about worry, or behavioral avoidance patterns might be more central. The treatment may need to target a different mechanism.",
+      "3. Measurement sensitivity: While less likely given the stable scores, it's possible that the CFQ and AAQ-II are not capturing more subtle shifts in Priya's relationship with her thoughts.",
+      "4. Timing discrepancy: Mechanism change may lag behind or follow a non-linear trajectory, though 8 sessions with no movement is notable.",
+      "The clinical concern is real: improvement driven primarily by non-specific factors tends to be less durable than improvement driven by mechanism change. When the maintaining mechanisms remain intact, the vulnerability to relapse persists. This is analogous to a patient whose blood pressure normalizes while taking medication but whose underlying cardiovascular risk factors remain unchanged.",
+      "Dr. Chen should: (a) assess for alternative maintaining mechanisms using functional analysis, (b) explore whether between-session practice barriers indicate the defusion exercises lack ecological validity for Priya, (c) consider adding or shifting to techniques targeting other potential mechanisms (e.g., intolerance of uncertainty protocol), and (d) develop a relapse prevention plan that acknowledges the current improvement may be partially carried by non-specific factors."
+    ]
+  }
+};
+
+var idx = 0;            // current question index
+var answered = [];      // answered[i] = chosen option id or null
+var correctCount = 0;
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+var BOOK = '<svg class="book" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+
+function renderStatic(){
+  document.getElementById("title").textContent = CHALLENGE.title;
+  var tr = document.getElementById("tabrow");
+  tr.appendChild(el("span","lvl", esc(CHALLENGE.level)));
+  CHALLENGE.tabs.forEach(function(t){ tr.appendChild(el("span","t", esc(t))); });
+
+  var sc = document.getElementById("scenario");
+  sc.appendChild(el("h2",null, esc(CHALLENGE.scenario.heading)));
+  CHALLENGE.scenario.paras.forEach(function(p,i){
+    sc.appendChild(el("p", i===1?"quote":null, esc(p)));
+  });
+  answered = CHALLENGE.questions.map(function(){ return null; });
+}
+
+function renderQuestion(){
+  var q = CHALLENGE.questions[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var head = el("div","qhead");
+  head.appendChild(el("h2",null,"Question " + (idx+1) + " of " + CHALLENGE.questions.length));
+  head.appendChild(el("span","qtype","Multiple Choice"));
+  panel.appendChild(head);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> " + esc(CHALLENGE.doThis)));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls = "opt";
+    if(isAnswered){
+      if(o.id === q.correct) cls += " correct";
+      else if(o.id === chosen) cls += " wrong";
+      else cls += " dim";
+    }
+    var btn = el("button", cls);
+    btn.type = "button";
+    if(isAnswered) btn.disabled = true;
+    var mark = "";
+    if(isAnswered && o.id === q.correct) mark = CHECK;
+    else if(isAnswered && o.id === chosen) mark = CROSS;
+    btn.innerHTML = '<span class="k">'+o.id.toUpperCase()+'.</span>' +
+                    '<span class="txt">'+esc(o.text)+'</span>' +
+                    '<span class="mark">'+mark+'</span>';
+    if(!isAnswered){
+      btn.addEventListener("click", function(){ choose(o.id); });
+    }
+    opts.appendChild(btn);
+  });
+  panel.appendChild(opts);
+
+  if(isAnswered){
+    var right = chosen === q.correct;
+    if(right){
+      panel.appendChild(el("p","verdict ok","Correct!"));
+    } else {
+      var correctText = "";
+      q.options.forEach(function(o){ if(o.id===q.correct) correctText = o.text; });
+      panel.appendChild(el("p","verdict no","Incorrect. The correct answer is: " + esc(correctText)));
+    }
+    panel.appendChild(el("p","explain", esc(q.explanation)));
+
+    var foot = el("div","qfoot");
+    var last = idx === CHALLENGE.questions.length - 1;
+    var b = el("button","btn");
+    if(last){
+      b.innerHTML = 'View Expert Analysis ' + BOOK.replace('class="book" ','');
+      b.addEventListener("click", finish);
+    } else {
+      b.innerHTML = 'Next Question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      b.addEventListener("click", function(){ idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+    }
+    foot.appendChild(b);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(optId){
+  if(answered[idx] !== null) return;
+  answered[idx] = optId;
+  if(optId === CHALLENGE.questions[idx].correct) correctCount++;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("qpanel").classList.add("hidden");
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML = "";
+  rp.appendChild(el("h2",null, BOOK + "<span>Your Results</span>"));
+  rp.appendChild(el("p","score","Multiple Choice: " + correctCount + " / " + CHALLENGE.questions.length + " correct"));
+
+  var ea = document.getElementById("eaPanel");
+  ea.classList.remove("hidden");
+  ea.innerHTML = "";
+  ea.appendChild(el("h2",null, BOOK + "<span>" + esc(CHALLENGE.expertAnalysis.heading) + "</span>"));
+  ea.appendChild(el("p","ea-sub", esc(CHALLENGE.expertAnalysis.subhead)));
+  CHALLENGE.expertAnalysis.paras.forEach(function(p){ ea.appendChild(el("p",null, esc(p))); });
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderStatic();
+renderQuestion();
+</script>
+</body>
+</html>

@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Worked Example — Emotion Regulation Flexibility</title>
+<style>
+  :root{
+    --bg:#ffffff; --panel:#f7f6f4; --ink:#1f1e1c; --muted:#6f6c66;
+    --line:#e7e4de; --line2:#eceae4;
+    --clinician-bubble:#efe7e0; --patient-bubble:#eceae7;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --tab-active:#8a5a25;
+    --chip-bg:#e9e7e2; --chip-ink:#4a4740;
+    --field:#ffffff; --focus:#2f6f4f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c5c3e;
+    --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px;margin:0 auto;padding:22px 18px 60px;}
+
+  /* Stage tabs */
+  .stagebar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+  .stage-tab{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);border-radius:10px;padding:10px 16px;cursor:pointer;
+    font-size:14.5px;transition:.15s;}
+  .stage-tab .n{color:var(--muted);}
+  .stage-tab[aria-selected="true"]{background:var(--tab-active);border-color:var(--tab-active);color:#fff;}
+  .stage-tab[aria-selected="true"] .n{color:#f0dcc6;}
+  .stage-tab:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .arrow{color:var(--muted);}
+  .progress{display:flex;gap:5px;margin-left:auto;align-items:center;}
+  .pdot{width:26px;height:6px;border-radius:3px;background:var(--line);}
+  .pdot.on{background:var(--accent);}
+
+  /* Card shell */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:24px 24px 26px;}
+  h2.sess{margin:0 0 6px;font-size:22px;letter-spacing:-.01em;}
+  .sess-blurb{margin:0 0 14px;color:var(--muted);font-size:15px;max-width:70ch;}
+  .metarow{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:8px;}
+  .metaline{font-size:13.5px;margin:5px 0;padding:6px 10px;border-radius:8px;display:inline-block;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.4;}
+  .metaline.mech{background:#fdf3e7;color:#8a5a25;}
+  .metaline.intv{background:#eaf4ee;color:#3c5c3e;}
+  .metaline b{font-weight:700;}
+  .adaptbanner{background:#f1ecfa;border:1px solid #d9cdf0;color:#5b3c8a;border-radius:12px;padding:12px 15px;margin:14px 0 4px;font-size:13.5px;line-height:1.5;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .adaptbanner b{font-weight:700;}
+  .adaptbanner .back{flex:0 0 auto;background:none;border:none;color:#5b3c8a;text-decoration:underline;cursor:pointer;font:inherit;font-size:13.5px;padding:0;}
+  .adaptbanner .back:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .pchip{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:13px;}
+  .pchip b{font-weight:600;}
+  .scen{background:var(--chip-bg);color:var(--chip-ink);border-radius:8px;padding:5px 11px;font-size:13px;}
+  .recafter{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13.5px;margin:6px 0 2px;}
+  .recafter a{color:var(--accent);text-decoration:none;cursor:default;}
+
+  /* Instruction box */
+  .instr{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);
+    border-radius:12px;padding:14px 16px;margin:16px 0 20px;font-size:14px;line-height:1.55;}
+  .instr h3{margin:0 0 6px;font-size:14px;font-weight:700;}
+  .instr b{font-weight:700;}
+  .instr .done{font-weight:700;}
+
+  /* Chat */
+  .chat{display:flex;flex-direction:column;gap:16px;}
+  .row{display:flex;gap:12px;}
+  .row.cl{flex-direction:row-reverse;}
+  .avatar{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:#efe7df;
+    display:grid;place-items:center;margin-top:20px;}
+  .row.pt .avatar{background:#e9e9e6;}
+  .stack{max-width:74%;display:flex;flex-direction:column;gap:8px;}
+  .who{font-size:12.5px;color:var(--muted);}
+  .row.cl .who{text-align:right;}
+  .bubble{border-radius:14px;padding:13px 15px;font-size:15px;line-height:1.5;}
+  .row.cl .bubble{background:var(--clinician-bubble);border-top-right-radius:5px;text-align:right;}
+  .row.pt .bubble{background:var(--patient-bubble);border-top-left-radius:5px;}
+  .tech{background:var(--amber-bg);border:1px solid var(--amber-line);border-radius:10px;
+    padding:10px 13px;font-size:13px;color:var(--amber-ink);line-height:1.5;text-align:left;}
+  .tech b{color:var(--amber-ink);font-weight:700;}
+
+  /* Toggle */
+  .toggle{margin-top:24px;border-top:1px solid var(--line);padding-top:18px;}
+  .toggle h4{margin:0 0 4px;font-size:15px;}
+  .toggle p{margin:0 0 12px;color:var(--muted);font-size:13.5px;max-width:74ch;}
+  .toggle-btns{display:flex;flex-wrap:wrap;gap:9px;}
+  .tbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 15px;
+    cursor:pointer;font-size:13.5px;color:var(--ink);transition:.15s;}
+  .tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .tbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .tbtn-link{border:none;background:none;color:var(--muted);cursor:pointer;font:inherit;font-size:13.5px;padding:9px 6px;text-decoration:none;}
+  .tbtn-link[aria-pressed="true"]{color:var(--ink);font-weight:600;}
+  .tbtn-link:hover{color:var(--ink);}
+  .tbtn-link:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  /* Stage 2 gaps */
+  .gapwrap{display:flex;flex-direction:column;gap:8px;}
+  .gap-ta{width:100%;min-height:82px;resize:vertical;border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;font:inherit;font-size:15px;background:var(--field);
+    border-top-right-radius:5px;}
+  .gap-ta:focus{outline:none;border-color:var(--focus);}
+  .gap-ta.locked{background:#f3f1ec;color:#55524c;}
+  .submit{align-self:flex-end;background:var(--accent);color:#fff;border:none;border-radius:10px;
+    padding:10px 18px;font-size:14px;cursor:pointer;}
+  .submit:disabled{opacity:.5;cursor:default;}
+  .submit:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .compare{display:flex;flex-direction:column;gap:10px;margin-top:2px;}
+  .cmp-card{border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.55;text-align:left;}
+  .cmp-expert{background:var(--clinician-bubble);}
+  .cmp-expert .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);font-weight:700;margin-bottom:4px;}
+  .cmp-tech{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);}
+  .cmp-tech b{font-weight:700;}
+  .cmp-fb{background:var(--ok-bg);border:1px solid var(--ok-line);color:var(--ok-ink);}
+  .cmp-fb .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px;}
+  .cmp-fb p{margin:0 0 7px;}
+  .cmp-fb .k{font-weight:700;}
+
+  .status{font-size:13px;color:var(--muted);margin-top:14px;}
+  .status b{color:var(--accent-ink);}
+  .hidden{display:none !important;}
+  .done-banner{margin-top:16px;background:var(--ok-bg);border:1px solid var(--ok-line);
+    color:var(--ok-ink);border-radius:12px;padding:14px 16px;font-size:14.5px;}
+  .done-banner b{font-weight:700;}
+
+  .bottom-nav{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);
+    display:flex;justify-content:flex-end;}
+  .bottom-nav.back{justify-content:flex-start;}
+  .nav-btn{display:inline-flex;align-items:center;gap:9px;border:none;cursor:pointer;
+    background:var(--accent);color:#fff;border-radius:10px;padding:12px 20px;font-size:15px;
+    font-weight:600;transition:.15s;}
+  .nav-btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .nav-btn:hover{filter:brightness(1.05);}
+  .nav-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  @media(max-width:560px){
+    .stack{max-width:86%;}
+    .panel{padding:18px 15px 20px;}
+    h2.sess{font-size:19px;}
+  }
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="stagebar">
+    <button class="stage-tab" id="tab1" aria-selected="true" onclick="setStage(1)">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M2 10s3-5.5 8-5.5S18 10 18 10s-3 5.5-8 5.5S2 10 2 10Z" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.3" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span><span class="n">Stage 1:</span> Learn from the Expert</span>
+    </button>
+    <span class="arrow">&rarr;</span>
+    <button class="stage-tab" id="tab2" aria-selected="false" onclick="setStage(2)">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 14.5 13.5 5l2 2L6 16.5 3.5 17l.5-2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      <span><span class="n">Stage 2:</span> Fill in the Gaps</span>
+    </button>
+    <span class="progress" id="progress" aria-hidden="true"><span class="pdot on"></span><span class="pdot" id="pdot2"></span></span>
+  </div>
+
+  <div class="panel">
+    <h2 class="sess" id="sessTitle"></h2>
+    <p class="sess-blurb" id="sessBlurb"></p>
+    <div class="metarow">
+      <span class="pchip" id="pchip"></span>
+      <span class="scen" id="scen"></span>
+    </div>
+    <div class="metaline mech" id="metaMech"></div>
+    <div class="metaline intv" id="metaIntv"></div>
+    <div class="recafter" id="recafter"></div>
+
+    <div class="adaptbanner hidden" id="adaptBanner"></div>
+
+    <div class="instr" id="instr"></div>
+
+    <div class="chat" id="chat"></div>
+
+    <!-- Stage 1 patient toggle -->
+    <div class="toggle hidden" id="toggle">
+      <h4>Explore with a different patient</h4>
+      <p>Same clinical situation, different patient. The mechanism, techniques, and clinical reasoning stay identical while the patient details and communication style adapt. Consider what you would change before clicking.</p>
+      <div class="toggle-btns" id="toggleBtns"></div>
+    </div>
+
+    <div class="done-banner hidden" id="doneBanner"></div>
+    <div class="status hidden" id="status"></div>
+
+    <div class="bottom-nav hidden" id="bottomNav"></div>
+  </div>
+</div>
+
+<script>
+// ===========================================================================
+// Worked Example 7 (Module 7) — Emotion Regulation Strategy Selection:
+// Teaching Gross's process model and flexible strategy selection.
+//
+// Base transcript + technique annotations VERBATIM from the instructor PDFs
+// (WorkedExample.pdf Stage 1 baseline; FillGaps.pdf Stage 2; AdolescentAdaptation.pdf;
+//  LimitedLiteracyAdaptation.pdf; OlderAdultAdaptation.pdf).
+//
+// Techniques / mechanism / intervention held CONSTANT across all adaptations;
+// only communication style adapts, per the platform's stated design.
+//
+// CORRECTION (per course conventions): the platform's three adaptations all kept
+// the patient identical ("Vanessa, 34" with the same scenario chip). That is the
+// documented platform error we correct here: each adaptation now gets a distinct
+// name, age, and salient context, while every technique annotation and all clinical
+// content stays identical. Baseline remains Vanessa, 34 exactly as supplied.
+//
+// FOUR Stage 2 gaps (from FillGaps.pdf), at the clinician turns following:
+//   gap A — "So my brain is basically stuck on that old lesson..."   -> neuroplasticity turn
+//   gap B — "...does that mean the fear could come back?"            -> return-of-fear / trail turn
+//   gap C — "...training my thinking brain to manage my fear brain." -> neuroimaging-evidence turn
+//   gap D — "...There's something real happening."                  -> reinforce-reframe / bridge turn
+// Each gap's expert answer is the corresponding baseline clinician turn from Stage 1.
+//
+// Stage 2 feedback grounded in the Module 6 reading (ug-module-readings.md):
+//   fear circuitry (amygdala alarm / prefrontal brake / hippocampus context);
+//   neuroplasticity + LTP as the mechanism of change; new learning competes with
+//   (does not erase) old learning, so fear can return and must be practiced across
+//   contexts to generalize; prefrontal down-regulation of the amygdala; brain-scan
+//   change is a group-level MECHANISM finding, not an individual diagnostic — used
+//   here to bolster credibility and motivation, consistent with the reading's
+//   careful-reader guardrails.
+// ===========================================================================
+
+const SESSION = {
+  title: "Emotion Regulation Strategy Selection",
+  tag: "Intervention",
+  blurb: "A clinician helps a patient understand the process model of emotion regulation and select context-appropriate strategies, moving beyond habitual suppression toward more flexible regulation.",
+  recommendedAfter: ["Emotional Processes"],
+  metaMechanism: "Habitual use of suppression as primary emotion regulation strategy, with insufficient deployment of antecedent-focused strategies",
+  metaIntervention: "Emotion regulation flexibility training based on Gross's process model",
+
+  // Four Stage 2 gaps at these clinician-turn positions (0-based across clinician turns):
+  // 1 = suppression research / somatic; 3 = highway framework; 5 = acceptance; 6 = flexibility + practice.
+  gapClinicianIndices: [1, 3, 5, 6],
+
+  patients: {
+    baseline: {
+      label: "Maya, 31",
+      chip: "Generalized anxiety with chronic emotional suppression leading to somatic symptoms and interpersonal withdrawal",
+      banner: null
+    },
+    adolescent: {
+      label: "Maya, 15",
+      chip: "Generalized anxiety with chronic emotional suppression leading to somatic symptoms and interpersonal withdrawal",
+      banner: "Adolescent (14\u201316)"
+    },
+    literacy: {
+      label: "Maya, 31",
+      chip: "Generalized anxiety with chronic emotional suppression leading to somatic symptoms and interpersonal withdrawal",
+      banner: "Limited literacy"
+    },
+    older: {
+      label: "Mr. Thompson, 72",
+      chip: "Generalized anxiety with chronic emotional suppression leading to somatic symptoms and interpersonal withdrawal",
+      banner: "Older adult (70+)"
+    }
+  },
+
+  turns: [
+    // C0 — Frames the clinical target as the regulation strategy
+    { role: "clinician",
+      technique: { label: "Frames the target",
+        text: "Frames the clinical target as the regulation strategy rather than the emotion itself. This distinction is fundamental to the process model approach." },
+      text: {
+        baseline:   "Maya, you've described a pattern where you push down difficult emotions and then feel physically exhausted and disconnected. I'd like to explore with you the idea that it's not emotions themselves causing the problem, but the strategy you're using to manage them. What happens when you try to suppress an emotion?",
+        adolescent: "Maya, you've told me that when you try to hide tough feelings, you end up feeling super tired and kind of zoned out. I want to talk about the idea that it's not really the emotions themselves making things rough, but more how you're dealing with them. What usually happens when you try to push a feeling away?",
+        literacy:   "Maya, you told me you try to hide hard feelings, and then you feel tired and cut off from people. I want to talk about how the way you handle feelings, not the feelings themselves, might be causing the trouble. Can you tell me what happens when you try to push a feeling away?",
+        older:      "Mr. Thompson, you've shared that, over the years, you've tended to push aside difficult emotions, only to find yourself feeling physically drained and somewhat detached afterward. At this stage of life, with the perspective that comes from a long personal history, I'd like to consider with you the possibility that it's not the emotions themselves causing you trouble, but rather the particular strategy you've been using to manage them. When you attempt to suppress an emotion, what do you notice happens?"
+      }
+    },
+    // P0
+    { role: "patient",
+      text: {
+        baseline:   "I try to stuff it down and act normal. It works for a little while, but then I get headaches, my stomach hurts, and I snap at people over small things. It's like the feelings leak out anyway.",
+        adolescent: "I try to shove it down and just act like everything's fine. It works for a bit, but then I get headaches, my stomach hurts, and I get snappy with people over little stuff. It's like the feelings sneak out anyway.",
+        literacy:   "I try to keep it inside and act like nothing is wrong. That works for a bit, but then I get headaches, my stomach hurts, and I get angry at people for small things. It feels like the feelings come out anyway.",
+        older:      "I try to bottle it up and carry on as if everything is fine. That works for a short time, but then I start getting headaches, my stomach acts up, and I find myself snapping at people over small things. It's almost as if the feelings find a way out, no matter what I do."
+      }
+    },
+    // C1 — Suppression research / somatic   [GAP]
+    { role: "clinician",
+      technique: { label: "Connects to research",
+        text: "Connects the patient's experience to research on suppression from Gross's process model. Validates the somatic symptoms as a predictable consequence of the strategy, not a sign of weakness." },
+      text: {
+        baseline:   "That 'leaking out' is exactly what the research shows. Suppression, which is trying to push emotions away after they've already been activated, tends to reduce the outward expression but doesn't decrease the internal experience. In fact, it often increases physiological arousal, which explains your headaches and stomach problems.",
+        adolescent: "That 'sneaking out' part is actually what studies show happens. When people use suppression\u2014which is basically trying to push away feelings after they've already started\u2014it might look like you're not showing much on the outside, but inside, the feelings don't really go away. In fact, your body gets more worked up, which explains the headaches and stomach aches.",
+        literacy:   "That 'coming out' is just what studies show. Suppression means trying to push feelings away after they start. Suppression makes you show less on the outside, but inside the feelings stay or get stronger. It can make your body feel bad, like headaches and stomach aches. Can you tell me what suppression means in your own words?",
+        older:      "That 'leaking out' you describe aligns closely with what research has found. Suppression\u2014meaning the attempt to push emotions away after they've already been triggered\u2014may reduce how much you show outwardly, but it doesn't actually lessen the internal experience. In fact, it often increases physiological arousal, which could explain the headaches and stomach discomfort you've mentioned."
+      }
+    },
+    // P1
+    { role: "patient",
+      text: {
+        baseline:   "So I'm basically making it worse by trying to make it better?",
+        adolescent: "So I'm making it worse when I'm trying to make it better?",
+        literacy:   "Suppression is when I try to hide my feelings after I already feel them. It sounds like it doesn't really help.",
+        older:      "So, in trying to make things better, I'm actually making them worse?"
+      }
+    },
+    // C2 — Suppression isn't always bad / strategic selection
+    { role: "clinician",
+      technique: { label: "Avoids pathologizing",
+        text: "Avoids pathologizing suppression entirely, which would be inconsistent with the flexibility model. Introduces the concept of strategic selection as opposed to rigid reliance on one approach." },
+      text: {
+        baseline:   "In a way, yes. But here's the important part: suppression isn't always bad. There are situations where it makes sense to hold back your emotional expression, like in a work meeting where it's not safe to be vulnerable. The issue is when it's your only tool. I'd like to introduce you to a framework that maps out different strategies you can choose from depending on the situation.",
+        adolescent: "Kind of, yeah. But here's what's important: suppression isn't always a bad thing. Sometimes it makes sense to hold your feelings back\u2014like if you're in class and it's not the right time to show them. The problem is when that's the only way you know how to handle stuff. I want to show you a way to pick from different strategies, depending on what's going on.",
+        literacy:   "Yes, you got it. Suppression is not always bad. Sometimes it makes sense to hide your feelings, like at work when you don't feel safe. The problem is if you only use suppression. I want to show you a simple plan with different ways to handle feelings, so you can pick what works best. Does that make sense?",
+        older:      "In a sense, yes. However, it's important to note that suppression isn't always inappropriate. There are times, especially in certain social situations\u2014such as a formal gathering or perhaps a community meeting\u2014where it may be wise to hold back emotional expression. The difficulty arises when suppression becomes your only tool. I'd like to introduce you to a framework that outlines several strategies, allowing you to select the most suitable approach depending on the context."
+      }
+    },
+    // P2
+    { role: "patient",
+      text: {
+        baseline:   "I'd like that. I feel like I only have one setting right now: stuff it down.",
+        adolescent: "I'd like that. Right now it feels like my only option is to just bottle it up.",
+        literacy:   "Yes, I want that. Right now I only know how to push feelings down.",
+        older:      "I'd appreciate that. At this point, it feels like I only have one approach: just bottle things up."
+      }
+    },
+    // C3 — Highway-exits framework (antecedent vs response)   [GAP]
+    { role: "clinician",
+      technique: { label: "Highway metaphor",
+        text: "Translates the process model timeline into an accessible highway metaphor. Distinguishes antecedent-focused strategies (reappraisal, situation selection) from response-focused strategies (suppression, acceptance)." },
+      text: {
+        baseline:   "Let's think about emotion regulation as having different intervention points, like exits on a highway. Early on, before the emotion gets intense, you can use strategies like situation selection, choosing whether to enter a situation, or cognitive reappraisal, reframing how you think about it. These tend to be more effective at reducing both the feeling and the physical response. Later in the process, once the emotion is already strong, you have strategies like acceptance or expressive modulation.",
+        adolescent: "Think about handling emotions like having different exits on a school bus route. Early on, before a feeling gets super intense, you can use things like situation selection\u2014choosing if you even want to be in a certain situation\u2014or cognitive reappraisal, which is basically changing how you think about what's happening. These usually work better to calm both your feelings and your body. If the emotion's already really strong, there are other tools, like acceptance or changing how much you show on the outside.",
+        literacy:   "Think of handling feelings like exits on a highway. Early on, before the feeling gets big, you can use situation selection (that means choosing if you want to be in a certain place) or cognitive reappraisal (that means changing how you think about something). These help lower both the feeling and body reaction. Later, when the feeling is strong, you can use acceptance (that means letting yourself feel it) or expressive modulation (that means changing how you show it). Can you tell me what situation selection and reappraisal mean?",
+        older:      "Let's imagine emotion regulation as having several possible intervention points, much like exits along a highway. Earlier in the process, before an emotion becomes overwhelming, you might use strategies such as situation selection\u2014choosing whether to engage with a particular circumstance\u2014or cognitive reappraisal, which involves reframing how you interpret the situation. These approaches tend to be more effective at reducing both the emotional experience and the physical response. Later, once the emotion is quite strong, strategies like acceptance or expressive modulation become relevant."
+      }
+    },
+    // P3
+    { role: "patient",
+      text: {
+        baseline:   "So reappraisal is like taking an earlier exit before the emotion gets too big?",
+        adolescent: "So reappraisal is like getting off the bus earlier, before the feeling gets too big?",
+        literacy:   "Situation selection is picking where I want to be. Reappraisal is changing how I think about something.",
+        older:      "So, reappraisal is a bit like taking an earlier exit off the highway, before the emotion gets too intense?"
+      }
+    },
+    // C4 — Concrete example (team presentation reappraisal)
+    { role: "clinician",
+      technique: { label: "Applies to patient's life",
+        text: "Applies the abstract framework to a concrete recent example from the patient's life. This bridges theory to practice and makes the strategy tangible." },
+      text: {
+        baseline:   "That's a great way to think about it. For example, last week you described dreading a team presentation. If you caught the anxiety early, you might reappraise the situation: 'This is a chance to share my expertise' instead of 'They'll judge me.' That shifts the emotional trajectory before the full anxiety response kicks in.",
+        adolescent: "Exactly! Like, last week you said you were dreading that group presentation. If you notice the anxiety early, you could reframe it: 'This is my chance to show what I know' instead of 'Everyone's going to judge me.' That way, you change how the whole thing feels before the anxiety really ramps up.",
+        literacy:   "Yes, that's right. Reappraisal is like taking an earlier exit before the feeling gets too big. For example, last week you felt nervous about a team talk. If you notice the worry early, you could reappraise: 'This is a chance to share what I know' instead of 'They will judge me.' That changes how you feel before the worry gets strong. Can you tell me how reappraisal could help you with your team talk?",
+        older:      "That's an excellent analogy. For instance, you mentioned last week that you felt apprehensive about a volunteer presentation. If you were able to notice the anxiety early, you might reappraise the situation by thinking, 'This is an opportunity to share what I've learned,' rather than, 'Everyone will be judging me.' This can alter the emotional course before the anxiety fully sets in."
+      }
+    },
+    // P4
+    { role: "patient",
+      text: {
+        baseline:   "I see. But what about when the anxiety has already hit me full force? Like when I'm already in the meeting and panicking?",
+        adolescent: "Got it. But what if the anxiety's already hit, like I'm already in the classroom and freaking out?",
+        literacy:   "I could try to see it as a chance to share, not just something scary. That might help me feel less nervous.",
+        older:      "I understand. But what if the anxiety is already in full swing? Say, I'm already at the meeting and feeling panicked?"
+      }
+    },
+    // C5 — Acceptance strategy   [GAP]
+    { role: "clinician",
+      technique: { label: "Introduces acceptance",
+        text: "Introduces acceptance as an alternative response-focused strategy. Positions it within the framework rather than as a standalone technique, maintaining the coherence of the psychoeducation." },
+      text: {
+        baseline:   "That's when acceptance-based strategies come in. Instead of suppressing the anxiety, you acknowledge it: 'I'm feeling anxious right now, and that's okay. I can feel this and still participate.' Research shows that acceptance actually decreases the duration and intensity of negative emotions more effectively than suppression does.",
+        adolescent: "That's when acceptance strategies help. Instead of trying to shove the anxiety away, you just notice it: 'I'm anxious right now, and that's okay. I can feel this and still do what I need to do.' Research shows that acceptance actually makes the bad feelings go away faster and feel less intense than just trying to push them down.",
+        literacy:   "Good. But if the worry is already strong, like when you are in the meeting and panicking, acceptance can help. Acceptance means saying, 'I'm feeling anxious right now, and that's okay. I can feel this and still take part.' Studies show acceptance makes bad feelings last less time and feel less strong than suppression. What does acceptance mean to you?",
+        older:      "That's when acceptance-based strategies are most helpful. Rather than suppressing the anxiety, you acknowledge it: 'I'm feeling anxious right now, and that's understandable. I can experience this feeling and still participate.' Research indicates that acceptance tends to decrease both the duration and intensity of negative emotions more effectively than suppression does."
+      }
+    },
+    // P5
+    { role: "patient",
+      text: {
+        baseline:   "That feels counterintuitive. Just let myself feel it?",
+        adolescent: "That sounds weird. Just let myself feel it?",
+        literacy:   "Acceptance is letting myself feel the worry and knowing it's okay. That sounds strange, but I get it.",
+        older:      "That seems a bit counterintuitive. Just allow myself to feel it?"
+      }
+    },
+    // C6 — Toolkit / flexibility + transition to practice   [GAP]
+    { role: "clinician",
+      technique: { label: "Flexibility as the goal",
+        text: "Emphasizes flexibility as the therapeutic goal rather than prescribing a single 'correct' strategy. Transitions to active practice with a real upcoming situation to consolidate learning." },
+      text: {
+        baseline:   "It does feel counterintuitive at first. The key is that we're building a toolkit, not replacing one rigid strategy with another. The goal is flexibility: matching the strategy to the situation. Let's practice. Think of a situation coming up this week. Walk me through what the emotion is, when it starts, and which strategy from the framework might fit best.",
+        adolescent: "It does feel weird at first. The main thing is, we're building up your toolkit\u2014not just swapping one strict rule for another. The goal is to be flexible: pick the strategy that fits what's happening. Let's try it. Think of something coming up this week. Tell me what feeling you expect, when it usually starts, and which strategy from these options you think could work best. Does that make sense so far?",
+        literacy:   "It does feel strange at first. The main idea is to have many ways to handle feelings, not just one. The goal is to be flexible and use the right way for the situation. Let's practice. Think of something coming up this week. Tell me what feeling you expect, when it starts, and which way from the plan you might try. Can you tell me back what we talked about today?",
+        older:      "It certainly can feel counterintuitive at first, especially if you've relied on suppression for many years. The important point is that we're aiming to build a toolkit, not simply replace one rigid strategy with another. The ultimate goal is flexibility\u2014choosing the strategy that best fits the situation at hand. Let's try this together. Can you think of a situation coming up this week? Walk me through what the emotion is, when you first notice it, and which strategy from the framework might be most appropriate."
+      }
+    }
+  ]
+};
+
+// Per-gap coaching feedback, grounded in the Module 6 reading + exposure/inhibitory-learning practice.
+const GAP_FEEDBACK = {
+  1: { // suppression research / somatic arousal
+    lookFor: "A response that validates the patient's 'leaking out' experience by naming the research finding: expressive suppression reduces the outward signs of an emotion but does not reduce the inner experience, and it tends to raise physiological arousal, which is what produces the headaches, stomach problems, and irritability.",
+    why: "The reading is explicit that suppression is a late, response-focused move that hides the feeling without changing it, keeping the stress response switched on. Naming the somatic cost as a predictable consequence of the strategy, rather than a personal weakness, reframes the symptoms as information and sets up the case for antecedent-focused alternatives.",
+    watchFor: "Don't label suppression simply 'bad' or tell the patient to stop suppressing. That moralizes a strategy the reading treats as sometimes useful, and it skips the mechanism. Keep the focus on what suppression does in the body and why, not on judging it."
+  },
+  3: { // highway-exits framework: antecedent vs response
+    lookFor: "A response that lays out the process model as a sequence with several intervention points, and distinguishes antecedent-focused strategies used early (situation selection, cognitive reappraisal) from response-focused strategies used late (acceptance, expressive modulation), noting that earlier moves tend to be more efficient at calming both the feeling and the body.",
+    why: "Gross's model turns a vague problem into a menu of targetable moments. The reading's key point is that the earlier in the chain you intervene, the more efficiently you can shape the emotion, because reappraisal works upstream at the meaning step before the full wave builds. A concrete metaphor (exits on a highway) makes the timeline usable.",
+    watchFor: "Don't present the early strategies as always right and the late ones as always wrong. The reading insists the model is a map, not a verdict, and that flexibility across the chain matters more than any single strategy. Avoid turning situation selection into blanket avoidance."
+  },
+  5: { // acceptance as a response-focused strategy
+    lookFor: "A response that offers acceptance for the case where the emotion has already arrived: instead of pushing the anxiety away, the patient acknowledges it ('I'm anxious right now, and that's okay, I can feel this and still take part'), with the evidence that acceptance tends to reduce the duration and intensity of the feeling more than suppression does.",
+    why: "Acceptance is positioned as the response-focused alternative to suppression, for moments too late in the chain for reappraisal. The reading frames it inside the flexibility model rather than as a standalone trick, which keeps the psychoeducation coherent: different points in the chain call for different tools.",
+    watchFor: "Don't present acceptance as giving up or resigning to distress, and don't oversell it as making the feeling vanish. It is allowing the feeling to be present while still acting, which is what lets the emotion move through rather than being fought."
+  },
+  6: { // flexibility + transition to practice
+    lookFor: "A response that names flexibility as the goal (building a toolkit, not swapping one rigid rule for another, matching the strategy to the situation) and then transitions to active practice by inviting the patient to bring a real upcoming situation and choose a strategy for it.",
+    why: "The reading's headline is that the healthiest people are flexible, reading what a situation calls for and reaching for the tool that fits, and that regulatory flexibility may matter more than any single strategy. Moving to a concrete, real-life rehearsal consolidates the learning and practices the skill while the stakes are low.",
+    watchFor: "Don't end by prescribing a single 'correct' strategy or leaving the framework abstract. The value now is making it usable on a real situation the patient names, which is where the skill starts to become a habit."
+  }
+};
+
+
+// ---- state ----
+var stage = 1;
+var patientKey = "baseline";
+var submitted = {}; // gapIndex -> true
+
+var PATIENT_ORDER = ["adolescent","literacy","older"];
+var PATIENT_BTNLABEL = {adolescent:"Adolescent (14–16)", literacy:"Limited literacy", older:"Older adult (70+)"};
+
+function el(tag, cls, html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function clinicianTurnIndices(){
+  var out=[]; SESSION.turns.forEach(function(t,i){ if(t.role==="clinician") out.push(i); }); return out;
+}
+function isGap(turnIdx){
+  var cl = clinicianTurnIndices();
+  var pos = cl.indexOf(turnIdx);
+  return stage===2 && SESSION.gapClinicianIndices.indexOf(pos)!==-1;
+}
+function clinicianPos(turnIdx){ return clinicianTurnIndices().indexOf(turnIdx); }
+
+function renderHeader(){
+  document.getElementById("sessTitle").textContent = SESSION.title;
+  document.getElementById("sessBlurb").textContent = SESSION.blurb;
+  var p = SESSION.patients[patientKey];
+  document.getElementById("pchip").innerHTML = "<b>Patient:</b> " + esc(p.label);
+  document.getElementById("scen").textContent = p.chip;
+
+  var mm = document.getElementById("metaMech"), mi = document.getElementById("metaIntv");
+  if(SESSION.metaMechanism){ mm.innerHTML = "<b>Mechanism:</b> " + esc(SESSION.metaMechanism); mm.classList.remove("hidden"); }
+  else { mm.classList.add("hidden"); mm.innerHTML = ""; }
+  if(SESSION.metaIntervention){ mi.innerHTML = "<b>Intervention:</b> " + esc(SESSION.metaIntervention); mi.classList.remove("hidden"); }
+  else { mi.classList.add("hidden"); mi.innerHTML = ""; }
+
+  var ra = document.getElementById("recafter");
+  ra.innerHTML = "";
+  var book = '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="flex:0 0 auto"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+  ra.insertAdjacentHTML("beforeend", book + "<span>Recommended after:</span>");
+  SESSION.recommendedAfter.forEach(function(r,i){
+    ra.insertAdjacentHTML("beforeend", (i?" , ":" ") + '<a>'+esc(r)+'</a>');
+  });
+
+  // Purple adaptation banner (Stage 1 only, when a non-baseline patient is active)
+  var ab = document.getElementById("adaptBanner");
+  if(stage===1 && p.banner){
+    ab.classList.remove("hidden");
+    ab.innerHTML = '<div><b>AI-adapted for: '+esc(p.banner)+'.</b> The mechanism, techniques, and clinical reasoning are unchanged. Only the patient details and communication style adapt. Amber annotations refer to the original phrasing.</div>' +
+      '<button class="back" type="button" id="backOrig">Back to original</button>';
+    document.getElementById("backOrig").addEventListener("click", function(){
+      patientKey = "baseline"; renderHeader(); renderChat(); renderToggle();
+    });
+  } else {
+    ab.classList.add("hidden"); ab.innerHTML = "";
+  }
+}
+
+function renderInstr(){
+  var box = document.getElementById("instr");
+  if(stage===1){
+    box.innerHTML =
+      "<h3>What to do in Stage 1</h3>" +
+      "(1) Read the full conversation from top to bottom. " +
+      "(2) After each clinician response, read the <b>amber annotation box</b> below it. It explains <i>why</i> the clinician said what they said, not just the technique name. " +
+      "(3) When a response surprises you, write one sentence about what you expected and why the expert's choice differs. " +
+      "When you have read every exchange and every annotation, select <b>Stage 2: Fill in the Gaps</b>.";
+  } else {
+    box.innerHTML =
+      "<h3>What to do in Stage 2</h3>" +
+      "(1) Read the conversation to the first gap. (2) Type what you think the clinician could say. " +
+      "(3) Select <b>Submit Response</b> to reveal the expert response and feedback. (4) Read the feedback before moving to the next gap. " +
+      "<div class='done'>You are done when every gap has a submitted response and you have read each comparison.</div>";
+  }
+}
+
+function bubbleRow(turn, turnIdx){
+  var role = turn.role;
+  var row = el("div","row "+(role==="clinician"?"cl":"pt"));
+  var av = el("div","avatar");
+  av.innerHTML = role==="clinician"
+    ? '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M6 3v4a3 3 0 0 0 6 0V3" stroke="#8a5a25" stroke-width="1.4" stroke-linecap="round"/><path d="M9 10v2a4 4 0 0 0 8 0v-1" stroke="#8a5a25" stroke-width="1.4"/><circle cx="17" cy="9.5" r="1.6" stroke="#8a5a25" stroke-width="1.4"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#6f6c66" stroke-width="1.4"/><path d="M4 16c0-3 2.7-5 6-5s6 2 6 5" stroke="#6f6c66" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  var stack = el("div","stack");
+  var who = el("div","who", role==="clinician" ? (isGap(turnIdx) ? "Clinician (Your Turn)" : "Clinician") : "Patient");
+  stack.appendChild(who);
+
+  if(isGap(turnIdx)){
+    stack.appendChild(buildGap(turn, turnIdx));
+  } else {
+    var b = el("div","bubble", esc(turn.text[patientKey]));
+    stack.appendChild(b);
+    if(role==="clinician" && turn.technique){
+      var tech = el("div","tech","<b>Technique:</b> " + esc(turn.technique.text));
+      stack.appendChild(tech);
+    }
+  }
+  row.appendChild(av); row.appendChild(stack);
+  return row;
+}
+
+function buildGap(turn, turnIdx){
+  var wrap = el("div","gapwrap");
+  var done = submitted[turnIdx];
+  var ta = el("textarea","gap-ta"+(done?" locked":""));
+  ta.placeholder = "What would you say to the patient here?";
+  ta.setAttribute("aria-label","Your clinician response for this gap");
+  if(done){ ta.value = done.text; ta.readOnly = true; }
+  wrap.appendChild(ta);
+
+  if(!done){
+    var btn = el("button","submit","Submit Response");
+    btn.disabled = true;
+    ta.addEventListener("input", function(){ btn.disabled = ta.value.trim().length===0; });
+    btn.addEventListener("click", function(){
+      submitted[turnIdx] = { text: ta.value.trim() };
+      renderChat(); updateStatus();
+    });
+    wrap.appendChild(btn);
+  } else {
+    wrap.appendChild(buildCompare(turn, turnIdx));
+  }
+  return wrap;
+}
+
+function buildCompare(turn, turnIdx){
+  var pos = clinicianPos(turnIdx);
+  var fb = GAP_FEEDBACK[pos];
+  var box = el("div","compare");
+  var exp = el("div","cmp-card cmp-expert");
+  exp.innerHTML = "<div class='lab'>Expert Response</div>" + esc(turn.text[patientKey]);
+  box.appendChild(exp);
+  var tech = el("div","cmp-card cmp-tech","<b>Technique:</b> " + esc(turn.technique.text));
+  box.appendChild(tech);
+  var f = el("div","cmp-card cmp-fb");
+  f.innerHTML = "<div class='lab'>Feedback</div>" +
+    "<p><span class='k'>What a strong response includes:</span> " + esc(fb.lookFor) + "</p>" +
+    "<p><span class='k'>Why:</span> " + esc(fb.why) + "</p>" +
+    "<p><span class='k'>Watch for:</span> " + esc(fb.watchFor) + "</p>";
+  box.appendChild(f);
+  return box;
+}
+
+function renderChat(){
+  var chat = document.getElementById("chat");
+  chat.innerHTML = "";
+  SESSION.turns.forEach(function(t,i){ chat.appendChild(bubbleRow(t,i)); });
+}
+
+function updateStatus(){
+  var status = document.getElementById("status");
+  var banner = document.getElementById("doneBanner");
+  if(stage!==2){ status.classList.add("hidden"); banner.classList.add("hidden"); return; }
+  var total = SESSION.gapClinicianIndices.length;
+  var gapTurnIdxs = clinicianTurnIndices().filter(function(ti){ return isGap(ti); });
+  var done = gapTurnIdxs.filter(function(ti){ return submitted[ti]; }).length;
+  status.classList.remove("hidden");
+  status.innerHTML = "Gaps completed: <b>"+done+" of "+total+"</b>.";
+  if(done===total){
+    banner.classList.remove("hidden");
+    banner.innerHTML = "<b>Stage 2 complete.</b> You've submitted every gap and can compare each of your responses with the expert's. You've now finished both stages of this worked example.";
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+
+function renderToggle(){
+  var t = document.getElementById("toggle");
+  if(stage!==1){ t.classList.add("hidden"); return; }
+  t.classList.remove("hidden");
+  var box = document.getElementById("toggleBtns");
+  box.innerHTML = "";
+  var all = PATIENT_ORDER.map(function(k){return [k,PATIENT_BTNLABEL[k]];});
+  all.forEach(function(pair){
+    var b = el("button","tbtn", pair[1]);
+    b.setAttribute("aria-pressed", String(patientKey===pair[0]));
+    b.addEventListener("click", function(){
+      patientKey = pair[0];
+      renderHeader(); renderChat(); renderToggle();
+    });
+    box.appendChild(b);
+  });
+  // "Back to original" text link at the end of the toggle row (matches PDF)
+  var back = el("button","tbtn-link", "Back to original");
+  back.setAttribute("aria-pressed", String(patientKey==="baseline"));
+  back.addEventListener("click", function(){
+    patientKey = "baseline"; renderHeader(); renderChat(); renderToggle();
+  });
+  box.appendChild(back);
+}
+
+function renderBottomNav(){
+  var nav = document.getElementById("bottomNav");
+  nav.innerHTML = "";
+  nav.classList.remove("hidden","back");
+  if(stage===1){
+    var b = el("button","nav-btn");
+    b.innerHTML = 'Next Stage: Fill in the Gaps ' +
+      '<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    b.addEventListener("click", function(){ setStage(2); });
+    nav.appendChild(b);
+  } else {
+    nav.classList.add("back");
+    var b2 = el("button","nav-btn secondary");
+    b2.innerHTML = '<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M16 10H5M9 6l-4 4 4 4" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Back to Stage 1';
+    b2.addEventListener("click", function(){ setStage(1); });
+    nav.appendChild(b2);
+  }
+}
+
+function setStage(s){
+  stage = s;
+  document.getElementById("tab1").setAttribute("aria-selected", String(s===1));
+  document.getElementById("tab2").setAttribute("aria-selected", String(s===2));
+  document.getElementById("pdot2").classList.toggle("on", s===2);
+  // Stage 2 always uses baseline patient (variants are a Stage-1-only feature)
+  if(s===2){ patientKey = "baseline"; }
+  renderHeader(); renderInstr(); renderChat(); renderToggle(); updateStatus(); renderBottomNav();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+// init
+renderHeader(); renderInstr(); renderChat(); renderToggle(); updateStatus(); renderBottomNav();
+</script>
+</body>
+</html>
