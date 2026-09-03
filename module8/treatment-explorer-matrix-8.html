@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treatment Explorer — Mechanism Matrix</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --mechdom-bg:#eaeefb; --mechdom-ink:#3a4a8a;   /* Mechanism dominant */
+    --integ-bg:#f0e9f7; --integ-ink:#6d4a86;        /* Integrated */
+    --cond-bg:#e7efe9; --cond-ink:#3c6b4e;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:960px;margin:0 auto;padding:22px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .task{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:12px;padding:12px 15px;margin:14px 0 4px;font-size:13px;line-height:1.55;}
+  .task b{font-weight:700;}
+
+  .section-h{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;}
+
+  /* card browser */
+  .shortcuts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .shortcuts button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 16px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;transition:border-color .12s,background .12s;}
+  .shortcuts button:hover:not(.sel){border-color:#cfc9bf;}
+  .shortcuts button.sel{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .shortcuts button:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .browser-hint{font-size:12px;color:var(--muted);margin-bottom:12px;}
+
+  .tcard{border:1px solid var(--line);border-radius:14px;box-shadow:var(--panel-shadow);padding:18px 20px;background:#fff;}
+  .tcard .tc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .tcard h3{margin:0 0 8px;font-size:18px;}
+  .classbadge{font-size:11.5px;font-weight:700;border-radius:8px;padding:4px 10px;white-space:nowrap;}
+  .classbadge.mechdom{background:var(--mechdom-bg);color:var(--mechdom-ink);}
+  .classbadge.integ{background:var(--integ-bg);color:var(--integ-ink);}
+  .cardbadges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .cbadge{font-size:12px;font-weight:600;border-radius:7px;padding:4px 10px;}
+  .cbadge.cond{background:var(--cond-bg);color:var(--cond-ink);}
+  .cbadge.pop{background:#f1efe9;color:var(--muted);}
+  .cbadge.deep{background:var(--accent);color:#fff;}
+
+  .expand{border-top:1px solid var(--line);}
+  .exrow{border-bottom:1px solid var(--line);}
+  .exhead{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:none;padding:12px 2px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left;}
+  .exhead:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .exhead .ei{display:flex;align-items:center;gap:9px;}
+  .exhead .chev{transition:transform .15s;color:var(--muted);}
+  .exhead.open .chev{transform:rotate(180deg);}
+  .exhead .starthere{font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;background:var(--ok-bg);color:var(--ok-ink);border-radius:6px;padding:3px 8px;}
+  .exbody{padding:0 2px 13px;font-size:14px;color:var(--ink);line-height:1.5;}
+  .exbody.hidden{display:none;}
+  .clinnote{border-top:1px solid var(--line);padding:12px 2px 2px;font-size:13.5px;color:var(--ink);}
+  .clinnote b{font-weight:700;}
+
+  /* matrix */
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;box-shadow:var(--panel-shadow);}
+  table.matrix{border-collapse:collapse;width:100%;min-width:760px;background:#fff;}
+  table.matrix th, table.matrix td{border:1px solid var(--line);padding:9px 10px;vertical-align:top;text-align:left;}
+  table.matrix thead th{background:#f7f5f1;font-size:11.5px;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);font-weight:700;}
+  table.matrix tbody th{background:#faf9f7;font-size:13.5px;font-weight:700;white-space:nowrap;}
+  table.matrix td select{width:100%;font:inherit;font-size:12.5px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 24px 7px 9px;cursor:pointer;appearance:none;line-height:1.35;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 20 20' fill='none'><path d='M5 7l5 5 5-5' stroke='%236b6862' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center;}
+  table.matrix td select:focus-visible{outline:2px solid var(--focus);outline-offset:1px;}
+  table.matrix td select:disabled{opacity:1;}
+  table.matrix td.ok select{background-color:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink);}
+  table.matrix td.no select{background-color:var(--no-bg);border-color:var(--no-line);color:var(--no-ink);}
+  .matrix-actions{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;}
+  .mstatus{font-size:12.5px;color:var(--muted);}
+
+  /* judgment questions */
+  .judge{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--panel-shadow);padding:18px 20px;}
+  .judge.hidden{display:none;}
+  .judge h4{margin:0 0 4px;font-size:15px;}
+  .judge .jsub{font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.5;}
+  .pairgrid{display:flex;flex-wrap:wrap;gap:8px;}
+  .pairbtn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 13px;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;transition:border-color .12s;}
+  .pairbtn:hover:not(:disabled){border-color:#cfc9bf;}
+  .pairbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .pairbtn:disabled{cursor:default;}
+  .pairbtn.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .pairbtn.accept-pick{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);box-shadow:0 0 0 2px var(--amber-ink) inset;}
+  .pairbtn.wrong-pick{background:var(--no-bg);border-color:var(--no-line);color:var(--no-ink);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .pairbtn.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .pairbtn.dim{opacity:.5;}
+  .jnote{margin-top:12px;font-size:13.5px;line-height:1.6;padding:11px 13px;border-radius:10px;}
+  .jnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .jnote.mix{background:var(--amber-bg);color:var(--amber-ink);}
+  .jnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .jnote b{font-weight:700;}
+
+  .summary{margin-top:16px;background:#fff;border:1px dashed var(--accent);border-radius:12px;padding:15px 16px;font-size:14px;line-height:1.62;}
+  .summary.hidden{display:none;}
+  .summary .st{font-weight:700;color:var(--accent-ink);margin-bottom:4px;}
+
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:16px;line-height:1.55;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 17px;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Treatment Explorer &mdash; Mechanism Matrix</h1>
+    <p class="sub">Evidence-based interventions, organized by the mechanism they target. Open each of the five treatments to read what it does, then build the comparison matrix below. The goal is not to memorize five therapy names, it is to see that treatments cluster by the process they change, so two very different-looking approaches can be mechanistic cousins and two similar-sounding ones can be opposites.</p>
+  </div>
+
+  <div class="task">
+    <b>This module's task.</b> Open each of the five cards and read its four fields. Then complete the matrix, choosing the correct value for every cell, and answer the two comparison questions: which two treatments are most mechanistically similar, and which two are most different. You're done when the matrix is complete and both comparisons are answered.
+  </div>
+
+  <div class="section-h">Explore the cards</div>
+  <div class="shortcuts" id="shortcuts" role="group" aria-label="Treatment shortcuts"></div>
+  <div class="browser-hint">Use the five shortcuts. Each one opens exactly the intended card. Expand its sections to read the four fields you'll need for the matrix.</div>
+  <div id="cardHost"></div>
+
+  <div class="section-h">Build the matrix</div>
+  <div class="matrix-wrap">
+    <table class="matrix" id="matrix"></table>
+  </div>
+  <div class="matrix-actions">
+    <button class="btn" id="checkBtn">Check the matrix</button>
+    <span class="mstatus" id="mstatus"></span>
+  </div>
+
+  <section class="judge hidden" id="judgeSimilar"></section>
+  <section class="judge hidden" id="judgeDifferent"></section>
+  <section class="summary hidden" id="summary"></section>
+
+  <div class="selfnote" id="selfnote"></div>
+</div>
+
+<script>
+// ===========================================================================
+// Treatment Explorer — Mechanism Matrix (Module 8). Two linked parts:
+// (1) a card browser (five treatment shortcuts, each opening one card with
+//     expandable Core Procedures / Psychological Mechanisms / Clinical Note), and
+// (2) an interactive, self-checking comparison matrix plus two judgment questions
+//     ("most mechanistically similar" and "most different").
+//
+// All card content is reproduced from the course's Treatment Explorer cards
+// (CBT, BA, ACT for Pain, IPT, DBT), the four matrix fields per card, verbatim.
+// Matrix cells are dropdowns so the activity can check them (green = correct,
+// red = wrong, per house convention) without pretending to grade free text.
+// The "most similar" answer (CBT & BA) is scored right/wrong; the "most different"
+// question accepts the strongest mechanistic answer and treats close alternatives
+// as partial with explanation, since it genuinely requires judgment.
+// Fully client-side; nothing transmitted (stated to the user).
+// ===========================================================================
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+// ---- The five cards (verbatim four fields + classification) ----
+var CARDS = [
+  { key:"CBT", name:"CBT (cognitive-behavioral therapy) for Depression", cls:"mechdom", clsLabel:"Mechanism dominant",
+    condition:"Major Depressive Disorder", population:"Adult",
+    core:"Behavioral activation, cognitive restructuring, homework",
+    mech:"Reduced avoidance, increased reward engagement, cognitive reappraisal",
+    note:"Use PHQ-9; start with BA" },
+  { key:"BA", name:"Behavioral Activation", cls:"mechdom", clsLabel:"Mechanism dominant",
+    condition:"Major Depressive Disorder", population:"Adult",
+    core:"Activity scheduling, values clarification",
+    mech:"Increased reinforcement, reduced avoidance",
+    note:"Best for low motivation" },
+  { key:"ACT", name:"ACT (acceptance and commitment therapy) for Pain", cls:"integ", clsLabel:"Integrated",
+    condition:"Chronic Pain", population:"Adult",
+    core:"Acceptance, values, defusion",
+    mech:"Pain acceptance & reduced struggle",
+    note:"Track pain interference" },
+  { key:"IPT", name:"IPT (interpersonal psychotherapy)", cls:"integ", clsLabel:"Integrated",
+    condition:"Major Depressive Disorder", population:"Adult",
+    core:"Interpersonal links, communication analysis",
+    mech:"Improved interpersonal functioning, attachment shifts",
+    note:"Track mood-event links" },
+  { key:"DBT", name:"DBT (dialectical behavior therapy)", cls:"integ", clsLabel:"Integrated",
+    condition:"Borderline Personality Disorder", population:"Adult",
+    core:"Mindfulness, distress tolerance, ER, IPT skills",
+    mech:"Improved regulation & distress tolerance",
+    note:"Use diary cards" }
+];
+
+// ---- Matrix columns and the option pools (dropdown choices, shuffled per column) ----
+// Each column pulls the correct value for each card, plus the full set as distractors.
+var COLUMNS = [
+  {id:"condpop", label:"Condition & population", value:function(c){return c.condition+" / "+c.population;} },
+  {id:"mech",    label:"Psychological mechanisms", value:function(c){return c.mech;} },
+  {id:"core",    label:"Core procedures", value:function(c){return c.core;} },
+  {id:"note",    label:"Clinical note", value:function(c){return c.note;} }
+];
+
+var openCard = "CBT";
+var openSections = {};      // per-card open section, default 'mech' (the "START HERE")
+var matrixSel = {};          // matrixSel[cardKey][colId] = chosen string
+var matrixChecked = false;
+var simAns = null, diffAns = null;
+
+CARDS.forEach(function(c){ openSections[c.key] = "mech"; matrixSel[c.key] = {}; });
+
+// ---------------- CARD BROWSER ----------------
+function renderShortcuts(){
+  var host=document.getElementById("shortcuts"); host.innerHTML="";
+  CARDS.forEach(function(c){
+    var b=el("button", c.key===openCard?"sel":null, esc(c.key));
+    b.type="button";
+    b.addEventListener("click", function(){ openCard=c.key; renderCard(); renderShortcuts(); });
+    host.appendChild(b);
+  });
+}
+
+function renderCard(){
+  var c = CARDS.filter(function(x){return x.key===openCard;})[0];
+  var host=document.getElementById("cardHost"); host.innerHTML="";
+  var card=el("div","tcard");
+  var top=el("div","tc-top");
+  var left=el("div");
+  left.appendChild(el("h3",null, esc(c.name)));
+  top.appendChild(left);
+  top.appendChild(el("span","classbadge "+(c.cls==="mechdom"?"mechdom":"integ"), esc(c.clsLabel)));
+  card.appendChild(top);
+
+  var badges=el("div","cardbadges");
+  badges.appendChild(el("span","cbadge cond", esc(c.condition)));
+  badges.appendChild(el("span","cbadge pop", esc(c.population)));
+  badges.appendChild(el("span","cbadge deep", "Deep Dive Available"));
+  card.appendChild(badges);
+
+  var expand=el("div","expand");
+  var sections=[
+    {id:"core", label:"Core Procedures", body:c.core, start:false},
+    {id:"mech", label:"Psychological Mechanisms", body:c.mech, start:true},
+    {id:"neural", label:"Neural Systems", body:"See the full intervention guide for neural-systems detail.", start:false},
+    {id:"facil", label:"Facilitating Factors", body:"See the full intervention guide for facilitating-factors detail.", start:false}
+  ];
+  sections.forEach(function(s){
+    var row=el("div","exrow");
+    var isOpen = openSections[c.key]===s.id;
+    var head=el("button","exhead"+(isOpen?" open":""));
+    head.type="button";
+    var inner='<span class="ei">'+esc(s.label)+'</span>';
+    var right = (s.start?'<span class="starthere">Start here</span>':'')+'<span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+    head.innerHTML='<span class="ei">'+esc(s.label)+'</span><span class="ei">'+right+'</span>';
+    head.addEventListener("click", function(){ openSections[c.key] = isOpen ? null : s.id; renderCard(); });
+    row.appendChild(head);
+    var body=el("div","exbody"+(isOpen?"":" hidden"), esc(s.body));
+    row.appendChild(body);
+    expand.appendChild(row);
+  });
+  card.appendChild(expand);
+  card.appendChild(el("div","clinnote","<b>Clinical Note:</b> "+esc(c.note)));
+  host.appendChild(card);
+}
+
+// ---------------- MATRIX ----------------
+function optionPool(col){
+  // unique set of correct values across cards for this column
+  var vals = CARDS.map(function(c){ return col.value(c); });
+  // dedupe while keeping order
+  var seen={}, pool=[];
+  vals.forEach(function(v){ if(!seen[v]){ seen[v]=1; pool.push(v); } });
+  return pool;
+}
+
+function renderMatrix(){
+  var t=document.getElementById("matrix"); t.innerHTML="";
+  var thead=el("thead"); var htr=el("tr");
+  htr.appendChild(el("th",null,"Treatment"));
+  COLUMNS.forEach(function(col){ htr.appendChild(el("th",null, esc(col.label))); });
+  thead.appendChild(htr); t.appendChild(thead);
+
+  var tbody=el("tbody");
+  CARDS.forEach(function(c){
+    var tr=el("tr");
+    tr.appendChild(el("th",null, esc(c.key)));
+    COLUMNS.forEach(function(col){
+      var td=el("td");
+      var correct = col.value(c);
+      var chosen = matrixSel[c.key][col.id];
+      var sel=document.createElement("select");
+      var ph=document.createElement("option"); ph.value=""; ph.textContent="Choose\u2026"; ph.disabled=true; ph.selected=!chosen; sel.appendChild(ph);
+      optionPool(col).forEach(function(v){
+        var op=document.createElement("option"); op.value=v; op.textContent=v; if(chosen===v) op.selected=true; sel.appendChild(op);
+      });
+      if(matrixChecked){
+        sel.disabled=true;
+        td.className = (chosen===correct) ? "ok" : "no";
+      } else {
+        sel.addEventListener("change", function(){ matrixSel[c.key][col.id]=sel.value; });
+      }
+      td.appendChild(sel);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  t.appendChild(tbody);
+}
+
+function matrixComplete(){
+  return CARDS.every(function(c){ return COLUMNS.every(function(col){ return matrixSel[c.key][col.id]; }); });
+}
+function matrixScore(){
+  var correct=0, total=0;
+  CARDS.forEach(function(c){ COLUMNS.forEach(function(col){ total++; if(matrixSel[c.key][col.id]===col.value(c)) correct++; }); });
+  return {correct:correct, total:total};
+}
+
+function checkMatrix(){
+  if(!matrixComplete()){
+    document.getElementById("mstatus").textContent="Fill every cell first, then check.";
+    return;
+  }
+  matrixChecked=true;
+  renderMatrix();
+  var sc=matrixScore();
+  document.getElementById("mstatus").innerHTML="<b>"+sc.correct+" of "+sc.total+"</b> cells correct. Now make the two comparisons below.";
+  document.getElementById("checkBtn").classList.add("hidden");
+  renderJudgments();
+  window.scrollTo({top:document.getElementById("judgeSimilar").offsetTop-20,behavior:"smooth"});
+}
+
+// ---------------- JUDGMENT QUESTIONS ----------------
+// All unordered pairs of the five treatments.
+function allPairs(){
+  var ks=CARDS.map(function(c){return c.key;}); var out=[];
+  for(var i=0;i<ks.length;i++) for(var j=i+1;j<ks.length;j++) out.push(ks[i]+" & "+ks[j]);
+  return out;
+}
+var SIMILAR = {
+  answer:"CBT & BA",
+  why:"CBT and BA are the closest mechanistic cousins. Both are classed Mechanism dominant, both treat depression in adults, and both work through the same core processes, reducing avoidance and rebuilding reward and reinforcement. BA is literally a component inside CBT, which is why the CBT clinical note even says to start with BA."
+};
+var DIFFERENT = {
+  answer:"BA & ACT",
+  accept:["ACT & BA"],
+  why:"BA and ACT sit at opposite ends of the logic. BA works by change, cutting avoidance and increasing reinforcement to lift a low mood, while ACT works by acceptance, dropping the struggle with an experience (pain) rather than trying to reduce it. They target different conditions (depression versus chronic pain) and come from different families (behavioral-dominant versus acceptance-based). Other pairs are defensible, but this contrast is the sharpest.",
+  softWhy:"That is a reasonable pick, and this question genuinely calls for judgment. The sharpest contrast, though, is BA versus ACT: one works by change (cut avoidance, add reinforcement) and the other by acceptance (stop struggling with the experience), across different conditions and different treatment families."
+};
+
+function renderJudgments(){
+  // SIMILAR
+  var js=document.getElementById("judgeSimilar"); js.classList.remove("hidden"); js.innerHTML="";
+  js.appendChild(el("h4",null,"Which two are most mechanistically similar?"));
+  js.appendChild(el("div","jsub","Use the matrix you just built. Look for shared mechanisms, condition, and classification."));
+  var g1=el("div","pairgrid");
+  allPairs().forEach(function(pr){
+    var b=el("button","pairbtn"); b.type="button"; b.textContent=pr;
+    if(simAns!==null){
+      b.disabled=true;
+      if(pr===simAns){ b.classList.add(pr===SIMILAR.answer?"correct-pick":"wrong-pick"); }
+      else if(pr===SIMILAR.answer){ b.classList.add("show-correct"); }
+      else { b.classList.add("dim"); }
+    } else {
+      b.addEventListener("click", function(){ simAns=pr; renderJudgments(); maybeSummary(); });
+    }
+    g1.appendChild(b);
+  });
+  js.appendChild(g1);
+  if(simAns!==null){
+    var right = simAns===SIMILAR.answer;
+    var note=el("div","jnote "+(right?"ok":"no"));
+    note.innerHTML=(right?"<b>Yes.</b> ":"<b>Not the closest pair.</b> ")+esc(SIMILAR.why);
+    js.appendChild(note);
+  }
+
+  // DIFFERENT (unlocks after SIMILAR answered)
+  var jd=document.getElementById("judgeDifferent");
+  if(simAns!==null){
+    jd.classList.remove("hidden"); jd.innerHTML="";
+    jd.appendChild(el("h4",null,"Which two are most mechanistically different?"));
+    jd.appendChild(el("div","jsub","This one takes judgment. Look for opposite logic, different conditions, and different families."));
+    var g2=el("div","pairgrid");
+    allPairs().forEach(function(pr){
+      var b=el("button","pairbtn"); b.type="button"; b.textContent=pr;
+      var isBest = pr===DIFFERENT.answer || DIFFERENT.accept.indexOf(pr)!==-1;
+      if(diffAns!==null){
+        b.disabled=true;
+        if(pr===diffAns){ b.classList.add(isBest?"correct-pick":"accept-pick"); }
+        else if(pr===DIFFERENT.answer){ b.classList.add("show-correct"); }
+        else { b.classList.add("dim"); }
+      } else {
+        b.addEventListener("click", function(){ diffAns=pr; renderJudgments(); maybeSummary(); });
+      }
+      g2.appendChild(b);
+    });
+    jd.appendChild(g2);
+    if(diffAns!==null){
+      var best = diffAns===DIFFERENT.answer || DIFFERENT.accept.indexOf(diffAns)!==-1;
+      var note2=el("div","jnote "+(best?"ok":"mix"));
+      note2.innerHTML=(best?"<b>Yes.</b> "+esc(DIFFERENT.why):"<b>Defensible, but not the sharpest.</b> "+esc(DIFFERENT.softWhy));
+      jd.appendChild(note2);
+    }
+  }
+}
+
+function maybeSummary(){
+  if(simAns!==null && diffAns!==null){
+    var s=document.getElementById("summary"); s.classList.remove("hidden"); s.innerHTML="";
+    var sc=matrixScore();
+    s.innerHTML='<div class="st">The point of the matrix</div>'+
+      'You filled <b>'+sc.correct+' of '+sc.total+'</b> cells and made both comparisons. The lesson is the one the whole course has been building: treatments are not interchangeable brands, and they are not islands either. They cluster by the <b>mechanism</b> they change. CBT and BA are near-identical under the hood, which is why you can start with the simpler one. BA and ACT look like near-neighbors on a syllabus yet run on opposite logic, change versus acceptance. When you choose a treatment, you are really choosing a mechanism to target, so the first question is always what process is maintaining this person\u2019s problem.';
+    s.appendChild(el("div","selfnote","This activity runs entirely on your own screen. Nothing you select is saved, sent, or made visible to anyone else."));
+  }
+}
+
+document.getElementById("checkBtn").addEventListener("click", checkMatrix);
+
+renderShortcuts();
+renderCard();
+renderMatrix();
+</script>
+</body>
+</html>
