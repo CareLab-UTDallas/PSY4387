@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evidence Appraisal — Developmental Claims</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --study-bg:#f2f4f8; --study-line:#c9d4e6; --study-ink:#2f4a72;
+    --tool-bg:#f3eef7; --tool-ink:#6d4a86; --tool-line:#d8c7e6;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .stagetabs{display:flex;gap:0;margin:16px 0 6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .stagetabs button{flex:1 1 0;border:none;background:#fff;padding:11px 10px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.25;}
+  .stagetabs button+button{border-left:1px solid var(--line);}
+  .stagetabs button[aria-selected="true"]{background:var(--accent);color:#fff;}
+  .stagetabs button:disabled{color:#b7b2a9;cursor:not-allowed;}
+  .stagetabs button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .stagetabs .sn{display:block;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+  .stagetabs .stt{display:block;font-weight:600;font-size:13px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:12px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .intro{background:var(--study-bg);border:1px solid var(--study-line);color:var(--study-ink);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;margin-bottom:16px;}
+  .intro b{font-weight:700;}
+
+  /* toolkit cards */
+  .toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  @media(max-width:620px){ .toolgrid{grid-template-columns:1fr;} }
+  .tool{border:1px solid var(--tool-line);background:var(--tool-bg);border-radius:12px;padding:13px 15px;}
+  .tool h3{margin:0 0 4px;font-size:14px;color:var(--tool-ink);}
+  .tool p{margin:0;font-size:13px;line-height:1.55;}
+  .tool .ask{margin-top:7px;font-size:12.5px;font-style:italic;color:var(--muted);}
+
+  .study{background:var(--study-bg);border:1px solid var(--study-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;}
+  .study .slabel{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--study-ink);background:#fff;border-radius:7px;padding:3px 9px;margin-bottom:8px;}
+  .study .sbody{font-size:14px;line-height:1.6;}
+  .study .sbody b{font-weight:700;}
+  .study .datarow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .study .chip{font-size:12px;background:#fff;border:1px solid var(--study-line);border-radius:7px;padding:4px 10px;color:var(--study-ink);}
+
+  .difficulty{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:6px;padding:3px 9px;display:inline-block;margin-bottom:10px;}
+  .difficulty.mod{background:var(--amber-bg);color:var(--amber-ink);}
+  .difficulty.hard{background:var(--no-bg);color:var(--no-ink);}
+
+  .qprompt{font-size:15px;line-height:1.5;margin:14px 0 12px;font-weight:600;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt .ol{font-weight:700;margin-right:7px;color:var(--muted);}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fnote{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+  .fnote .tool-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:#fff;border-radius:6px;padding:2px 8px;margin-bottom:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 6px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.62;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Evidence Appraisal: Developmental Claims</h1>
+    <p class="sub">Knowing a mechanism is one skill. Judging whether the evidence actually supports a claim about it is a harder one, but that is the skill that distinguishes a consumer of research from a scientist. This activity gives you a small appraisal toolkit, then puts it to work on studies that make developmental and emotional claims about who struggles and why. The studies here are constructed for practice, but the reasoning is exactly what you will use on real ones.</p>
+  </div>
+
+  <div class="stagetabs" id="tabs" role="tablist"></div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+</div>
+
+<script>
+// ===========================================================================
+// Evidence Appraisal — Developmental Claims (Module 7).
+// Raises Module 7 to the PLO2 (evaluate scientific claims) mastery bar. Two stages:
+// (1) TOOLKIT — teaches the appraisal tools: levels of evidence, effect size,
+//     confounds, replication, plus the psychotherapy-specific tools (allegiance
+//     effects, common-factors confound, mechanism-vs-outcome).
+// (2) APPRAISE — constructed (not real) study scenarios about developmental/emotional
+//     claims (equifinality/multifinality, causal overreach, population vs. individual); MC appraisal items escalating moderate -> hard, each answer a
+//     reasoned judgment with feedback that names the tool and teaches the move.
+// Cheat-resistant by design: the answer is a judgment, the value is the skill, and
+// the proctored exam tests that skill with DIFFERENT items. No real citations
+// (unsearchable, verification-safe) and no overlap with any exam bank.
+// House convention: correct = green, wrong = red; mark the correct answer when wrong.
+// Fully client-side; nothing transmitted (stated to the user).
+// ===========================================================================
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var TOOLS = [
+  {name:"Levels of evidence", body:"Not all evidence carries equal weight. A single case or an uncontrolled pre-post study is weaker than a randomized controlled trial, which is weaker than a meta-analysis of many good trials. The design caps how strong a claim can be.", ask:"How strong is this design, and what claim can it support?"},
+  {name:"Effect size", body:"Statistical significance says an effect probably is not zero. Effect size says how big it is. With a large sample, a trivial effect can be significant, so a p-value alone never tells you whether a finding matters.", ask:"Significant, yes, but how large, and does the size matter clinically?"},
+  {name:"Confounds", body:"A third variable, or a rival explanation, can produce the observed result without the proposed mechanism being involved at all. Regression to the mean, maturation, and selection are common ones.", ask:"What else, besides the proposed mechanism, could produce this result?"},
+  {name:"Replication", body:"One study is a lead, not a fact. Findings that hold up across independent samples and teams are trustworthy; findings that never replicate, or come only from one lab, are provisional.", ask:"Has this held up beyond a single study or a single group?"},
+  {name:"Allegiance effects", body:"Studies run by advocates of a treatment tend to find larger benefits for it than studies run by neutral or rival teams. Researcher allegiance is one of the most reliable biases in the psychotherapy literature.", ask:"Who ran this, and did they have a stake in the result?"},
+  {name:"Common-factors confound", body:"Any active therapy delivers attention, hope, warmth, and a plausible rationale. If a study compares a treatment only to a waitlist, improvement may come from these shared factors rather than the specific mechanism claimed.", ask:"Was the specific mechanism isolated, or could shared factors explain the gain?"},
+  {name:"Mechanism vs. outcome", body:"Symptoms improving does not prove the proposed mechanism changed. To claim a mechanism, a study has to show the mechanism itself shifted and that its shift accounts for the outcome, rather than only that the patient got better.", ask:"Did they measure the mechanism moving, or only the symptoms?"}
+];
+
+// Constructed scenarios about interpersonal mechanisms. Each has 1-2 escalating items.
+var ITEMS = [
+  {
+    diff:"mod",
+    study:{
+      label:"Study A",
+      body:"A study surveys 500 adults with depression and finds that 60% report a difficult relationship with a caregiver in childhood. The authors headline the finding: \u201cDifficult early relationships lead to adult depression.\u201d",
+      data:["Design: cross-sectional survey","N = 500, all depressed","60% report difficult caregiver","No comparison group"]
+    },
+    prompt:"What is the central flaw in the headline conclusion?",
+    answer:"c",
+    tool:"Confounds / correlation vs. causation",
+    options:[
+      {id:"a", text:"The sample is too small to say anything."},
+      {id:"b", text:"60% is not a majority, so the claim is false."},
+      {id:"c", text:"With no comparison group of non-depressed adults, we cannot know whether 60% is high, low, or ordinary, and a cross-sectional correlation cannot establish that early relationships caused the depression."},
+      {id:"d", text:"Self-report of childhood is always completely unreliable and unusable."}
+    ],
+    why:"The fatal problem is the missing comparison: if 60% of adults without depression also report a difficult caregiver relationship, the finding shows nothing. Sampling only depressed people makes the base rate uninterpretable. Even with a comparison, a cross-sectional survey could only show correlation, not that early relationships caused depression (reverse causation and third variables remain open). The sample is actually large (a), 60% being 'not a majority' misreads the logic (b), and retrospective report has limits but is not categorically unusable (d)."
+  },
+  {
+    diff:"mod",
+    study:{
+      label:"Study B",
+      body:"A longitudinal study follows children exposed to a specific early adversity. Twenty years later, those exposed have significantly higher rates of an anxiety disorder than unexposed peers. A summary concludes: \u201cThis adversity produces anxiety; children who experience it will develop anxiety disorders.\u201d",
+      data:["Design: longitudinal cohort","Exposed vs. unexposed","Exposed: higher anxiety rates","Effect at 20-year follow-up"]
+    },
+    prompt:"The design is strong. Which developmental principle does the summary violate?",
+    answer:"b",
+    tool:"Multifinality / population vs. individual",
+    options:[
+      {id:"a", text:"None; a longitudinal design proves individual causation."},
+      {id:"b", text:"It confuses a raised group-level risk with an individual certainty. Multifinality means the same adversity leads to different outcomes across people, so 'children who experience it will develop anxiety' overreaches, many exposed children will not."},
+      {id:"c", text:"Longitudinal designs cannot detect group differences."},
+      {id:"d", text:"The 20-year gap makes the finding meaningless."}
+    ],
+    why:"A strong longitudinal design can establish that the adversity raises risk at the group level. What it cannot do is license the jump from 'higher rate in the exposed group' to 'this child will develop anxiety.' That is the multifinality point from the reading: the same starting condition branches into different outcomes depending on everything else in a life, so most exposed children may still not develop the disorder even when the group risk is genuinely elevated. Longitudinal designs are in fact well suited to detecting these group differences (c), and the long follow-up is a strength, not a defect (d)."
+  },
+  {
+    diff:"hard",
+    study:{
+      label:"Study C",
+      body:"Two studies examine the same outcome, treatment-resistant depression. Study 1 concludes it stems from early attachment disruption. Study 2, using a different sample, concludes it stems from a chronic inflammatory process. Both report solid, replicated associations with their proposed cause. A student asks which study must be wrong.",
+      data:["Study 1: attachment pathway","Study 2: inflammatory pathway","Both replicated","Same outcome, different samples"]
+    },
+    prompt:"What is the most sophisticated resolution?",
+    answer:"d",
+    tool:"Equifinality",
+    options:[
+      {id:"a", text:"Study 1 is right and Study 2 is wrong, because psychological causes take precedence."},
+      {id:"b", text:"Study 2 is right and Study 1 is wrong, because biological causes are more fundamental."},
+      {id:"c", text:"One of them must have failed to replicate."},
+      {id:"d", text:"Both can be correct. Equifinality means different pathways can lead to the same outcome, so treatment-resistant depression may arise through an attachment route in some people and an inflammatory route in others, which is also why it may need different treatments for different patients."}
+    ],
+    why:"The question contains a false premise, that one study must be wrong, and the rigorous move is to reject it. Equifinality holds that different causal roads can arrive at the same destination, so two replicated pathways to the same diagnosis are not a contradiction; they are evidence that the diagnosis is heterogeneous. Ranking psychological over biological (a) or biological over psychological (b) just imports a bias, and nothing here indicates a replication failure (c). The clinical payoff is exactly the mechanism-first one: same label, different mechanisms, potentially different treatments."
+  },
+  {
+    diff:"hard",
+    study:{
+      label:"Study D",
+      body:"A study reports that an emotion-regulation intervention reduces distress, and that improvement in a reappraisal measure mediates the effect. On close reading: the reappraisal measure and the distress measure were collected at the same single time point after treatment, and the mediator and outcome share several near-identical questionnaire items. The authors claim reappraisal is the mechanism of change.",
+      data:["Design: RCT with mediation","Mediator + outcome: same time point","Overlapping items across measures","Claim: reappraisal is the mechanism"]
+    },
+    prompt:"This is the hardest case. Why is the mechanism claim not yet supported, despite a significant mediation result?",
+    answer:"a",
+    tool:"Mechanism vs. outcome + measurement validity",
+    options:[
+      {id:"a", text:"Establishing a mechanism requires showing the mediator changed before the outcome, but here they were measured together, so temporal order is unknown, and the overlapping items mean the 'mediation' may partly reflect the two measures capturing the same thing rather than one causing the other."},
+      {id:"b", text:"Mediation analysis is invalid in psychotherapy research and should never be used."},
+      {id:"c", text:"The claim is fully supported, because a significant mediation result proves the mechanism."},
+      {id:"d", text:"The problem is only that the sample was too small."}
+    ],
+    why:"Genuine mechanism evidence needs temporal precedence, the proposed mechanism has to move before the outcome it supposedly drives, and here both were measured at one post-treatment time point, so the causal order is unknown. Worse, when the mediator and outcome share near-identical items, a 'significant mediation' can be an artifact of the two scales measuring overlapping content rather than one causing the other, a measurement-validity problem. So the claim outruns the data despite the significant statistic (c). Mediation is a legitimate and valuable tool when done with proper timing and distinct measures (b), and the flaw here is design and measurement, not sample size (d)."
+  }
+];
+
+var stage="toolkit", idx=0, answers=[];
+
+function init(){ answers=ITEMS.map(function(){return null;}); stage="toolkit"; idx=0; render(); }
+
+function renderTabs(){
+  var host=document.getElementById("tabs"); host.innerHTML="";
+  [["toolkit","Stage 1","The appraisal toolkit"],["appraise","Stage 2","Appraise the studies"]].forEach(function(t){
+    var b=el("button"); b.setAttribute("role","tab"); b.setAttribute("aria-selected",String(stage===t[0]));
+    var locked = t[0]==="appraise" && !toolkitSeen;
+    b.disabled=locked;
+    b.innerHTML='<span class="sn">'+esc(t[1])+'</span><span class="stt">'+esc(t[2])+'</span>';
+    if(!locked) b.addEventListener("click", function(){ stage=t[0]; render(); });
+    host.appendChild(b);
+  });
+}
+var toolkitSeen=false;
+
+function renderProgress(){
+  if(stage==="toolkit"){ document.getElementById("pbarfill").style.width="0%"; document.getElementById("pcount").textContent="Toolkit"; }
+  else { var d=answers.filter(function(x){return x!==null;}).length; document.getElementById("pbarfill").style.width=(d/ITEMS.length*100)+"%"; document.getElementById("pcount").textContent="Study "+Math.min(idx+1,ITEMS.length)+" of "+ITEMS.length; }
+}
+
+function render(){ renderTabs(); renderProgress(); if(stage==="toolkit") renderToolkit(); else renderAppraise(); }
+
+function renderToolkit(){
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("div","intro","<b>Seven tools for judging a claim.</b> Each names a question a careful reader asks of any study. You will use these by name in the next stage, so read the question each one poses. The point is not to distrust all research, it is to calibrate how much a given study can actually support."));
+  var grid=el("div","toolgrid");
+  TOOLS.forEach(function(t){
+    var c=el("div","tool");
+    c.appendChild(el("h3",null,esc(t.name)));
+    c.appendChild(el("p",null,esc(t.body)));
+    c.appendChild(el("div","ask","Ask: "+esc(t.ask)));
+    grid.appendChild(c);
+  });
+  p.appendChild(grid);
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var b=el("button","btn","Start appraising \u2192");
+  b.addEventListener("click", function(){ toolkitSeen=true; stage="appraise"; idx=0; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  foot.appendChild(b); p.appendChild(foot);
+}
+
+function renderAppraise(){
+  var it=ITEMS[idx], chosen=answers[idx];
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("span","difficulty "+(it.diff==="hard"?"hard":"mod"), it.diff==="hard"?"Harder":"Moderate"));
+  var st=el("div","study");
+  st.appendChild(el("span","slabel", it.study.label));
+  st.appendChild(el("div","sbody", it.study.body));
+  var dr=el("div","datarow"); it.study.data.forEach(function(d){ dr.appendChild(el("span","chip", esc(d))); }); st.appendChild(dr);
+  p.appendChild(st);
+  p.appendChild(el("div","qprompt", esc(it.prompt)));
+  var opts=el("div","opts");
+  it.options.forEach(function(o){
+    var b=el("button","opt"); b.type="button";
+    b.innerHTML='<span class="ol">'+esc(o.id.toUpperCase())+'</span>'+esc(o.text);
+    if(chosen!==null){
+      b.disabled=true;
+      if(o.id===chosen) b.classList.add(o.id===it.answer?"correct-pick":"wrong-pick");
+      else if(o.id===it.answer) b.classList.add("show-correct");
+      else b.classList.add("dim");
+    } else { b.addEventListener("click", function(){ answers[idx]=o.id; render(); }); }
+    opts.appendChild(b);
+  });
+  p.appendChild(opts);
+  if(chosen!==null){
+    var right=chosen===it.answer;
+    var note=el("div","fnote "+(right?"ok":"no"));
+    note.innerHTML='<span class="tool-tag">'+esc(it.tool)+'</span><br>'+(right?"<b>Sound appraisal.</b> ":"<b>Not the strongest reading.</b> ")+esc(it.why);
+    p.appendChild(note);
+  }
+  var foot=el("div","foot");
+  var back=el("button","btn secondary","\u2190 Back"); back.disabled=idx===0;
+  back.addEventListener("click", function(){ if(idx>0){idx--;render();} }); foot.appendChild(back);
+  var next=el("button","btn"); var last=idx===ITEMS.length-1; next.disabled=chosen===null;
+  next.innerHTML=last?"See results":"Next study \u2192";
+  next.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+  foot.appendChild(next); p.appendChild(foot);
+}
+
+function finish(){
+  var correct=0; ITEMS.forEach(function(it,i){ if(answers[i]===it.answer) correct++; });
+  var p=document.getElementById("cardPanel"); p.innerHTML=""; p.className="card results";
+  p.appendChild(el("h2",null,"Appraisal complete"));
+  p.appendChild(el("p","score","You reached the strongest reading on <b>"+correct+" of "+ITEMS.length+"</b> studies."));
+  p.appendChild(el("p",null,"Notice what the hard cases had in common. The design set a ceiling on what could be claimed, and the most confident-sounding conclusion was usually the one that overreached that ceiling. A significant result is not a large one, an improvement is not a cause, a symptom change is not a mechanism change, and a pile of studies from advocates is not the same as a pile of independent replications. Carrying those distinctions into any claim you meet is what it means to evaluate evidence rather than consume it."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Review the toolkit"); again.addEventListener("click", function(){ stage="toolkit"; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  var retry=el("button","btn","Try the studies again"); retry.addEventListener("click", function(){ init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); act.appendChild(retry); p.appendChild(act);
+  p.appendChild(el("div","selfnote","This activity runs entirely on your own screen. Nothing you select is saved, sent, or seen by anyone. The studies here are constructed for practice; the appraisal skill is what carries to real research."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>
