@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Route Matcher</title>
+<style>
+  :root{--bg:#faf9f7;--ink:#1f1e1c;--muted:#6b6862;--line:#e7e4de;--panel:#fff;
+  --shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);--accent:#8a5a25;--accent-ink:#6f4a20;
+  --ok-bg:#eef5ee;--ok-line:#bcd6bd;--ok-ink:#3c6b3e;--no-bg:#fbecec;--no-line:#e3b9b9;--no-ink:#a23b34;
+  --amber-bg:#fffbef;--amber-line:#e7c98a;--amber-ink:#8a6d2f;--focus:#2f6f4f;--radius:16px;}
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 20px 60px;}
+  h1{font-size:23px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em;}
+  .sub{color:var(--ink);font-size:14.5px;margin:0 0 18px;max-width:70ch;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;}
+  .scene{background:#f2f4f8;border:1px solid #c9d4e6;border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.6;color:#2f4a72;margin-bottom:14px;}
+  .scene b{font-weight:700;}
+  .prompt{font-size:15px;font-weight:600;margin:8px 0 12px;line-height:1.5;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .opt:disabled{cursor:default;}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fb{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fb.ok{background:var(--ok-bg);color:var(--ok-ink);} .fb.no{background:var(--no-bg);color:var(--no-ink);} .fb.amber{background:var(--amber-bg);color:var(--amber-ink);}
+  .fb b{font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;margin-top:14px;}
+  .btn:hover{filter:brightness(1.05);} .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .final{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:12px;padding:15px 16px;font-size:14px;line-height:1.62;margin-top:8px;}
+  .final b{font-weight:700;}
+  textarea.write{width:100%;min-height:80px;border:1px solid #cfc9bf;border-radius:9px;padding:9px 11px;font:inherit;font-size:14px;color:var(--ink);resize:vertical;margin-bottom:6px;}
+  textarea.write:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  .priv{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:8px;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .progress{font-size:12.5px;color:var(--muted);margin-bottom:12px;}
+  .hidden{display:none!important;}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+<style>
+.gauge{margin:4px 0 14px;} .gauge .lab{font-size:12px;color:var(--muted);margin-bottom:4px;}
+.gaugebar{height:16px;border-radius:8px;background:linear-gradient(90deg,#bcd6bd,#e7c98a,#e3b9b9);position:relative;}
+.gaugemark{position:absolute;top:-3px;width:4px;height:22px;background:#1f1e1c;border-radius:2px;}
+.gauge .ends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:3px;}
+</style>
+</head><body><div class="wrap">
+<h1>Route Matcher</h1>
+<p class="sub">There are two routes to a calmer brain. Top-down uses the thinking cortex to reappraise and quiet the alarm. Bottom-up uses the body, breath, grounding, to lower arousal directly. Neither is best in general; the right route depends on how flooded the person is. Read each case’s arousal level, then choose the route most likely to work. Each round draws a fresh set of cases.</p>
+<div class="card" id="panel"></div></div>
+<script>
+var ALL=[{"scene": "A client is calm in session and describes a worry about an upcoming review: “My boss will realize I’m a fraud.” Their body is relaxed; the fear is a thought, not a flood.", "arousal": 2, "answer": "top", "fb": {"top": "Right. Low arousal, a distorted appraisal, thinking brain online. Cognitive reappraisal is the efficient route.", "bottom": "Bottom-up targets arousal that isn’t high here. The live problem is the catastrophic thought, which top-down addresses directly.", "both": "Overkill. With low arousal and a clear distortion, top-down reappraisal alone is the match."}}, {"scene": "Mid-panic attack: heart pounding, can’t catch their breath, says they can’t think straight. Arousal at its peak.", "arousal": 9, "answer": "bottom", "fb": {"top": "The trap. At peak arousal the prefrontal cortex is partly offline, so “just reframe it” can’t land. This is why top-down fails in panic.", "bottom": "Right. When arousal is this high the thinking brain is swamped. Bottom-up (slow breathing, grounding) lowers arousal directly, the only route that works until the cortex returns.", "both": "Bottom-up is the priority; top-down can’t engage until arousal drops. Lead with the body, add reappraisal after."}}, {"scene": "A trauma survivor is triggered by a sound. Flooded, slightly dissociating, and caught in “I’m in danger right now.” High arousal plus a strong belief once they can think.", "arousal": 7, "answer": "both", "fb": {"top": "Too soon for top-down alone. While arousal and dissociation are high, reappraisal can’t take hold.", "bottom": "The right start, but not the whole answer. Once grounding lowers arousal, the “I’m in danger” belief still needs top-down work.", "both": "Right, and order matters: bottom-up first to lower flooding and restore the cortex, then top-down to update the belief."}}, {"scene": "A client with mild ongoing stress wants a quick desk strategy before meetings. Functional, not flooded, wants something portable.", "arousal": 4, "answer": "both", "fb": {"top": "Reappraisal helps, but pairing it with a few slow breaths is more robust for a quick reset.", "bottom": "Breathing helps but doesn’t address the meeting worries; a brief reframe makes it stick.", "both": "Reasonable. At moderate arousal both routes are available; a quick combo (breaths plus a short reframe) is practical."}}, {"scene": "A student is spiraling with test anxiety the night before an exam, pacing, heart racing, convinced they’ll fail. Arousal is high and climbing.", "arousal": 8, "answer": "bottom", "fb": {"top": "Trying to argue with “I’ll fail” while this activated tends to bounce off. The arousal has to come down first.", "bottom": "Right. Lead with the body, slow breathing, a walk, to bring arousal into a range where thinking is possible again.", "both": "Bottom-up first is correct; reappraisal can follow once they’re calmer, but leading with it now won’t take."}}, {"scene": "In a calm coaching session, a client keeps predicting “if I set a boundary, I’ll lose the friendship.” Relaxed body, rigid belief.", "arousal": 2, "answer": "top", "fb": {"top": "Right. The problem is a rigid prediction, not high arousal. Reappraisal, testing the belief, examining evidence, is the fit.", "bottom": "There’s little arousal to lower here; the work is cognitive.", "both": "Breathing adds little when the person is already calm. Top-down alone is the efficient match."}}, {"scene": "A client is so angry mid-session about a betrayal that their voice is shaking and they can’t hear you. Arousal very high.", "arousal": 9, "answer": "bottom", "fb": {"top": "Reasoning with someone whose anger has peaked rarely lands; the thinking brain is swamped by the surge.", "bottom": "Right. Help regulate the body first, slow the pace, breathe, lower the volume, before any reframing can be heard.", "both": "Body first; the cognitive work on the betrayal comes once arousal is down. Order matters."}}, {"scene": "A generally steady client mentions a recurring self-critical thought, “I always let people down,” with no distress in the moment, just noticing the pattern.", "arousal": 3, "answer": "top", "fb": {"top": "Right. Calm state, a clear cognitive distortion (overgeneralization). Reappraisal is the efficient tool.", "bottom": "Little arousal to regulate; the leverage is on the thought.", "both": "Breathing isn’t needed at this arousal level; top-down alone fits."}}, {"scene": "A veteran with PTSD is moderately activated by a crowded room, some racing heart, and also thinking “something bad is about to happen.”", "arousal": 6, "answer": "both", "fb": {"top": "Reappraisal alone may not hold while arousal is building; grounding needs to come alongside it.", "bottom": "Grounding is essential but the threat belief also needs addressing once they can think.", "both": "Right. Pair grounding to steady the body with a reframe of the threat prediction, sequenced as arousal allows."}}, {"scene": "A client wants to prevent future anxiety spikes and asks what to practice when they’re feeling fine. Calm, planning ahead.", "arousal": 1, "answer": "both", "fb": {"top": "Reappraisal skills are worth rehearsing, but so is bottom-up regulation, practiced while calm so it’s available later.", "bottom": "Breathing practice is valuable, and pairing it with reappraisal rehearsal builds a fuller toolkit.", "both": "Right. When calm and planning, building both routes, so each is ready when needed, is the strongest prep."}}];var SETSIZE=5;
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function draw(){var a=ALL.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a.slice(0,Math.min(SETSIZE,a.length));}
+var set=draw(),idx=0,answered=false,correct=0;
+function labelFor(a){return a==="top"?"Top-down":a==="bottom"?"Bottom-up":"Both";}
+function render(){
+ var p=document.getElementById("panel");p.innerHTML="";
+ if(idx>=set.length){
+   p.appendChild(el("div","final","<b>You got "+correct+" of "+set.length+".</b> The pattern to carry: the higher the arousal, the more you must lead with bottom-up, because a flooded brain can’t use top-down reappraisal until the body calms first. Low arousal with a clear distorted thought is where top-down shines. And the skilled move in mixed cases is <i>sequencing</i>: body first to restore access to the thinking brain, then cognition to update the belief. Matching route to arousal is the clinical reasoning this module teaches."));
+   var again=el("button","btn","New set of cases");again.addEventListener("click",function(){set=draw();idx=0;correct=0;answered=false;render();window.scrollTo({top:0,behavior:"smooth"});});p.appendChild(again);
+   p.appendChild(el("div","selfnote","Nothing here is saved or transmitted. It runs on your screen."));
+   return;
+ }
+ p.appendChild(el("div","progress","Case "+(idx+1)+" of "+set.length));
+ var c=set[idx];
+ p.appendChild(el("div","scene",esc(c.scene)));
+ var g=el("div","gauge");g.appendChild(el("div","lab","Arousal level:"));
+ var gb=el("div","gaugebar");var gm=el("div","gaugemark");gm.style.left=(c.arousal*10)+"%";gb.appendChild(gm);g.appendChild(gb);
+ var ends=el("div","ends");ends.appendChild(el("span",null,"calm"));ends.appendChild(el("span",null,"flooded"));g.appendChild(ends);
+ p.appendChild(g);
+ p.appendChild(el("div","prompt","Which route fits best?"));
+ var opts=el("div","opts");
+ [["top","Top-down (reappraise the thought)"],["bottom","Bottom-up (calm the body first)"],["both","Both, in sequence"]].forEach(function(pair){
+   var b=el("button","opt",esc(pair[1]));b.type="button";
+   b.addEventListener("click",function(){
+     if(answered)return;answered=true;var right=pair[0]===c.answer;if(right)correct++;
+     [].forEach.call(opts.children,function(x){x.disabled=true;});
+     b.classList.add(right?"correct-pick":"wrong-pick");
+     if(!right){[].forEach.call(opts.children,function(x){if(x.textContent.indexOf(labelFor(c.answer))>=0)x.classList.add("show-correct");});}
+     [].forEach.call(opts.children,function(x){if(!x.classList.contains("correct-pick")&&!x.classList.contains("wrong-pick")&&!x.classList.contains("show-correct"))x.classList.add("dim");});
+     var fb=el("div","fb "+(right?"ok":"no"),(right?"<b>Good match.</b> ":"<b>Reconsider.</b> ")+esc(c.fb[pair[0]]));
+     p.insertBefore(fb,next);next.classList.remove("hidden");
+   });
+   opts.appendChild(b);
+ });
+ p.appendChild(opts);
+ var next=el("button","btn hidden",idx===set.length-1?"See the pattern":"Next case →");
+ next.addEventListener("click",function(){idx++;answered=false;render();window.scrollTo({top:0,behavior:"smooth"});});
+ p.appendChild(next);
+}
+render();
+</script></body></html>
