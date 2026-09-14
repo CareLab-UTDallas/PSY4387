@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Right Tool, Right Moment</title>
+<style>
+  :root{--bg:#faf9f7;--ink:#1f1e1c;--muted:#6b6862;--line:#e7e4de;--panel:#fff;
+  --shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);--accent:#8a5a25;--accent-ink:#6f4a20;
+  --ok-bg:#eef5ee;--ok-line:#bcd6bd;--ok-ink:#3c6b3e;--no-bg:#fbecec;--no-line:#e3b9b9;--no-ink:#a23b34;
+  --amber-bg:#fffbef;--amber-line:#e7c98a;--amber-ink:#8a6d2f;--focus:#2f6f4f;--radius:16px;}
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 20px 60px;}
+  h1{font-size:23px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em;}
+  .sub{color:var(--ink);font-size:14.5px;margin:0 0 18px;max-width:70ch;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;}
+  .scene{background:#f2f4f8;border:1px solid #c9d4e6;border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.6;color:#2f4a72;margin-bottom:14px;}
+  .scene b{font-weight:700;}
+  .prompt{font-size:15px;font-weight:600;margin:8px 0 12px;line-height:1.5;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .opt:disabled{cursor:default;}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fb{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fb.ok{background:var(--ok-bg);color:var(--ok-ink);} .fb.no{background:var(--no-bg);color:var(--no-ink);} .fb.amber{background:var(--amber-bg);color:var(--amber-ink);}
+  .fb b{font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;margin-top:14px;}
+  .btn:hover{filter:brightness(1.05);} .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .final{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:12px;padding:15px 16px;font-size:14px;line-height:1.62;margin-top:8px;}
+  .final b{font-weight:700;}
+  textarea.write{width:100%;min-height:80px;border:1px solid #cfc9bf;border-radius:9px;padding:9px 11px;font:inherit;font-size:14px;color:var(--ink);resize:vertical;margin-bottom:6px;}
+  textarea.write:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  .priv{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:8px;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .progress{font-size:12.5px;color:var(--muted);margin-bottom:12px;}
+  .hidden{display:none!important;}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+<style>
+.timeline{display:flex;gap:0;margin:12px 0 6px;}
+.tlpt{flex:1;text-align:center;padding:9px 4px;border:1px solid var(--line);font-size:11.5px;background:#fff;position:relative;}
+.tlpt:first-child{border-radius:9px 0 0 9px;} .tlpt:last-child{border-radius:0 9px 9px 0;}
+.tlpt.now{background:#fffbef;border-color:var(--amber-line);font-weight:700;color:var(--amber-ink);}
+.tlpt .arrow{position:absolute;top:-20px;white-space:nowrap;left:50%;transform:translateX(-50%);font-size:12px;color:var(--amber-ink);}
+.tllabel{font-size:11px;color:var(--muted);text-align:center;margin-bottom:14px;}
+</style>
+<style>.pick{display:flex;flex-direction:column;gap:9px;margin:6px 0 8px;}
+.pickbtn{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;text-align:left;line-height:1.4;font-weight:600;}
+.pickbtn:hover{border-color:var(--accent);}</style>
+</head><body><div class="wrap">
+<h1>Right Tool, Right Moment</h1>
+<p class="sub">Emotion regulation strategies aren’t simply good or bad. The same strategy can help or harm depending on <em>when</em> in the unfolding of an emotion you use it. Follow a situation as it develops; at each moment a timeline marker shows where you are, and you choose the strategy that fits that moment. Run as many situations as you like.</p>
+<div class="card" id="panel"></div></div>
+<script>
+var SCEN=[{"title": "The difficult coworker", "moments": [{"now": 0, "scene": "You learn a coworker you find difficult will be at tonight’s optional work dinner. The emotion hasn’t started yet, you’re just anticipating.", "prompt": "Earliest point on the timeline. What fits?", "opts": [{"t": "Situation selection: decide whether to go, or go for a shorter time.", "best": true, "fb": "Right. Before the emotion builds you can shape the situation itself, the cheapest regulation, and only available now."}, {"t": "Suppress your feelings all evening once you’re there.", "best": false, "fb": "A last-resort, late-stage move applied far too early. You can still shape the situation; a night of suppressing is the costliest choice."}, {"t": "Reappraise how bad it will be.", "best": false, "fb": "Useful, but slightly later. Before the emotion even starts you have the more powerful option of choosing or modifying the situation."}]}, {"now": 2, "scene": "You went. Now you see the coworker across the room, feel the first prickle of irritation, and a thought forms: “They always undermine me.”", "prompt": "The interpretation is forming. What fits now?", "opts": [{"t": "Reappraisal: question the thought, maybe “they’re not focused on me tonight.”", "best": true, "fb": "Right. At the appraisal stage the meaning is being set. Reframing now changes the emotion at its source, before the wave builds."}, {"t": "Suppress the irritation and keep a neutral face.", "best": false, "fb": "It’s not too late for reappraisal, so suppression is premature and costlier. Work the interpretation while you still can."}, {"t": "Leave immediately.", "best": false, "fb": "Situation selection has largely passed and the emotion is mild; fleeing can slide into avoidance. Reappraisal fits better."}]}, {"now": 3, "scene": "The coworker makes a pointed comment and the anger arrives full force, face hot, heart pounding.", "prompt": "The emotion has fully arrived. What fits now?", "opts": [{"t": "Acceptance and expressive modulation: feel the anger without acting on it, breathe, choose how much to show.", "best": true, "fb": "Right. Once the emotion is fully present, response-focused options fit. Acceptance reduces duration better than suppression."}, {"t": "Reappraise the situation from scratch.", "best": false, "fb": "Reappraisal works best before the peak; at full arousal it’s much harder. The right tool a moment ago is the wrong tool now."}, {"t": "Suppress it completely so no one sees anything.", "best": false, "fb": "Pure suppression is costliest: it doesn’t lower the inner experience and raises arousal. Acceptance lets the feeling move through."}]}]}, {"title": "The performance review", "moments": [{"now": 0, "scene": "Your annual review is scheduled for Friday. It’s Monday, and you notice dread starting to gather when you think about it.", "prompt": "Days out, emotion barely started. What fits?", "opts": [{"t": "Situation modification: prepare, gather your accomplishments, and ask your manager for the agenda in advance.", "best": true, "fb": "Right. Early on you can change the situation itself. Reducing uncertainty through preparation is upstream regulation, and it shrinks the dread at its root."}, {"t": "Suppress the dread every time it comes up this week.", "best": false, "fb": "Days of suppression is exhausting and ineffective this early. You have better, situation-level options now."}, {"t": "Just accept the anxiety and ride it out until Friday.", "best": false, "fb": "Acceptance is a late-stage tool. With days to go, you can actually shape the situation, which is more powerful than enduring the feeling."}]}, {"now": 2, "scene": "Friday morning, waiting outside the office, the thought arrives: “They’re going to say I’m not good enough.”", "prompt": "The appraisal is forming. What fits?", "opts": [{"t": "Reappraisal: “This is a normal review, and I have concrete wins to point to.”", "best": true, "fb": "Right. Reframing the catastrophic prediction now, before you walk in, shifts the emotional trajectory at the meaning stage."}, {"t": "Suppress the nerves and put on a blank face.", "best": false, "fb": "Still time to reframe, so suppression is premature. Working the thought is more efficient than hiding the feeling."}, {"t": "Cancel and reschedule to avoid it.", "best": false, "fb": "Situation selection has essentially passed, and avoidance would only grow the dread. Reappraisal is the fit here."}]}, {"now": 3, "scene": "Mid-review, your manager raises a criticism and your heart pounds, face flushes, mind starts to blank.", "prompt": "Emotion fully here, in the room. What fits?", "opts": [{"t": "Acceptance plus a slow breath: let the anxiety be present, steady yourself, and stay engaged.", "best": true, "fb": "Right. Fully activated and unable to leave, the response-focused tools fit: accept the feeling and modulate your body to stay present."}, {"t": "Reappraise the entire situation right now.", "best": false, "fb": "Hard to reframe cleanly at peak arousal, the thinking brain is swamped. This is why earlier reappraisal matters."}, {"t": "Suppress it entirely and pretend you’re fine.", "best": false, "fb": "Suppression keeps the inner arousal high and can make you seem shut down. Acceptance plus breath is the better late-stage move."}]}]}, {"title": "The friend who canceled", "moments": [{"now": 0, "scene": "You’re about to text a friend to make weekend plans, but you remember they canceled last-minute twice recently, and you brace for disappointment.", "prompt": "Before the feeling takes hold. What fits?", "opts": [{"t": "Situation selection/modification: suggest a low-stakes plan, or make a backup plan so a cancel stings less.", "best": true, "fb": "Right. Shaping the situation up front, lower stakes, a backup, reduces the emotional hit before it can build."}, {"t": "Suppress any hurt if they cancel again.", "best": false, "fb": "That’s a late-stage move planned too early. You can shape the setup now instead of bracing to hide a feeling later."}, {"t": "Accept in advance that you’ll be crushed.", "best": false, "fb": "Pre-accepting a catastrophe isn’t regulation, it’s rumination. Early on, adjusting the plan itself is the stronger option."}]}, {"now": 2, "scene": "They reply that they might have to work. The thought lands: “They always flake on me, they don’t really care.”", "prompt": "The interpretation is forming. What fits?", "opts": [{"t": "Reappraisal: “‘Might’ isn’t ‘will,’ and a work conflict isn’t proof they don’t care.”", "best": true, "fb": "Right. Reframing the “always/never” overgeneralization at the appraisal stage keeps a small letdown from becoming a story about the friendship."}, {"t": "Suppress the hurt and reply “no worries!” while stewing.", "best": false, "fb": "Suppression while stewing keeps the inner experience high. Reappraisal is still available and more effective."}, {"t": "Cancel the whole plan preemptively.", "best": false, "fb": "Avoidance ends the discomfort but confirms the gloomy story. Reframing the thought fits better here."}]}, {"now": 3, "scene": "They cancel. The wave of hurt and anger hits hard, tight chest, stinging eyes.", "prompt": "The emotion has fully arrived. What fits?", "opts": [{"t": "Acceptance: let the disappointment be real without acting on the anger, and decide later how to raise it.", "best": true, "fb": "Right. Fully activated, accepting the feeling (rather than suppressing or firing off an angry text) lets it move through and preserves your later choices."}, {"t": "Reappraise from scratch that it doesn’t bother you.", "best": false, "fb": "Telling yourself it’s fine at peak hurt is closer to suppression than genuine reappraisal, which works better earlier."}, {"t": "Suppress it all and act completely unbothered.", "best": false, "fb": "Suppression keeps arousal high and can leak out sideways later. Acceptance is the healthier late-stage response."}]}]}];var STAGES=["Situation","Attention","Appraisal","Response"];
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var state={sc:null,idx:0,answered:false,correct:0};var last=-1;
+function pick(){var i=Math.floor(Math.random()*SCEN.length);if(SCEN.length>1&&i===last)i=(i+1)%SCEN.length;last=i;return i;}
+function start(i){state.sc=SCEN[i];state.idx=0;state.answered=false;state.correct=0;render();window.scrollTo({top:0,behavior:"smooth"});}
+function render(){
+ var p=document.getElementById("panel");p.innerHTML="";
+ if(!state.sc){
+   p.appendChild(el("div","progress","Choose a situation, or take a random one:"));
+   var pk=el("div","pick");
+   SCEN.forEach(function(s,i){var b=el("button","pickbtn",esc(s.title));b.addEventListener("click",function(){start(i);});pk.appendChild(b);});
+   p.appendChild(pk);
+   var r=el("button","btn","&#127922; Random situation");r.addEventListener("click",function(){start(pick());});p.appendChild(r);
+   p.appendChild(el("div","selfnote","Nothing here is saved or transmitted. It runs on your screen."));
+   return;
+ }
+ var sc=state.sc,ms=sc.moments;
+ if(state.idx>=ms.length){
+   p.appendChild(el("div","final","<b>You matched "+state.correct+" of "+ms.length+".</b> The lesson isn’t that some strategies are good and others bad, it’s that <i>the same strategy is adaptive or maladaptive depending on when you use it.</i> Situation selection is powerful but only early. Reappraisal shines while the interpretation is still forming. Once the emotion has fully arrived, acceptance and modulation fit, and suppression is costly. Reappraising too late fails not because reappraisal is bad, but because the moment for it has passed. Read the moment, then choose the tool."));
+   var again=el("button","btn","Another situation");again.addEventListener("click",function(){start(pick());});
+   var menu=el("button","btn secondary","Back to list");menu.style.marginLeft="8px";menu.addEventListener("click",function(){state.sc=null;render();window.scrollTo({top:0,behavior:"smooth"});});
+   p.appendChild(again);p.appendChild(menu);
+   p.appendChild(el("div","selfnote","Nothing here is saved or transmitted. It runs on your screen."));
+   return;
+ }
+ p.appendChild(el("div","scene","<b>"+esc(sc.title)+"</b>"));
+ p.appendChild(el("div","progress","Moment "+(state.idx+1)+" of "+ms.length));
+ var m=ms[state.idx];
+ var tl=el("div","timeline");
+ STAGES.forEach(function(st,i){tl.appendChild(el("div","tlpt"+(i===m.now?" now":""),(i===m.now?'<span class="arrow">▼ you are here</span>':'')+esc(st)));});
+ p.appendChild(tl);
+ p.appendChild(el("div","tllabel","earlier ← emotion timeline → later"));
+ p.appendChild(el("div","scene",esc(m.scene)));
+ p.appendChild(el("div","prompt",esc(m.prompt)));
+ var opts=el("div","opts");
+ m.opts.forEach(function(o,oi){
+   var b=el("button","opt",esc(o.t));b.type="button";
+   b.addEventListener("click",function(){
+     if(state.answered)return;state.answered=true;if(o.best)state.correct++;
+     [].forEach.call(opts.children,function(x){x.disabled=true;});
+     b.classList.add(o.best?"correct-pick":"wrong-pick");
+     if(!o.best){[].forEach.call(opts.children,function(x){var i=[].indexOf.call(opts.children,x);if(m.opts[i].best)x.classList.add("show-correct");});}
+     [].forEach.call(opts.children,function(x){if(!x.classList.contains("correct-pick")&&!x.classList.contains("wrong-pick")&&!x.classList.contains("show-correct"))x.classList.add("dim");});
+     var fb=el("div","fb "+(o.best?"ok":"no"),(o.best?"<b>Right tool for this moment.</b> ":"<b>Wrong moment for that tool.</b> ")+esc(o.fb));
+     p.insertBefore(fb,next);next.classList.remove("hidden");
+   });
+   opts.appendChild(b);
+ });
+ p.appendChild(opts);
+ var next=el("button","btn hidden",state.idx===ms.length-1?"See the lesson":"The situation develops →");
+ next.addEventListener("click",function(){state.idx++;state.answered=false;render();window.scrollTo({top:0,behavior:"smooth"});});
+ p.appendChild(next);
+}
+render();
+</script></body></html>
