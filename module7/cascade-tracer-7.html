@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Cascade Tracer</title>
+<style>
+  :root{--bg:#faf9f7;--ink:#1f1e1c;--muted:#6b6862;--line:#e7e4de;--panel:#fff;
+  --shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);--accent:#8a5a25;--accent-ink:#6f4a20;
+  --ok-bg:#eef5ee;--ok-line:#bcd6bd;--ok-ink:#3c6b3e;--no-bg:#fbecec;--no-line:#e3b9b9;--no-ink:#a23b34;
+  --amber-bg:#fffbef;--amber-line:#e7c98a;--amber-ink:#8a6d2f;--focus:#2f6f4f;--radius:16px;}
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 20px 60px;}
+  h1{font-size:23px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em;}
+  .sub{color:var(--ink);font-size:14.5px;margin:0 0 18px;max-width:70ch;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;}
+  .scene{background:#f2f4f8;border:1px solid #c9d4e6;border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.6;color:#2f4a72;margin-bottom:14px;}
+  .scene b{font-weight:700;}
+  .prompt{font-size:15px;font-weight:600;margin:8px 0 12px;line-height:1.5;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .opt:disabled{cursor:default;}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fb{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fb.ok{background:var(--ok-bg);color:var(--ok-ink);} .fb.no{background:var(--no-bg);color:var(--no-ink);} .fb.amber{background:var(--amber-bg);color:var(--amber-ink);}
+  .fb b{font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;margin-top:14px;}
+  .btn:hover{filter:brightness(1.05);} .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .final{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:12px;padding:15px 16px;font-size:14px;line-height:1.62;margin-top:8px;}
+  .final b{font-weight:700;}
+  textarea.write{width:100%;min-height:80px;border:1px solid #cfc9bf;border-radius:9px;padding:9px 11px;font:inherit;font-size:14px;color:var(--ink);resize:vertical;margin-bottom:6px;}
+  textarea.write:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  .priv{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:8px;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .progress{font-size:12.5px;color:var(--muted);margin-bottom:12px;}
+  .hidden{display:none!important;}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+<style>
+.chain{display:flex;flex-direction:column;gap:0;margin:10px 0;}
+.link{border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:13.5px;line-height:1.5;background:#faf9f7;}
+.link.revealed{background:#f3eef7;border-color:#d8c7e6;color:#6d4a86;}
+.linkarrow{text-align:center;color:#b8b2a8;font-size:15px;line-height:1.2;}
+.link .step{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:3px;}
+</style>
+</head><body><div class="wrap">
+<h1>Cascade Tracer</h1>
+<p class="sub">A developmental cascade is not a single cause producing a single effect. It is a chain, where each difficulty raises the odds of the next, so small early differences compound over time. You&rsquo;ll reveal one cascade a link at a time, predicting each next step, then find the points where a well-timed intervention could interrupt the chain.</p>
+<div class="card" id="panel"></div></div>
+<script>
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var CHAIN=[
+ {step:"Starting point",text:"A young child has a difficult temperament, intense, easily frustrated, hard to soothe. On its own, this is a vulnerability, not a destiny."},
+ {step:"Link 1",text:"Parenting the child is exhausting, and stressed caregivers respond with more irritability and less warmth. The child\u2019s difficulty and the caregiver\u2019s response feed each other."},
+ {step:"Link 2",text:"Entering school, the child has weaker emotion-regulation skills and struggles to get along with peers, leading to early peer rejection."},
+ {step:"Link 3",text:"Excluded and frustrated, the child disengages from school and academics slip, which narrows later opportunities and self-image."},
+ {step:"Outcome",text:"By adolescence, the accumulated difficulties raise the risk of depression and conduct problems, not because of the temperament alone, but because of the chain it set in motion."}
+];
+var revealed=1; // starting point shown first
+var phase="reveal"; // reveal -> intervene
+function render(){
+ var p=document.getElementById("panel");p.innerHTML="";
+ if(phase==="reveal"){
+   p.appendChild(el("div","progress","Reveal the cascade one link at a time. Predict each step before you reveal it."));
+   var chain=el("div","chain");
+   for(var i=0;i<revealed;i++){
+     if(i>0)chain.appendChild(el("div","linkarrow","\u2193"));
+     var lk=el("div","link revealed");lk.appendChild(el("div","step",esc(CHAIN[i].step)));lk.appendChild(el("div",null,esc(CHAIN[i].text)));
+     chain.appendChild(lk);
+   }
+   p.appendChild(chain);
+   if(revealed<CHAIN.length){
+     var b=el("button","btn","Reveal the next link \u2192");
+     b.addEventListener("click",function(){revealed++;render();});
+     p.appendChild(b);
+     p.appendChild(el("div","selfnote","Before you click: what do you predict the next link will be? Each step raises the odds of the next."));
+   } else {
+     var done=el("button","btn","Now find where to intervene \u2192");
+     done.addEventListener("click",function(){phase="intervene";render();window.scrollTo({top:0,behavior:"smooth"});});
+     p.appendChild(done);
+   }
+   return;
+ }
+ // intervene phase
+ if(phase==="intervene"){
+   p.appendChild(el("div","prompt","A cascade can be interrupted at more than one point. Select the TWO links where a well-timed intervention would most plausibly break the chain."));
+   var opts=el("div","opts");
+   // best intervention points: Link1 (caregiver support) and Link2 (emotion-reg/social skills at school entry)
+   var BEST=[1,2];
+   var chosen=[];
+   CHAIN.forEach(function(c,i){
+     var b=el("button","opt","<b>"+esc(c.step)+":</b> "+esc(c.text.slice(0,70))+"\u2026");b.type="button";
+     b.addEventListener("click",function(){
+       if(chosen.indexOf(i)>=0||chosen.length>=2)return;
+       chosen.push(i);
+       b.classList.add(BEST.indexOf(i)>=0?"correct-pick":"wrong-pick");
+       if(chosen.length>=2){showFB();}
+     });
+     opts.appendChild(b);
+   });
+   p.appendChild(opts);
+   var fbholder=el("div");p.appendChild(fbholder);
+   function showFB(){
+     [].forEach.call(opts.children,function(x){x.disabled=true;});
+     // mark any missed best points
+     BEST.forEach(function(bi){if(chosen.indexOf(bi)<0)opts.children[bi].classList.add("show-correct");});
+     var hits=chosen.filter(function(c){return BEST.indexOf(c)>=0;}).length;
+     var msg;
+     if(hits===2) msg="<b>Strong choices.</b> The two most tractable points are early: supporting the caregiver relationship (Link 1) before the coercive cycle sets in, and building emotion-regulation and social skills at school entry (Link 2) before peer rejection compounds. Intervening early, upstream, is far more efficient than waiting for the outcome.";
+     else if(hits===1) msg="<b>One strong pick.</b> The most tractable points are the early links, supporting the caregiver relationship (Link 1) and building regulation/social skills at school entry (Link 2), because intervening upstream stops the compounding before it gains momentum. Later links can still be addressed, but by then more damage has accumulated.";
+     else msg="<b>Reconsider timing.</b> The chain is easiest to break early, at the caregiver relationship (Link 1) and at school entry (Link 2), before each difficulty raises the odds of the next. Waiting until the outcome means intervening after the cascade has already done its compounding.";
+     fbholder.appendChild(el("div","fb "+(hits===2?"ok":hits===1?"amber":"no"),msg));
+     fbholder.appendChild(el("div","final","<b>The cascade lesson.</b> Because each link raises the odds of the next, the same intervention is far more powerful early than late, a small nudge at Link 1 prevents a whole chain, while the same effort at the outcome fights accumulated momentum. This is also why the temperament alone doesn\u2019t doom the child: break any link and the outcome changes. Equifinality and multifinality live here, the path, not just the starting point, shapes where a life lands."));
+     var again=el("button","btn secondary","Trace it again");again.addEventListener("click",function(){revealed=1;phase="reveal";render();window.scrollTo({top:0,behavior:"smooth"});});
+     fbholder.appendChild(again);
+     fbholder.appendChild(el("div","selfnote","Nothing here is saved or transmitted. It runs on your screen."));
+   }
+ }
+}
+render();
+</script></body></html>
