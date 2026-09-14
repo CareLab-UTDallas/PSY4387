@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Two Descriptions</title>
+<style>
+  :root{--bg:#faf9f7;--ink:#1f1e1c;--muted:#6b6862;--line:#e7e4de;--panel:#fff;
+  --shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);--accent:#8a5a25;--accent-ink:#6f4a20;
+  --ok-bg:#eef5ee;--ok-line:#bcd6bd;--ok-ink:#3c6b3e;--no-bg:#fbecec;--no-line:#e3b9b9;--no-ink:#a23b34;
+  --amber-bg:#fffbef;--amber-line:#e7c98a;--amber-ink:#8a6d2f;--focus:#2f6f4f;--radius:16px;}
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 20px 60px;}
+  h1{font-size:23px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em;}
+  .sub{color:var(--ink);font-size:14.5px;margin:0 0 18px;max-width:70ch;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;}
+  .scene{background:#f2f4f8;border:1px solid #c9d4e6;border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.6;color:#2f4a72;margin-bottom:14px;}
+  .scene b{font-weight:700;}
+  .prompt{font-size:15px;font-weight:600;margin:8px 0 12px;line-height:1.5;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .opt:disabled{cursor:default;}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fb{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fb.ok{background:var(--ok-bg);color:var(--ok-ink);} .fb.no{background:var(--no-bg);color:var(--no-ink);} .fb.amber{background:var(--amber-bg);color:var(--amber-ink);}
+  .fb b{font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;margin-top:14px;}
+  .btn:hover{filter:brightness(1.05);} .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .final{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:12px;padding:15px 16px;font-size:14px;line-height:1.62;margin-top:8px;}
+  .final b{font-weight:700;}
+  textarea.write{width:100%;min-height:80px;border:1px solid #cfc9bf;border-radius:9px;padding:9px 11px;font:inherit;font-size:14px;color:var(--ink);resize:vertical;margin-bottom:6px;}
+  textarea.write:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  .priv{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:8px;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .progress{font-size:12.5px;color:var(--muted);margin-bottom:12px;}
+  .hidden{display:none!important;}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head><body><div class="wrap">
+<h1>Two Descriptions</h1>
+<p class="sub">The same moment can be described in psychological language and in biological language at once. Neither description is more real than the other; they are two accounts of one event at different levels. For each moment, write both descriptions yourself, then compare with a model. The goal is to feel why &ldquo;it&rsquo;s just brain chemistry&rdquo; is a category error, not a deeper truth.</p>
+<div class="card" id="panel"></div></div>
+<script>
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var ITEMS=[
+ {moment:"A student freezes at the start of a class presentation, heart racing, mind blank.",
+  psych:"She predicts she will be judged and humiliated; that catastrophic interpretation spikes her anxiety and her attention narrows onto every sign of the audience\u2019s disapproval.",
+  bio:"Her amygdala fires a threat signal, the sympathetic nervous system floods her with adrenaline and cortisol, and blood flow shifts away from the prefrontal cortex, which is why her thinking goes blank."},
+ {moment:"After eight weeks of exposure therapy, a person with a dog phobia can calmly pet a friend\u2019s dog.",
+  psych:"Through repeated safe experiences, her expectation shifted from \u2018the dog will hurt me\u2019 to \u2018I can handle this,\u2019 and the situation no longer triggers the old fear.",
+  bio:"Repeated exposure built new inhibitory pathways from the prefrontal cortex to the amygdala; the old fear circuit still exists but a competing \u2018safe\u2019 pathway now activates more readily. The learning is physically encoded as changed synaptic connections."},
+ {moment:"Someone taking an antidepressant and doing therapy notices, months in, that mornings feel less hopeless.",
+  psych:"She has built behavioral routines and reframed the automatic thought that \u2018nothing will ever change,\u2019 so mornings carry less dread and more possibility.",
+  bio:"Both the medication and the therapy altered activity across mood-regulating circuits and supported neuroplastic change; the brain systems involved shifted regardless of which intervention drove them."}
+];
+var idx=0,revealed=false;
+function render(){
+ var p=document.getElementById("panel");p.innerHTML="";
+ if(idx>=ITEMS.length){
+   p.appendChild(el("div","final","<b>You wrote both, for the same events.</b> That is the whole point: for every moment, the psychological and biological descriptions are both fully true, because they describe one event at two levels. The biology is <i>how the psychology is physically carried out</i>, not a truer replacement for it. So \u2018depression is just a chemical imbalance\u2019 or \u2018the fear is just the amygdala\u2019 commits a category error, it mistakes one level of description for the only real one. Notice too that therapy showed up in the biological column: talking changes the brain, because experience changes the brain. That is why a mechanism-focused clinician refuses to rank the levels."));
+   var again=el("button","btn secondary","Do it again");again.addEventListener("click",function(){idx=0;revealed=false;render();window.scrollTo({top:0,behavior:"smooth"});});p.appendChild(again);
+   p.appendChild(el("div","selfnote","Everything you type stays on your own screen. Nothing is saved, sent, or seen by anyone."));
+   return;
+ }
+ p.appendChild(el("div","progress","Moment "+(idx+1)+" of "+ITEMS.length));
+ var it=ITEMS[idx];
+ p.appendChild(el("div","scene","<b>The moment:</b> "+esc(it.moment)));
+ p.appendChild(el("div","prompt","1. Describe it in psychological terms (thoughts, feelings, interpretations):"));
+ var ta1=el("textarea","write");ta1.placeholder="Psychological description...";p.appendChild(ta1);
+ p.appendChild(el("div","prompt","2. Describe the same moment in biological terms (brain, body, chemistry):"));
+ var ta2=el("textarea","write");ta2.placeholder="Biological description...";p.appendChild(ta2);
+ p.appendChild(el("div","priv","Nothing you type is saved, sent, or seen by anyone."));
+ var reveal=el("button","btn","Compare with a model");
+ reveal.addEventListener("click",function(){
+   if(revealed)return;revealed=true;reveal.disabled=true;
+   var m1=el("div","fb ok","<b>Model, psychological:</b> "+esc(it.psych));
+   var m2=el("div","fb ok","<b>Model, biological:</b> "+esc(it.bio));
+   p.insertBefore(m1,nextBtn);p.insertBefore(m2,nextBtn);nextBtn.classList.remove("hidden");
+ });
+ p.appendChild(reveal);
+ var nextBtn=el("button","btn secondary hidden",idx===ITEMS.length-1?"Finish":"Next moment \u2192");nextBtn.style.marginLeft="8px";
+ nextBtn.addEventListener("click",function(){idx++;revealed=false;render();window.scrollTo({top:0,behavior:"smooth"});});
+ p.appendChild(nextBtn);
+}
+render();
+</script></body></html>
