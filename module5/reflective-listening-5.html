@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Reflective Listening Builder</title>
+<style>
+  :root{--bg:#faf9f7;--ink:#1f1e1c;--muted:#6b6862;--line:#e7e4de;--panel:#fff;
+  --shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);--accent:#8a5a25;--accent-ink:#6f4a20;
+  --ok-bg:#eef5ee;--ok-line:#bcd6bd;--ok-ink:#3c6b3e;--no-bg:#fbecec;--no-line:#e3b9b9;--no-ink:#a23b34;
+  --amber-bg:#fffbef;--amber-line:#e7c98a;--amber-ink:#8a6d2f;--focus:#2f6f4f;--radius:16px;}
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 20px 60px;}
+  h1{font-size:23px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em;}
+  .sub{color:var(--ink);font-size:14.5px;margin:0 0 18px;max-width:70ch;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;}
+  .scene{background:#f2f4f8;border:1px solid #c9d4e6;border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.6;color:#2f4a72;margin-bottom:14px;}
+  .scene b{font-weight:700;}
+  .prompt{font-size:15px;font-weight:600;margin:8px 0 12px;line-height:1.5;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .opt:disabled{cursor:default;}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fb{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fb.ok{background:var(--ok-bg);color:var(--ok-ink);} .fb.no{background:var(--no-bg);color:var(--no-ink);} .fb.amber{background:var(--amber-bg);color:var(--amber-ink);}
+  .fb b{font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;margin-top:14px;}
+  .btn:hover{filter:brightness(1.05);} .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .final{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:12px;padding:15px 16px;font-size:14px;line-height:1.62;margin-top:8px;}
+  .final b{font-weight:700;}
+  textarea.write{width:100%;min-height:80px;border:1px solid #cfc9bf;border-radius:9px;padding:9px 11px;font:inherit;font-size:14px;color:var(--ink);resize:vertical;margin-bottom:6px;}
+  textarea.write:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  .priv{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:8px;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .progress{font-size:12.5px;color:var(--muted);margin-bottom:12px;}
+  .hidden{display:none!important;}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head><body><div class="wrap">
+<h1>Reflective Listening Builder</h1>
+<p class="sub">Reflective listening means restating, in your own words, the meaning under what someone said, so they feel understood and can correct you if you&rsquo;re off. It is a skill you build by doing, not a fact you memorize. For each statement, write your own reflection first, then compare it against strong and weak examples.</p>
+<div class="card" id="panel"></div></div>
+<script>
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var ITEMS=[
+ {say:"\u201cI keep meaning to start the assignment but every time I sit down I just freeze and end up cleaning my room instead.\u201d",
+  weak:{t:"\u201cSo you clean your room instead of working.\u201d",why:"This just repeats the surface behavior (parroting). It captures what happened but not the meaning under it, so it does not help the speaker feel understood or move forward."},
+  strong:{t:"\u201cIt sounds like sitting down to start brings up something uncomfortable enough that doing almost anything else feels easier.\u201d",why:"This reflects the meaning, the avoidance is doing a job, and it names the feeling without judging it. It gives the speaker something true to confirm or correct, which deepens the conversation."}},
+ {say:"\u201cMy partner says I overreact, but honestly I feel like I\u2019m the only one who ever actually cares about anything.\u201d",
+  weak:{t:"\u201cYou shouldn\u2019t let what your partner says get to you.\u201d",why:"This is advice and reassurance, not a reflection. It skips past understanding to fixing, which tends to make the speaker feel unheard and a little defensive."},
+  strong:{t:"\u201cSo underneath the \u2018overreacting\u2019 label, it feels like you\u2019re carrying more of the caring in the relationship, and that\u2019s lonely.\u201d",why:"It reflects both sides, the accusation and the deeper feeling, and offers a tentative read (\u2018it feels like\u2019) the speaker can adjust. That tentativeness is part of good reflection."}},
+ {say:"\u201cI got the promotion I wanted, but now I just feel sick about whether I can actually do it.\u201d",
+  weak:{t:"\u201cCongratulations! You\u2019ll be great, don\u2019t worry.\u201d",why:"Warm, but it overrides the feeling the speaker actually named. Rushing to reassurance tells them the anxious part isn\u2019t welcome, so they stop sharing it."},
+  strong:{t:"\u201cThe thing you worked for arrived, and instead of relief it brought a wave of doubt about measuring up.\u201d",why:"It holds the contradiction the speaker is living (wanted it, now afraid) without resolving it for them. Reflecting the tension, rather than picking a side, is what makes someone feel genuinely understood."}}
+];
+var idx=0,revealed=false;
+function render(){
+ var p=document.getElementById("panel");p.innerHTML="";
+ if(idx>=ITEMS.length){
+   p.appendChild(el("div","final","<b>You practiced the move.</b> Notice the pattern in the strong reflections: they restate <i>meaning</i> rather than words, they stay tentative so the speaker can correct them, and they resist the pull to reassure, advise, or fix. That restraint is the hardest part, the reflex is to help by solving, but the help here is being understood. Keep asking: did I capture what this meant to them, or just what happened?"));
+   var again=el("button","btn secondary","Practice again");again.addEventListener("click",function(){idx=0;revealed=false;render();window.scrollTo({top:0,behavior:"smooth"});});
+   p.appendChild(again);
+   p.appendChild(el("div","selfnote","Everything you type stays on your own screen. Nothing is saved, sent, or seen by anyone, and it disappears when you close the page."));
+   return;
+ }
+ p.appendChild(el("div","progress","Statement "+(idx+1)+" of "+ITEMS.length));
+ var it=ITEMS[idx];
+ p.appendChild(el("div","scene","<b>They say:</b> "+esc(it.say)));
+ p.appendChild(el("div","prompt","Write your reflection, restate the meaning under what they said:"));
+ var ta=el("textarea","write");ta.placeholder="Your reflection...";p.appendChild(ta);
+ p.appendChild(el("div","priv","Nothing you type is saved, sent, or seen by anyone. It stays on your screen."));
+ var reveal=el("button","btn","Compare with examples");
+ reveal.addEventListener("click",function(){
+   if(revealed)return;revealed=true;
+   var wk=el("div","fb no","<b>Weaker reflection:</b> "+esc(it.weak.t)+"<br><br>"+esc(it.weak.why));
+   var st=el("div","fb ok","<b>Stronger reflection:</b> "+esc(it.strong.t)+"<br><br>"+esc(it.strong.why));
+   p.insertBefore(wk,nextBtn);p.insertBefore(st,nextBtn);
+   nextBtn.classList.remove("hidden");reveal.disabled=true;
+ });
+ p.appendChild(reveal);
+ var nextBtn=el("button","btn secondary hidden",idx===ITEMS.length-1?"Finish":"Next statement \u2192");
+ nextBtn.style.marginLeft="8px";
+ nextBtn.addEventListener("click",function(){idx++;revealed=false;render();window.scrollTo({top:0,behavior:"smooth"});});
+ p.appendChild(nextBtn);
+}
+render();
+</script></body></html>
