@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>The Reassurance Trap</title>
+<style>
+  :root{--bg:#faf9f7;--ink:#1f1e1c;--muted:#6b6862;--line:#e7e4de;--panel:#fff;
+  --shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);--accent:#8a5a25;--accent-ink:#6f4a20;
+  --ok-bg:#eef5ee;--ok-line:#bcd6bd;--ok-ink:#3c6b3e;--no-bg:#fbecec;--no-line:#e3b9b9;--no-ink:#a23b34;
+  --amber-bg:#fffbef;--amber-line:#e7c98a;--amber-ink:#8a6d2f;--focus:#2f6f4f;--radius:16px;}
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 20px 60px;}
+  h1{font-size:23px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em;}
+  .sub{color:var(--ink);font-size:14.5px;margin:0 0 18px;max-width:70ch;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;}
+  .scene{background:#f2f4f8;border:1px solid #c9d4e6;border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.6;color:#2f4a72;margin-bottom:14px;}
+  .scene b{font-weight:700;}
+  .prompt{font-size:15px;font-weight:600;margin:8px 0 12px;line-height:1.5;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .opt:disabled{cursor:default;}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fb{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fb.ok{background:var(--ok-bg);color:var(--ok-ink);} .fb.no{background:var(--no-bg);color:var(--no-ink);} .fb.amber{background:var(--amber-bg);color:var(--amber-ink);}
+  .fb b{font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;margin-top:14px;}
+  .btn:hover{filter:brightness(1.05);} .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;} .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .final{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);border-radius:12px;padding:15px 16px;font-size:14px;line-height:1.62;margin-top:8px;}
+  .final b{font-weight:700;}
+  textarea.write{width:100%;min-height:80px;border:1px solid #cfc9bf;border-radius:9px;padding:9px 11px;font:inherit;font-size:14px;color:var(--ink);resize:vertical;margin-bottom:6px;}
+  textarea.write:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  .priv{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:8px;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .progress{font-size:12.5px;color:var(--muted);margin-bottom:12px;}
+  .hidden{display:none!important;}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+<style>.pick{display:flex;flex-direction:column;gap:9px;margin:6px 0 8px;}
+.pickbtn{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;text-align:left;line-height:1.4;}
+.pickbtn:hover{border-color:var(--accent);}</style>
+</head><body><div class="wrap">
+<h1>The Reassurance Trap</h1>
+<p class="sub">Reassurance-seeking is avoidance wearing a friendly costume. It looks like care, and giving it feels kind, which is exactly why it is so hard to resist and so easy to get wrong. Work a scenario and watch what repeated reassurance actually does over time. Run as many as you like.</p>
+<div class="card" id="panel"></div></div>
+<script>
+var SCEN=[{"setup": "Your roommate Priya, who worries about her health, keeps asking you to confirm a symptom isn’t serious.", "rounds": [{"ask": "“This mole looks different, right? It’s probably nothing—tell me it’s nothing.”", "opts": [{"t": "“It’s nothing, honestly. Don’t worry about it.”", "good": false, "fb": "Short-term relief, long-term training: the anxiety learns relief comes from asking you, so it asks again, sooner."}, {"t": "“I notice you’re really worried. I won’t guess about your skin—what would help you tolerate not knowing for now?”", "good": true, "fb": "You met the feeling without supplying certainty. Sitting with uncertainty is what builds tolerance so the asking fades."}]}, {"ask": "“Sorry, I know you said it’s fine, but can you just look one more time?”", "opts": [{"t": "Look again: “Still totally fine, I promise.”", "good": false, "fb": "“One more time” is the loop’s fingerprint. There is no final reassurance because the relief never lasts."}, {"t": "“I care about you, so I’m going to stop checking, it keeps you stuck. If it bothers you, a dermatologist, once.”", "good": true, "fb": "Kindly declining removes the maintaining behavior while pointing to one bounded, appropriate action."}]}, {"ask": "Calmer, then: “You’d tell me if you were just saying it to make me feel better, right?”", "opts": [{"t": "“Of course! You can always ask me, anytime.”", "good": false, "fb": "“Anytime” is an open invitation for the anxiety to keep returning to you. The loop widens."}, {"t": "“I’d always be honest. And I’m still going to step back from the reassurance, because you deserve to trust your own read.”", "good": true, "fb": "You held the boundary warmly and reframed the goal toward Priya’s own tolerance, which is what actually helps."}]}]}, {"setup": "Your partner keeps seeking reassurance that you’re not about to leave the relationship, especially after minor disagreements.", "rounds": [{"ask": "After a small tiff: “You still love me, right? You’re not going to leave?”", "opts": [{"t": "“Of course I love you, I’ll never leave, I promise promise promise.”", "good": false, "fb": "The flood of promises soothes for a moment, but it teaches that reassurance is how the anxiety gets managed, so it returns after the next small friction."}, {"t": "“I love you, and a disagreement doesn’t change that. I notice these fears spike after we argue, want to look at that together?”", "good": true, "fb": "You gave genuine warmth once, then turned toward the pattern instead of feeding it. Naming the trigger beats endless reassurance."}]}, {"ask": "“But how do I KNOW you won’t change your mind? Just say it again.”", "opts": [{"t": "Say it again, and again, until they calm down.", "good": false, "fb": "Repeating on demand makes you the anxiety’s off-switch. The calm is real but brief, and the demand grows."}, {"t": "“You can’t know the future for certain, and neither can I, that’s true of every relationship. I’m choosing you, and I’d rather build trust than trade guarantees.”", "good": true, "fb": "You normalized uncertainty rather than trying to erase it. Tolerating not-knowing is the skill; certainty-on-demand is the trap."}]}, {"ask": "“So you can’t even promise? That makes me feel worse.”", "opts": [{"t": "“Okay okay, I promise 100 percent forever, feel better?”", "good": false, "fb": "Caving to the distress restores the loop you just started to break. The lesson the anxiety takes: escalate and the reassurance comes."}, {"t": "“I get that it’s uncomfortable. I’m here, I’m not going anywhere today, and I don’t want to feed a cycle that keeps you scared. Can we sit with this together?”", "good": true, "fb": "You validated the discomfort, offered presence rather than a guarantee, and named the cycle. That is the reassurance-resistant move."}]}]}, {"setup": "You supervise a bright new hire, Dev, who checks with you before nearly every small decision, worried about making a mistake.", "rounds": [{"ask": "“Before I send this, can you confirm the email sounds okay? I don’t want to mess up.”", "opts": [{"t": "“Yes it’s perfect, send it. Always run them by me first if unsure.”", "good": false, "fb": "You relieved the worry and built the checking into the workflow. Now every email routes through you."}, {"t": "“I trust your judgment here. Send it, and we’ll review patterns at our weekly one-on-one.”", "good": true, "fb": "You handed the decision back and bounded feedback to a set time, which builds independent judgment instead of dependence."}]}, {"ask": "An hour later: “One more, is this spreadsheet formatted the way you’d want?”", "opts": [{"t": "Check it line by line right away.", "good": false, "fb": "Immediate detailed checking rewards the asking with exactly what it wants. The requests keep coming."}, {"t": "“Give it your best and send it. If something’s off we’ll both learn, low stakes.”", "good": true, "fb": "You made a small mistake safe, the antidote to reassurance-seeking is tolerable uncertainty with room to learn."}]}, {"ask": "Quietly: “I just really don’t want to disappoint you.”", "opts": [{"t": "“You won’t if you keep checking with me, that’s what I’m here for.”", "good": false, "fb": "You just named checking-with-you as the safety behavior, cementing the loop and the dependence under it."}, {"t": "“I get that fear. What would help most is trusting your calls, I’d rather you act and occasionally miss than check everything.”", "good": true, "fb": "You addressed the underlying fear and permitted imperfection, which dissolves the need to seek reassurance."}]}]}, {"setup": "Your teenage sibling with contamination fears keeps asking you to confirm their hands, and various surfaces, are 'clean enough.'", "rounds": [{"ask": "“I washed twice but are my hands actually clean? Can you check?”", "opts": [{"t": "Inspect their hands: “Yep, spotless, you’re good.”", "good": false, "fb": "Your inspection becomes part of the ritual. The certainty you provide is the reward that keeps the checking alive."}, {"t": "“I’m not going to be the one who decides they’re clean, because that keeps the worry going. You washed, that’s enough for now.”", "good": true, "fb": "Declining to be the certainty-checker interrupts the compulsion’s loop. Ending the ritual is how the fear weakens."}]}, {"ask": "“But what if I touched something bad and didn’t notice? Just tell me it’s fine.”", "opts": [{"t": "“It’s fine, you didn’t touch anything bad, I promise.”", "good": false, "fb": "Reassurance about the feared 'what if' teaches that the doubt is worth chasing. It always regenerates a new what-if."}, {"t": "“Not knowing for sure is exactly the feeling to practice sitting with. I know it’s hard. I’m here with you while it passes.”", "good": true, "fb": "You reframed the discomfort as the thing to tolerate and offered support without supplying certainty. That is the treatment stance."}]}, {"ask": "“Can you at least watch me wash one more time so I know I did it right?”", "opts": [{"t": "Watch and confirm each step.", "good": false, "fb": "Supervising the wash folds you into the ritual. Your presence-as-checker becomes a new safety behavior to depend on."}, {"t": "“I love you too much to help the OCD run the show. Let’s do something else together instead, right now.”", "good": true, "fb": "You named the disorder, declined the ritual, and redirected to connection. Refusing to accommodate is how families help, gently."}]}]}];
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var state={sc:null,idx:0,answered:false,good:0};
+var last=-1;
+function pick(){var i=Math.floor(Math.random()*SCEN.length);if(SCEN.length>1&&i===last)i=(i+1)%SCEN.length;last=i;return i;}
+function start(i){state.sc=SCEN[i];state.idx=0;state.answered=false;state.good=0;render();window.scrollTo({top:0,behavior:"smooth"});}
+function render(){
+ var p=document.getElementById("panel");p.innerHTML="";
+ if(!state.sc){
+   p.appendChild(el("div","progress","Choose a scenario, or take a random one:"));
+   var pk=el("div","pick");
+   SCEN.forEach(function(s,i){var b=el("button","pickbtn",esc(s.setup));b.addEventListener("click",function(){start(i);});pk.appendChild(b);});
+   p.appendChild(pk);
+   var r=el("button","btn","&#127922; Random scenario");r.addEventListener("click",function(){start(pick());});p.appendChild(r);
+   p.appendChild(el("div","selfnote","Nothing here is saved or transmitted. It runs on your screen."));
+   return;
+ }
+ var sc=state.sc;
+ if(state.idx>=sc.rounds.length){
+   var msg=state.good>=2?"<b>You resisted the trap.</b> Notice how counterintuitive it felt: the kind-seeming move (reassure) maintains the anxiety, and the slightly harder move (allow the uncertainty) is the one that helps. Reassurance relieves the giver’s discomfort as much as the seeker’s, which is why it is so tempting.":"<b>The trap held.</b> Each reassurance made sense as kindness, yet together they trained the very anxiety you were trying to soothe. The way out is warm refusal to supply certainty, paired with support for tolerating the not-knowing.";
+   p.appendChild(el("div","final",msg));
+   var again=el("button","btn","Another scenario");again.addEventListener("click",function(){start(pick());});
+   var menu=el("button","btn secondary","Back to list");menu.style.marginLeft="8px";menu.addEventListener("click",function(){state.sc=null;render();window.scrollTo({top:0,behavior:"smooth"});});
+   p.appendChild(again);p.appendChild(menu);
+   p.appendChild(el("div","selfnote","Nothing here is saved or transmitted. The value is noticing the inversion, not the score."));
+   return;
+ }
+ p.appendChild(el("div","scene","<b>Scenario:</b> "+esc(sc.setup)));
+ p.appendChild(el("div","progress","Round "+(state.idx+1)+" of "+sc.rounds.length));
+ var r=sc.rounds[state.idx];
+ p.appendChild(el("div","scene",esc(r.ask)));
+ p.appendChild(el("div","prompt","How do you respond?"));
+ var opts=el("div","opts");
+ r.opts.forEach(function(o){
+   var b=el("button","opt",esc(o.t));b.type="button";
+   b.addEventListener("click",function(){
+     if(state.answered)return;state.answered=true;if(o.good)state.good++;
+     [].forEach.call(opts.children,function(c){c.disabled=true;});
+     b.classList.add(o.good?"correct-pick":"wrong-pick");
+     [].forEach.call(opts.children,function(c){if(c!==b&&!c.classList.contains("wrong-pick"))c.classList.add("dim");});
+     var fb=el("div","fb "+(o.good?"ok":"no"),(o.good?"<b>That resists the trap.</b> ":"<b>That feeds the trap.</b> ")+esc(o.fb));
+     p.insertBefore(fb,next);next.classList.remove("hidden");
+   });
+   opts.appendChild(b);
+ });
+ p.appendChild(opts);
+ var next=el("button","btn hidden",state.idx===sc.rounds.length-1?"See what the reassurance did":"Next round →");
+ next.addEventListener("click",function(){state.idx++;state.answered=false;render();window.scrollTo({top:0,behavior:"smooth"});});
+ p.appendChild(next);
+}
+render();
+</script></body></html>
