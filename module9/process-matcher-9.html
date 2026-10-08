@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Process Matcher</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Process Matcher: Name, Rank, Match, Track</h1>
+    <p class="sub"></p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "multi",
+  "title": "Case 1: name the processes",
+  "short": "C1 processes",
+  "tag": "Which processes are present?",
+  "case": {
+   "title": "Case 1: Aaliyah, 19",
+   "text": "Before in-class presentations Aaliyah’s heart pounds and she thinks, “I am going to pass out and everyone will see.” She has dropped two courses to avoid presenting. On the occasions when she must present, she stands near the door, rehearses every line, and keeps a water bottle in hand."
+  },
+  "intro": "<b>How this works.<\/b> For each of four cases, first name the processes that are running, then rank them, choose the matched plan, and decide what to track. A diagnosis is a starting point, and a treatment plan needs more than a label.",
+  "prompt": "Select every process present in this case.",
+  "doThis": "Select all that apply, then check. Not every process appears in every case.",
+  "options": [
+   {
+    "id": "threat",
+    "label": "Threat overestimation"
+   },
+   {
+    "id": "unc",
+    "label": "Intolerance of uncertainty"
+   },
+   {
+    "id": "avoid",
+    "label": "Avoidance and safety behaviors"
+   },
+   {
+    "id": "withd",
+    "label": "Behavioral withdrawal"
+   },
+   {
+    "id": "triad",
+    "label": "Negative cognitive triad"
+   },
+   {
+    "id": "rum",
+    "label": "Rumination"
+   },
+   {
+    "id": "emo",
+    "label": "Emotion dysregulation"
+   },
+   {
+    "id": "inter",
+    "label": "An interpersonal pattern"
+   }
+  ],
+  "truth": [
+   "threat",
+   "avoid"
+  ],
+  "reasons": {
+   "threat": "She rates fainting and public humiliation as both likely and catastrophic.",
+   "avoid": "Dropping courses is avoidance. The door seat, the rehearsal, and the water bottle are safety behaviors, and she credits them for getting her through."
+  },
+  "src": "Module 9",
+  "revisit": "Reread “Working Out Which Processes Are Active”"
+ },
+ {
+  "type": "mcq",
+  "title": "Case 1: rank, match, track",
+  "short": "C1 match",
+  "tag": "Mechanism-treatment matching",
+  "case": {
+   "title": "Case 1: Aaliyah, 19",
+   "text": "Before in-class presentations Aaliyah’s heart pounds and she thinks, “I am going to pass out and everyone will see.” She has dropped two courses to avoid presenting. On the occasions when she must present, she stands near the door, rehearses every line, and keeps a water bottle in hand."
+  },
+  "doThis": "Choose the best answer for each decision.",
+  "src": "Module 9, Mechanism-Treatment Matching",
+  "items": [
+   {
+    "prompt": "Which process is the best first target?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The negative cognitive triad, because her thoughts about herself are the root cause of the problem"
+     },
+     {
+      "id": "b",
+      "text": "Avoidance and safety behaviors, because exposure that drops them tests her prediction directly"
+     },
+     {
+      "id": "c",
+      "text": "Behavioral withdrawal, because dropping courses is how depression usually begins in students"
+     },
+     {
+      "id": "d",
+      "text": "Intolerance of uncertainty, because her main difficulty is not knowing outcomes in advance"
+     }
+    ],
+    "correct": "b",
+    "why": "Her predicted catastrophe is only testable if she approaches presentations without the safety behaviors. Avoidance and safety behaviors are the process that keeps the prediction from ever being disproven.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "Which plan best matches that process?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Schedule rewarding weekend activities to lift her mood before she returns to any presentation"
+     },
+     {
+      "id": "b",
+      "text": "Teach relaxation so that she feels calm before each presentation and can go ahead exactly as before"
+     },
+     {
+      "id": "c",
+      "text": "State the prediction, present without rehearsing or an exit seat, and repeat it in varied settings"
+     },
+     {
+      "id": "d",
+      "text": "Move her to courses without presentations so that she can stay in school while her anxiety settles"
+     }
+    ],
+    "correct": "c",
+    "why": "A mechanism-matched plan is exposure designed for inhibitory learning. Relaxation can become another safety behavior, and moving to easier courses is more avoidance.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "What should be tracked to know whether the plan is working?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Only her overall anxiety score at the end of each month, since that is the symptom she came in for"
+     },
+     {
+      "id": "b",
+      "text": "How many hours she spends practicing relaxation each day, since that shows her commitment"
+     },
+     {
+      "id": "c",
+      "text": "Her grade point average across the semester, since grades reflect whether treatment is working"
+     },
+     {
+      "id": "d",
+      "text": "Presentations avoided or completed and which safety behaviors were used, alongside fear ratings"
+     }
+    ],
+    "correct": "d",
+    "why": "The mechanism usually changes before symptoms do, so track the process being changed, which means approach, avoidance, and safety behaviors.",
+    "src": "Module 9, Watching the Mechanism as Well as the Symptom"
+   }
+  ],
+  "revisit": "Reread “Mechanism-Treatment Matching.”"
+ },
+ {
+  "type": "multi",
+  "title": "Case 2: name the processes",
+  "short": "C2 processes",
+  "tag": "Which processes are present?",
+  "case": {
+   "title": "Case 2: Ben, 38",
+   "text": "Ben re-reads every email five times before sending it, asks his wife “did I say something wrong?” several times a day, and searches symptoms online late at night. He says he cannot decide anything until he is “completely sure.”"
+  },
+  "intro": "",
+  "prompt": "Select every process present in this case.",
+  "doThis": "Select all that apply, then check. Not every process appears in every case.",
+  "options": [
+   {
+    "id": "threat",
+    "label": "Threat overestimation"
+   },
+   {
+    "id": "unc",
+    "label": "Intolerance of uncertainty"
+   },
+   {
+    "id": "avoid",
+    "label": "Avoidance and safety behaviors"
+   },
+   {
+    "id": "withd",
+    "label": "Behavioral withdrawal"
+   },
+   {
+    "id": "triad",
+    "label": "Negative cognitive triad"
+   },
+   {
+    "id": "rum",
+    "label": "Rumination"
+   },
+   {
+    "id": "emo",
+    "label": "Emotion dysregulation"
+   },
+   {
+    "id": "inter",
+    "label": "An interpersonal pattern"
+   }
+  ],
+  "truth": [
+   "unc",
+   "avoid"
+  ],
+  "reasons": {
+   "unc": "“Completely sure” is the demand. Not knowing is itself unbearable, so he tries to eliminate it.",
+   "avoid": "Re-reading, symptom searches, and reassurance requests are safety behaviors. They soothe briefly and keep the doubt alive."
+  },
+  "src": "Module 9",
+  "revisit": "Reread “Working Out Which Processes Are Active”"
+ },
+ {
+  "type": "mcq",
+  "title": "Case 2: rank, match, track",
+  "short": "C2 match",
+  "tag": "Mechanism-treatment matching",
+  "case": {
+   "title": "Case 2: Ben, 38",
+   "text": "Ben re-reads every email five times before sending it, asks his wife “did I say something wrong?” several times a day, and searches symptoms online late at night. He says he cannot decide anything until he is “completely sure.”"
+  },
+  "doThis": "Choose the best answer for each decision.",
+  "src": "Module 9, Mechanism-Treatment Matching",
+  "items": [
+   {
+    "prompt": "Which process is the best first target?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Behavioral withdrawal, because his activity level has fallen sharply since the problem began"
+     },
+     {
+      "id": "b",
+      "text": "Intolerance of uncertainty, because checking and reassurance are attempts to eliminate not-knowing"
+     },
+     {
+      "id": "c",
+      "text": "Threat overestimation of a single feared object, because his fear has one clear and specific target"
+     },
+     {
+      "id": "d",
+      "text": "The negative cognitive triad, because his statements show deep hopelessness about the future"
+     }
+    ],
+    "correct": "b",
+    "why": "His behaviors serve one belief, that not knowing is dangerous. That belief acts across many topics, which is why arguing with each worry never ends.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "Which plan best matches that process?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Practice leaving small uncertainties unresolved and resisting checking and reassurance, step by step"
+     },
+     {
+      "id": "b",
+      "text": "Have his wife answer every question fully each time, so that his doubts are settled early on in the day"
+     },
+     {
+      "id": "c",
+      "text": "Give him a fixed schedule of checks so the reassurance is predictable and fully under his control"
+     },
+     {
+      "id": "d",
+      "text": "Argue with each individual worry using logic until he agrees that the feared outcome is unlikely"
+     }
+    ],
+    "correct": "a",
+    "why": "The mechanism-matched move is exposure aimed at uncertainty, building the learning that “I can not know and still function.” Arguing worry by worry is whack-a-mole, and supplying reassurance feeds the loop.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "What should be tracked to know whether the plan is working?",
+    "options": [
+     {
+      "id": "a",
+      "text": "How often he checks, searches, or asks for reassurance"
+     },
+     {
+      "id": "b",
+      "text": "His resting heart rate measured across several days of the week"
+     },
+     {
+      "id": "c",
+      "text": "How many decisions he completes with total certainty each week"
+     },
+     {
+      "id": "d",
+      "text": "How many worries he can name and list in a single day"
+     }
+    ],
+    "correct": "a",
+    "why": "The process being changed is the checking and reassurance-seeking, and a falling count is an early sign that the process is shifting.",
+    "src": "Module 9, Watching the Mechanism as Well as the Symptom"
+   }
+  ],
+  "revisit": "Reread “Mechanism-Treatment Matching.”"
+ },
+ {
+  "type": "multi",
+  "title": "Case 3: name the processes",
+  "short": "C3 processes",
+  "tag": "Which processes are present?",
+  "case": {
+   "title": "Case 3: Noor, 26",
+   "text": "Since being laid off, Noor has stopped painting and seeing friends and spends most days in bed. She says, “Nothing ever works out for me and it never will,” and lies awake replaying the layoff, asking what she did wrong."
+  },
+  "intro": "",
+  "prompt": "Select every process present in this case.",
+  "doThis": "Select all that apply, then check. Not every process appears in every case.",
+  "options": [
+   {
+    "id": "threat",
+    "label": "Threat overestimation"
+   },
+   {
+    "id": "unc",
+    "label": "Intolerance of uncertainty"
+   },
+   {
+    "id": "avoid",
+    "label": "Avoidance and safety behaviors"
+   },
+   {
+    "id": "withd",
+    "label": "Behavioral withdrawal"
+   },
+   {
+    "id": "triad",
+    "label": "Negative cognitive triad"
+   },
+   {
+    "id": "rum",
+    "label": "Rumination"
+   },
+   {
+    "id": "emo",
+    "label": "Emotion dysregulation"
+   },
+   {
+    "id": "inter",
+    "label": "An interpersonal pattern"
+   }
+  ],
+  "truth": [
+   "withd",
+   "triad",
+   "rum"
+  ],
+  "reasons": {
+   "withd": "She has stopped painting and seeing friends, which removes the rewards that would lift her mood.",
+   "triad": "“Nothing ever works out for me” (world) and “it never will” (future) present as plain truth.",
+   "rum": "Replaying the layoff and asking what she did wrong is repetitive, passive dwelling that links the thinking and the withdrawal."
+  },
+  "src": "Module 9",
+  "revisit": "Reread “Working Out Which Processes Are Active”"
+ },
+ {
+  "type": "mcq",
+  "title": "Case 3: rank, match, track",
+  "short": "C3 match",
+  "tag": "Mechanism-treatment matching",
+  "case": {
+   "title": "Case 3: Noor, 26",
+   "text": "Since being laid off, Noor has stopped painting and seeing friends and spends most days in bed. She says, “Nothing ever works out for me and it never will,” and lies awake replaying the layoff, asking what she did wrong."
+  },
+  "doThis": "Choose the best answer for each decision.",
+  "src": "Module 9, Mechanism-Treatment Matching",
+  "items": [
+   {
+    "prompt": "Which process is the best first target?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Emotion dysregulation, because her main difficulty is intense swings in feeling that she cannot manage"
+     },
+     {
+      "id": "b",
+      "text": "Intolerance of uncertainty, because the layoff has left her unsure about what comes next in her life"
+     },
+     {
+      "id": "c",
+      "text": "Threat overestimation, because she predicts further catastrophes in the months that lie ahead"
+     },
+     {
+      "id": "d",
+      "text": "Behavioral withdrawal, because rebuilding rewarding activity weakens the other processes most directly"
+     }
+    ],
+    "correct": "d",
+    "why": "Withdrawal removes the reward that would give the triad contradicting evidence and leaves room for rumination. Reactivating rewarding activity addresses withdrawal, which feeds both rumination and low mood.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "Which plan best matches that process?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Behavioral activation: small scheduled activities, acting first, then testing her beliefs"
+     },
+     {
+      "id": "b",
+      "text": "Reassurance that the job market will recover and that things are certain to work out soon"
+     },
+     {
+      "id": "c",
+      "text": "Exposure to a feared situation until her anxiety has fallen to zero while she is in the room"
+     },
+     {
+      "id": "d",
+      "text": "Relaxation training to settle her body before any change in what she does during the day"
+     }
+    ],
+    "correct": "a",
+    "why": "Activation targets withdrawal directly and gives the triad contradicting evidence. Reassurance does not change the triad, and waiting to feel better first reverses cause and effect.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "What should be tracked to know whether the plan is working?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The number of job applications sent, since employment is the true target of the plan"
+     },
+     {
+      "id": "b",
+      "text": "Her mood alone, since activity levels only reflect effort and say little about the problem"
+     },
+     {
+      "id": "c",
+      "text": "How long she can keep herself from thinking about the layoff each evening"
+     },
+     {
+      "id": "d",
+      "text": "The number of planned activities completed each week, alongside mood ratings"
+     }
+    ],
+    "correct": "d",
+    "why": "The mechanism being changed is activity, and it usually moves before mood does. Counting what she actually did gives an early read.",
+    "src": "Module 9, Watching the Mechanism as Well as the Symptom"
+   }
+  ],
+  "revisit": "Reread “Mechanism-Treatment Matching.”"
+ },
+ {
+  "type": "multi",
+  "title": "Case 4: name the processes",
+  "short": "C4 processes",
+  "tag": "Which processes are present?",
+  "case": {
+   "title": "Case 4: Sam",
+   "text": "Sam began declining invitations and working from home because of social fears. Months later, Sam’s world is an apartment and a laptop. Friends have drifted, hobbies are gone, and mood is flat. At night Sam replays being “a failure who ruined everything,” and still dreads the few social obligations that remain."
+  },
+  "intro": "",
+  "prompt": "Select every process present in this case.",
+  "doThis": "Select all that apply, then check. Not every process appears in every case.",
+  "options": [
+   {
+    "id": "threat",
+    "label": "Threat overestimation"
+   },
+   {
+    "id": "unc",
+    "label": "Intolerance of uncertainty"
+   },
+   {
+    "id": "avoid",
+    "label": "Avoidance and safety behaviors"
+   },
+   {
+    "id": "withd",
+    "label": "Behavioral withdrawal"
+   },
+   {
+    "id": "triad",
+    "label": "Negative cognitive triad"
+   },
+   {
+    "id": "rum",
+    "label": "Rumination"
+   },
+   {
+    "id": "emo",
+    "label": "Emotion dysregulation"
+   },
+   {
+    "id": "inter",
+    "label": "An interpersonal pattern"
+   }
+  ],
+  "truth": [
+   "threat",
+   "avoid",
+   "withd",
+   "triad",
+   "rum"
+  ],
+  "reasons": {
+   "threat": "Sam predicts social judgment as likely and unbearable, which started the retreat.",
+   "avoid": "Declining invitations and working from home are avoidance that brought relief and shrank Sam’s world.",
+   "withd": "Hobbies and friendships dropped away, removing the sources of reward.",
+   "triad": "“A failure who ruined everything” is the self-view leg of the triad.",
+   "rum": "Replaying the story at night keeps the thinking and the withdrawal feeding each other."
+  },
+  "src": "Module 9",
+  "revisit": "Reread “Working Out Which Processes Are Active”"
+ },
+ {
+  "type": "mcq",
+  "title": "Case 4: rank, match, track",
+  "short": "C4 match",
+  "tag": "Mechanism-treatment matching",
+  "case": {
+   "title": "Case 4: Sam",
+   "text": "Sam began declining invitations and working from home because of social fears. Months later, Sam’s world is an apartment and a laptop. Friends have drifted, hobbies are gone, and mood is flat. At night Sam replays being “a failure who ruined everything,” and still dreads the few social obligations that remain."
+  },
+  "doThis": "Choose the best answer for each decision.",
+  "src": "Module 9, Mechanism-Treatment Matching",
+  "items": [
+   {
+    "prompt": "Which decision would address the most processes at once?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Focus on rumination alone, since it is the only process in the case that clearly appears at night"
+     },
+     {
+      "id": "b",
+      "text": "A graded return to approaching life, since avoidance and withdrawal share the same behavioral solution"
+     },
+     {
+      "id": "c",
+      "text": "Treat the anxiety and the depression one at a time, finishing a full anxiety protocol before touching mood"
+     },
+     {
+      "id": "d",
+      "text": "Argue with the triad first, because thoughts must always change before behavior can be expected to"
+     }
+    ],
+    "correct": "b",
+    "why": "Anxious avoidance and depressive withdrawal share a behavioral component, so one intervention such as behavioral activation can address both processes.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "Which plan best matches the case?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A standard depression protocol alone, because mood is the more severe of the two current problems"
+     },
+     {
+      "id": "b",
+      "text": "A standard social anxiety protocol alone, because that diagnosis was the first one that Sam received"
+     },
+     {
+      "id": "c",
+      "text": "Gentle behavioral activation with graded social approach, then exposure to specific fears when ready"
+     },
+     {
+      "id": "d",
+      "text": "Relaxation training, so that Sam feels calm enough to start re-engaging with others at a later date"
+     }
+    ],
+    "correct": "c",
+    "why": "Matching identifies the processes present and selects where to intervene first. Choosing one label and one protocol overlooks the way the processes maintain each other.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "What should be tracked to know whether the plan is working?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Fear ratings only, since social anxiety was the first problem to appear in this case file"
+     },
+     {
+      "id": "b",
+      "text": "The number of days Sam leaves the apartment each week, with no other measure of any kind at all"
+     },
+     {
+      "id": "c",
+      "text": "Activities completed and approach steps taken weekly, with mood and fear ratings secondary"
+     },
+     {
+      "id": "d",
+      "text": "Mood ratings only, since depression is the more disabling problem that Sam now has to manage"
+     }
+    ],
+    "correct": "c",
+    "why": "Two processes are involved, so the process measures are activity and approach. Symptom ratings can follow, but they change later.",
+    "src": "Module 9, Watching the Mechanism as Well as the Symptom"
+   }
+  ],
+  "revisit": "Reread “Mechanism-Treatment Matching.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>The sequence to carry forward:<\/b> name the processes that are actually running, rank them by which one, if disrupted, would loosen the others fastest, choose the tool built for that process, and track the process alongside the symptom to see whether it is working. Most real people run several processes at once, which is why effective treatment often combines components.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. All four people are invented composites."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var last=(st.type==="classify"||st.type==="mcq")?(S.i>=st.items.length-1):true;
+  if(!last) return "Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+/* ---- classify ---- */
+function rClassify(st){
+  var it=st.items[S.i], ans=S.picked!==null;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+', item '+(S.i+1)+' of '+st.items.length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=st.items[S.i], ans=S.picked!==null;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+', question '+(S.i+1)+' of '+st.items.length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  it.options.forEach(function(o){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+o.id.toUpperCase()+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=st.items[S.i]; if(v===it.answer) S.res[S.k].score+=1; render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=st.items[S.i]; if(v===q.correct) S.res[S.k].score+=1; render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<st.items.length-1){ S.i++; S.picked=null; render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triad Mapper: Elena</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Mapping the Negative Cognitive Triad</h1>
+    <p class="sub">Follow one depression case through the three views, the self-confirming loop, and the tools that match each part. About fifteen minutes.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Name the three views",
+  "short": "Name the views",
+  "tag": "Elena’s journal",
+  "case": {
+   "title": "Case: Elena, 34",
+   "text": "Elena is an accountant who was laid off and went through a breakup in the same season. Over several weeks she has kept a journal. Every entry below is hers, and each one is a conclusion that feels to her like plain truth."
+  },
+  "intro": "<b>Step 1.<\/b> The negative cognitive triad is a pattern of negative belief in three directions at once. Sort each entry from Elena’s journal into the direction it points.",
+  "doThis": "Choose the direction the belief points, toward the self, toward the world and current experience, or toward the future.",
+  "cats": [
+   {
+    "id": "self",
+    "label": "About the self"
+   },
+   {
+    "id": "world",
+    "label": "About the world and experience"
+   },
+   {
+    "id": "future",
+    "label": "About the future"
+   }
+  ],
+  "src": "Module 9, Negative cognitive triad",
+  "items": [
+   {
+    "text": "“I’ll be alone like this forever.”",
+    "answer": "future",
+    "why": "A forecast. It feels like sober truth, so it is hard to argue with from the inside."
+   },
+   {
+    "text": "“I’m useless. Everyone else manages and I’m the failure.”",
+    "answer": "self",
+    "why": "A judgment about her own worth and competence. Self-views like this are the self component of the triad."
+   },
+   {
+    "text": "“There is something fundamentally wrong with me.”",
+    "answer": "self",
+    "why": "A sweeping verdict on the self, stated as fact."
+   },
+   {
+    "text": "“My friends only invite me out of pity.”",
+    "answer": "world",
+    "why": "A reading of other people and of her experience with them. Ambiguous events get read as confirmation of the bleak story."
+   },
+   {
+    "text": "“I’m a burden to my sister.”",
+    "answer": "self",
+    "why": "A statement about what she is."
+   },
+   {
+    "text": "“Nothing good ever happens to me.”",
+    "answer": "world",
+    "why": "A claim about her current experience and the world she lives in. The word “ever” screens out any counter-evidence."
+   },
+   {
+    "text": "“Everyone at my old firm is glad I’m gone.”",
+    "answer": "world",
+    "why": "A belief about how the world and the people in it treat her, built from an event that could be read many ways."
+   },
+   {
+    "text": "“Things will never get better.”",
+    "answer": "future",
+    "why": "This is a forecast about the future stated with total certainty."
+   },
+   {
+    "text": "“I’ll never find another job.”",
+    "answer": "future",
+    "why": "A prediction about what lies ahead. It is about the future even though it mentions work, which is part of her experience."
+   }
+  ],
+  "revisit": "Reread “Negative cognitive triad” and “Why the Triad Feels Like the Truth.”"
+ },
+ {
+  "type": "order",
+  "title": "Trace the self-confirming loop",
+  "short": "Trace the loop",
+  "tag": "Triad + withdrawal + rumination",
+  "case": {
+   "title": "Case: Elena, 34",
+   "text": "Elena has just thought, “There is no point in trying.” Follow what that belief leads to."
+  },
+  "intro": "<b>Step 2.<\/b> The triad does not stay in the mind. It locks together with behavior and rumination into a loop that confirms itself. Build the sequence the module describes.",
+  "prompt": "Put the five links in order, starting with the future belief.",
+  "doThis": "Select the links one at a time, in the order the loop runs. Undo if you change your mind.",
+  "nodes": [
+   {
+    "id": "c",
+    "text": "Missing evidence: she gets none of the pleasure, accomplishment, or connection that activity would have brought."
+   },
+   {
+    "id": "e",
+    "text": "Mood sinks, and rumination replays “what is wrong with me?”, which strengthens the belief about herself."
+   },
+   {
+    "id": "a",
+    "text": "Future belief: “There is no point in trying.”"
+   },
+   {
+    "id": "b",
+    "text": "Behavior: Elena stays in bed and cancels her plans."
+   },
+   {
+    "id": "d",
+    "text": "World belief “confirmed”: “See, nothing good ever happens.”"
+   }
+  ],
+  "correct": [
+   "a",
+   "b",
+   "c",
+   "d",
+   "e"
+  ],
+  "hintWrong": "Start with the future belief and ask what it justifies doing. Then ask what that behavior removes, and what is left unchallenged once the evidence is missing.",
+  "why": "This is the module’s core loop for depression. “There is no point in trying” (future) justifies staying in bed (withdrawal), which removes the rewarding experiences that could have challenged “nothing good ever happens” (world). Mood sinks, rumination continues, and the belief about the self strengthens, which begins the next round. Every link supplies evidence for the others, so the loop does not correct itself and the belief strengthens.",
+  "src": "Module 9, Negative cognitive triad and The Depression Maintenance Loop",
+  "revisit": "Reread “The Depression Maintenance Loop.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Match the tool to the target",
+  "short": "Match tools",
+  "tag": "Mechanism-treatment matching",
+  "case": {
+   "title": "Case: Elena, 34",
+   "text": "Elena stays in bed most days, tells herself that her friends only invite her out of pity, and has begun to say that she is “fundamentally wrong” and will “always be alone.”"
+  },
+  "intro": "<b>Step 3.<\/b> Different parts of the loop call for different tools. Match each target with the move that reaches it.",
+  "doThis": "Choose the response that fits the target process.",
+  "src": "Module 9, Depression, Up Close, and Module 4, three layers of thinking",
+  "items": [
+   {
+    "prompt": "Elena stays in bed most of the day and has cancelled her plans. Which tool targets this process most directly?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Behavioral activation, with small scheduled rewarding activities and action before mood"
+     },
+     {
+      "id": "b",
+      "text": "A thought record on its own, on the grounds that behavior should not change until thoughts do"
+     },
+     {
+      "id": "c",
+      "text": "Waiting until her motivation returns on its own, then drawing up a full weekly schedule"
+     },
+     {
+      "id": "d",
+      "text": "Cheerful reassurance that things will improve soon, repeated until she comes to believe it"
+     }
+    ],
+    "correct": "a",
+    "why": "Withdrawal is the behavioral process, and activation rebuilds the reward it removed. Waiting for motivation reverses cause and effect, and a full schedule makes failure likely.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "Elena says, “My friends only invite me out of pity.” Which response treats this as something to test?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Agree that it may well be true, since depression gives an accurate view of how others feel"
+     },
+     {
+      "id": "b",
+      "text": "Ask her to replace the thought with “my friends adore me” whenever it comes up until it fades"
+     },
+     {
+      "id": "c",
+      "text": "Tell her that her friends obviously care about her, and that she should stop doubting them"
+     },
+     {
+      "id": "d",
+      "text": "Treat it as a prediction and check it against a record of what happens when she accepts an invitation"
+     }
+    ],
+    "correct": "d",
+    "why": "It treats the conclusion as a hypothesis and gathers real evidence, often through renewed activity, so the biased system’s screening is exposed.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "Over several weeks, Elena’s statements settle into “I am fundamentally wrong” and “I will always be alone.” What work do beliefs this deep need?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A daily rating of how strongly she believes it, recorded with no other change to her routine or to what she does"
+     },
+     {
+      "id": "b",
+      "text": "Avoiding the topic entirely until her activity level has risen above where it was before the layoff, and only then returning to the belief"
+     },
+     {
+      "id": "c",
+      "text": "Repeated, structured testing of the belief against evidence over time, through planned experiences that give the evidence something to say"
+     },
+     {
+      "id": "d",
+      "text": "A single insightful conversation that finds the belief’s origin, after which the belief should gradually fade on its own without further work"
+     }
+    ],
+    "correct": "c",
+    "why": "Surface automatic thoughts and deeper beliefs are different layers (Module 4). Deeper beliefs are held in place by the same screening, so they need repeated tests and new experiences. A one-time insight or passive monitoring will not be enough.",
+    "src": "Module 4, three layers and Module 9, Why the Triad Feels Like the Truth"
+   }
+  ],
+  "revisit": "Reread the negative cognitive triad section of the reading and the Module 4 layers."
+ },
+ {
+  "type": "mcq",
+  "title": "Choose a first response",
+  "short": "First response",
+  "tag": "Applying it",
+  "case": {
+   "title": "Case: Elena, 34",
+   "text": "In a first session, Elena says quietly, “Nothing will ever get better.”"
+  },
+  "intro": "<b>Step 4.<\/b> One last decision: what you say next.",
+  "doThis": "Pick the first response most consistent with the module.",
+  "src": "Module 9, Why the Triad Feels Like the Truth and Pleasure and Mastery",
+  "items": [
+   {
+    "prompt": "Which first response best fits what the module teaches?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Point out that this is a distorted thought and ask her to stop having thoughts like it before the next session"
+     },
+     {
+      "id": "b",
+      "text": "Acknowledge the feeling, name the forecast as something to test, and propose one small activity to gather evidence"
+     },
+     {
+      "id": "c",
+      "text": "Explain that attitude determines outcome, and encourage her to try thinking more positively about the future each day"
+     },
+     {
+      "id": "d",
+      "text": "Promise her that things will definitely improve within a few weeks if she keeps attending sessions and trying hard"
+     }
+    ],
+    "correct": "b",
+    "why": "Cheerful slogans and promises do not alter a triad that presents itself as truth, and telling her to stop the thought dismisses her. A small planned activity creates the real evidence the biased system has been screening out.",
+    "src": "Module 9"
+   }
+  ],
+  "revisit": "Reread “Why the Triad Feels Like the Truth.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>The pattern to carry forward:<\/b> the negative cognitive triad is not pessimism a person can choose to drop. It locks with withdrawal and rumination into a loop in which every link supplies evidence for the others. Behavioral activation reaches the withdrawal and gives the beliefs real evidence to meet. Cognitive work treats the conclusions as hypotheses to test. Both are matched to a mechanism, not to a label.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Elena is an invented composite."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var last=(st.type==="classify"||st.type==="mcq")?(S.i>=st.items.length-1):true;
+  if(!last) return "Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+/* ---- classify ---- */
+function rClassify(st){
+  var it=st.items[S.i], ans=S.picked!==null;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+', item '+(S.i+1)+' of '+st.items.length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=st.items[S.i], ans=S.picked!==null;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+', question '+(S.i+1)+' of '+st.items.length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  it.options.forEach(function(o){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+o.id.toUpperCase()+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=st.items[S.i]; if(v===it.answer) S.res[S.k].score+=1; render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=st.items[S.i]; if(v===q.correct) S.res[S.k].score+=1; render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<st.items.length-1){ S.i++; S.picked=null; render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

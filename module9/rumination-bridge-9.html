@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rumination Bridge: Mateo</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Rumination as a Bridge</h1>
+    <p class="sub">Follow how rumination links negative thinking to withdrawal, compare it with reappraisal, and practice interrupting it.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Label the thinking",
+  "short": "Label it",
+  "tag": "Mateo’s night",
+  "case": {
+   "title": "Case: Mateo, 22",
+   "text": "Mateo failed a chemistry exam last week. At night he replays it for hours. Since then he has skipped lab sections and stopped going to basketball with his roommates."
+  },
+  "intro": "<b>Step 1.<\/b> Rumination, worry, and reflection are cousins that feel alike from the inside. Sort each thought by what it does.",
+  "doThis": "Label each thought as repetitive dwelling on the past and the self, a future-focused “what if,” or thinking that moves toward a plan.",
+  "cats": [
+   {
+    "id": "rum",
+    "label": "Rumination"
+   },
+   {
+    "id": "wor",
+    "label": "Worry"
+   },
+   {
+    "id": "ref",
+    "label": "Reflection (moves toward a plan)"
+   }
+  ],
+  "src": "Module 9, Where Anxiety and Depression Overlap and Module 7, rumination and reflection",
+  "items": [
+   {
+    "text": "“Why can’t I just get over it? Other people don’t fall apart over a grade.”",
+    "answer": "rum",
+    "why": "An unanswerable question plus self-criticism, circling the distress itself while doing nothing about it."
+   },
+   {
+    "text": "“What would I do differently, and who could go over the material with me?”",
+    "answer": "ref",
+    "why": "A concrete “how can I address this?” question that leads to a next step."
+   },
+   {
+    "text": "“If I book the study group for Thursday, what do I need to prepare first?”",
+    "answer": "ref",
+    "why": "A plan in motion. It is thinking that is working toward action."
+   },
+   {
+    "text": "“What if I fail the next exam too and lose my scholarship?”",
+    "answer": "wor",
+    "why": "Future-focused “what if.” Worry rehearses what might go wrong, where rumination replays what already did."
+   },
+   {
+    "text": "“Which topics did I actually miss, and when did I start falling behind?”",
+    "answer": "ref",
+    "why": "Specific, answerable questions that point toward understanding."
+   },
+   {
+    "text": "“What if I never get into the program and everyone finds out?”",
+    "answer": "wor",
+    "why": "Another forward-looking catastrophe, with the same repetitive, unproductive quality."
+   },
+   {
+    "text": "“Why am I like this? What is wrong with me?”",
+    "answer": "rum",
+    "why": "An unanswerable “why” question about the self. Unanswerable questions about the self are characteristic of rumination."
+   },
+   {
+    "text": "“I keep replaying that moment in the exam hall again and again.”",
+    "answer": "rum",
+    "why": "Passive replaying of what went wrong. It revisits the pain without moving toward a solution."
+   }
+  ],
+  "revisit": "Reread the rumination and worry passages in “Where Anxiety and Depression Overlap” and the Module 7 contrast with reflection."
+ },
+ {
+  "type": "mcq",
+  "title": "Follow the bridge",
+  "short": "Follow the bridge",
+  "tag": "Two functions of rumination",
+  "case": {
+   "title": "Case: Mateo, 22",
+   "text": "Mateo spends ninety minutes after midnight replaying the exam and asking himself what is wrong with him."
+  },
+  "intro": "<b>Step 2.<\/b> In depression, rumination does two jobs: it fuels the negative thinking, and it feeds the behavioral withdrawal. That is why the module calls it a bridge.",
+  "doThis": "Choose what is most likely to happen next.",
+  "src": "Module 9, Negative cognitive triad and Review from Module 7",
+  "items": [
+   {
+    "prompt": "After ninety minutes of this, which thought is most likely to come next?",
+    "options": [
+     {
+      "id": "a",
+      "text": "“I should review my notes tomorrow and ask the instructor about the exam.”"
+     },
+     {
+      "id": "b",
+      "text": "“The exam was only one part of the course grade, so it will probably not matter much.”"
+     },
+     {
+      "id": "c",
+      "text": "“I am a failure, and nothing I do will ever change that for me, no matter what.”"
+     },
+     {
+      "id": "d",
+      "text": "“I wonder what would be a good time to schedule a study group this week.”"
+     }
+    ],
+    "correct": "c",
+    "why": "Rumination keeps negative material active and tilts interpretation darker, so conclusions drift toward the triad. It strengthens the negative views of self and future.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "What does Mateo’s next morning most likely look like?",
+    "options": [
+     {
+      "id": "a",
+      "text": "High energy, because replaying a problem is a way of working on it that prepares him to act the next day"
+     },
+     {
+      "id": "b",
+      "text": "Low energy and a stronger case for staying in, so skipping lab and basketball feels justified"
+     },
+     {
+      "id": "c",
+      "text": "More motivation to start studying early, because the consequences now feel clearer to him than before"
+     },
+     {
+      "id": "d",
+      "text": "Unchanged, since thinking about distress at night has no effect on what a person does the next day"
+     }
+    ],
+    "correct": "b",
+    "why": "Rumination drains the energy that might go toward activity and makes withdrawal feel justified. Withdrawal then removes reward and deepens low mood. This is the second function of rumination.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "Which statement best describes rumination’s role in the depression maintenance loop?",
+    "options": [
+     {
+      "id": "a",
+      "text": "It is a byproduct of withdrawal that has no effect on the thoughts or actions that follow it later on"
+     },
+     {
+      "id": "b",
+      "text": "It is a helpful form of processing that reduces the need for behavioral activation in most cases"
+     },
+     {
+      "id": "c",
+      "text": "It is a symptom of anxiety only, with no part in how depression is kept going or made worse over time"
+     },
+     {
+      "id": "d",
+      "text": "It links the negative thinking of depression to withdrawal, keeping both processes in place"
+     }
+    ],
+    "correct": "d",
+    "why": "Rumination links the thinking process and the behavioral process, so interrupting it reduces both.",
+    "src": "Module 9"
+   }
+  ],
+  "revisit": "Reread the rumination review in the reading."
+ },
+ {
+  "type": "classify",
+  "title": "Rumination or reappraisal?",
+  "short": "Compare",
+  "tag": "Same event, two responses",
+  "case": {
+   "title": "Case: Mateo, 22",
+   "text": "A friend has not texted Mateo back for a full day. "
+  },
+  "intro": "<b>Step 3.<\/b> Reappraisal and rumination are both responses to the same ambiguous event, but they sit at different points in the emotion sequence and leave a person in very different places.",
+  "doThis": "Decide whether each response is ruminative or reappraisal (a fair, plausible reading of the same facts).",
+  "cats": [
+   {
+    "id": "rum",
+    "label": "Ruminative response"
+   },
+   {
+    "id": "rea",
+    "label": "Reappraisal"
+   }
+  ],
+  "src": "Review from Module 7, cognitive reappraisal and rumination",
+  "items": [
+   {
+    "text": "“What would I say to a friend in this situation? Probably that one quiet day does not mean much.”",
+    "answer": "rea",
+    "why": "The outside view asks what a calm, fair observer would say, which is a reappraisal."
+   },
+   {
+    "text": "“What is wrong with me that people always drift away?”",
+    "answer": "rum",
+    "why": "A sweeping self-directed question that cannot be answered and shades toward the triad."
+   },
+   {
+    "text": "“She’s ignoring me. What did I do wrong? Why does this always happen to me?”",
+    "answer": "rum",
+    "why": "Locks in one interpretation, then circles unanswerable “why” questions about the self."
+   },
+   {
+    "text": "“I keep going over our last conversation to find the mistake I must have made.”",
+    "answer": "rum",
+    "why": "Passive replaying in search of fault. It has no destination and feeds the belief about the self."
+   },
+   {
+    "text": "“She’s probably swamped at work. She usually replies eventually.”",
+    "answer": "rea",
+    "why": "A fair, plausible reading of an ambiguous event. The same facts receive a different, plausible meaning."
+   },
+   {
+    "text": "“There are other explanations. Her phone may have died, or she may be busy. I’ll check in tomorrow if I haven’t heard.”",
+    "answer": "rea",
+    "why": "Considers other explanations for the same facts and ends in a small, concrete action."
+   }
+  ],
+  "revisit": "Reread the reappraisal and rumination sections of Module 7."
+ },
+ {
+  "type": "mcq",
+  "title": "Interrupt and redirect",
+  "short": "Interrupt it",
+  "tag": "Counter-moves",
+  "case": {
+   "title": "Case: Mateo, 22",
+   "text": "Mateo’s clinician wants to help him step off the nightly loop."
+  },
+  "intro": "<b>Step 4.<\/b> The module points to a few ways out: noticing the pattern, shifting from abstract questions to concrete ones, and pairing the shift with activity.",
+  "doThis": "Choose the best interruption and the best reason for pairing it with action.",
+  "src": "Module 9, Depression, Up Close, and review from Module 7",
+  "items": [
+   {
+    "prompt": "Which response best interrupts Mateo’s nightly rumination?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Notice “I’m ruminating again,” swap “why am I like this” for “what can I do tomorrow,” and do it"
+     },
+     {
+      "id": "b",
+      "text": "Push the thoughts out of his mind by force, and avoid thinking about the exam or the course at all"
+     },
+     {
+      "id": "c",
+      "text": "Keep analyzing until he finds the single answer that explains why he feels the way he does"
+     },
+     {
+      "id": "d",
+      "text": "Wait for the thoughts to stop on their own before he makes any plan or does anything else at all"
+     }
+    ],
+    "correct": "a",
+    "why": "Noticing the pattern, then moving from unanswerable “why” questions to answerable “how” questions that lead to action, interrupts the loop without suppressing the thoughts. Suppressing thoughts often increases them, and further analysis prolongs the loop.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "Why does it matter to pair that interruption with an activity?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Rumination and withdrawal reinforce each other, so an absorbing activity pulls attention off the loop"
+     },
+     {
+      "id": "b",
+      "text": "Activity matters mainly because it makes a person tired enough to fall asleep earlier in the evening"
+     },
+     {
+      "id": "c",
+      "text": "Activity replaces the need to notice rumination at all, so noticing the pattern can be skipped entirely"
+     },
+     {
+      "id": "d",
+      "text": "Activity is only a distraction, which should be avoided because it keeps people from processing their feelings"
+     }
+    ],
+    "correct": "a",
+    "why": "Rumination and withdrawal feed each other. Gently shifting from thinking to doing, through behavioral activation, cuts into both processes at once.",
+    "src": "Module 9"
+   }
+  ],
+  "revisit": "Reread the rumination passages in the reading."
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>The pattern to carry forward:<\/b> rumination is repetitive, passive, and past- and self-focused, and it feels like problem-solving. In depression it does two jobs at once, fueling the negative cognitive triad and draining the energy for activity, which is why it bridges the thinking process and the behavioral process. Reappraisal, noticing the pattern, and concrete “how” questions paired with action interrupt it.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Mateo is an invented composite."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var last=(st.type==="classify"||st.type==="mcq")?(S.i>=st.items.length-1):true;
+  if(!last) return "Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+/* ---- classify ---- */
+function rClassify(st){
+  var it=st.items[S.i], ans=S.picked!==null;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+', item '+(S.i+1)+' of '+st.items.length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=st.items[S.i], ans=S.picked!==null;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+', question '+(S.i+1)+' of '+st.items.length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  it.options.forEach(function(o){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+o.id.toUpperCase()+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=st.items[S.i]; if(v===it.answer) S.res[S.k].score+=1; render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=st.items[S.i]; if(v===q.correct) S.res[S.k].score+=1; render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<st.items.length-1){ S.i++; S.picked=null; render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Challenge: Two Loops, One Student</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --line2:#eceae4;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --level-bg:#fbe7e0; --level-ink:#b0472a;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --sel-line:#c9d3c2;
+    --focus:#2f6f4f; --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px;}
+
+  .head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px;}
+  .back-ic{flex:0 0 auto;margin-top:4px;opacity:.6;}
+  .head h1{margin:0;font-size:24px;letter-spacing:-.01em;font-weight:700;}
+  .tabrow{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 22px;padding-left:38px;font-size:14px;}
+  .lvl{background:var(--level-bg);color:var(--level-ink);font-weight:700;border-radius:8px;padding:4px 12px;}
+  .tabrow .t{color:var(--muted);padding:4px 0;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;margin-bottom:20px;}
+  .panel h2{margin:0 0 14px;font-size:17px;font-weight:700;}
+  .panel p{margin:0 0 14px;font-size:15.5px;line-height:1.6;}
+  .panel p:last-child{margin-bottom:0;}
+  .scenario p.quote{color:#3a3833;}
+
+  .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
+  .qhead h2{margin:0;font-size:17px;font-weight:700;}
+  .qtype{flex:0 0 auto;font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:7px;padding:5px 10px;}
+  .qprompt{font-size:15.5px;margin:0 0 14px;line-height:1.55;}
+
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin-bottom:18px;}
+  .do b{color:var(--ink);font-weight:700;}
+
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font:inherit;font-size:15px;line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:14px;}
+  .opt .txt{flex:1 1 auto;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;}
+  .opt:disabled{cursor:default;}
+  /* answered states */
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.62;}
+
+  .verdict{margin:16px 0 0;font-size:15px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14.5px;color:#44413b;line-height:1.6;}
+
+  .qfoot{display:flex;justify-content:flex-end;margin-top:20px;}
+  .btn{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;transition:.12s;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .results h2{display:flex;align-items:center;gap:9px;}
+  .results .score{font-size:15.5px;margin:0;}
+  .ea-sub{color:var(--muted);font-size:14px;margin:-6px 0 14px;}
+  .book{flex:0 0 auto;opacity:.7;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+  @media(max-width:560px){ .wrap{padding:18px 14px 44px;} .tabrow{padding-left:0;} .head h1{font-size:20px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg class="back-ic" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 5l-5 5 5 5" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1 id="title"></h1>
+  </div>
+  <div class="tabrow" id="tabrow"></div>
+
+  <!-- Scenario (persistent) -->
+  <section class="panel scenario" id="scenario"></section>
+
+  <!-- Question area -->
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <!-- Results + Expert Analysis (hidden until finished) -->
+  <section class="panel results hidden" id="resultsPanel"></section>
+  <section class="panel hidden" id="eaPanel"></section>
+</div>
+
+<script>
+// Challenge data. Scenario, questions, and expert analysis are original and grounded in the module reading.
+const CHALLENGE = {
+ "title": "Two Loops, One Student",
+ "level": "Level 4: Analyze",
+ "tabs": [
+  "Mechanism Identification",
+  "Clinical Reasoning",
+  "Exposure Design"
+ ],
+ "scenario": {
+  "heading": "Clinical Scenario",
+  "paras": [
+   "Dr. Okafor is meeting Camille, a 21-year-old nursing student, for the third time. Camille came in after failing a pharmacology exam. Since then she has stopped attending study group, quit the campus choir she loved, and sleeps until noon on most days. She has also stopped signing up for clinical placement shifts, because she is afraid she will make a mistake in front of patients and be judged.",
+   "“I think I’m just not cut out for this. Nothing I do is going to change that, and I’ll probably always feel this way. I keep going over the exam at night, asking myself what is wrong with me.”",
+   "Camille texts her mother several times a day. “Do you think I’ll be okay? Are you sure I’m not making a mistake?” Her mother always answers warmly and at length, and Camille says she feels better for about an hour. Her activity log for the past two weeks shows two planned activities completed, both done at home.",
+   "Dr. Okafor wants to choose a first target, make sense of the reassurance pattern, and design a first step that will change what Camille learns."
+  ]
+ },
+ "doThis": "Pick the best option. After you answer, read whether you were correct and why before advancing.",
+ "questions": [
+  {
+   "id": "q1",
+   "prompt": "Camille’s clinical placement avoidance and her withdrawal from choir and study group both appear in the data. Which first target would change the largest number of the processes maintaining her distress?",
+   "options": [
+    {
+     "id": "a",
+     "text": "Begin by debating each statement in her negative cognitive triad until she agrees, point by point, that the evidence does not support it"
+    },
+    {
+     "id": "b",
+     "text": "Rebuild a graded return to valued activities, since anxious avoidance and depressive withdrawal share one behavioral solution"
+    },
+    {
+     "id": "c",
+     "text": "Focus on rumination alone, because it is the only process in the case that clearly appears during the nighttime hours"
+    },
+    {
+     "id": "d",
+     "text": "Wait for her mood to lift on its own, then address the placement avoidance once she feels motivated enough to try"
+    }
+   ],
+   "correct": "b",
+   "explanation": "Several processes are present at once in Camille. Anxious avoidance of placements and depressive withdrawal from choir and study group are the same short-term-relief pattern in different forms, and both respond to getting her re-engaged with a rewarding, less avoidant life. As activity returns, some triad claims meet contradicting evidence, and specific fears can then be targeted with exposure. Debating the triad first is unlikely to succeed because the triad presents itself as truth, and waiting for motivation reverses the usual order of activity and mood."
+  },
+  {
+   "id": "q2",
+   "prompt": "Camille’s mother answers every reassurance text warmly and at length, and Camille feels better for about an hour. How should Dr. Okafor understand this pattern?",
+   "options": [
+    {
+     "id": "a",
+     "text": "It shows the triad is weakening, because Camille accepts a positive view of her future when it is stated clearly"
+    },
+    {
+     "id": "b",
+     "text": "It is unrelated to Camille’s anxiety, because reassurance only becomes a problem when the person asks in person"
+    },
+    {
+     "id": "c",
+     "text": "It works as a safety behavior, because the relief reinforces more asking and teaches Camille she could not tolerate the doubt alone"
+    },
+    {
+     "id": "d",
+     "text": "It is the healthiest part of the case, because social support is the strongest predictor of recovery and should be increased further"
+    }
+   ],
+   "correct": "c",
+   "explanation": "Repeated reassurance reduces distress briefly, the distress returns, and the person asks again. Each answer, however loving, teaches the anxious person that the reassurance was needed to cope, and intolerance of uncertainty is unchanged. Families can be coached to respond with warmth while gradually providing less reassurance, so Camille can learn to tolerate the doubt."
+  },
+  {
+   "id": "q3",
+   "prompt": "Dr. Okafor designs Camille’s first exposure to signing up for a clinical shift. Which design best reflects what the module says makes exposure produce durable learning?",
+   "options": [
+    {
+     "id": "a",
+     "text": "She states her exact prediction first, completes the shift without rehearsing scripts or an escape plan, and repeats it in different settings"
+    },
+    {
+     "id": "b",
+     "text": "She watches other students complete their shifts for several weeks first, so that the real shift holds no surprises for her"
+    },
+    {
+     "id": "c",
+     "text": "She completes the shift while rehearsing every sentence and keeping her phone ready, which keeps her calm enough to stay until the end"
+    },
+    {
+     "id": "d",
+     "text": "She completes the shift only after her anxiety has fallen to a low rating, and leaves early if it climbs, to protect her confidence"
+    }
+   ],
+   "correct": "a",
+   "explanation": "The strongest learning comes when reality clearly contradicts a stated prediction, so the prediction is named in advance. Safety behaviors such as rehearsing or an escape plan become the explanation for the outcome, so they are gradually dropped, and variety across places and times makes the safety memory general. Waiting for low anxiety, leaving early, and keeping safety behaviors in place all leave the fearful prediction untested."
+  }
+ ],
+ "expertAnalysis": {
+  "heading": "Expert Analysis",
+  "subhead": "Model answer and clinical reasoning walkthrough",
+  "paras": [
+   "Camille presents with several interacting maintaining processes. Her avoidance of placements and her withdrawal from choir and study group are two forms of the same short-term-relief pattern. Her statements about being unfit and never changing carry the negative cognitive triad (self, future), and her nightly replay of the exam is rumination, which connects negative thinking to withdrawal. The repeated texts to her mother are reassurance-seeking, a safety behavior that serves intolerance of uncertainty.",
+   "Matching starts by asking which move disrupts the most processes at once. A graded return to valued activity and a graded approach to placement shifts both avoidance and withdrawal, gives the triad real evidence to meet, and creates the occasions for exposure to specific fears. Her mother can remain warm while the supply of endless reassurance is reduced, which is a change in the loop, not a loss of support.",
+   "The exposure should be built around a named prediction (for example, that she will make an error that is both noticed and unforgivable), completed without scripts or an escape route, and repeated across settings. Success is judged by what she learned about the prediction, whatever level her anxiety reaches.",
+   "Finally, the plan is a hypothesis, so it should be monitored at the level of the mechanism. If the activity count, the number of placement shifts, and the frequency of reassurance requests are moving, the plan is plausibly working, since mechanism measures may change before symptom scores do. If they are not, a different process may be maintaining the distress, and the plan should be revised."
+  ]
+ }
+};
+
+var idx = 0;            // current question index
+var answered = [];      // answered[i] = chosen option id or null
+var correctCount = 0;
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+var BOOK = '<svg class="book" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+
+function renderStatic(){
+  document.getElementById("title").textContent = CHALLENGE.title;
+  var tr = document.getElementById("tabrow");
+  tr.appendChild(el("span","lvl", esc(CHALLENGE.level)));
+  CHALLENGE.tabs.forEach(function(t){ tr.appendChild(el("span","t", esc(t))); });
+
+  var sc = document.getElementById("scenario");
+  sc.appendChild(el("h2",null, esc(CHALLENGE.scenario.heading)));
+  CHALLENGE.scenario.paras.forEach(function(p,i){
+    sc.appendChild(el("p", i===1?"quote":null, esc(p)));
+  });
+  answered = CHALLENGE.questions.map(function(){ return null; });
+}
+
+function renderQuestion(){
+  var q = CHALLENGE.questions[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var head = el("div","qhead");
+  head.appendChild(el("h2",null,"Question " + (idx+1) + " of " + CHALLENGE.questions.length));
+  head.appendChild(el("span","qtype","Multiple Choice"));
+  panel.appendChild(head);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> " + esc(CHALLENGE.doThis)));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls = "opt";
+    if(isAnswered){
+      if(o.id === q.correct) cls += " correct";
+      else if(o.id === chosen) cls += " wrong";
+      else cls += " dim";
+    }
+    var btn = el("button", cls);
+    btn.type = "button";
+    if(isAnswered) btn.disabled = true;
+    var mark = "";
+    if(isAnswered && o.id === q.correct) mark = CHECK;
+    else if(isAnswered && o.id === chosen) mark = CROSS;
+    btn.innerHTML = '<span class="k">'+o.id.toUpperCase()+'.</span>' +
+                    '<span class="txt">'+esc(o.text)+'</span>' +
+                    '<span class="mark">'+mark+'</span>';
+    if(!isAnswered){
+      btn.addEventListener("click", function(){ choose(o.id); });
+    }
+    opts.appendChild(btn);
+  });
+  panel.appendChild(opts);
+
+  if(isAnswered){
+    var right = chosen === q.correct;
+    if(right){
+      panel.appendChild(el("p","verdict ok","Correct!"));
+    } else {
+      var correctText = "";
+      q.options.forEach(function(o){ if(o.id===q.correct) correctText = o.text; });
+      panel.appendChild(el("p","verdict no","Incorrect. The correct answer is: " + esc(correctText)));
+    }
+    panel.appendChild(el("p","explain", esc(q.explanation)));
+
+    var foot = el("div","qfoot");
+    var last = idx === CHALLENGE.questions.length - 1;
+    var b = el("button","btn");
+    if(last){
+      b.innerHTML = 'View Expert Analysis ' + BOOK.replace('class="book" ','');
+      b.addEventListener("click", finish);
+    } else {
+      b.innerHTML = 'Next Question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      b.addEventListener("click", function(){ idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+    }
+    foot.appendChild(b);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(optId){
+  if(answered[idx] !== null) return;
+  answered[idx] = optId;
+  if(optId === CHALLENGE.questions[idx].correct) correctCount++;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("qpanel").classList.add("hidden");
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML = "";
+  rp.appendChild(el("h2",null, BOOK + "<span>Your Results</span>"));
+  rp.appendChild(el("p","score","Multiple Choice: " + correctCount + " / " + CHALLENGE.questions.length + " correct"));
+
+  var ea = document.getElementById("eaPanel");
+  ea.classList.remove("hidden");
+  ea.innerHTML = "";
+  ea.appendChild(el("h2",null, BOOK + "<span>" + esc(CHALLENGE.expertAnalysis.heading) + "</span>"));
+  ea.appendChild(el("p","ea-sub", esc(CHALLENGE.expertAnalysis.subhead)));
+  CHALLENGE.expertAnalysis.paras.forEach(function(p){ ea.appendChild(el("p",null, esc(p))); });
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderStatic();
+renderQuestion();
+</script>
+</body>
+</html>

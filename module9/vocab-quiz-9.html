@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 9 Vocabulary: Self-Test</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:2px 0 16px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .term-tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:2px 0 6px;line-height:1.4;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;
+    border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;
+    line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;margin-left:auto;}
+  .opt:disabled{cursor:default;}
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.6;}
+
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;}
+  .hintbtn{background:none;border:none;color:var(--accent-ink);font:inherit;font-size:13.5px;cursor:pointer;text-decoration:underline;padding:0;}
+  .hintbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .hintbox{margin-top:12px;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);
+    border-radius:10px;padding:10px 13px;font-size:13.5px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  /* results */
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;}
+  .results .score b{color:var(--accent-ink);}
+  .results .breakdown{margin:16px 0 0;border-top:1px solid var(--line);padding-top:14px;}
+  .results .brow{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .bi{flex:0 0 auto;margin-top:1px;}
+  .results .bt{flex:1 1 auto;}
+  .results .bt .bterm{font-weight:600;}
+  .results .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Anxiety and Depression Vocabulary: Self-Test</h1>
+    <p class="sub">Ten questions on the core Module 9 terms. Each question applies a term in a short scenario. Pick an answer to see whether it is right and why.</p>
+  </div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <section class="panel results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// Data for this self-test. Items are original, scenario-based, and grounded in the module reading.
+var QUIZ = [
+ {
+  "term": "Threat overestimation",
+  "prompt": "A student says, “If I speak in seminar I will freeze, and that will ruin my reputation for the whole semester.” Which pair of judgments is this student making?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The feared outcome is rated as more likely than it is, and as more costly than it would be"
+   },
+   {
+    "id": "b",
+    "text": "The feared outcome is rated as likely to happen, yet its cost is accurately judged to be small and brief"
+   },
+   {
+    "id": "c",
+    "text": "The feared outcome is rated as unlikely, but not knowing for certain still feels unbearable to the student"
+   },
+   {
+    "id": "d",
+    "text": "The feared outcome is rated accurately, but the student lacks the skills needed to prevent it from happening"
+   }
+  ],
+  "correct": "a",
+  "explain": "Threat overestimation has two parts, probability and cost, and the anxious mind raises both estimates at once. This student predicts freezing as likely and treats a stumble as a lasting disaster. The estimate feels like a fact, so it often goes unchecked against what happens.",
+  "hint": "Consider two judgments, how likely and how costly.",
+  "src": "Module 9, Anxiety, Up Close"
+ },
+ {
+  "term": "Intolerance of uncertainty",
+  "prompt": "Which description fits intolerance of uncertainty, as opposed to threat overestimation?",
+  "options": [
+   {
+    "id": "a",
+    "text": "A prediction that one particular feared event, such as a crash on a flight, is likely to happen soon"
+   },
+   {
+    "id": "b",
+    "text": "A conviction that ordinary body sensations are the first sign of a medical emergency that is already underway"
+   },
+   {
+    "id": "c",
+    "text": "A belief that not knowing is itself unbearable, which keeps the person searching for certainty on many topics"
+   },
+   {
+    "id": "d",
+    "text": "A habit of leaving a feared situation as soon as anxiety rises, so that relief arrives quickly every time"
+   }
+  ],
+  "correct": "c",
+  "explain": "Threat overestimation points at particular feared things. Intolerance of uncertainty points at a whole category of experience, anything unresolved, which is why it shows up as worry, checking, over-researching, and reassurance-seeking across different topics. Certainty is almost never fully available, so the discomfort does not resolve.",
+  "hint": "One of these is about a specific feared thing, and one is about not knowing itself.",
+  "src": "Module 9, Intolerance of uncertainty"
+ },
+ {
+  "term": "Safety behavior",
+  "prompt": "Lena gets through ten parties without a panic attack and credits sitting by the door and holding her phone. Her fear has not changed. Which explanation fits the module best?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Sitting by the door is an ordinary habit with no real bearing on what she concludes about how the parties went"
+   },
+   {
+    "id": "b",
+    "text": "Each uneventful evening is credited to her safety behaviors, so her belief that she needs them goes untested"
+   },
+   {
+    "id": "c",
+    "text": "Ten parties is too few for the fear to wear down, so continuing to attend alone will eventually lower it"
+   },
+   {
+    "id": "d",
+    "text": "The parties were too easy to trigger any anxiety, so there was nothing for her nervous system to learn from"
+   }
+  ],
+  "correct": "b",
+  "explain": "Safety behaviors become the explanation for the outcome. Lena concludes she survived because she was careful, so the prediction that she would not cope without the door seat and phone is never disproven. Attendance alone teaches little while the safety behaviors remain, which is why exposure works best when they are gradually dropped.",
+  "hint": "Consider what the person credits for the safe outcome.",
+  "src": "Module 9, How Anxiety Keeps Itself Alive"
+ },
+ {
+  "term": "Inhibitory learning",
+  "prompt": "A clinician says that successful exposure does not delete the old fear memory. Which statement best captures what the clinician means?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The fear memory is overwritten once the person stays in the situation long enough for anxiety to fall to zero"
+   },
+   {
+    "id": "b",
+    "text": "A new safety memory is built that competes with the fear memory, and fear can win again if safety learning is weak"
+   },
+   {
+    "id": "c",
+    "text": "The fear memory is slowly weakened until it disappears, so any return of fear shows that treatment failed"
+   },
+   {
+    "id": "d",
+    "text": "The fear memory is moved to a different brain region, where it can no longer influence later behavior or feelings at all"
+   }
+  ],
+  "correct": "b",
+  "explain": "Under the inhibitory-learning view, recovery is additive. Both memories remain, and the safety memory has to become stronger and easier to retrieve than the fear memory. That is why fear can return after a long gap, a stressful stretch, or a new setting, and why that return is a cue to practice rather than proof of failure.",
+  "hint": "Think competition between two memories, with neither one deleted.",
+  "src": "Module 9, Breaking the Loop and When Old Fears Come Back"
+ },
+ {
+  "term": "Behavioral withdrawal",
+  "prompt": "After a breakup, Marcus drops cooking and basketball because nothing sounds fun, and then feels worse. What best explains why withdrawing deepened his low mood?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Rest gave his negative thoughts the quiet they needed, which is what turns ordinary sadness into clinical depression"
+   },
+   {
+    "id": "b",
+    "text": "Withdrawal reflects low willpower, which on its own accounts for the continuing decline in his mood over time"
+   },
+   {
+    "id": "c",
+    "text": "Dropping the activities reduced his anxiety, and the loss of that anxiety is what then lowered his mood"
+   },
+   {
+    "id": "d",
+    "text": "Pulling back removed the pleasure, accomplishment, and connection that normally lift mood, so mood fell further"
+   }
+  ],
+  "correct": "d",
+  "explain": "Withdrawal begins as a reasonable response to feeling low, but it cuts the person off from the natural rewards that would have lifted mood. Lower mood then makes withdrawal feel even more justified. It is the depressive mirror image of anxious avoidance, with short-term relief and long-term cost.",
+  "hint": "What did he stop receiving when he stopped doing?",
+  "src": "Module 9, Behavioral withdrawal"
+ },
+ {
+  "term": "Negative cognitive triad",
+  "prompt": "Which set of statements shows all three parts of the negative cognitive triad?",
+  "options": [
+   {
+    "id": "a",
+    "text": "“Nobody ever treats me kindly. The world is unfair. Everyone is against me.”"
+   },
+   {
+    "id": "b",
+    "text": "“I am worthless. I always fail at what I try. I am a burden to my family.”"
+   },
+   {
+    "id": "c",
+    "text": "“Nothing will ever get better. The future is hopeless. I will never recover.”"
+   },
+   {
+    "id": "d",
+    "text": "“I am worthless. Nobody ever treats me kindly. Nothing will ever get better.”"
+   }
+  ],
+  "correct": "d",
+  "explain": "The triad is three directions of negative belief at once, toward the self, the world and current experience, and the future. The other sets each stay inside one direction. The parts reinforce one another, and the whole pattern presents itself to the person as plain truth.",
+  "hint": "Look for one statement each about self, world, and future.",
+  "src": "Module 9, Negative cognitive triad and Why the Triad Feels Like the Truth"
+ },
+ {
+  "term": "Rumination and worry",
+  "prompt": "One person replays an argument for hours, asking “why am I like this?” Another lies awake asking “what if I fail next week and lose my job?” Which pairing is correct?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The first is rumination, which dwells on the past and self, and the second is worry, which dwells on possible future threats"
+   },
+   {
+    "id": "b",
+    "text": "The first is worry, which dwells on the past and the self, and the second is rumination, which dwells on possible future threats"
+   },
+   {
+    "id": "c",
+    "text": "Both are rumination, because both involve repeated thinking about something that might go wrong or already has"
+   },
+   {
+    "id": "d",
+    "text": "Both are problem-solving, because each person is working toward a solution through repeated, effortful thinking"
+   }
+  ],
+  "correct": "a",
+  "explain": "Rumination and worry share features. Both are repetitive, passive, and unproductive, and they differ in direction. Rumination replays what went wrong, and worry rehearses what might go wrong. Both feel like problem-solving, but they are problem-dwelling, which is why the module treats them as overlapping processes across depression and anxiety.",
+  "hint": "Sort by the direction of the thinking, past or future.",
+  "src": "Module 9, Where Anxiety and Depression Overlap"
+ },
+ {
+  "term": "Pleasure and mastery",
+  "prompt": "A clinician starts a severely depressed client on “wash one dish and send one email” instead of “attend the party.” What is the reasoning?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Easy tasks keep the client’s activity level steady so that nothing changes and no disappointment can occur later"
+   },
+   {
+    "id": "b",
+    "text": "Small mastery experiences bring accomplishment even without enjoyment, and a chain of them can reopen the door to pleasure"
+   },
+   {
+    "id": "c",
+    "text": "Small tasks are chosen because the client is likely to enjoy them most, which restores pleasure almost at once"
+   },
+   {
+    "id": "d",
+    "text": "Tasks are kept trivial so the client can wait comfortably until motivation returns before attempting anything more than that"
+   }
+  ],
+  "correct": "b",
+  "explain": "Depression dulls both pleasure and mastery, but mastery is often easier to rebuild first because it does not require feeling enjoyment. Starting small makes success likely, gives the negative triad disconfirming evidence, and reflects the activation rule of acting first and letting motivation follow.",
+  "hint": "Which type of reward does not require enjoying the task?",
+  "src": "Module 9, Pleasure and Mastery, Two Kinds of Reward"
+ },
+ {
+  "term": "Transdiagnostic mechanism",
+  "prompt": "Which observation best illustrates a transdiagnostic mechanism?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Avoidance in anxiety and withdrawal in depression both give short-term relief at long-term cost, so one intervention helps both"
+   },
+   {
+    "id": "b",
+    "text": "Two people with the same diagnosis are certain to be kept stuck by the same process and to need the same protocol"
+   },
+   {
+    "id": "c",
+    "text": "Anxiety and depression have entirely unrelated causes, which is why they appear under separate headings in diagnostic manuals and textbooks"
+   },
+   {
+    "id": "d",
+    "text": "A person can only carry one diagnostic label at a time, so co-occurring problems are usually a mistake in assessment"
+   }
+  ],
+  "correct": "a",
+  "explain": "A transdiagnostic mechanism is a maintaining process that shows up across diagnoses. Avoidance and withdrawal, worry and rumination, and biased meaning-making are shared, so treating the process can help more than one problem. The shared processes also explain why anxiety and depression co-occur so often.",
+  "hint": "Look for the answer in which one process cuts across two labels.",
+  "src": "Module 9, Where Anxiety and Depression Overlap"
+ },
+ {
+  "term": "Mechanism-treatment matching",
+  "prompt": "A clinician hears “social anxiety” and immediately selects the standard protocol for that label. Which step of mechanism-treatment matching has been skipped?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Choosing a tool that has not yet been properly studied so that the results cannot be predicted in advance"
+   },
+   {
+    "id": "b",
+    "text": "Applying the standard protocol more intensively until the person’s symptom scores begin to fall"
+   },
+   {
+    "id": "c",
+    "text": "Identifying which process maintains this person’s distress before choosing a tool that targets it"
+   },
+   {
+    "id": "d",
+    "text": "Asking the person which treatment sounds the most comfortable to them and then choosing that one"
+   }
+  ],
+  "correct": "c",
+  "explain": "Matching runs in a fixed order. Figure out what keeps this person stuck, then choose the tool designed to disrupt exactly that, then check whether the targeted process actually changes. A label is a starting point, and two people with the same label can be kept stuck by different processes.",
+  "hint": "",
+  "src": "Module 9, Mechanism-Treatment Matching"
+ }
+];
+
+var idx = 0;
+var answered = [];   // chosen id or null
+var hintShown = {};
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK='<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS='<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+function init(){ answered = QUIZ.map(function(){return null;}); renderProgress(); renderQuestion(); }
+
+function renderProgress(){
+  var pct = (idx) / QUIZ.length * 100;
+  document.getElementById("pbarfill").style.width = pct + "%";
+  document.getElementById("pcount").textContent = "Question " + Math.min(idx+1,QUIZ.length) + " of " + QUIZ.length;
+}
+
+function renderQuestion(){
+  renderProgress();
+  var q = QUIZ[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var top = el("div","qtop");
+  top.appendChild(el("span","qn","Question " + (idx+1) + " of " + QUIZ.length));
+  top.appendChild(el("span","term-tag", esc(q.term)));
+  panel.appendChild(top);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> Choose the option that reflects the reading's meaning of the term rather than a familiar word. You'll see whether it's right and why before moving on."));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls="opt";
+    if(isAnswered){
+      if(o.id===q.correct) cls+=" correct";
+      else if(o.id===chosen) cls+=" wrong";
+      else cls+=" dim";
+    }
+    var b = el("button",cls);
+    b.type="button";
+    if(isAnswered) b.disabled=true;
+    var mark="";
+    if(isAnswered && o.id===q.correct) mark=CHECK;
+    else if(isAnswered && o.id===chosen) mark=CROSS;
+    b.innerHTML='<span class="k">'+o.id.toUpperCase()+'.</span><span class="txt">'+esc(o.text)+'</span><span class="mark">'+mark+'</span>';
+    if(!isAnswered) b.addEventListener("click",function(){ choose(o.id); });
+    opts.appendChild(b);
+  });
+  panel.appendChild(opts);
+
+  if(!isAnswered){
+    var foot = el("div","foot");
+    var hb = el("button","hintbtn", hintShown[idx] ? "Hide hint" : "Show a hint");
+    hb.addEventListener("click", function(){ hintShown[idx]=!hintShown[idx]; renderQuestion(); });
+    foot.appendChild(hb);
+    foot.appendChild(el("span","",""));
+    panel.appendChild(foot);
+    if(hintShown[idx]) panel.appendChild(el("div","hintbox", esc(q.hint)));
+  } else {
+    var right = chosen===q.correct;
+    panel.appendChild(el("p","verdict "+(right?"ok":"no"), right ? "Correct." : "Not quite."));
+    var ex = el("p","explain", esc(q.explain));
+    ex.innerHTML += '<div class="src">Reading: ' + esc(q.src) + '</div>';
+    panel.appendChild(ex);
+
+    var foot = el("div","foot");
+    foot.appendChild(el("span","",""));
+    var last = idx===QUIZ.length-1;
+    var nb = el("button","btn");
+    nb.innerHTML = last ? 'See your results' : 'Next question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    nb.addEventListener("click", function(){
+      if(last){ finish(); } else { idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); }
+    });
+    foot.appendChild(nb);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(id){
+  if(answered[idx]!==null) return;
+  answered[idx]=id;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("pbarfill").style.width = "100%";
+  document.getElementById("pcount").textContent = "Complete";
+  document.getElementById("qpanel").classList.add("hidden");
+  var correct = answered.filter(function(a,i){return a===QUIZ[i].correct;}).length;
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML="";
+  rp.appendChild(el("h2",null,"Your results"));
+  rp.appendChild(el("p","score","You answered <b>"+correct+" of "+QUIZ.length+"</b> correctly."));
+
+  var bd = el("div","breakdown");
+  QUIZ.forEach(function(q,i){
+    var right = answered[i]===q.correct;
+    var row = el("div","brow");
+    row.innerHTML = '<span class="bi">'+(right?CHECK:CROSS)+'</span>' +
+      '<span class="bt"><span class="bterm">'+esc(q.term)+'</span>'+(right?'':' (revisit in the reading: '+esc(q.src)+')')+'</span>';
+    bd.appendChild(row);
+  });
+  rp.appendChild(bd);
+
+  var act = el("div","actions");
+  var again = el("button","btn secondary","Retake the self-test");
+  again.addEventListener("click", function(){ idx=0; answered=QUIZ.map(function(){return null;}); hintShown={};
+    document.getElementById("qpanel").classList.remove("hidden"); rp.classList.add("hidden"); renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again);
+  rp.appendChild(act);
+
+  rp.appendChild(el("p","selfnote","This self-test scores only these multiple-choice items, and your score is not saved or sent anywhere. Terms you missed are the ones to practice producing from memory."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

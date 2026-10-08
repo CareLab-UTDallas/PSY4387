@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evidence Appraisal: Anxiety and Depression Claims</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --study-bg:#f2f4f8; --study-line:#c9d4e6; --study-ink:#2f4a72;
+    --tool-bg:#f3eef7; --tool-ink:#6d4a86; --tool-line:#d8c7e6;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .stagetabs{display:flex;gap:0;margin:16px 0 6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .stagetabs button{flex:1 1 0;border:none;background:#fff;padding:11px 10px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.25;}
+  .stagetabs button+button{border-left:1px solid var(--line);}
+  .stagetabs button[aria-selected="true"]{background:var(--accent);color:#fff;}
+  .stagetabs button:disabled{color:#b7b2a9;cursor:not-allowed;}
+  .stagetabs button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .stagetabs .sn{display:block;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+  .stagetabs .stt{display:block;font-weight:600;font-size:13px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:12px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .intro{background:var(--study-bg);border:1px solid var(--study-line);color:var(--study-ink);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;margin-bottom:16px;}
+  .intro b{font-weight:700;}
+
+  /* toolkit cards */
+  .toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  @media(max-width:620px){ .toolgrid{grid-template-columns:1fr;} }
+  .tool{border:1px solid var(--tool-line);background:var(--tool-bg);border-radius:12px;padding:13px 15px;}
+  .tool h3{margin:0 0 4px;font-size:14px;color:var(--tool-ink);}
+  .tool p{margin:0;font-size:13px;line-height:1.55;}
+  .tool .ask{margin-top:7px;font-size:12.5px;font-style:italic;color:var(--muted);}
+
+  .study{background:var(--study-bg);border:1px solid var(--study-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;}
+  .study .slabel{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--study-ink);background:#fff;border-radius:7px;padding:3px 9px;margin-bottom:8px;}
+  .study .sbody{font-size:14px;line-height:1.6;}
+  .study .sbody b{font-weight:700;}
+  .study .datarow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .study .chip{font-size:12px;background:#fff;border:1px solid var(--study-line);border-radius:7px;padding:4px 10px;color:var(--study-ink);}
+
+  .difficulty{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:6px;padding:3px 9px;display:inline-block;margin-bottom:10px;}
+  .difficulty.mod{background:var(--amber-bg);color:var(--amber-ink);}
+  .difficulty.hard{background:var(--no-bg);color:var(--no-ink);}
+
+  .qprompt{font-size:15px;line-height:1.5;margin:14px 0 12px;font-weight:600;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt .ol{font-weight:700;margin-right:7px;color:var(--muted);}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fnote{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+  .fnote .tool-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:#fff;border-radius:6px;padding:2px 8px;margin-bottom:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 6px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.62;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Evidence Appraisal: Anxiety and Depression Claims</h1>
+    <p class="sub">Judging whether the evidence supports a claim about a mechanism requires a separate set of skills from knowing the mechanism. The six appraisal questions below apply to claims and constructed studies about how treatment for anxiety and depression works. The studies are constructed for practice, and the reasoning carries over to real ones.</p>
+  </div>
+
+  <div class="stagetabs" id="tabs" role="tablist"></div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+</div>
+
+<script>
+// Appraisal toolkit and constructed studies (not real publications; nothing here should be cited as a finding).
+var TOOLS = [
+ {
+  "name": "Compared to what?",
+  "body": "A result can be interpreted only relative to a comparison condition. Improvement over a waitlist shows a treatment beats doing nothing. It does not show it beats an existing good option or that its special ingredient is responsible. Testimonials compare a product to the person’s worst moment, which is a low bar."
+ },
+ {
+  "name": "Levels of evidence",
+  "body": "A testimonial, a single case, and an uncontrolled pre-post study provide weaker evidence than a randomized controlled trial, and a synthesis of many trials provides stronger evidence still. Ask how strong the evidence design is before asking whether the claim is exciting."
+ },
+ {
+  "name": "Confounds",
+  "body": "A rival explanation can produce the same result without the proposed mechanism. Time, regression to the mean, expectancy, and extra therapist attention are common alternative explanations whenever groups differ in more than one way."
+ },
+ {
+  "name": "Mechanism versus symptom",
+  "body": "Symptom improvement does not show that the proposed mechanism changed. To support a mechanism claim, a study should measure the mechanism itself, show it shifted, and show that the shift came before and accounts for the symptom change."
+ },
+ {
+  "name": "Correlation and direction",
+  "body": "Two things that travel together may be linked in either direction, or through a third factor. A single cross-sectional snapshot cannot tell you which came first. Repeated measures over time, or experiments that change one variable, are needed to support a causal story."
+ },
+ {
+  "name": "Effect size and durability",
+  "body": "Significance says an effect probably is not zero. Effect size says how big it is. A gain measured only at the end of treatment says little about whether it lasts. Follow-up measurements show whether the new learning held."
+ },
+ {
+  "name": "Allegiance and who benefits",
+  "body": "Studies run by advocates of a treatment, and claims made by those who sell it, may report larger benefits than neutral teams do. Ask who produced the claim and what they hoped to find."
+ }
+];
+
+var ITEMS = [
+ {
+  "diff": "mod",
+  "study": {
+   "label": "Claim A",
+   "body": "A company advertises a calming app: “Users report feeling 80% calmer after one session. Open it the moment anxiety hits.” The evidence is a set of in-app ratings taken right before and right after a single five-minute session, from users who chose to complete the rating.",
+   "data": [
+    "Type: product claim",
+    "Design: in-app before/after ratings",
+    "No comparison group",
+    "Self-selected raters",
+    "No follow-up"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "a",
+  "tool": "Compared to what? / safety behavior in disguise",
+  "options": [
+   {
+    "id": "a",
+    "text": "The ratings show real short-term calming but cannot show that the app beats doing nothing, and an app opened at every spike could also work as a safety behavior"
+   },
+   {
+    "id": "b",
+    "text": "The claim is worthless because any short-term relief counts as a safety behavior, so no tool of this kind could ever help a person with anxiety at any stage"
+   },
+   {
+    "id": "c",
+    "text": "The 80% figure shows the app works through the same mechanism as exposure, so it can safely replace gradual approach to feared situations in daily life for most users"
+   },
+   {
+    "id": "d",
+    "text": "The self-selected raters strengthen the claim, because motivated users give the most accurate account of the app’s benefit and the most useful data"
+   }
+  ],
+  "why": "A before/after rating with no comparison cannot show that the app did anything beyond time passing, a pause, or the expectation of calm. The module also cautions that a tool used the instant anxiety rises can reduce distress briefly while teaching the person they got through only because they had it. The outcome depends on how it is used and whether it builds independence over time."
+ },
+ {
+  "diff": "mod",
+  "study": {
+   "label": "Study B",
+   "body": "In a constructed trial, 60 adults with social anxiety complete the same 8 sessions of exposure. In one arm, participants are coached to drop safety behaviors (such as rehearsing and phone-holding) before each exposure. In the other arm they are free to use them. At the end of treatment and at a 3-month follow-up, the first arm reports less fear of the situations they practiced. Therapists, session length, and exposure tasks are the same in both arms.",
+   "data": [
+    "Design: randomized, two arms",
+    "N = 60 (30 per arm)",
+    "Difference: safety-behavior coaching only",
+    "Follow-up: 3 months",
+    "Outcome: self-rated fear"
+   ]
+  },
+  "prompt": "What is the most defensible reading of Study B?",
+  "answer": "b",
+  "tool": "Confounds / mechanism versus symptom",
+  "options": [
+   {
+    "id": "a",
+    "text": "The study proves that inhibitory learning is the mechanism, because the group that learned more about its predictions also reported less fear afterward in the trial"
+   },
+   {
+    "id": "b",
+    "text": "With only one element differing between arms, the result supports the safety-behavior claim, though it does not show that changed beliefs are the reason"
+   },
+   {
+    "id": "c",
+    "text": "Self-rated fear is the weakest possible outcome, so a result like this cannot support any conclusion about the treatment, however well designed"
+   },
+   {
+    "id": "d",
+    "text": "Randomization is irrelevant here, since both arms received the same exposures and tasks, so any difference between them must be due to chance alone"
+   }
+  ],
+  "why": "The arms differ in one element, which makes this a dismantling design. The benefit can therefore be attributed to that element, with attention, therapist, and dose held constant. That supports the claim about safety behaviors. It does not directly show why. To claim inhibitory learning as the mechanism, the study would have to measure whether predictions changed and show that change came first and accounted for the fear reduction. Self-report is imperfect and remains a legitimate outcome here."
+ },
+ {
+  "diff": "hard",
+  "study": {
+   "label": "Study C",
+   "body": "A constructed trial finds that behavioral activation reduces depression scores more than a waitlist over 10 weeks. The authors conclude: “Activation works by restoring contact with rewarding experiences.” Activity levels and reward ratings were not collected. The waitlist group received no contact between assessments.",
+   "data": [
+    "Design: randomized, BA vs waitlist",
+    "N = 80",
+    "Outcome: depression scores",
+    "Mechanism measures: none",
+    "Waitlist: no contact"
+   ]
+  },
+  "prompt": "The depression result is clear. What is the sharpest appraisal of the mechanism conclusion?",
+  "answer": "d",
+  "tool": "Mechanism versus symptom + comparison condition",
+  "options": [
+   {
+    "id": "a",
+    "text": "The study should be rejected entirely, because comparing a treatment to a waitlist is never a legitimate design in any psychotherapy research, whatever the outcome"
+   },
+   {
+    "id": "b",
+    "text": "The randomized design means the mechanism conclusion is established, since randomization rules out every alternative explanation for the improvement, including expectancy"
+   },
+   {
+    "id": "c",
+    "text": "The mechanism conclusion is plausible, so the lack of any mechanism measure is a minor technical detail with no bearing on the conclusion"
+   },
+   {
+    "id": "d",
+    "text": "The mechanism claim goes beyond the data, since no activity or reward was measured and a waitlist cannot separate activation from general attention and hope"
+   }
+  ],
+  "why": "Randomization protects the claim that BA beat waiting. It cannot, by itself, tell you why. Without measuring activity or reward, the mechanism is an assumption, and a waitlist leaves the common factors (attention, a plausible rationale, hope, structure) uncontrolled. The finding is useful, while the explanation goes beyond the measured evidence."
+ },
+ {
+  "diff": "hard",
+  "study": {
+   "label": "Study D",
+   "body": "A constructed survey of 400 university students measures rumination and depressive symptoms on a single day. People who ruminate more also report more depressive symptoms, and the correlation is substantial. A news article reports: “Rumination causes depression, new study shows.”",
+   "data": [
+    "Design: cross-sectional survey",
+    "N = 400",
+    "Measures: self-report, one time point",
+    "Finding: substantial correlation",
+    "Headline: causal"
+   ]
+  },
+  "prompt": "The survey is competently run. What is the most rigorous appraisal of the headline?",
+  "answer": "c",
+  "tool": "Correlation and direction",
+  "options": [
+   {
+    "id": "a",
+    "text": "The headline is correct because the module describes rumination as a maintainer of depression, so any study of the topic must confirm that claim"
+   },
+   {
+    "id": "b",
+    "text": "The size of the correlation settles the question, since a strong relationship found in a large sample is sufficient evidence of cause and direction"
+   },
+   {
+    "id": "c",
+    "text": "The data fit rumination maintaining depression, but one snapshot cannot show direction. Low mood could drive rumination, or a third factor could drive both"
+   },
+   {
+    "id": "d",
+    "text": "The findings are meaningless because self-report measures can never be used in research on depression, however carefully they are collected or analyzed"
+   }
+  ],
+  "why": "A strong correlation at a single time point is compatible with several stories. The module presents rumination as a bridge that maintains depression, and the survey is consistent with that picture, but a snapshot cannot say which came first. Longitudinal measurement, or an experiment that changes rumination and watches mood, would be needed. The module’s account draws on more than this one study."
+ }
+];
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var stage="toolkit", idx=0, answers=[];
+
+function init(){ answers=ITEMS.map(function(){return null;}); stage="toolkit"; idx=0; render(); }
+
+function renderTabs(){
+  var host=document.getElementById("tabs"); host.innerHTML="";
+  [["toolkit","Stage 1","The appraisal toolkit"],["appraise","Stage 2","Appraise the studies"]].forEach(function(t){
+    var b=el("button"); b.setAttribute("role","tab"); b.setAttribute("aria-selected",String(stage===t[0]));
+    var locked = t[0]==="appraise" && !toolkitSeen;
+    b.disabled=locked;
+    b.innerHTML='<span class="sn">'+esc(t[1])+'</span><span class="stt">'+esc(t[2])+'</span>';
+    if(!locked) b.addEventListener("click", function(){ stage=t[0]; render(); });
+    host.appendChild(b);
+  });
+}
+var toolkitSeen=false;
+
+function renderProgress(){
+  if(stage==="toolkit"){ document.getElementById("pbarfill").style.width="0%"; document.getElementById("pcount").textContent="Toolkit"; }
+  else { var d=answers.filter(function(x){return x!==null;}).length; document.getElementById("pbarfill").style.width=(d/ITEMS.length*100)+"%"; document.getElementById("pcount").textContent="Study "+Math.min(idx+1,ITEMS.length)+" of "+ITEMS.length; }
+}
+
+function render(){ renderTabs(); renderProgress(); if(stage==="toolkit") renderToolkit(); else renderAppraise(); }
+
+function renderToolkit(){
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("div","intro","<b>Seven tools for judging a claim.</b> Each names a question a careful reader asks of any study. You will use these by name in the next stage, so read the question each one poses. The point is not to distrust all research, it is to calibrate how much a given study can actually support."));
+  var grid=el("div","toolgrid");
+  TOOLS.forEach(function(t){
+    var c=el("div","tool");
+    c.appendChild(el("h3",null,esc(t.name)));
+    c.appendChild(el("p",null,esc(t.body)));
+    c.appendChild(el("div","ask","Ask: "+esc(t.ask)));
+    grid.appendChild(c);
+  });
+  p.appendChild(grid);
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var b=el("button","btn","Start appraising \u2192");
+  b.addEventListener("click", function(){ toolkitSeen=true; stage="appraise"; idx=0; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  foot.appendChild(b); p.appendChild(foot);
+}
+
+function renderAppraise(){
+  var it=ITEMS[idx], chosen=answers[idx];
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("span","difficulty "+(it.diff==="hard"?"hard":"mod"), it.diff==="hard"?"Harder":"Moderate"));
+  var st=el("div","study");
+  st.appendChild(el("span","slabel", it.study.label));
+  st.appendChild(el("div","sbody", it.study.body));
+  var dr=el("div","datarow"); it.study.data.forEach(function(d){ dr.appendChild(el("span","chip", esc(d))); }); st.appendChild(dr);
+  p.appendChild(st);
+  p.appendChild(el("div","qprompt", esc(it.prompt)));
+  var opts=el("div","opts");
+  it.options.forEach(function(o){
+    var b=el("button","opt"); b.type="button";
+    b.innerHTML='<span class="ol">'+esc(o.id.toUpperCase())+'</span>'+esc(o.text);
+    if(chosen!==null){
+      b.disabled=true;
+      if(o.id===chosen) b.classList.add(o.id===it.answer?"correct-pick":"wrong-pick");
+      else if(o.id===it.answer) b.classList.add("show-correct");
+      else b.classList.add("dim");
+    } else { b.addEventListener("click", function(){ answers[idx]=o.id; render(); }); }
+    opts.appendChild(b);
+  });
+  p.appendChild(opts);
+  if(chosen!==null){
+    var right=chosen===it.answer;
+    var note=el("div","fnote "+(right?"ok":"no"));
+    note.innerHTML='<span class="tool-tag">'+esc(it.tool)+'</span><br>'+(right?"<b>Sound appraisal.</b> ":"<b>Not the strongest reading.</b> ")+esc(it.why);
+    p.appendChild(note);
+  }
+  var foot=el("div","foot");
+  var back=el("button","btn secondary","\u2190 Back"); back.disabled=idx===0;
+  back.addEventListener("click", function(){ if(idx>0){idx--;render();} }); foot.appendChild(back);
+  var next=el("button","btn"); var last=idx===ITEMS.length-1; next.disabled=chosen===null;
+  next.innerHTML=last?"See results":"Next study \u2192";
+  next.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+  foot.appendChild(next); p.appendChild(foot);
+}
+
+function finish(){
+  var correct=0; ITEMS.forEach(function(it,i){ if(answers[i]===it.answer) correct++; });
+  var p=document.getElementById("cardPanel"); p.innerHTML=""; p.className="card results";
+  p.appendChild(el("h2",null,"Appraisal complete"));
+  p.appendChild(el("p","score","You chose the best-supported reading on <b>"+correct+" of "+ITEMS.length+"</b> studies."));
+  p.appendChild(el("p",null,"In each hard case the conclusion claimed more than the design could support, because the studies lacked a comparison, a mechanism measure, or a way to establish order in time."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Review the toolkit"); again.addEventListener("click", function(){ stage="toolkit"; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  var retry=el("button","btn","Try the studies again"); retry.addEventListener("click", function(){ init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); act.appendChild(retry); p.appendChild(act);
+  p.appendChild(el("div","selfnote","This activity runs entirely on your own screen. Nothing you select is saved, sent, or seen by anyone. The studies here are constructed for practice."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

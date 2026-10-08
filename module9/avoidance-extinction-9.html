@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avoidance to Extinction: Nadia</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>From Avoidance to New Learning</h1>
+    <p class="sub">Trace why avoidance keeps fear alive, spot the safety behaviors, and design an exposure that builds a new safety memory.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "order",
+  "title": "Trace the loop",
+  "short": "Trace the loop",
+  "tag": "How avoidance maintains anxiety",
+  "case": {
+   "title": "Case: Nadia, 27",
+   "text": "Nadia fears she will faint in the grocery store. When she feels dizzy, she grips the cart, breathes carefully, and hurries to the checkout. Lately she shops at 6 a.m. or asks her partner to come along."
+  },
+  "intro": "<b>Step 1.<\/b> Anxiety persists for years even though the feared disaster almost never happens. The escape hatch is the trap. Rebuild one trip through the store in the order it unfolds.",
+  "prompt": "Put the six links of one shopping trip in order.",
+  "doThis": "Select the links one at a time, in the order they happen.",
+  "nodes": [
+   {
+    "id": "a",
+    "text": "Trigger: she feels dizzy in the cereal aisle."
+   },
+   {
+    "id": "d",
+    "text": "She grips the cart and hurries to the checkout."
+   },
+   {
+    "id": "f",
+    "text": "Conclusion: “I only stayed upright because I gripped the cart.” The prediction is never disproven."
+   },
+   {
+    "id": "b",
+    "text": "Prediction: “I am about to faint in front of everyone.”"
+   },
+   {
+    "id": "c",
+    "text": "Her anxiety spikes."
+   },
+   {
+    "id": "e",
+    "text": "Relief arrives as her anxiety drops."
+   }
+  ],
+  "correct": [
+   "a",
+   "b",
+   "c",
+   "d",
+   "e",
+   "f"
+  ],
+  "hintWrong": "Follow the loop: trigger, interpretation, alarm, response, what the response produces, and what she concludes from it.",
+  "why": "The escape and safety behavior produce relief, and the relief rewards the escape. She never learns she could have stayed and been fine, so the threat belief survives and strengthens on the next trip.",
+  "src": "Module 9, How Anxiety Keeps Itself Alive and The Anxiety Maintenance Loop",
+  "revisit": "Reread “The Anxiety Maintenance Loop.”"
+ },
+ {
+  "type": "mcq",
+  "title": "What gets reinforced, and what is missed",
+  "short": "Reinforced / missed",
+  "tag": "Learning terms from Module 5",
+  "case": {
+   "title": "Case: Nadia, 27",
+   "text": "Same trip. Each time she grips the cart and hurries out, her anxiety falls and she does not faint."
+  },
+  "intro": "<b>Step 2.<\/b> Two learning terms from the social and behavioral level come back in force here.",
+  "doThis": "Choose the best explanation of what the escape does.",
+  "src": "Module 9, How Anxiety Keeps Itself Alive and review from Module 5",
+  "items": [
+   {
+    "prompt": "Which process explains why the relief makes escaping more likely on her next trip?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Positive reinforcement: the store itself becomes pleasant, so she is drawn back to it"
+     },
+     {
+      "id": "b",
+      "text": "Negative reinforcement: the drop in anxiety rewards the behavior that came just before it"
+     },
+     {
+      "id": "c",
+      "text": "Classical conditioning alone: the store directly causes the dizziness every time she enters"
+     },
+     {
+      "id": "d",
+      "text": "Habituation: each escape gradually wears the fear down through repeated practice"
+     }
+    ],
+    "correct": "b",
+    "why": "Relief following the escape reinforces it by removing something unpleasant. Avoidance and safety behaviors are rewarding in the moment, even though they maintain the fear.",
+    "src": "Review from Module 5 and Module 9, How Anxiety Keeps Itself Alive"
+   },
+   {
+    "prompt": "What does Nadia fail to learn on these trips?",
+    "options": [
+     {
+      "id": "a",
+      "text": "That dizziness in a store is harmless, and that she would not have fainted without the safety behaviors"
+     },
+     {
+      "id": "b",
+      "text": "That the cart grip works well and should be used more often and in more situations over the coming weeks"
+     },
+     {
+      "id": "c",
+      "text": "That anxiety should be avoided before it reaches a high level, since it always keeps on rising"
+     },
+     {
+      "id": "d",
+      "text": "That grocery stores are objectively dangerous places for people who sometimes feel dizzy or faint"
+     }
+    ],
+    "correct": "a",
+    "why": " She concludes she survived because she was careful, so the prediction is never tested. Each uneventful trip becomes more evidence that the store is dangerous and that only vigilance keeps disaster away.",
+    "src": "Module 9"
+   }
+  ],
+  "revisit": "Reread “How Anxiety Keeps Itself Alive.”"
+ },
+ {
+  "type": "classify",
+  "title": "Spot the safety behaviors",
+  "short": "Safety behaviors",
+  "tag": "Nadia’s routine",
+  "case": {
+   "title": "Case: Nadia, 27",
+   "text": "Here is what Nadia does in a typical week around shopping. Some of it is ordinary life and some of it maintains the fear."
+  },
+  "intro": "<b>Step 3.<\/b> Safety behaviors and avoidance are easy to miss, because they look like reasonable precautions. Sort each item.",
+  "doThis": "Decide whether each item is a safety behavior or avoidance, or simply an ordinary habit.",
+  "cats": [
+   {
+    "id": "sb",
+    "label": "Safety behavior or avoidance"
+   },
+   {
+    "id": "ord",
+    "label": "Ordinary habit"
+   }
+  ],
+  "src": "Module 9, How Anxiety Keeps Itself Alive",
+  "items": [
+   {
+    "text": "Shops at 6 a.m. when the store is nearly empty",
+    "answer": "sb",
+    "why": "Steering around crowds is avoidance. It brings relief now and prevents learning that busy stores are survivable."
+   },
+   {
+    "text": "Writes a shopping list for the week’s meals",
+    "answer": "ord",
+    "why": "Ordinary planning that serves the shopping itself."
+   },
+   {
+    "text": "Carries a water bottle and keeps her phone in hand “just in case”",
+    "answer": "sb",
+    "why": "Items carried to prevent the feared outcome work the same way, like Theo’s water bottle and phone in the reading."
+   },
+   {
+    "text": "Wears comfortable shoes for the trip",
+    "answer": "ord",
+    "why": "An everyday comfort choice, unrelated to the feared prediction."
+   },
+   {
+    "text": "Grips the cart tightly whenever she feels dizzy",
+    "answer": "sb",
+    "why": "A small action taken in the feared situation to prevent the imagined catastrophe. She attributes staying upright to the grip, so the prediction is never tested."
+   },
+   {
+    "text": "Checks the weekly flyer for items on sale",
+    "answer": "ord",
+    "why": "A normal, money-saving habit. A routine counts as a safety behavior only when its purpose is to prevent a feared outcome."
+   },
+   {
+    "text": "Asks her partner to come to every trip",
+    "answer": "sb",
+    "why": "A person can become the safety behavior. Their presence lets her believe she is safe only with company."
+   },
+   {
+    "text": "Plans her route so she is always close to an exit",
+    "answer": "sb",
+    "why": "An escape route held in reserve is a safety behavior. It tells her she is only safe because the exit is near."
+   }
+  ],
+  "revisit": "Reread the safety behavior examples in “How Anxiety Keeps Itself Alive” and Theo’s story."
+ },
+ {
+  "type": "mcq",
+  "title": "Design the exposure",
+  "short": "Design it",
+  "tag": "Inhibitory learning",
+  "case": {
+   "title": "Case: Nadia, 27",
+   "text": "Nadia and her clinician are planning the first exposure. The aim is to build safety learning that is memorable and general across settings. Reducing anxiety within the session is a separate outcome."
+  },
+  "intro": "<b>Step 4.<\/b> Mechanism dictates technique. Four design decisions follow from inhibitory learning.",
+  "doThis": "Choose the design decision a clinician who understands inhibitory learning would make.",
+  "src": "Module 9, What Inhibitory Learning Tells Us About Doing Exposure Well",
+  "items": [
+   {
+    "prompt": "Which prediction is best to test on Nadia’s first exposure?",
+    "options": [
+     {
+      "id": "a",
+      "text": "“I will start to feel better and calmer if I stay in the store for long enough today, and then I can relax.”"
+     },
+     {
+      "id": "b",
+      "text": "“The store may well be crowded, and that could go badly in some way that I am not able to predict today.”"
+     },
+     {
+      "id": "c",
+      "text": "“If I stand in the cereal aisle for ten minutes without gripping the cart, I will faint and fall.”"
+     },
+     {
+      "id": "d",
+      "text": "“I will probably feel uncomfortable and on edge, and my heart will probably race, while I am inside the store today.”"
+     }
+    ],
+    "correct": "c",
+    "why": "Learning is larger when reality clearly contradicts a specific, testable prediction. Vague predictions cannot be disproven, and a prediction that anxiety will fall measures anxiety and leaves the feared outcome untested.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "How should Nadia’s safety behaviors be handled?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Keep every one in place until her anxiety reaches zero in the store, and drop them only after that has happened"
+     },
+     {
+      "id": "b",
+      "text": "Keep all of them in place, because they help her stay in the store long enough to practice the exposure"
+     },
+     {
+      "id": "c",
+      "text": "Drop everything at once in a crowded store at peak shopping hours, as a test of her resolve and courage"
+     },
+     {
+      "id": "d",
+      "text": "Name them ahead of time, drop the central ones first (cart grip, exit route), and release the rest later"
+     }
+    ],
+    "correct": "d",
+    "why": "Safety behaviors become the explanation for the safe outcome, so exposure works best when they are gradually released. Keeping them in place teaches “I survived because I gripped the cart.”",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "How should the exposure be varied across practice?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Practice only with her partner present, so she always feels supported and safe during each exposure"
+     },
+     {
+      "id": "b",
+      "text": "Repeat it in different stores, at different times of day, and with different lengths of stay"
+     },
+     {
+      "id": "c",
+      "text": "Repeat it in one familiar store at 6 a.m. until it feels easy, and then stop practicing for good"
+     },
+     {
+      "id": "d",
+      "text": "Stop after the first success, because one disconfirming experience is enough to settle it"
+     }
+    ],
+    "correct": "b",
+    "why": "Safety learning acquired in one setting may not carry over to others. Variety across settings and times makes the safety memory general, so it is available wherever the fear appears.",
+    "src": "Module 9"
+   },
+   {
+    "prompt": "What is the right measure of success for the first exposure?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Whether the feared outcome happened, compared with her prediction, even if she is still anxious"
+     },
+     {
+      "id": "b",
+      "text": "Whether her anxiety fell all the way to zero before she finally left the store at the end of that day"
+     },
+     {
+      "id": "c",
+      "text": "Whether she felt comfortable enough in the store that she now wants to shop there more often than before"
+     },
+     {
+      "id": "d",
+      "text": "Whether she stayed without having any physical symptoms at all during the whole of the exposure"
+     }
+    ],
+    "correct": "a",
+    "why": "Under the inhibitory-learning view, success is judged by whether the feared outcome occurred. The goal is to learn that she can feel anxious and the feared outcome still does not happen.",
+    "src": "Module 9"
+   }
+  ],
+  "revisit": "Reread “What Inhibitory Learning Tells Us About Doing Exposure Well.”"
+ },
+ {
+  "type": "mcq",
+  "title": "When the fear comes back",
+  "short": "Return of fear",
+  "tag": "Reading a setback",
+  "case": {
+   "title": "Case: Nadia, 27",
+   "text": "Six weeks later, after a week of poor sleep, Nadia feels the old fear rise in an unfamiliar pharmacy she has never visited."
+  },
+  "intro": "<b>Step 5.<\/b> How you read a setback shapes what happens next.",
+  "doThis": "Choose the interpretation that fits the inhibitory-learning view.",
+  "src": "Module 9, When Old Fears Come Back and Recovery Adds New Learning",
+  "items": [
+   {
+    "prompt": "How should this return of fear be interpreted?",
+    "options": [
+     {
+      "id": "a",
+      "text": "As a sign that she should avoid pharmacies until she feels fully confident about going into them again"
+     },
+     {
+      "id": "b",
+      "text": "As evidence that the safety learning was erased and must now be rebuilt from nothing, one trip at a time"
+     },
+     {
+      "id": "c",
+      "text": "As an expected moment when the old memory competes again, and a cue to practice in this new setting"
+     },
+     {
+      "id": "d",
+      "text": "As proof that exposure failed and that the fear was never reduced at all, even during her earlier progress"
+     }
+    ],
+    "correct": "c",
+    "why": "Both memories remain, so the fear can win again under stress, poor sleep, or a new setting where the safety memory was never rehearsed. The response is further practice in the new setting, and expecting a comeback ahead of time is part of treatment.",
+    "src": "Module 9"
+   }
+  ],
+  "revisit": "Reread “When Old Fears Come Back.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>The pattern to carry forward:<\/b> avoidance and safety behaviors are rewarded by relief and receive the credit for the outcome for good outcomes, so the prediction is never tested. Exposure works by building a new safety memory that competes with the old fear memory: state a specific prediction, drop the crutches, vary the practice, and judge success by what was learned rather than by whether anxiety reached zero.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Nadia is an invented composite."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var last=(st.type==="classify"||st.type==="mcq")?(S.i>=st.items.length-1):true;
+  if(!last) return "Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+/* ---- classify ---- */
+function rClassify(st){
+  var it=st.items[S.i], ans=S.picked!==null;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+', item '+(S.i+1)+' of '+st.items.length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=st.items[S.i], ans=S.picked!==null;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+', question '+(S.i+1)+' of '+st.items.length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  it.options.forEach(function(o){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+o.id.toUpperCase()+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=st.items[S.i]; if(v===it.answer) S.res[S.k].score+=1; render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=st.items[S.i]; if(v===q.correct) S.res[S.k].score+=1; render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<st.items.length-1){ S.i++; S.picked=null; render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>
