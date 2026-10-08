@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Challenge: Several Mechanisms, One Order</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --line2:#eceae4;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --level-bg:#fbe7e0; --level-ink:#b0472a;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --sel-line:#c9d3c2;
+    --focus:#2f6f4f; --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px;}
+
+  .head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px;}
+  .back-ic{flex:0 0 auto;margin-top:4px;opacity:.6;}
+  .head h1{margin:0;font-size:24px;letter-spacing:-.01em;font-weight:700;}
+  .tabrow{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 22px;padding-left:38px;font-size:14px;}
+  .lvl{background:var(--level-bg);color:var(--level-ink);font-weight:700;border-radius:8px;padding:4px 12px;}
+  .tabrow .t{color:var(--muted);padding:4px 0;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;margin-bottom:20px;}
+  .panel h2{margin:0 0 14px;font-size:17px;font-weight:700;}
+  .panel p{margin:0 0 14px;font-size:15.5px;line-height:1.6;}
+  .panel p:last-child{margin-bottom:0;}
+  .scenario p.quote{color:#3a3833;}
+
+  .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
+  .qhead h2{margin:0;font-size:17px;font-weight:700;}
+  .qtype{flex:0 0 auto;font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:7px;padding:5px 10px;}
+  .qprompt{font-size:15.5px;margin:0 0 14px;line-height:1.55;}
+
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin-bottom:18px;}
+  .do b{color:var(--ink);font-weight:700;}
+
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font:inherit;font-size:15px;line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:14px;}
+  .opt .txt{flex:1 1 auto;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;}
+  .opt:disabled{cursor:default;}
+  /* answered states */
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.62;}
+
+  .verdict{margin:16px 0 0;font-size:15px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14.5px;color:#44413b;line-height:1.6;}
+
+  .qfoot{display:flex;justify-content:flex-end;margin-top:20px;}
+  .btn{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;transition:.12s;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .results h2{display:flex;align-items:center;gap:9px;}
+  .results .score{font-size:15.5px;margin:0;}
+  .ea-sub{color:var(--muted);font-size:14px;margin:-6px 0 14px;}
+  .book{flex:0 0 auto;opacity:.7;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+  @media(max-width:560px){ .wrap{padding:18px 14px 44px;} .tabrow{padding-left:0;} .head h1{font-size:20px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg class="back-ic" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 5l-5 5 5 5" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1 id="title"></h1>
+  </div>
+  <div class="tabrow" id="tabrow"></div>
+
+  <!-- Scenario (persistent) -->
+  <section class="panel scenario" id="scenario"></section>
+
+  <!-- Question area -->
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <!-- Results + Expert Analysis (hidden until finished) -->
+  <section class="panel results hidden" id="resultsPanel"></section>
+  <section class="panel hidden" id="eaPanel"></section>
+</div>
+
+<script>
+// Challenge data. Scenario, questions, and expert analysis are original and grounded in the module reading.
+const CHALLENGE = {
+ "title": "Several Mechanisms, One Order",
+ "level": "Level 4: Analyze",
+ "tabs": [
+  "Mechanism Identification",
+  "Sequencing",
+  "Consent and Measurement"
+ ],
+ "scenario": {
+  "heading": "Clinical Scenario",
+  "paras": [
+   "Delphine is an invented client, 38, who was robbed in a parking garage about eight months ago. She was not injured. Since then she has had vivid images of the incident during the day, and she has stopped using any parking garage. She takes a bus that adds ninety minutes to her commute. She startles at footsteps behind her, sleeps about four hours a night, and has told her sister, “I should have screamed or run. Freezing was pathetic.”",
+   "Most nights she has three or four glasses of wine to fall asleep. She told her doctor about the sleep problem and was referred to a psychologist, Dr. Reyes. At the first visit, Delphine said, “I don’t know if talking about it will help. I’m afraid if I start I won’t be able to stop, and I can’t stay stuck like this.” When Dr. Reyes asked directly, she said she has not had thoughts of ending her life. Dr. Reyes is deciding where to start.",
+   "Dr. Reyes plans to review progress with brief measures every few sessions, and wants to be clear with Delphine about what she is agreeing to."
+  ]
+ },
+ "doThis": "Pick the best option. After you answer, read whether you were correct and why before advancing.",
+ "questions": [
+  {
+   "id": "q1",
+   "prompt": "Which set of maintaining processes best describes Delphine’s presentation?",
+   "options": [
+    {
+     "id": "a",
+     "text": "An unprocessed memory kept raw by avoidance, a stuck point about freezing, ambivalence, and drinking used to escape"
+    },
+    {
+     "id": "b",
+     "text": "Ambivalence about treatment and drinking to escape, with the images and the avoidance expected to ease as she begins talking"
+    },
+    {
+     "id": "c",
+     "text": "A stuck point about freezing and a habit of drinking, with the avoidance and the startle as ordinary caution after a robbery"
+    },
+    {
+     "id": "d",
+     "text": "An unprocessed memory kept raw by avoidance and a stuck point about freezing, with the drinking and her doubts as side issues"
+    }
+   ],
+   "correct": "a",
+   "explanation": "Several processes are alive at once. The images and the startle show a memory that has not settled. Garage avoidance and the long commute keep it raw. “Freezing was pathetic” is a stuck point about blame and worth. Her mixed feelings about starting are ambivalence, and the wine is escape that costs more over time. Naming all of them gives the clinician a short list in place of one big label."
+  },
+  {
+   "id": "q2",
+   "prompt": "What should Dr. Reyes do first?",
+   "options": [
+    {
+     "id": "a",
+     "text": "Begin retelling the memory in detail this week, since she came for help and the memory is the core of the problem"
+    },
+    {
+     "id": "b",
+     "text": "Ask her to cut back on drinking and report at the next visit, with trauma-focused work to begin once that is done"
+    },
+    {
+     "id": "c",
+     "text": "Explore her mixed feelings with open questions and reflections, and ask what would help her on hard nights"
+    },
+    {
+     "id": "d",
+     "text": "Work on the stuck point about freezing first, since the shame it produces is probably what drives the drinking"
+    }
+   ],
+   "correct": "c",
+   "explanation": "Delphine has said she is afraid that she will not be able to stop once she starts. Memory work now would outrun her readiness, and the pacing principle favors building readiness first. A motivational stance builds her own reasons, and a plan for the hard nights gives her something to rely on. The drinking matters, and a demand that she cut back first would likely bring out the defense of the doubting side."
+  },
+  {
+   "id": "q3",
+   "prompt": "Delphine decides two months later to begin exposure. What does Dr. Reyes owe her before starting, and what should be tracked?",
+   "options": [
+    {
+     "id": "a",
+     "text": "A written handout about exposure with a chance to ask questions afterward, and a plan to review the symptom checklist at the end of treatment"
+    },
+    {
+     "id": "b",
+     "text": "A new consent conversation about exposure, including a temporary rise in distress, plus a checklist and ratings of avoidance and belief"
+    },
+    {
+     "id": "c",
+     "text": "A new consent conversation about exposure, including a temporary rise in distress, with one symptom checklist total as the only measure"
+    },
+    {
+     "id": "d",
+     "text": "A brief reminder that the intake form covers all treatment, with ratings of avoidance and belief in the stuck point at each visit"
+    }
+   ],
+   "correct": "b",
+   "explanation": "Moving to exposure changes the risks, so the clinician revisits disclosure, capacity, and voluntariness, including alternatives such as CPT and the choice to wait. Brief measures of the targeted processes, avoidance and the stuck point belief, give an early read on whether the plan is working, and a symptom checklist adds the overall picture. A form signed earlier does not cover a change in direction."
+  }
+ ],
+ "expertAnalysis": {
+  "heading": "Expert Analysis",
+  "subhead": "Model answer and clinical reasoning walkthrough",
+  "paras": [
+   "Delphine carries several processes at once. The intrusive images and startle show a memory that has not finished processing, and her garage avoidance and long commute are the avoidance that keeps it raw. Her statement about freezing is a stuck point about blame and self-worth, and freezing is an automatic response that CPT would help her examine. She is ambivalent, because she wants relief and fears she will not be able to stop once she starts talking. The nightly wine buys sleep tonight at a cost tomorrow.",
+   "Readiness and safety shape the order. A motivational stance comes first, so that her own reasons for treatment come forward and her fear about starting can be heard. A plan for hard nights gives her a way to ride out a wave without wine, and the clinician and Delphine can talk about what the drinking does for her at night. She denied thoughts of ending her life when asked, and the clinician would continue to ask directly and in an ordinary tone as treatment goes on.",
+   "When Delphine decides to move into trauma-focused work, the clinician revisits consent because the risks have changed. Delphine should hear that exposure involves deliberately approaching the memory, that distress often rises before it falls, that CPT is an alternative with similar average results, and that she can decide at her own pace. Brief measures of avoidance and of belief in “freezing was pathetic,” alongside a symptom checklist, let the two of them see whether the targeted processes are moving. If the avoidance ratings fall and the belief rating does not, the next step is to work on the belief directly. If neither moves, the clinician revises the plan."
+  ]
+ }
+};
+
+var idx = 0;            // current question index
+var answered = [];      // answered[i] = chosen option id or null
+var correctCount = 0;
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+var BOOK = '<svg class="book" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+
+function renderStatic(){
+  document.getElementById("title").textContent = CHALLENGE.title;
+  var tr = document.getElementById("tabrow");
+  tr.appendChild(el("span","lvl", esc(CHALLENGE.level)));
+  CHALLENGE.tabs.forEach(function(t){ tr.appendChild(el("span","t", esc(t))); });
+
+  var sc = document.getElementById("scenario");
+  sc.appendChild(el("h2",null, esc(CHALLENGE.scenario.heading)));
+  CHALLENGE.scenario.paras.forEach(function(p,i){
+    sc.appendChild(el("p", i===1?"quote":null, esc(p)));
+  });
+  answered = CHALLENGE.questions.map(function(){ return null; });
+}
+
+function renderQuestion(){
+  var q = CHALLENGE.questions[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var head = el("div","qhead");
+  head.appendChild(el("h2",null,"Question " + (idx+1) + " of " + CHALLENGE.questions.length));
+  head.appendChild(el("span","qtype","Multiple Choice"));
+  panel.appendChild(head);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> " + esc(CHALLENGE.doThis)));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls = "opt";
+    if(isAnswered){
+      if(o.id === q.correct) cls += " correct";
+      else if(o.id === chosen) cls += " wrong";
+      else cls += " dim";
+    }
+    var btn = el("button", cls);
+    btn.type = "button";
+    if(isAnswered) btn.disabled = true;
+    var mark = "";
+    if(isAnswered && o.id === q.correct) mark = CHECK;
+    else if(isAnswered && o.id === chosen) mark = CROSS;
+    btn.innerHTML = '<span class="k">'+o.id.toUpperCase()+'.</span>' +
+                    '<span class="txt">'+esc(o.text)+'</span>' +
+                    '<span class="mark">'+mark+'</span>';
+    if(!isAnswered){
+      btn.addEventListener("click", function(){ choose(o.id); });
+    }
+    opts.appendChild(btn);
+  });
+  panel.appendChild(opts);
+
+  if(isAnswered){
+    var right = chosen === q.correct;
+    if(right){
+      panel.appendChild(el("p","verdict ok","Correct!"));
+    } else {
+      var correctText = "";
+      q.options.forEach(function(o){ if(o.id===q.correct) correctText = o.text; });
+      panel.appendChild(el("p","verdict no","Incorrect. The correct answer is: " + esc(correctText)));
+    }
+    panel.appendChild(el("p","explain", esc(q.explanation)));
+
+    var foot = el("div","qfoot");
+    var last = idx === CHALLENGE.questions.length - 1;
+    var b = el("button","btn");
+    if(last){
+      b.innerHTML = 'View Expert Analysis ' + BOOK.replace('class="book" ','');
+      b.addEventListener("click", finish);
+    } else {
+      b.innerHTML = 'Next Question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      b.addEventListener("click", function(){ idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+    }
+    foot.appendChild(b);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(optId){
+  if(answered[idx] !== null) return;
+  answered[idx] = optId;
+  if(optId === CHALLENGE.questions[idx].correct) correctCount++;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("qpanel").classList.add("hidden");
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML = "";
+  rp.appendChild(el("h2",null, BOOK + "<span>Your Results</span>"));
+  rp.appendChild(el("p","score","Multiple Choice: " + correctCount + " / " + CHALLENGE.questions.length + " correct"));
+
+  var ea = document.getElementById("eaPanel");
+  ea.classList.remove("hidden");
+  ea.innerHTML = "";
+  ea.appendChild(el("h2",null, BOOK + "<span>" + esc(CHALLENGE.expertAnalysis.heading) + "</span>"));
+  ea.appendChild(el("p","ea-sub", esc(CHALLENGE.expertAnalysis.subhead)));
+  CHALLENGE.expertAnalysis.paras.forEach(function(p){ ea.appendChild(el("p",null, esc(p))); });
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderStatic();
+renderQuestion();
+</script>
+</body>
+</html>

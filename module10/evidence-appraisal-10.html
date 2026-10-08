@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evidence Appraisal: Trauma Care Claims</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --study-bg:#f2f4f8; --study-line:#c9d4e6; --study-ink:#2f4a72;
+    --tool-bg:#f3eef7; --tool-ink:#6d4a86; --tool-line:#d8c7e6;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .stagetabs{display:flex;gap:0;margin:16px 0 6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .stagetabs button{flex:1 1 0;border:none;background:#fff;padding:11px 10px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.25;}
+  .stagetabs button+button{border-left:1px solid var(--line);}
+  .stagetabs button[aria-selected="true"]{background:var(--accent);color:#fff;}
+  .stagetabs button:disabled{color:#b7b2a9;cursor:not-allowed;}
+  .stagetabs button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .stagetabs .sn{display:block;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+  .stagetabs .stt{display:block;font-weight:600;font-size:13px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:12px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .intro{background:var(--study-bg);border:1px solid var(--study-line);color:var(--study-ink);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;margin-bottom:16px;}
+  .intro b{font-weight:700;}
+
+  /* toolkit cards */
+  .toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  @media(max-width:620px){ .toolgrid{grid-template-columns:1fr;} }
+  .tool{border:1px solid var(--tool-line);background:var(--tool-bg);border-radius:12px;padding:13px 15px;}
+  .tool h3{margin:0 0 4px;font-size:14px;color:var(--tool-ink);}
+  .tool p{margin:0;font-size:13px;line-height:1.55;}
+  .tool .ask{margin-top:7px;font-size:12.5px;font-style:italic;color:var(--muted);}
+
+  .study{background:var(--study-bg);border:1px solid var(--study-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;}
+  .study .slabel{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--study-ink);background:#fff;border-radius:7px;padding:3px 9px;margin-bottom:8px;}
+  .study .sbody{font-size:14px;line-height:1.6;}
+  .study .sbody b{font-weight:700;}
+  .study .datarow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .study .chip{font-size:12px;background:#fff;border:1px solid var(--study-line);border-radius:7px;padding:4px 10px;color:var(--study-ink);}
+
+  .difficulty{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:6px;padding:3px 9px;display:inline-block;margin-bottom:10px;}
+  .difficulty.mod{background:var(--amber-bg);color:var(--amber-ink);}
+  .difficulty.hard{background:var(--no-bg);color:var(--no-ink);}
+
+  .qprompt{font-size:15px;line-height:1.5;margin:14px 0 12px;font-weight:600;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt .ol{font-weight:700;margin-right:7px;color:var(--muted);}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fnote{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+  .fnote .tool-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:#fff;border-radius:6px;padding:2px 8px;margin-bottom:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 6px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.62;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Evidence Appraisal: Trauma, Change, and Measurement Claims</h1>
+    <p class="sub">Judging whether the evidence supports a claim about a treatment requires different skills from knowing the treatment. The six appraisal questions below apply to claims and constructed studies about trauma care, motivational interviewing, and measurement. The studies are constructed for practice, and the reasoning carries over to real ones.</p>
+  </div>
+
+  <div class="stagetabs" id="tabs" role="tablist"></div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+</div>
+
+<script>
+// Appraisal toolkit and constructed studies (not real publications; nothing here should be cited as a finding).
+var TOOLS = [
+ {
+  "name": "Compared to what?",
+  "body": "A result can be interpreted only against a comparison. A fall in scores across a clinic’s clients says little without a group that did not receive the practice, and it says less when clients who dropped out are left out of the average."
+ },
+ {
+  "name": "Statistical versus clinical significance",
+  "body": "A statistically significant difference says the gap probably is not zero. Clinical significance asks whether the gap is large enough to matter to a person. With a large sample, a small gap can be significant and still not change what a clinician or client would do."
+ },
+ {
+  "name": "Averages and individuals",
+  "body": "An average describes a group. Two treatments that tie on average can still differ for particular people, and one that leads on average can be the wrong fit for the person in the room. Averages show which tools to have available and do not show which one this person needs."
+ },
+ {
+  "name": "Timing and durability",
+  "body": "A change at one moment can mislead. Distress that rises early in treatment and falls later is a different pattern from distress that rises and stays up. Look at what happened by the end and afterward, and at how many people got worse as well as how many improved at some point."
+ },
+ {
+  "name": "Mechanism versus symptom",
+  "body": "Symptom improvement does not show that the proposed mechanism changed. A mechanism claim needs a measure of the mechanism itself, evidence that it shifted, and evidence that the shift came before the symptom change."
+ },
+ {
+  "name": "Correlation and direction",
+  "body": "Two things that travel together may be linked in either direction, or through a third factor. Observing sessions and later outcomes can show a link and cannot rule out a third factor that produces both. A claim that changing one thing causes the other needs a design that changes it."
+ }
+];
+
+var ITEMS = [
+ {
+  "diff": "mod",
+  "study": {
+   "label": "Claim A",
+   "body": "A conference poster compares two treatments for PTSD in a constructed trial. Treatment 1 is Prolonged Exposure and Treatment 2 is Cognitive Processing Therapy. Both groups improved a great deal. The poster concludes, “PE is significantly more effective, so CPT should no longer be offered.”",
+   "data": [
+    "Type: randomized trial (constructed)",
+    "Participants: 3,000, split evenly",
+    "Average symptom drop: PE 27 points, CPT 25 points",
+    "Spread of symptom change: SD about 15 points",
+    "Difference: 2 points, p < .001",
+    "Clinical threshold for a meaningful difference: 10 points"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "b",
+  "tool": "Statistical versus clinical significance",
+  "options": [
+   {
+    "id": "a",
+    "text": "A sample of 3,000 is too large to trust, since big studies produce differences by construction and are not reliable evidence of anything at all"
+   },
+   {
+    "id": "b",
+    "text": "The gap is detectable because the sample is large, falls far below the meaningful threshold, and leaves the choice to fit and preference"
+   },
+   {
+    "id": "c",
+    "text": "Both groups improved by similar amounts, which shows that neither treatment did anything beyond the passage of time and ordinary support for them"
+   },
+   {
+    "id": "d",
+    "text": "A p-value below .001 shows the gap is large and important, so the study supports dropping CPT from clinical use in favor of PE for everyone"
+   }
+  ],
+  "why": "A small p-value reflects a large sample as well as a gap, and it says nothing about size. Here the gap is 2 points against a 10-point threshold for a difference that matters, and both groups improved by roughly 25 points. Treatments that tie in practice leave room for the person’s mechanism, readiness, and informed preference to guide the choice. The real veteran trial reached a similar kind of conclusion, and the authors stressed shared decision-making."
+ },
+ {
+  "diff": "mod",
+  "study": {
+   "label": "Claim B",
+   "body": "A clinic begins asking every client to complete a short symptom checklist at each visit. After a year the clinic reports, “Average scores fell by 30 percent. Routine tracking improves outcomes.” The report averages scores only for clients who completed at least six sessions.",
+   "data": [
+    "Type: clinic report (constructed)",
+    "Design: scores before and after, one clinic",
+    "Sample: clients with at least six sessions",
+    "Outcome: average checklist score"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "c",
+  "tool": "Compared to what? / timing and attrition",
+  "options": [
+   {
+    "id": "a",
+    "text": "Excluding clients with few sessions makes the result more trustworthy, because those clients were not engaged enough to be informative"
+   },
+   {
+    "id": "b",
+    "text": "A 30 percent fall across a full year of clients is strong evidence that tracking works, since a before-and-after design is the standard"
+   },
+   {
+    "id": "c",
+    "text": "Without a comparison group, and with early dropouts left out, the fall cannot be credited to tracking and may reflect who stayed"
+   },
+   {
+    "id": "d",
+    "text": "The report shows tracking does not work, since a clinic cannot learn anything from a checklist that clients complete themselves"
+   }
+  ],
+  "why": "Clients who stay for six sessions are different from those who leave, and people also tend to improve with time. Without a comparison group and without the dropouts, the report cannot separate the effect of tracking from selection and time. Studies that compare monitoring with feedback against monitoring without it, as in the work Lambert (2010) summarizes, are a stronger basis for the claim."
+ },
+ {
+  "diff": "hard",
+  "study": {
+   "label": "Claim C",
+   "body": "A blog post cites a constructed study of exposure therapy for PTSD and concludes, “Exposure is harmful. In this study, 35 percent of clients scored worse at week 2 than at baseline.” The study followed clients for twelve weeks and also reports what happened by the end.",
+   "data": [
+    "Type: randomized trial, exposure versus a comparison treatment (constructed)",
+    "Week 2: 35% of the exposure group scored worse than baseline, 12% of the comparison group",
+    "Week 12: exposure group average fell 24 points, comparison group average fell 20 points",
+    "Worse than baseline at week 12: exposure 6%, comparison 7%",
+    "Dropout: exposure 18%, comparison 17%"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "a",
+  "tool": "Timing and durability",
+  "options": [
+   {
+    "id": "a",
+    "text": "The early rise fits distress rising before it falls, and the week 12 results and dropout rates show no added harm"
+   },
+   {
+    "id": "b",
+    "text": "The week 12 averages matter less than early results, since the early weeks are when clients are most at risk of leaving"
+   },
+   {
+    "id": "c",
+    "text": "The early worsening is a real harm signal that belongs in consent, so exposure should be offered only when no alternative exists"
+   },
+   {
+    "id": "d",
+    "text": "The early rise shows that exposure acts faster than the comparison, since a larger early change reflects a stronger effect"
+   }
+  ],
+  "why": "The claim rests on one time point. Distress commonly rises early in exposure and then falls, and the study reports that by week 12 the exposure group improved at least as much as the comparison group, with a similar share worse than baseline and similar dropout. A fair appraisal weighs the whole course. The early rise still belongs in the consent conversation, so clients hear it in advance."
+ },
+ {
+  "diff": "hard",
+  "study": {
+   "label": "Claim D",
+   "body": "A researcher records 120 counseling sessions about alcohol use and counts how often clients make statements favoring change. Clients with more such statements were more likely to report drinking less three months later. A trainer concludes, “Counselors should coach clients to make more change statements, and outcomes will improve.”",
+   "data": [
+    "Type: observational study (constructed)",
+    "Design: sessions recorded, outcome measured at 3 months",
+    "Measures: count of change statements, self-reported drinking",
+    "Link: more change statements, more reduction"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "d",
+  "tool": "Correlation and direction",
+  "options": [
+   {
+    "id": "a",
+    "text": "Because the outcome came after the sessions, the order is clear, and the study supports coaching clients to make more change statements"
+   },
+   {
+    "id": "b",
+    "text": "Because the study is observational, it says nothing useful about change statements, and counselors should disregard them"
+   },
+   {
+    "id": "c",
+    "text": "The link is probably produced by the recording process, since being recorded changes what clients say and what they later do"
+   },
+   {
+    "id": "d",
+    "text": "The link may reflect readiness, so the claim needs counselor behavior varied and change statements shown to move first"
+   }
+  ],
+  "why": "Order in time helps, and it does not settle the question. Clients who were already closer to changing may say more about change in session and also drink less afterward, so readiness could produce both. The study shows a link. To support the claim that eliciting change statements produces change, researchers would vary counselor behavior, show that change statements shift in response, and show that the shift precedes the outcome."
+ }
+];
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var stage="toolkit", idx=0, answers=[];
+
+function init(){ answers=ITEMS.map(function(){return null;}); stage="toolkit"; idx=0; render(); }
+
+function renderTabs(){
+  var host=document.getElementById("tabs"); host.innerHTML="";
+  [["toolkit","Stage 1","The appraisal toolkit"],["appraise","Stage 2","Appraise the studies"]].forEach(function(t){
+    var b=el("button"); b.setAttribute("role","tab"); b.setAttribute("aria-selected",String(stage===t[0]));
+    var locked = t[0]==="appraise" && !toolkitSeen;
+    b.disabled=locked;
+    b.innerHTML='<span class="sn">'+esc(t[1])+'</span><span class="stt">'+esc(t[2])+'</span>';
+    if(!locked) b.addEventListener("click", function(){ stage=t[0]; render(); });
+    host.appendChild(b);
+  });
+}
+var toolkitSeen=false;
+
+function renderProgress(){
+  if(stage==="toolkit"){ document.getElementById("pbarfill").style.width="0%"; document.getElementById("pcount").textContent="Toolkit"; }
+  else { var d=answers.filter(function(x){return x!==null;}).length; document.getElementById("pbarfill").style.width=(d/ITEMS.length*100)+"%"; document.getElementById("pcount").textContent="Study "+Math.min(idx+1,ITEMS.length)+" of "+ITEMS.length; }
+}
+
+function render(){ renderTabs(); renderProgress(); if(stage==="toolkit") renderToolkit(); else renderAppraise(); }
+
+function renderToolkit(){
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("div","intro","<b>Seven tools for judging a claim.</b> Each names a question a careful reader asks of any study. You will use these by name in the next stage, so read the question each one poses. The point is not to distrust all research, it is to calibrate how much a given study can actually support."));
+  var grid=el("div","toolgrid");
+  TOOLS.forEach(function(t){
+    var c=el("div","tool");
+    c.appendChild(el("h3",null,esc(t.name)));
+    c.appendChild(el("p",null,esc(t.body)));
+    c.appendChild(el("div","ask","Ask: "+esc(t.ask)));
+    grid.appendChild(c);
+  });
+  p.appendChild(grid);
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var b=el("button","btn","Start appraising \u2192");
+  b.addEventListener("click", function(){ toolkitSeen=true; stage="appraise"; idx=0; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  foot.appendChild(b); p.appendChild(foot);
+}
+
+function renderAppraise(){
+  var it=ITEMS[idx], chosen=answers[idx];
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("span","difficulty "+(it.diff==="hard"?"hard":"mod"), it.diff==="hard"?"Harder":"Moderate"));
+  var st=el("div","study");
+  st.appendChild(el("span","slabel", it.study.label));
+  st.appendChild(el("div","sbody", it.study.body));
+  var dr=el("div","datarow"); it.study.data.forEach(function(d){ dr.appendChild(el("span","chip", esc(d))); }); st.appendChild(dr);
+  p.appendChild(st);
+  p.appendChild(el("div","qprompt", esc(it.prompt)));
+  var opts=el("div","opts");
+  it.options.forEach(function(o){
+    var b=el("button","opt"); b.type="button";
+    b.innerHTML='<span class="ol">'+esc(o.id.toUpperCase())+'</span>'+esc(o.text);
+    if(chosen!==null){
+      b.disabled=true;
+      if(o.id===chosen) b.classList.add(o.id===it.answer?"correct-pick":"wrong-pick");
+      else if(o.id===it.answer) b.classList.add("show-correct");
+      else b.classList.add("dim");
+    } else { b.addEventListener("click", function(){ answers[idx]=o.id; render(); }); }
+    opts.appendChild(b);
+  });
+  p.appendChild(opts);
+  if(chosen!==null){
+    var right=chosen===it.answer;
+    var note=el("div","fnote "+(right?"ok":"no"));
+    note.innerHTML='<span class="tool-tag">'+esc(it.tool)+'</span><br>'+(right?"<b>Sound appraisal.</b> ":"<b>Not the strongest reading.</b> ")+esc(it.why);
+    p.appendChild(note);
+  }
+  var foot=el("div","foot");
+  var back=el("button","btn secondary","\u2190 Back"); back.disabled=idx===0;
+  back.addEventListener("click", function(){ if(idx>0){idx--;render();} }); foot.appendChild(back);
+  var next=el("button","btn"); var last=idx===ITEMS.length-1; next.disabled=chosen===null;
+  next.innerHTML=last?"See results":"Next study \u2192";
+  next.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+  foot.appendChild(next); p.appendChild(foot);
+}
+
+function finish(){
+  var correct=0; ITEMS.forEach(function(it,i){ if(answers[i]===it.answer) correct++; });
+  var p=document.getElementById("cardPanel"); p.innerHTML=""; p.className="card results";
+  p.appendChild(el("h2",null,"Appraisal complete"));
+  p.appendChild(el("p","score","You chose the best-supported reading on <b>"+correct+" of "+ITEMS.length+"</b> studies."));
+  p.appendChild(el("p",null,"In each hard case the conclusion claimed more than the design could support, because the studies lacked a comparison, a mechanism measure, or a way to establish order in time."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Review the toolkit"); again.addEventListener("click", function(){ stage="toolkit"; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  var retry=el("button","btn","Try the studies again"); retry.addEventListener("click", function(){ init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); act.appendChild(retry); p.appendChild(act);
+  p.appendChild(el("div","selfnote","This activity runs entirely on your own screen. Nothing you select is saved, sent, or seen by anyone. The studies here are constructed for practice."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

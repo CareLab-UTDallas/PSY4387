@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motivational Interviewing Practice: A Conversation with Odette</title>
+<style>
+  :root{ --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --panel:#fff; --accent:#8a5a25; --accent-ink:#6f4a20;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e; --mid-bg:#fffbef; --mid-line:#e7c98a; --mid-ink:#7a5f1f; --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72; --focus:#2f6f4f; }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  h1{margin:0;font-size:23px;letter-spacing:-.01em;} .sub{margin:6px 0 14px;color:var(--muted);font-size:14.5px;}
+  .masthead{padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .pills{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;} .pill{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .pill.on{background:var(--accent);color:#fff;} .pill.done{background:var(--ok-bg);color:var(--ok-ink);}
+  .case{background:var(--mid-bg);border:1px solid var(--mid-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);}
+  .panel:focus{outline:none;}
+  .skill{font-size:13px;color:var(--muted);margin:0 0 6px;}
+  .quote{font-size:17px;line-height:1.5;margin:6px 0 12px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .who{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:2px;}
+  .do{background:#f3f1ec;color:#57544e;border-radius:10px;padding:10px 13px;font-size:13px;margin:6px 0 14px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:disabled{cursor:default;} .opt .k{font-weight:700;color:var(--muted);min-width:15px;}
+  .opt.r2{background:var(--ok-bg);border-color:var(--ok-line);} .opt.r1{background:var(--mid-bg);border-color:var(--mid-line);} .opt.r0{background:var(--no-bg);border-color:var(--no-line);}
+  .opt.pick{box-shadow:0 0 0 2px var(--accent) inset;} .opt.dim{opacity:.6;}
+  .opt:focus-visible,.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .verdict{margin:16px 0 4px;font-size:14.5px;font-weight:600;} .verdict.r2{color:var(--ok-ink);} .verdict.r1{color:var(--mid-ink);} .verdict.r0{color:var(--no-ink);}
+  .explain{font-size:14px;color:#44413b;margin:6px 0;} .better{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:10px;padding:10px 13px;font-size:14px;margin:10px 0;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;flex-wrap:wrap;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;} .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;} .brow:last-child{border-bottom:none;} .brow .bs{flex:0 0 52px;font-weight:700;color:var(--accent-ink);}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .note{font-size:12.5px;color:var(--muted);margin-top:14px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead"><h1>Meeting Ambivalence</h1><p class="sub">Practice the first ten minutes of a conversation with Odette. Your choices change how she responds.</p></div>
+  <div id="root"></div>
+</div>
+<script>
+var SKILLS = [
+ "Asking an open question",
+ "Reflecting what you hear",
+ "Affirming a strength",
+ "Responding to sustain talk without arguing",
+ "Evoking a next step"
+];
+var SCENARIO = "Odette is an invented client, 37, who works as an accountant, and the case carries no diagnosis. A blood test result that her doctor linked to drinking came back slightly outside the usual range, and the doctor suggested she talk with a counselor. She drinks wine most evenings. Her sister has been worried. This is the first ten minutes of her first session with you. She sits with her arms folded.";
+var TURNS = [
+ {
+  "skill": 0,
+  "client": {
+   "start": "I’m not sure why I’m here. My doctor made a big deal out of one blood test. I have a stressful job, and a glass or two of wine is how I unwind. I don’t think I have a problem."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "I’m glad you came in. If anything could be different about how things are going, what would you want it to be?",
+    "reply": "Huh. Nobody has asked me that.",
+    "why": "The question is open and does not assume a problem. It invites her to describe what she wants, which is the start of her own reasons for change."
+   },
+   {
+    "r": 1,
+    "t": "How many drinks do you have on a typical night, and how many nights a week?",
+    "reply": "Two or three, sometimes a bottle on a bad week. Why, is that a lot?",
+    "why": "The facts will be useful later. As a first question it is closed, it invites a short answer, and it puts her in the position of defending the amount."
+   },
+   {
+    "r": 0,
+    "t": "A blood test that doctors link to drinking is serious, so it makes sense to start by talking about the risks of drinking at this level.",
+    "reply": "Here we go. I knew this would be a lecture.",
+    "why": "The response supplies the reasons for change before she has said any. She is left to voice the reasons against, and she does."
+   },
+   {
+    "r": 0,
+    "t": "Lots of people drink to unwind after a stressful job, so there is nothing unusual here. Maybe we could focus on stress management instead.",
+    "reply": "Right? That is what I told my doctor.",
+    "why": "Telling her nothing is unusual closes the door before it opens. It confirms the side of her that says there is no problem, and nothing about her own reasons has been explored."
+   }
+  ],
+  "order": [
+   2,
+   0,
+   1,
+   3
+  ]
+ },
+ {
+  "skill": 1,
+  "client": {
+   "g": "Mostly I’d like my sister to stop hovering. I’d sleep better too, I guess. I’m not saying the wine is the issue.",
+   "m": "Anyway, my sister hovers and I sleep badly, but that’s work. I’m not saying the wine is the issue, whatever the blood test says.",
+   "p": "My sister hovers, I sleep badly, my doctor is worried. None of that is the wine."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Your sister’s worry and your sleep are both on your mind, and you are not convinced the wine has anything to do with either.",
+    "reply": "Yes. Though sometimes I do wonder about it.",
+    "why": "The reflection keeps what she said, her concerns and her doubt, without arguing. Hearing it said back leaves room for the thought she had not yet said aloud."
+   },
+   {
+    "r": 1,
+    "t": "It sounds like you are under pressure from your sister and your doctor right now.",
+    "reply": "Everyone has an opinion.",
+    "why": "A simple reflection shows she was heard. It captures the pressure and leaves out her sleep and her doubt, so the conversation does not move toward her own reasons."
+   },
+   {
+    "r": 0,
+    "t": "Your doctor flagged the blood test and your sister is worried too, so your drinking seems to be a real concern here, and the numbers back that up.",
+    "reply": "See, this is why I don’t talk about it.",
+    "why": "The response lines up with her doctor and her sister against her. She defends the drinking, and the conversation turns into an argument."
+   },
+   {
+    "r": 0,
+    "t": "You think the problem is mostly your sister and your doctor overreacting.",
+    "reply": "Exactly. Thank you.",
+    "why": "The reflection overstates what she said. She agrees eagerly, her sleep drops out of the picture, and her doubt about the wine gets stronger."
+   }
+  ],
+  "order": [
+   2,
+   1,
+   3,
+   0
+  ]
+ },
+ {
+  "skill": 2,
+  "client": {
+   "g": "I did come in, though. I wake up at 3 most nights, and it bothers me.",
+   "m": "I did come in, though. I wake up at 3 most nights, which isn’t great.",
+   "p": "Anyway, I did come in. I wake up at 3 most nights."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "You came in even though part of you doubts you need to, and you shared the 3 a.m. waking, which is not easy to say. What is it like to be awake at 3 a.m.?",
+    "reply": "It’s tiring. I’m exhausted by noon.",
+    "why": "The affirmation names two specific things she did, coming and being open. The question that follows invites her to say more about the part that bothers her."
+   },
+   {
+    "r": 1,
+    "t": "Thanks for coming. Many people find a first session the hardest part.",
+    "reply": "Sure. It’s hard.",
+    "why": "The thanks is warm and generic. It does not name anything she did, so it does not strengthen what she has just shown."
+   },
+   {
+    "r": 1,
+    "t": "It sounds like you have been dealing with a lot lately, and I appreciate you being open with me about the sleep today.",
+    "reply": "I guess so. It’s been a lot.",
+    "why": "The response is kind and points at something she said. It stays general, leaves out that she came in despite her doubts, and ends without a question that invites more."
+   },
+   {
+    "r": 0,
+    "t": "Waking at 3 a.m. is a common sign that alcohol is disrupting sleep, so that is the first thing for us to fix, and the sooner the better.",
+    "reply": "I don’t know that it’s the wine.",
+    "why": "The response skips the affirmation and moves to an expert fix. She had raised the sleep herself, and a conclusion handed to her turns it back into someone else’s argument."
+   }
+  ],
+  "order": [
+   0,
+   1,
+   3,
+   2
+  ]
+ },
+ {
+  "skill": 3,
+  "client": {
+   "g": "I’m not going to give up wine, though, if that is where this is going.",
+   "m": "I’m exhausted by noon. If you’re going to tell me to give up wine, I’m not doing that.",
+   "p": "I’m exhausted by noon, and that’s the job. If you’re going to tell me to quit, we’re done."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "You are not planning to give up wine, and the tiredness is wearing on you. The wine is your decision. What have you noticed on nights you drink less?",
+    "reply": "Huh. I hadn’t thought about it much.",
+    "why": "The response reflects both parts of what she said, supports her control over the decision, and turns toward the part that bothers her. Asking about nights she drinks less invites her to compare."
+   },
+   {
+    "r": 1,
+    "t": "I’m not asking you to quit. Let’s look at your drinking patterns for now, and we can decide about the rest later on.",
+    "reply": "Fine.",
+    "why": "Saying she is not being asked to quit lowers the pressure. The direction is set by the counselor, though, and nothing invites her own thinking."
+   },
+   {
+    "r": 0,
+    "t": "If you keep drinking at this level your results will probably get worse, so it is important to think about cutting back soon, before the numbers move further.",
+    "reply": "That’s what everyone says.",
+    "why": "Arguing for change brings out the case against it. She is back to defending her position, and the warning raises her worry without offering a plan."
+   },
+   {
+    "r": 0,
+    "t": "I can’t force you to quit, but I would be failing at my job if I didn’t tell you that you should, for your own health and for the sake of the people in your life who care about you a great deal.",
+    "reply": "Then it isn’t my decision, is it?",
+    "why": "The statement says it respects her choice and then pushes anyway. She notices the contradiction, and her sense of control is lost."
+   }
+  ],
+  "order": [
+   1,
+   2,
+   0,
+   3
+  ]
+ },
+ {
+  "skill": 4,
+  "client": {
+   "g": "Nights I skip it I sleep better, I think. I haven’t tracked it.",
+   "m": "I guess I sleep a bit better some nights, if that’s what you’re after. I haven’t tracked it.",
+   "p": "Fine. I sleep a bit better some nights, if you want to know. I don’t see where this is going."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "You like wine to unwind, you do not want to be told what to do, you are tired by noon, and you may sleep better some nights. Where does that leave you?",
+    "reply": "Hm. I could see tracking my sleep and my drinks for a couple of weeks, just to look. Not quitting. Just looking.",
+    "why": "The summary gathers both sides in her own words and ends with an open key question. The step that follows comes from her."
+   },
+   {
+    "r": 1,
+    "t": "That is interesting. Tell me more about how you sleep on the nights you skip it, and what you notice the next day.",
+    "reply": "Better, I think. I wake up less. I haven’t thought about it much.",
+    "why": "An open question about her own observation is a good move. Without a summary of where she stands or a question about what she wants to do, the conversation circles."
+   },
+   {
+    "r": 1,
+    "t": "Would you be willing to keep a record of your drinks and your sleep this week, and we can look at it together next time we meet, whatever it shows, and decide what to do with it?",
+    "reply": "I guess. If it’s just a record. Fine.",
+    "why": "The plan is reasonable and the request comes from the counselor. She agrees without having voiced a reason of her own, so the commitment is thin."
+   },
+   {
+    "r": 0,
+    "t": "Great, so you agree you should quit. Let’s set a quit date for the end of this week, then.",
+    "reply": "I never said that. I said I might sleep a bit better some nights. I’m not setting a date.",
+    "why": "The response turns a small observation into a conclusion she did not reach. She pushes back, and the step she was approaching is lost."
+   }
+  ],
+  "order": [
+   1,
+   0,
+   2,
+   3
+  ]
+ }
+];
+var REVISIT = [
+ "Begin with an open question that does not assume a problem and invites the person to say what they want. Closed questions can come later.",
+ "Reflect what you heard, including both the wish and the doubt, without arguing or overstating. Simple and complex reflections both help.",
+ "Name a specific thing the person did or said, and follow with a question that invites more. A generic thank-you or a fix does not affirm anything in particular.",
+ "Reflect what the person said, support their control over the decision, and turn toward the part that bothers them. Arguing for change or pushing while claiming not to brings out the other side.",
+ "Summarize both sides in the person’s words and end with an open key question. Let the next step come from the person."
+];
+var TAKE = "In this module’s model, motivation comes from within the person. The counselor asks open questions, reflects what the person says, affirms specific strengths, avoids arguing with sustain talk, and summarizes before asking what the person wants to do. The person’s own words are associated with change.";
+var NOTE = "This practice conversation is invented and scores only the choices shown. It practices motivational interviewing with one scripted client and is not clinical training. It is not a way to assess or treat yourself or anyone you know. If someone talks about harming themselves, respond to that first, and in the United States call or text 988, or call 911 in an emergency.";
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root"), S;
+var LABEL={2:"Skilled response",1:"Acceptable, with a gap",0:"Missed the skill"};
+function fresh(){ S={t:0,branch:"start",pick:null,retried:false,first:null,log:[],done:false}; render(); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function pills(){ return '<div class="pills" aria-hidden="true">'+TURNS.map(function(t,i){ return '<span class="pill'+(i===S.t&&!S.done?" on":(i<S.log.length?" done":""))+'">'+(i+1)+'. '+esc(SKILLS[t.skill])+'</span>'; }).join("")+'</div>'; }
+function clientLine(t){ return t.client[S.branch]||t.client.start||t.client.m; }
+function render(){
+  if(S.done){ return summary(); }
+  var t=TURNS[S.t], h=pills()+'<div class="case"><b class="t">Case: Odette</b>'+esc(SCENARIO)+'</div><section class="panel" id="panel" tabindex="-1" aria-live="polite">';
+  h+='<p class="skill">Turn '+(S.t+1)+' of '+TURNS.length+'. Skill practiced: '+esc(SKILLS[t.skill])+'</p>';
+  h+='<p class="quote"><span class="who">Odette</span>'+esc(clientLine(t))+'</p>';
+  h+='<div class="do"><b>Do this:</b> Choose the response you would say next. Each choice changes how Odette answers.</div><div class="options">';
+  t.order.forEach(function(ix,pos){
+    var o=t.options[ix], cls="opt";
+    if(S.pick!==null){ cls+=" r"+o.r; if(S.pick===ix) cls+=" pick"; else cls+=" dim"; }
+    h+='<button type="button" class="'+cls+'" data-ix="'+ix+'"'+(S.pick!==null?" disabled":"")+'><span class="k">'+String.fromCharCode(65+pos)+'.</span><span>'+esc(o.t)+'</span></button>';
+  });
+  h+='</div>';
+  if(S.pick!==null){
+    var o=t.options[S.pick], best=t.options.filter(function(x){return x.r===2;})[0], eff=(S.retried?Math.min(o.r,1):o.r);
+    h+='<p class="verdict r'+o.r+'">'+LABEL[o.r]+(S.retried?" (second try, scored at most 1 of 2)":"")+'</p>';
+    h+='<p class="quote"><span class="who">Odette</span>'+esc(o.reply)+'</p><p class="explain">'+esc(o.why)+'</p>';
+    if(o.r<2) h+='<div class="better"><b>A stronger response:</b> '+esc(best.t)+'</div>';
+    h+='<div class="foot">'+((o.r===0&&!S.retried)?'<button class="btn secondary" type="button" data-act="retry">Try this turn again</button>':'<span></span>')+'<button class="btn" type="button" data-act="next">'+(S.t>=TURNS.length-1?"See your results":"Continue the conversation")+'</button></div>';
+  }
+  h+='</section>'; root.innerHTML=h; post();
+  var p=document.getElementById("panel"); if(p&&S.pick!==null){ try{p.focus();}catch(e){} }
+}
+function commit(){
+  var t=TURNS[S.t], o=t.options[S.pick], sc=(S.retried?Math.min(o.r,1):o.r);
+  S.log.push({skill:t.skill,r:o.r,score:sc,retried:S.retried,first:S.first});
+  S.branch=(o.r===2?"g":(o.r===1?"m":"p"));
+}
+function summary(){
+  var tot=0; S.log.forEach(function(l){tot+=l.score;});
+  var worst=S.log.slice().sort(function(a,b){return a.score-b.score;})[0];
+  var h=pills()+'<section class="panel" id="panel" tabindex="-1"><h2 style="margin:0 0 4px;font-size:20px;">Your conversation with Odette</h2><p>You scored <b>'+tot+' of '+(TURNS.length*2)+'</b> across the five skills. A retried turn counts for at most 1 point.</p><div>';
+  S.log.forEach(function(l){ h+='<div class="brow"><span class="bs">'+l.score+' / 2</span><span><b>'+esc(SKILLS[l.skill])+'.</b> '+(l.score===2?"Skilled response.":esc(REVISIT[l.skill]))+'</span></div>'; });
+  h+='</div>';
+  if(tot<TURNS.length*2){ h+='<div class="take"><b>Where to look again:</b> '+esc(REVISIT[worst.skill])+'</div>'; }
+  h+='<div class="take"><b>What carries forward:</b> '+esc(TAKE)+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="note">'+esc(NOTE)+'</p></section>';
+  root.innerHTML=h; post();
+}
+root.addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b||b.disabled) return;
+  if(b.hasAttribute("data-ix")){ if(S.pick!==null) return; S.pick=parseInt(b.getAttribute("data-ix"),10); if(!S.retried) S.first=S.pick; render(); return; }
+  var a=b.getAttribute("data-act");
+  if(a==="retry"){ S.retried=true; S.pick=null; render(); return; }
+  if(a==="next"){ commit(); S.pick=null; S.retried=false; S.first=null; if(S.t>=TURNS.length-1){ S.done=true; } else { S.t++; } render(); try{window.scrollTo({top:0,behavior:"smooth"});}catch(x){} return; }
+  if(a==="again"){ fresh(); return; }
+});
+fresh();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sequencing Workshop</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Sequencing Workshop: What Comes First</h1>
+    <p class="sub">Order care by readiness and safety, decide what comes first for three clients, and read measures to revise a plan.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "order",
+  "title": "Order the care",
+  "short": "Order care",
+  "tag": "Readiness and safety first",
+  "case": {
+   "title": "Case: Petra, 45",
+   "text": "Petra is an invented client who was assaulted on her way home from work. She has flashbacks, avoids her old route, and drinks to fall asleep. At intake she says, “I don’t see how talking about it helps.” She has no way yet to get through a bad night without drinking, and she has not described any thoughts of harming herself."
+  },
+  "intro": "<b>Step 1.<\/b> The mechanisms say what needs to happen. Readiness and safety say in what order.",
+  "prompt": "Put the four phases of Petra’s care in order, starting with the first.",
+  "doThis": "Select the phases one at a time, in order. Undo if you change your mind.",
+  "nodes": [
+   {
+    "id": "d",
+    "text": "When the measures stall, a joint review with Petra and a revised plan"
+   },
+   {
+    "id": "c",
+    "text": "Trauma-focused work, PE or CPT, with brief measures every few sessions"
+   },
+   {
+    "id": "b",
+    "text": "Skills and a written plan for hard nights"
+   },
+   {
+    "id": "a",
+    "text": "A motivational conversation that draws out her own reasons and builds readiness, with direct questions about safety asked from the first visit"
+   }
+  ],
+  "correct": [
+   "a",
+   "b",
+   "c",
+   "d"
+  ],
+  "hintWrong": "Ask first whether Petra wants this work, then whether she can get through a hard night, and only then which treatment.",
+  "why": "Petra is not yet sure she wants treatment, so readiness comes first. She has no skills for a hard night, so steadying comes next, along with direct questions about safety. Trauma-focused work follows, with brief measures running alongside it, and a joint review with Petra revises the plan when the measures stall. Different clients would call for a different sequence.",
+  "src": "Module 10, One Person, Several Mechanisms",
+  "revisit": "Reread “One Person, Several Mechanisms.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Decide what comes first",
+  "short": "What first",
+  "tag": "Three clients",
+  "case": {
+   "title": "Three invented clients",
+   "text": "Three invented clients are referred for trauma-focused care. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+  },
+  "intro": "<b>Step 2.<\/b> Decide what each client needs first.",
+  "doThis": "Choose the best answer for each client.",
+  "src": "Module 10, One Person, Several Mechanisms",
+  "items": [
+   {
+    "prompt": "Kaito, 24, says, “I want PE now.” He sleeps about three hours a night, drinks heavily every day, and last week had two nights of urges to hurt himself. What comes first?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Ask him to stop drinking completely first, since treatment cannot proceed while he is drinking daily"
+     },
+     {
+      "id": "b",
+      "text": "Begin PE this week, since he says he is ready and a delay may keep the memory raw for longer"
+     },
+     {
+      "id": "c",
+      "text": "Ask him directly about safety, build a safety plan and steadying skills, arrange a physician review of the drinking, then return to PE"
+     },
+     {
+      "id": "d",
+      "text": "Refer him away, since urges to harm himself mean outpatient trauma treatment is not possible"
+     }
+    ],
+    "correct": "c",
+    "why": "Safety and steadiness come first. Approaching a trauma memory helps when the person has ways to get through a wave of distress. His wish for PE matters and the order can be revisited as he stabilizes.",
+    "src": "Module 10"
+   },
+   {
+    "prompt": "Ines, 52, is stable, safe, and ready, and she wants CPT for a stuck point about blame. What is the best plan?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Begin with exposure to the memory, since PE is the standard treatment and her stated preference matters less"
+     },
+     {
+      "id": "b",
+      "text": "Start CPT now, take brief measures of belief and symptoms every few sessions, and review them together"
+     },
+     {
+      "id": "c",
+      "text": "Wait until her symptoms are more severe, so that the measures have more to show"
+     },
+     {
+      "id": "d",
+      "text": "Spend several months on motivational work first, since clients benefit from a long preparation phase before trauma work"
+     }
+    ],
+    "correct": "b",
+    "why": "Ines is ready and stable, so there is no reason to delay. The measures show whether the belief is moving and give the plan a way to change.",
+    "src": "Module 10"
+   },
+   {
+    "prompt": "Wren, 30, says, “I’m only here because my boss made me.” What fits best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Be open about what is required and what is her choice, then explore her own reasons for coming"
+     },
+     {
+      "id": "b",
+      "text": "Explain why treatment is important so that she understands the value of attending"
+     },
+     {
+      "id": "c",
+      "text": "Begin trauma processing, since she has agreed to attend and consent has been given"
+     },
+     {
+      "id": "d",
+      "text": "End the session, since attendance that is not voluntary cannot lead to benefit"
+     }
+    ],
+    "correct": "a",
+    "why": "Voluntariness is in question when the pressure is external. Honesty about what is mandated respects her, and curiosity about her own reasons builds readiness.",
+    "src": "Module 10, Consent in Trauma-Focused Care"
+   }
+  ],
+  "revisit": "Reread “One Person, Several Mechanisms” and “Consent in Trauma-Focused Care.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Read the measures and revise",
+  "short": "Revise",
+  "tag": "Measurement-based care",
+  "case": {
+   "title": "Case: Thandi, 38",
+   "text": "Thandi’s plan began with graded approach steps for avoidance of her old route home, with belief work to come. Checklist total (0 to 80): week 0, 62. Week 4, 60. Week 8, 59. Avoidance rating (0 to 10): 8, 5, 3. Belief in “I am careless” (0 to 100 percent): 90, 88, 87. Thandi is invented."
+  },
+  "intro": "<b>Step 3.<\/b> Treat the plan as a hypothesis. Read the three measures and decide what to do.",
+  "doThis": "Choose the best answer for each question.",
+  "src": "Module 10, Measuring Whether the Process Is Moving",
+  "items": [
+   {
+    "prompt": "What do the three measures show at week 8?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The plan has failed, since the checklist total has barely moved in eight weeks of treatment"
+     },
+     {
+      "id": "b",
+      "text": "Avoidance is moving and the belief and total have barely changed, so the belief has not been worked on yet"
+     },
+     {
+      "id": "c",
+      "text": "The measures are inconclusive, since small changes in a total do not mean anything in practice"
+     },
+     {
+      "id": "d",
+      "text": "The plan needs no change, since the avoidance rating has improved a good deal and the belief and total will follow"
+     }
+    ],
+    "correct": "b",
+    "why": "The targeted process is shifting and the untargeted belief is not. The result fits the plan so far and points to what is missing.",
+    "src": "Module 10"
+   },
+   {
+    "prompt": "What is the best next step?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Drop the belief work and use the total score as the main guide from here"
+     },
+     {
+      "id": "b",
+      "text": "Repeat the same plan for several more weeks before looking at the numbers again"
+     },
+     {
+      "id": "c",
+      "text": "Stop the approach steps, since avoidance has improved and the belief will follow on its own"
+     },
+     {
+      "id": "d",
+      "text": "Keep the approach steps and add direct belief work, then watch the belief rating"
+     }
+    ],
+    "correct": "d",
+    "why": "A revision can add the tool aimed at the process that is not changing. The cycle runs from identifying the process to intervening, measuring, and revising.",
+    "src": "Module 10"
+   },
+   {
+    "prompt": "A different client, Osei, agrees with his plan, and at week 8 his avoidance rating has not moved. He says, “I agree with all of it. I just never do the steps.” What should the clinician consider first?",
+    "options": [
+     {
+      "id": "a",
+      "text": "That the hypothesis may be right and the plan is not engaged, so explore obstacles and shrink the steps"
+     },
+     {
+      "id": "b",
+      "text": "That the measure is faulty, so set the rating aside and continue exactly as before"
+     },
+     {
+      "id": "c",
+      "text": "That Osei is not trying, so tell him the plan will fail unless he follows it as written"
+     },
+     {
+      "id": "d",
+      "text": "That the hypothesis is wrong, so drop avoidance as a target and choose a new process to work on"
+     }
+    ],
+    "correct": "a",
+    "why": "A revision can target the intervention or the hypothesis. A client who agrees and does not act suggests ambivalence or steps that are too big, which a motivational stance and smaller steps address.",
+    "src": "Module 10"
+   }
+  ],
+  "revisit": "Reread “Measuring Whether the Process Is Moving.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>Carry forward.<\/b> Name the processes, order the care by readiness and safety, take brief measures of the targeted processes, and revise the intervention or the hypothesis when a process is not moving.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every client in it is invented."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

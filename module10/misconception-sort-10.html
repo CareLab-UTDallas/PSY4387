@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 10: Sort the Claims</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --myth-bg:#fbecec; --myth-line:#e3b9b9; --myth-ink:#a23b34;
+    --acc-bg:#eef5ee; --acc-line:#bcd6bd; --acc-ink:#3c6b3e;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --do-bg:#eef3fb; --do-line:#c9d9f0; --do-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:820px;margin:0 auto;padding:24px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:74ch;}
+
+  .thesis{display:flex;gap:10px;align-items:flex-start;background:var(--amber-bg);border:1px solid var(--amber-line);
+    color:var(--amber-ink);border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.55;margin:14px 0 8px;}
+  .thesis svg{flex:0 0 auto;margin-top:1px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:14px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .cardtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px;}
+  .cardtop .cn{font-size:13px;color:var(--muted);}
+  .cardtop .trap{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+
+  .claim{font-size:17px;line-height:1.5;font-weight:600;margin:0 0 4px;}
+  .claim .q{color:var(--muted);font-weight:400;font-size:14px;display:block;margin-bottom:8px;}
+
+  .sortrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 4px;}
+  @media(max-width:520px){ .sortrow{grid-template-columns:1fr;} }
+  .sortbtn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 16px;cursor:pointer;
+    font:inherit;font-size:15px;font-weight:600;color:var(--ink);transition:.12s;display:flex;align-items:center;gap:10px;justify-content:center;}
+  .sortbtn:hover:not(:disabled){border-color:#cfc9bf;}
+  .sortbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .sortbtn .ic{width:20px;height:20px;flex:0 0 auto;}
+  .sortbtn.myth-btn:hover:not(:disabled){border-color:var(--myth-line);}
+  .sortbtn.acc-btn:hover:not(:disabled){border-color:var(--acc-line);}
+  .sortbtn:disabled{cursor:default;}
+  .sortbtn.chosen.myth-btn{background:var(--myth-bg);border-color:var(--myth-line);color:var(--myth-ink);}
+  .sortbtn.chosen.acc-btn{background:var(--acc-bg);border-color:var(--acc-line);color:var(--acc-ink);}
+  .sortbtn.dim{opacity:.5;}
+  .sortbtn.right-answer{box-shadow:0 0 0 2px var(--acc-ink) inset;}
+
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--acc-ink);}
+  .verdict.no{color:var(--myth-ink);}
+  .reveal{margin-top:12px;background:#f5f3ef;border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;color:#413d36;}
+  .reveal .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:6px;}
+  .reveal .fix{margin-top:10px;padding-top:10px;border-top:1px solid #e6e3dd;}
+  .reveal .fix b{color:var(--ink);}
+  .reveal .src{color:var(--muted);font-size:12.5px;margin-top:8px;}
+
+  .whybox{margin-top:14px;}
+  .whybox label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
+  .whybox textarea{width:100%;min-height:64px;resize:vertical;border:1px solid var(--line);border-radius:10px;
+    padding:10px 13px;font:inherit;font-size:14px;background:#fff;}
+  .whybox textarea:focus{outline:none;border-color:var(--focus);}
+
+  .foot{display:flex;justify-content:flex-end;margin-top:18px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;
+    padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0;}
+  .results .score b{color:var(--accent-ink);}
+  .results .list{margin:16px 0 0;border-top:1px solid var(--line);padding-top:12px;}
+  .results .r{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .r:last-child{border-bottom:none;}
+  .results .r .ri{flex:0 0 auto;margin-top:1px;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Common Misreadings: Sort the Claims</h1>
+    <p class="sub">Trauma, change, and suicide risk attract confident-sounding claims. For each statement, decide whether it is a <strong>common misreading</strong> or an <strong>accurate</strong> claim, then check your reasoning against the module.</p>
+  </div>
+
+  <div class="thesis">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.3" stroke="currentColor" stroke-width="1.4"/><path d="M10 6.4v4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.4" r=".5" fill="currentColor" stroke="currentColor"/></svg>
+    <div>Most of these misreadings come from what feels kind or obvious in the moment. Each overlooks what the person is learning or deciding over time.</div>
+  </div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+  <section class="card results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// Data for this sort. Each item is original and grounded in the module reading.
+var ITEMS = [
+ {
+  "trap": "Asking is appropriate",
+  "claim": "“Asking a person directly and with care about suicidal thoughts is an appropriate response, and a review of studies found no significant increase in ideation among people asked.”",
+  "answer": "accurate",
+  "why": "Asking with care can be a relief to someone who has been alone with the thought. The review (Dazzi et al., 2014) found no statistically significant increase in suicidal ideation among people asked.",
+  "fix": "",
+  "src": "Module 10, Talking About Suicide"
+ },
+ {
+  "trap": "Same label, different first step",
+  "claim": "“Two clients with the same PTSD diagnosis can need different first steps, depending on readiness and safety.”",
+  "answer": "accurate",
+  "why": "A client who is unsure about treatment may need a motivational conversation first, and a client in acute danger needs safety and coping skills first. A client who is ready and stable can begin trauma-focused work.",
+  "fix": "",
+  "src": "Module 10, One Person, Several Mechanisms"
+ },
+ {
+  "trap": "Retelling is cruel",
+  "claim": "“Asking a trauma survivor to retell the memory in therapy is cruel, so a kind clinician avoids it.”",
+  "answer": "myth",
+  "why": "Avoidance feels kind and keeps the memory raw, because the memory never gets the chance to settle. Paced by a trained clinician, with the person’s agreement, approaching the memory is one route to recovery.",
+  "fix": "<b>Accurate version.<\/b> Approaching the memory at a pace the person can tolerate, with support, is one route to recovery. Avoidance keeps it raw.",
+  "src": "Module 10, Prolonged Exposure"
+ },
+ {
+  "trap": "Capacity and disagreement",
+  "claim": "“A client who disagrees with the clinician’s recommendation does not, for that reason alone, lack capacity to decide.”",
+  "answer": "accurate",
+  "why": "Capacity concerns understanding, appreciating how the information applies, reasoning about options, and expressing a choice. Clients have the right to make decisions the clinician considers unwise.",
+  "fix": "",
+  "src": "Module 10, Consent in Trauma-Focused Care"
+ },
+ {
+  "trap": "Most recover",
+  "claim": "“Most people who live through a frightening event gradually recover with time and support.”",
+  "answer": "accurate",
+  "why": "The memory usually becomes something that happened in the past. PTSD develops in a minority whose natural processing is interrupted.",
+  "fix": "",
+  "src": "Module 10, What Trauma Does to Memory"
+ },
+ {
+  "trap": "Re-consent",
+  "claim": "“When treatment shifts from supportive sessions to exposure, the clinician needs a new consent conversation, even if a form was signed at intake.”",
+  "answer": "accurate",
+  "why": "Consent continues through treatment. A change that raises distress or alters the risks calls for a fresh conversation about disclosure, capacity, and voluntariness, and the conversation is documented.",
+  "fix": "",
+  "src": "Module 10, Consent in Trauma-Focused Care"
+ },
+ {
+  "trap": "A chat will do",
+  "claim": "“Since PE and CPT work about equally well, a friendly chat about the event is a fine substitute for either one.”",
+  "answer": "myth",
+  "why": "The comparison is between two structured, well-studied treatments delivered by trained clinicians and aimed at specific processes. A friendly chat is a different thing and was not part of the comparison.",
+  "fix": "<b>Accurate version.<\/b> Among structured, competently delivered treatments aimed at the right processes, outcomes tend to be similar. The comparison does not extend to unstructured conversation.",
+  "src": "Module 10, Two Roads, One Destination"
+ },
+ {
+  "trap": "Combat only",
+  "claim": "“PTSD is a condition of combat veterans.”",
+  "answer": "myth",
+  "why": "PTSD can follow any terrifying event that a person experiences or witnesses, including accidents, assaults, disasters, sudden losses, and abuse. The same four symptom clusters define the diagnosis whatever the source.",
+  "fix": "<b>Accurate version.<\/b> PTSD can follow many kinds of terrifying events, and most people exposed to such events recover without it.",
+  "src": "Module 10, What Trauma Does to Memory"
+ },
+ {
+  "trap": "Signature makes a plan",
+  "claim": "“The main ingredient of a safety plan is the client’s signed commitment not to act on suicidal thoughts.”",
+  "answer": "myth",
+  "why": "A safety plan is a set of steps the person and a helper build together ahead of time, with warning signs, coping strategies, people, professional resources, and ways to make the environment safer. A signature does not give the person anything to do at a hard moment.",
+  "fix": "<b>Accurate version.<\/b> The strength of a safety plan lies in its content, which is the person’s own list of what helps, made easy to reach.",
+  "src": "Module 10, Risk, Protection, and Safety Planning"
+ },
+ {
+  "trap": "Skills erase feelings",
+  "claim": "“Distress tolerance skills are meant to make a painful feeling go away for good.”",
+  "answer": "myth",
+  "why": "The skills get a person through the peak of a wave without harmful action. They do not fix the feeling or its cause, and the person works on those afterward.",
+  "fix": "<b>Accurate version.<\/b> Distress tolerance buys time through the crest of the wave. The feeling is expected to ease, and the skill concerns what the person does in the meantime.",
+  "src": "Module 10, DBT and Distress Tolerance"
+ },
+ {
+  "trap": "Mandated means unwilling",
+  "claim": "“A client who says ‘My wife made me come’ does not want to change, and the counselor should explain why treatment matters.”",
+  "answer": "myth",
+  "why": "Ambivalence is normal, and arguing for change tends to bring out the case against it. A client who came and voiced doubt is showing both sides at once, and the counselor’s first task is to make room for the client’s own reasons.",
+  "fix": "<b>Accurate version.<\/b> Doubt is one side of ambivalence. Curiosity about the client’s own reasons invites them to come forward.",
+  "src": "Module 10, Motivational Interviewing, Revisited"
+ },
+ {
+  "trap": "Track the process",
+  "claim": "“A rating of avoidance can differ from the overall symptom total, so tracking both gives a fuller read on whether a plan is working.”",
+  "answer": "accurate",
+  "why": "A process rating and a symptom total track different things and can disagree. Following both lets the clinician see whether the process the treatment targets is shifting and revise when it is not.",
+  "fix": "",
+  "src": "Module 10, Measuring Whether the Process Is Moving"
+ }
+];
+
+var idx = 0;
+var chosen = [];   // 'myth' | 'accurate' | null, indexed by ITEMS index
+var order = [];    // display order: array of ITEMS indices, shuffled each run
+
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function currentItem(){ return ITEMS[order[idx]]; }
+function itemIndex(){ return order[idx]; }
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+
+var CHECK='<svg class="ic" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="currentColor" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var FLAG='<svg class="ic" viewBox="0 0 20 20" fill="none"><path d="M5 3v14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5 4h9l-2 3 2 3H5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+var MINI_CHECK='<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var MINI_CROSS='<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+function init(){
+  chosen = ITEMS.map(function(){return null;});
+  order = shuffle(ITEMS.map(function(_,i){return i;}));
+  idx = 0;
+  render();
+}
+
+function renderProgress(){
+  document.getElementById("pbarfill").style.width = (idx/ITEMS.length*100) + "%";
+  document.getElementById("pcount").textContent = "Claim " + Math.min(idx+1,ITEMS.length) + " of " + ITEMS.length;
+}
+
+function render(){
+  renderProgress();
+  var it = currentItem();
+  var ii = itemIndex();
+  var panel = document.getElementById("cardPanel");
+  panel.innerHTML="";
+  var pick = chosen[ii];
+  var isAnswered = pick!==null;
+
+  var top = el("div","cardtop");
+  top.appendChild(el("span","cn","Claim " + (idx+1) + " of " + ITEMS.length));
+  top.appendChild(el("span","trap", it.trap));
+  panel.appendChild(top);
+
+  panel.appendChild(el("p","claim", '<span class="q">A statement you might hear:</span>' + it.claim));
+
+  var row = el("div","sortrow");
+  var mBtn = el("button","sortbtn myth-btn"+(isAnswered && pick==="myth"?" chosen":"")+(isAnswered && it.answer!=="myth"?" ":""));
+  mBtn.type="button";
+  mBtn.innerHTML = FLAG + "Common misreading";
+  var aBtn = el("button","sortbtn acc-btn"+(isAnswered && pick==="accurate"?" chosen":""));
+  aBtn.type="button";
+  aBtn.innerHTML = CHECK + "Accurate claim";
+
+  if(isAnswered){
+    mBtn.disabled=true; aBtn.disabled=true;
+    // highlight correct answer
+    if(it.answer==="myth") mBtn.classList.add("right-answer"); else aBtn.classList.add("right-answer");
+    if(pick!==it.answer){ (pick==="myth"?mBtn:aBtn).classList.add("dim"); }
+  } else {
+    mBtn.addEventListener("click", function(){ choose("myth"); });
+    aBtn.addEventListener("click", function(){ choose("accurate"); });
+  }
+  row.appendChild(mBtn); row.appendChild(aBtn);
+  panel.appendChild(row);
+
+  if(!isAnswered){
+    var wb = el("div","whybox");
+    wb.innerHTML = '<label for="why">Optional: before you choose, jot the sign that gives it away.</label><textarea id="why" placeholder="What makes this accurate or a trap?"></textarea>';
+    panel.appendChild(wb);
+  } else {
+    var right = pick===it.answer;
+    panel.appendChild(el("p","verdict "+(right?"ok":"no"),
+      right ? "You got it." : "Not quite."));
+    var rv = el("div","reveal");
+    var head = it.answer==="myth" ? "Why this is a common misreading" : "Why this one is accurate";
+    rv.innerHTML = '<div class="lab">'+head+'</div>' + it.why +
+      (it.fix ? '<div class="fix">'+it.fix+'</div>' : '') +
+      '<div class="src">Reading: '+it.src+'</div>';
+    panel.appendChild(rv);
+
+    var foot = el("div","foot");
+    var last = idx===ITEMS.length-1;
+    var nb = el("button","btn");
+    nb.innerHTML = last ? 'See your results' : 'Next claim <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    nb.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+    foot.appendChild(nb);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(val){
+  var ii = itemIndex();
+  if(chosen[ii]!==null) return;
+  chosen[ii]=val;
+  render();
+}
+
+function finish(){
+  document.getElementById("pbarfill").style.width="100%";
+  document.getElementById("pcount").textContent="Complete";
+  document.getElementById("cardPanel").classList.add("hidden");
+  var correct = chosen.filter(function(c,i){return c===ITEMS[i].answer;}).length;
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML="";
+  rp.appendChild(el("h2",null,"Your results"));
+  rp.appendChild(el("p","score","You sorted <b>"+correct+" of "+ITEMS.length+"</b> correctly."));
+
+  var list = el("div","list");
+  order.forEach(function(ii){
+    var it = ITEMS[ii];
+    var right = chosen[ii]===it.answer;
+    var r = el("div","r");
+    r.innerHTML = '<span class="ri">'+(right?MINI_CHECK:MINI_CROSS)+'</span>' +
+      '<span><b>'+it.trap+'</b>, '+(it.answer==="myth"?"common misreading":"accurate")+(right?'':' (revisit in the reading: '+it.src+')')+'</span>';
+    list.appendChild(r);
+  });
+  rp.appendChild(list);
+
+  var act = el("div","actions");
+  var again = el("button","btn secondary","Sort again");
+  again.addEventListener("click", function(){
+    document.getElementById("cardPanel").classList.remove("hidden"); rp.classList.add("hidden");
+    init(); window.scrollTo({top:0,behavior:"smooth"});
+  });
+  act.appendChild(again);
+  rp.appendChild(act);
+
+  rp.appendChild(el("p","selfnote","This sort scores only the misreading-versus-accurate choices, and nothing is saved or sent. Compare your own reasoning for each claim with the explanation."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>
