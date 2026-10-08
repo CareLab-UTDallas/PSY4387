@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reassurance Practice: A Conversation with Jonah</title>
+<style>
+  :root{ --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --panel:#fff; --accent:#8a5a25; --accent-ink:#6f4a20;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e; --mid-bg:#fffbef; --mid-line:#e7c98a; --mid-ink:#7a5f1f; --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72; --focus:#2f6f4f; }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  h1{margin:0;font-size:23px;letter-spacing:-.01em;} .sub{margin:6px 0 14px;color:var(--muted);font-size:14.5px;}
+  .masthead{padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .pills{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;} .pill{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .pill.on{background:var(--accent);color:#fff;} .pill.done{background:var(--ok-bg);color:var(--ok-ink);}
+  .case{background:var(--mid-bg);border:1px solid var(--mid-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);}
+  .panel:focus{outline:none;}
+  .skill{font-size:13px;color:var(--muted);margin:0 0 6px;}
+  .quote{font-size:17px;line-height:1.5;margin:6px 0 12px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .who{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:2px;}
+  .do{background:#f3f1ec;color:#57544e;border-radius:10px;padding:10px 13px;font-size:13px;margin:6px 0 14px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:disabled{cursor:default;} .opt .k{font-weight:700;color:var(--muted);min-width:15px;}
+  .opt.r2{background:var(--ok-bg);border-color:var(--ok-line);} .opt.r1{background:var(--mid-bg);border-color:var(--mid-line);} .opt.r0{background:var(--no-bg);border-color:var(--no-line);}
+  .opt.pick{box-shadow:0 0 0 2px var(--accent) inset;} .opt.dim{opacity:.6;}
+  .opt:focus-visible,.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .verdict{margin:16px 0 4px;font-size:14.5px;font-weight:600;} .verdict.r2{color:var(--ok-ink);} .verdict.r1{color:var(--mid-ink);} .verdict.r0{color:var(--no-ink);}
+  .explain{font-size:14px;color:#44413b;margin:6px 0;} .better{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:10px;padding:10px 13px;font-size:14px;margin:10px 0;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;flex-wrap:wrap;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;} .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;} .brow:last-child{border-bottom:none;} .brow .bs{flex:0 0 52px;font-weight:700;color:var(--accent-ink);}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .note{font-size:12.5px;color:var(--muted);margin-top:14px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead"><h1>When the Client Asks for Reassurance</h1><p class="sub">Practice a short conversation with Jonah. Your choices change how he responds.</p></div>
+  <div id="root"></div>
+</div>
+<script>
+var SKILLS = [
+ "Acknowledging the feeling",
+ "Naming the pattern",
+ "Holding steady under pressure",
+ "Linking the pattern to the process",
+ "Making a shared plan"
+];
+var SCENARIO = "Jonah is an invented client, 29, who works as a project coordinator, and the case carries no diagnosis. Last week he gave a short presentation at work. His manager told him it went well and no one raised a concern. Since then he replays it several times a day, searches his memory for moments when he may have stumbled, and asks his partner and a coworker whether he seemed nervous. This is your third session. He opens by asking you for reassurance.";
+var TURNS = [
+ {
+  "skill": 0,
+  "client": {
+   "start": "I know I keep bringing up the presentation, but I replayed it again this morning and I think I did sound shaky. You’ve heard how I describe it. Can you just tell me it went fine?"
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "It sounds painful to replay it and hear yourself shaky again. What went through your mind as you replayed it this morning?",
+    "reply": "I thought, what if everyone noticed and they’re just too polite to say so. Then I couldn’t focus until I’d gone through it twice more.",
+    "why": "The response addresses the feeling before the request. Asking what went through his mind brings out his catastrophic prediction, which the treatment will later test."
+   },
+   {
+    "r": 1,
+    "t": "That sounds stressful. Let’s talk about how often you have been going over it lately and when it tends to happen.",
+    "reply": "Stressful, sure. Did it sound shaky from how I described it, or not? That’s all I’m asking.",
+    "why": "The response names the feeling with one generic word and moves to frequency before he feels heard, so his request for an answer goes unmet and he repeats it."
+   },
+   {
+    "r": 0,
+    "t": "Your manager said it went well and nobody raised a concern, so I’m confident it was fine and you can let this one go.",
+    "reply": "Okay. Okay, that helps. Though what if she only said that to be nice? Would she tell me if it went badly?",
+    "why": "The response gives him the reassurance he asked for. It soothes for a moment, and his next question shows the doubt is already back."
+   },
+   {
+    "r": 0,
+    "t": "I wasn’t there, so I can’t say how it sounded, and I wouldn’t want you to rely on my word. Maybe you should ask your manager for specific feedback.",
+    "reply": "Maybe you’re right. Maybe one comment wasn’t enough. I’ll email her this afternoon and ask exactly how I sounded.",
+    "why": "Asking his manager for more feedback is one more check. It adds a round to the loop and leaves his feeling unheard."
+   }
+  ],
+  "order": [
+   1,
+   3,
+   0,
+   2
+  ]
+ },
+ {
+  "skill": 1,
+  "client": {
+   "g": "I keep replaying it. When I decide it went fine I feel calm for a little while, and then ten minutes later I’m replaying it again.",
+   "m": "It did sound shaky to me, though. I keep going back and forth on whether it went fine.",
+   "p": "I’m still not sure. The part I lie awake over is whether anyone will think less of me, whatever she says."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "From what you describe, replaying it and checking with other people calms you for a few minutes, and then the doubt returns, which is how you end up replaying it again. I wonder whether that checking is part of what keeps the worry going.",
+    "reply": "That’s what it feels like. Like scratching an itch that gets worse when I scratch it.",
+    "why": "The response names the loop and its function in his own terms. It makes no accusation, and it offers the pattern as a hypothesis."
+   },
+   {
+    "r": 1,
+    "t": "Lots of people replay an event or ask others how they did. It is common, and it says nothing bad about you.",
+    "reply": "Okay. That’s a relief, I guess. What am I supposed to do about it?",
+    "why": "Normalizing can lower shame. It leaves out what the replaying does, so he has nothing yet to act on."
+   },
+   {
+    "r": 0,
+    "t": "You shouldn’t replay it so much or keep asking people how you came across. It is making things worse, and you need to stop, because every check keeps the worry alive and you will only get better once you stop, so please start today and keep going until it stops.",
+    "reply": "I can’t just stop. If I stop and they did notice something, that’s on me.",
+    "why": "A directive with blame attached. He hears that he is doing something wrong, and stopping feels dangerous to him because he has not yet seen what happens when he does."
+   },
+   {
+    "r": 0,
+    "t": "I wasn’t there, but nothing you have described to me sounds like a problem or like anything to be worried about, so I don’t think you need to keep worrying about it.",
+    "reply": "You think it’s fine, then? Say that again, that actually helped.",
+    "why": "The statement is reassurance framed as an observation. His request to hear it again shows he is already seeking more."
+   }
+  ],
+  "order": [
+   0,
+   3,
+   1,
+   2
+  ]
+ },
+ {
+  "skill": 2,
+  "client": {
+   "g": "Okay, I see the pattern. Right now, today, I need to hear it went fine. Just this once.",
+   "m": "Okay, it’s common. I still don’t know what to do about it, and I still want an answer on whether I sounded shaky.",
+   "p": "Part of me wants to hear it again, and part of me knows it won’t last. I still need to know what you actually think."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "I can hear how much you want relief right now, and I want to help you find relief that doesn’t depend on anyone’s answer. An answer from me would feel good for a few minutes, and the question would be back by tonight. Can we try something different?",
+    "reply": "That’s annoying and also true. The question always comes back. Okay, what’s different?",
+    "why": "The response stays warm, gives the reason for withholding the answer, and invites him to try something different together."
+   },
+   {
+    "r": 1,
+    "t": "I am not going to tell you it went fine. Let’s keep talking about what is going on.",
+    "reply": "That’s frustrating, but okay.",
+    "why": "The refusal is clear and gives him no reason for it. Without the reason, the refusal can feel like withdrawal of care."
+   },
+   {
+    "r": 1,
+    "t": "Reassurance helps for a few minutes and then the doubt comes back, and you have to learn that, and you need to stop asking people to say it went fine, whether it is me, your partner, or a coworker you happen to pass in the hallway or see at a team meeting.",
+    "reply": "Right. I’m doing it wrong again, then.",
+    "why": "The response gives a reason, and the idea matches the model taught in this module. Delivered as a flat rule, it adds shame and gives him nothing to do next."
+   },
+   {
+    "r": 0,
+    "t": "I’ll say it just this once, since your manager did tell you it went well. It went fine, you can relax about it, and we can use the rest of the session to talk about how work has been going lately and what else has been on your mind this week.",
+    "reply": "Thank you, I feel so much better. Can I just ask one more thing, though?",
+    "why": "Giving way teaches him that pressing for reassurance works. His follow-up question shows he is already seeking more."
+   }
+  ],
+  "order": [
+   2,
+   1,
+   3,
+   0
+  ]
+ },
+ {
+  "skill": 3,
+  "client": {
+   "g": "All right. I’ll try something. What would that even look like?",
+   "m": "I guess I’m willing, even if I’m doing this wrong. I don’t know what you’d have me do, and I don’t think I can stay in not knowing.",
+   "p": "That lasted about an hour. It never ends, nothing helps for long, and I’m tired of this."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "If the replaying and checking keep the doubt alive, then doing them less should weaken it over time, even though it may feel worse at first. Would you try cutting back and see what happens?",
+    "reply": "That’s scary, but I can see why it’s a test. Cut back to what?",
+    "why": "The response links the behavior to the process (the checking keeps the doubt alive) and frames the change as a test of a hypothesis the two of them can check."
+   },
+   {
+    "r": 1,
+    "t": "Why don’t we try cutting back on the replaying this week, and then you can tell me how you felt about it and what happened when you did, and we will go from there?",
+    "reply": "I guess. I’ll try it.",
+    "why": "The direction is right. Without the rationale he is following an instruction, and the first hard moment may be harder to get through."
+   },
+   {
+    "r": 1,
+    "t": "Let’s go through the evidence that people noticed and weigh it up logically, step by step, so you can see for yourself how small the risk is and why the worry is out of proportion to the facts we have.",
+    "reply": "I’ve done that a hundred times. The logic holds right up until I’m lying in bed replaying it.",
+    "why": "Cognitive work has a place in treatment. Offered here as a verdict inside a reassurance loop, weighing the probability again gives him one more route to the certainty he is seeking."
+   },
+   {
+    "r": 0,
+    "t": "Try to distract yourself whenever you feel the urge to replay it. Keep busy with work, music, or anything else that occupies you, and the urge will fade on its own over time.",
+    "reply": "Distract myself from what, the thing that could ruin my reputation? That doesn’t make it go away.",
+    "why": "The option promises the urge will fade on its own. Distracting yourself to escape the doubt, with no plan to see what happens, can function as another safety behavior."
+   }
+  ],
+  "order": [
+   2,
+   0,
+   3,
+   1
+  ]
+ },
+ {
+  "skill": 4,
+  "client": {
+   "g": "Cutting back is going to be hard, but okay. My partner answers every time I ask, too.",
+   "m": "I guess. I don’t know what I’d be trying to do, and I’m not sure I can keep it up if it gets bad.",
+   "p": "Fine. I don’t know what we’re doing now. I can’t tell how this is going to go."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Let’s write the plan down together, including how many times you will replay it or ask, how you will count them, and what you will do when the urge comes. If you are comfortable, we could ask your partner to say something warm and leave the verdict out. Next week we will look at the numbers.",
+    "reply": "Okay. A weekly count, and I’ll talk to her tonight. I like that we’re looking at what happens.",
+    "why": "The plan is specific, includes the person who answers his questions, and sets a time to look at the result. The count tracks the maintaining behavior itself."
+   },
+   {
+    "r": 1,
+    "t": "Let’s aim for two rounds of replaying a day this week, and you can tell me how it went when we meet next time, and we will see whether the number needs to change.",
+    "reply": "Okay. I’ll try.",
+    "why": "The target is clear. There is no method for recording it, no plan for the urge, and nothing about his partner, so the loop outside the session stays as it was."
+   },
+   {
+    "r": 0,
+    "t": "Promise me you won’t replay it or ask anyone about it at all this week, no matter what happens. Then we will know whether the plan works, and you will see the difference between how you feel now and how you feel once the checking has stopped completely and for good, with no exceptions at all.",
+    "reply": "I’ll try, but I don’t think I can promise that. What if I slip?",
+    "why": "A promise of no slips, set by the clinician without his input, can make any lapse feel like proof of failure."
+   },
+   {
+    "r": 0,
+    "t": "Keep your phone handy, and if the urge gets bad this week, just text me and I will talk you through it right away, whatever time of day it is, until the urge has passed.",
+    "reply": "Okay, thanks. That makes it a lot easier to get through the day.",
+    "why": "Offering contact at any hour makes the clinician the new source of relief and promises availability a clinician cannot sustain. A plan for the urge can rely on skills and a scheduled check-in. Crisis procedures are a separate matter, and this case does not involve one."
+   }
+  ],
+  "order": [
+   2,
+   1,
+   0,
+   3
+  ]
+ }
+];
+var REVISIT = [
+ "Acknowledge what the client is feeling and ask what went through his mind before moving to a request or a plan.",
+ "Name the checking and what it does (brief relief, doubt returns) as a pattern to test, without blame and without giving the answer in disguise.",
+ "Keep the warmth, give the reason for not supplying another answer, and propose a joint task. Review Checking and Reassurance in the reading.",
+ "Connect the behavior to the process and frame the change as an experiment with a prediction. Review the mechanism-matching sections of the reading.",
+ "Make the plan specific and countable, include the person who answers the reassurance requests, and schedule a look at the result."
+];
+var TAKE = "In this module’s model, reassurance relieves distress briefly and can teach the person that the distress cannot be handled without it. The clinician stays warm, names the pattern, gives the reason for not supplying another answer, and proposes a test of what happens when the checking decreases.";
+var NOTE = "This practice conversation is invented and scores only the choices shown. It applies to repetitive reassurance-seeking within treatment. It is not advice to withhold support from someone who is struggling, and it is not a way to assess or treat yourself or anyone you know. If someone talks about harming themselves, respond to that first.";
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root"), S;
+var LABEL={2:"Skilled response",1:"Acceptable, with a gap",0:"Missed the skill"};
+function fresh(){ S={t:0,branch:"start",pick:null,retried:false,first:null,log:[],done:false}; render(); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function pills(){ return '<div class="pills" aria-hidden="true">'+TURNS.map(function(t,i){ return '<span class="pill'+(i===S.t&&!S.done?" on":(i<S.log.length?" done":""))+'">'+(i+1)+'. '+esc(SKILLS[t.skill])+'</span>'; }).join("")+'</div>'; }
+function clientLine(t){ return t.client[S.branch]||t.client.start||t.client.m; }
+function render(){
+  if(S.done){ return summary(); }
+  var t=TURNS[S.t], h=pills()+'<div class="case"><b class="t">Case: Jonah</b>'+esc(SCENARIO)+'</div><section class="panel" id="panel" tabindex="-1" aria-live="polite">';
+  h+='<p class="skill">Turn '+(S.t+1)+' of '+TURNS.length+'. Skill practiced: '+esc(SKILLS[t.skill])+'</p>';
+  h+='<p class="quote"><span class="who">Jonah</span>'+esc(clientLine(t))+'</p>';
+  h+='<div class="do"><b>Do this:</b> Choose the response you would say next. Each choice changes how Jonah answers.</div><div class="options">';
+  t.order.forEach(function(ix,pos){
+    var o=t.options[ix], cls="opt";
+    if(S.pick!==null){ cls+=" r"+o.r; if(S.pick===ix) cls+=" pick"; else cls+=" dim"; }
+    h+='<button type="button" class="'+cls+'" data-ix="'+ix+'"'+(S.pick!==null?" disabled":"")+'><span class="k">'+String.fromCharCode(65+pos)+'.</span><span>'+esc(o.t)+'</span></button>';
+  });
+  h+='</div>';
+  if(S.pick!==null){
+    var o=t.options[S.pick], best=t.options.filter(function(x){return x.r===2;})[0], eff=(S.retried?Math.min(o.r,1):o.r);
+    h+='<p class="verdict r'+o.r+'">'+LABEL[o.r]+(S.retried?" (second try, scored at most 1 of 2)":"")+'</p>';
+    h+='<p class="quote"><span class="who">Jonah</span>'+esc(o.reply)+'</p><p class="explain">'+esc(o.why)+'</p>';
+    if(o.r<2) h+='<div class="better"><b>A stronger response:</b> '+esc(best.t)+'</div>';
+    h+='<div class="foot">'+((o.r===0&&!S.retried)?'<button class="btn secondary" type="button" data-act="retry">Try this turn again</button>':'<span></span>')+'<button class="btn" type="button" data-act="next">'+(S.t>=TURNS.length-1?"See your results":"Continue the conversation")+'</button></div>';
+  }
+  h+='</section>'; root.innerHTML=h; post();
+  var p=document.getElementById("panel"); if(p&&S.pick!==null){ try{p.focus();}catch(e){} }
+}
+function commit(){
+  var t=TURNS[S.t], o=t.options[S.pick], sc=(S.retried?Math.min(o.r,1):o.r);
+  S.log.push({skill:t.skill,r:o.r,score:sc,retried:S.retried,first:S.first});
+  S.branch=(o.r===2?"g":(o.r===1?"m":"p"));
+}
+function summary(){
+  var tot=0; S.log.forEach(function(l){tot+=l.score;});
+  var worst=S.log.slice().sort(function(a,b){return a.score-b.score;})[0];
+  var h=pills()+'<section class="panel" id="panel" tabindex="-1"><h2 style="margin:0 0 4px;font-size:20px;">Your conversation with Jonah</h2><p>You scored <b>'+tot+' of '+(TURNS.length*2)+'</b> across the five skills. A retried turn counts for at most 1 point.</p><div>';
+  S.log.forEach(function(l){ h+='<div class="brow"><span class="bs">'+l.score+' / 2</span><span><b>'+esc(SKILLS[l.skill])+'.</b> '+(l.score===2?"Skilled response.":esc(REVISIT[l.skill]))+'</span></div>'; });
+  h+='</div>';
+  if(tot<TURNS.length*2){ h+='<div class="take"><b>Where to look again:</b> '+esc(REVISIT[worst.skill])+'</div>'; }
+  h+='<div class="take"><b>What carries forward:</b> '+esc(TAKE)+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="note">'+esc(NOTE)+'</p></section>';
+  root.innerHTML=h; post();
+}
+root.addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b||b.disabled) return;
+  if(b.hasAttribute("data-ix")){ if(S.pick!==null) return; S.pick=parseInt(b.getAttribute("data-ix"),10); if(!S.retried) S.first=S.pick; render(); return; }
+  var a=b.getAttribute("data-act");
+  if(a==="retry"){ S.retried=true; S.pick=null; render(); return; }
+  if(a==="next"){ commit(); S.pick=null; S.retried=false; S.first=null; if(S.t>=TURNS.length-1){ S.done=true; } else { S.t++; } render(); try{window.scrollTo({top:0,behavior:"smooth"});}catch(x){} return; }
+  if(a==="again"){ fresh(); return; }
+});
+fresh();
+
+</script>
+</body>
+</html>
