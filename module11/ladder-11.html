@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Levels of Evidence Ladder</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Levels of Evidence Ladder</h1>
+    <p class="sub">Classify designs by what they can and cannot support, rank them for a given claim, and find where the ladder misleads.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "What each design can support",
+  "short": "What it supports",
+  "tag": "One question, six designs",
+  "case": {
+   "title": "Case: one research question (invented)",
+   "text": "A clinic wants to know whether EWD improves sleep. Does the invented Evening Wind-Down program (EWD), a six-week app course, improve sleep in adults with insomnia? Six different studies of this program are described below. All numbers in this activity are invented for practice."
+  },
+  "intro": "<b>Step 1.<\/b> A design sets a ceiling on what its result can support. For each study, choose the strongest statement that its design allows. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the strongest statement the design can support about the program and sleep.",
+  "cats": [
+   {
+    "id": "hyp",
+    "label": "Suggests an idea to test, cannot test it"
+   },
+   {
+    "id": "back",
+    "label": "Association found by looking backward"
+   },
+   {
+    "id": "fwd",
+    "label": "Association followed forward in time"
+   },
+   {
+    "id": "cause",
+    "label": "Causal claim for these participants"
+   },
+   {
+    "id": "pool",
+    "label": "Combined estimate, only as strong as its trials"
+   }
+  ],
+  "src": "Module 11, Levels of Evidence",
+  "items": [
+   {
+    "text": "A computer draw assigns 300 adults to EWD or a leaflet. Staff enrolling participants cannot see the next assignment, raters do not know the arm, and nearly everyone completes the assessment.",
+    "answer": "cause",
+    "bloom": "apply",
+    "why": "Random assignment with concealment spreads measured and unmeasured differences across arms by chance. The claim holds for the people enrolled, and whether it travels to other people is a separate question."
+   },
+   {
+    "text": "A clinic describes nine clients who used EWD. Seven say they were sleeping better after eight weeks.",
+    "answer": "hyp",
+    "bloom": "apply",
+    "why": "A series of cases has no comparison group. It can raise the idea that EWD helps and cannot test it, because time, hope, and regression to the mean could each produce the same story."
+   },
+   {
+    "text": "Researchers follow 900 adults for six months. Adults who chose EWD improve more, and the analysis adjusts for age, income, and baseline insomnia severity.",
+    "answer": "fwd",
+    "bloom": "analyze",
+    "why": "Adjustment handles the confounders that were measured. Motivation, routines, and life circumstances may differ between choosers and non-choosers and may not have been measured. The design is still a cohort, and the adjustment narrows the gap without closing it."
+   },
+   {
+    "text": "Researchers measure 600 adults at baseline, note who chooses EWD, and follow everyone for six months. Users improve more.",
+    "answer": "fwd",
+    "bloom": "apply",
+    "why": "A cohort follows people forward, so the program is known to have come before the change. Nobody assigned the program, so differences between the people who chose it and those who did not remain possible."
+   },
+   {
+    "text": "Authors search three databases with search terms and inclusion rules written in advance. They pool eleven randomized trials of EWD.",
+    "answer": "pool",
+    "bloom": "apply",
+    "why": "A systematic review ranks at the top of the ladder because it combines trials by rules set in advance. Its conclusion is limited by the quality of the trials that went in."
+   },
+   {
+    "text": "Researchers recruit 150 adults with chronic insomnia and 150 without. They ask each person to recall whether they used a wind-down program in the past two years. The insomnia group recalls less use.",
+    "answer": "back",
+    "bloom": "apply",
+    "why": "A case-control study starts from the outcome and looks backward. It depends on memory and on how the two groups were chosen, and both can bias the comparison."
+   }
+  ],
+  "revisit": "Reread “Levels of Evidence.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Rank three designs, then decide when to override",
+  "short": "Rank and override",
+  "tag": "A ranking is a starting point",
+  "case": {
+   "title": "Case: one claim, three studies (invented)",
+   "text": "A research group wants to judge the claim that the invented Steady Breath app lowers the number of panic attacks a person has each week in adults treated at ordinary clinics. Three studies exist. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Study<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Design<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Who was enrolled<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Key features<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">1<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Case-control<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">140 adults with panic disorder and 140 without, from several clinics<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Everyone was asked to recall app use over the past two years<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">2<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Prospective cohort<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">700 adults at 12 ordinary clinics, 350 of whom chose the app<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Followed for six months, adjusted for measured baseline differences, interviewers unaware of app use<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">3<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Randomized trial<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">80 volunteers at one university lab, screened to exclude other diagnoses<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Random assignment, concealed allocation, blinded raters, complete follow-up<\/td><\/tr><\/tbody><\/table>"
+  },
+  "intro": "<b>Step 2.<\/b> A ranking tells you where to look for weaknesses. A good reader also knows when the question or the conduct of a study calls for setting the ranking aside.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, Levels of Evidence",
+  "items": [
+   {
+    "prompt": "Ranked only by how well each design rules out rival explanations for a causal effect, which ordering is best supported, from strongest to weakest?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Randomized trial, then cohort, then case-control, because each step down gives less protection against rival explanations"
+     },
+     {
+      "id": "b",
+      "text": "Cohort, then randomized trial, then case-control, because the cohort drew on ordinary clinics and so ranks higher"
+     },
+     {
+      "id": "c",
+      "text": "No ordering is possible, because each study answers a different question and the ladder is only a heuristic"
+     },
+     {
+      "id": "d",
+      "text": "Randomized trial, then case-control, then cohort, because a case-control study starts from people who already have the outcome"
+     }
+    ],
+    "correct": "a",
+    "why": "Random assignment addresses confounders that were measured and unmeasured. A cohort establishes which came first but cannot assign the exposure, and a case-control study relies on memory and on how the two groups were chosen. Ordinary clinics bear on whether results travel and do not change how well a design rules out rival explanations. The ladder is a heuristic, and it still supports an ordering for one question when the stem asks for one.",
+    "bloom": "analyze"
+   },
+   {
+    "prompt": "Which reason would best justify trusting Study 2 over Study 3 for the claim about ordinary clinics?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Study 2 reported a larger drop in attacks, because a bigger estimate reflects a design that is more sensitive"
+     },
+     {
+      "id": "b",
+      "text": "Study 2 enrolled adults at ordinary clinics, because the claim concerns ordinary clinics and Study 3 screened its volunteers"
+     },
+     {
+      "id": "c",
+      "text": "Study 3 was published before Study 2, because newer studies tend to correct the results of older ones"
+     },
+     {
+      "id": "d",
+      "text": "Study 2 enrolled almost nine times as many people, because a large sample can offset the lack of random assignment"
+     }
+    ],
+    "correct": "b",
+    "why": "The ranking concerns how well a design rules out rival explanations, and the claim concerns ordinary clinics. A tightly controlled trial in screened volunteers answers whether the app can work under ideal conditions, and a well-run clinic cohort answers more directly whether it does work in ordinary conditions, at the price of weaker control over confounders. Sample size does not repair confounding. A bigger estimate and a later date say nothing about design.",
+    "bloom": "evaluate"
+   }
+  ],
+  "revisit": "Reread “Levels of Evidence.”"
+ },
+ {
+  "type": "mcq",
+  "title": "When a well-run study beats a poorly run one",
+  "short": "Cohort vs RCT",
+  "tag": "The ladder is a heuristic",
+  "case": {
+   "title": "Case: two studies of the same program (invented)",
+   "text": "Both studies below found that the program group improved more than the comparison group on an insomnia score. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\"><\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Study K<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Study R<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Design<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Prospective cohort<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Randomized trial<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Participants<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">1,200 adults, 600 of whom chose the program<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">160 adults, 80 per arm<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Comparison<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Adults who did not choose it, adjusted for measured baseline differences<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Waitlist<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Lost by the end (program / comparison)<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">5% / 5%<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">45% / 8%<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Who rated the outcome<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Interviewers unaware of program use<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">The participants, who knew their group<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Who was analyzed<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Everyone followed up<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Completers only<\/td><\/tr><\/tbody><\/table>"
+  },
+  "intro": "<b>Step 3.<\/b> The ladder says where to look first for weaknesses. It does not say which study to believe.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, Levels of Evidence",
+  "items": [
+   {
+    "prompt": "Which study offers the stronger basis for a cautious conclusion that the program helps, and why?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Study K, because 1,200 participants usually outweigh 160 and sample size tends to decide which study to trust"
+     },
+     {
+      "id": "b",
+      "text": "Study K, because Study R’s uneven dropout and completers-only analysis weaken the protection of random assignment"
+     },
+     {
+      "id": "c",
+      "text": "Study R, because randomized trials rank above cohort studies and a higher rung usually means more trustworthy evidence"
+     },
+     {
+      "id": "d",
+      "text": "Neither, because a single study of either design cannot support a cautious conclusion without a systematic review"
+     }
+    ],
+    "correct": "b",
+    "why": "Study R is the design that ranks higher, and its conduct undoes much of the advantage. Many more people left the program arm than the comparison arm, only completers were counted, and the raters were the participants themselves. Study K has a comparison group chosen by the participants and an adjustment that covers measured factors only, and it handled the rest of its conduct carefully. The ranking says where to check first and does not replace reading how each study was run. Sample size alone does not decide it either, because a large biased sample is still biased. A systematic review would help if sound trials existed to pool, and a single study can still support a cautious conclusion.",
+    "bloom": "evaluate"
+   },
+   {
+    "prompt": "Which change to Study R’s reporting would most restore the protection that random assignment is meant to give?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Adding a second outcome questionnaire, because it might show the program’s benefit on another measure"
+     },
+     {
+      "id": "b",
+      "text": "Reporting a standardized effect size, because it would let readers compare the result with other trials"
+     },
+     {
+      "id": "c",
+      "text": "Analyzing everyone as randomized, because the arms started comparable and completers alone are not"
+     },
+     {
+      "id": "d",
+      "text": "Recruiting a larger sample, because more participants would shrink the interval even with a completers-only analysis"
+     }
+    ],
+    "correct": "c",
+    "why": "Random assignment makes the arms comparable at the start. Counting only the people who stayed, when far more left one arm, breaks that comparability. Analyzing everyone in the arm they were assigned to restores it, and the reasons for leaving show whether the leavers differ. More completers, a different effect size metric, or another questionnaire leave the unequal loss untouched.",
+    "bloom": "analyze"
+   },
+   {
+    "prompt": "Study K adjusted for measured baseline differences. What does the design still leave open?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Whether chance could explain the gap, because cohort studies cannot report intervals around their estimates"
+     },
+     {
+      "id": "b",
+      "text": "Whether the improvement came before or after the program, because a cohort cannot establish the order of events"
+     },
+     {
+      "id": "c",
+      "text": "Whether the result applies outside the cohort, because cohort findings do not generalize to other groups"
+     },
+     {
+      "id": "d",
+      "text": "Unmeasured differences such as motivation, because nobody assigned the program to the people who chose it"
+     }
+    ],
+    "correct": "d",
+    "why": "A cohort follows people forward, so order in time is established, and it can report intervals like any study. Whether a result travels depends on who was enrolled, and it is open for a trial too. What a cohort cannot do is assign the exposure, so unmeasured differences between choosers and non-choosers stay possible. Random assignment is the feature that addresses those.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread the part of “Levels of Evidence” on well-run cohorts and poorly run trials."
+ },
+ {
+  "type": "mcq",
+  "title": "When randomizing is not possible",
+  "short": "No RCT possible",
+  "tag": "Ethics and practicality",
+  "case": {
+   "title": "Case: questions an RCT cannot answer (invented)",
+   "text": "Some questions cannot be put to a randomized trial. Assigning a loss to a child is unethical, and some outcomes occur too rarely for any trial to see. All numbers in this activity are invented for practice."
+  },
+  "intro": "<b>Step 4.<\/b> When the top design is unavailable, the task becomes choosing the best available design and judging how well it was done.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, Levels of Evidence",
+  "items": [
+   {
+    "prompt": "Researchers ask whether losing a parent before age 12 raises the chance of long-lasting insomnia in adulthood. Which design can best address the question, and what must they still do?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A case series of bereaved adults with insomnia, because it describes the outcome in the people most affected by it"
+     },
+     {
+      "id": "b",
+      "text": "A cohort following bereaved and non-bereaved children forward, because it can measure confounders and report losses"
+     },
+     {
+      "id": "c",
+      "text": "A systematic review, because the top of the ladder gives the strongest answer even when few trials exist"
+     },
+     {
+      "id": "d",
+      "text": "A randomized trial, because random assignment is the design that usually supports claims about what causes an outcome"
+     }
+    ],
+    "correct": "b",
+    "why": "Nobody can ethically assign a bereavement, so the ladder’s top two rungs are closed for this question. A cohort establishes order in time and can measure many confounders, so its quality depends on those measures and on how many participants were lost. A case series has no comparison, and a review of randomized trials has nothing to review.",
+    "bloom": "evaluate"
+   },
+   {
+    "prompt": "A reviewer rejects that cohort study because it is only a cohort. Which reply is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Judge the cohort on its confounders and follow-up, because randomizing a loss is impossible"
+     },
+     {
+      "id": "b",
+      "text": "Reject the objection, because a cohort that adjusts for measured factors rules out confounders as fully as a trial"
+     },
+     {
+      "id": "c",
+      "text": "Accept the rejection, because findings about cause from designs without randomization deserve little weight"
+     },
+     {
+      "id": "d",
+      "text": "Treat the cohort as equal to a trial, because the ladder applies only when randomizing is possible"
+     }
+    ],
+    "correct": "a",
+    "why": "The ladder is a heuristic about how much a design can support when everything else is equal. Where the better design is unavailable, the question becomes how carefully the available one was run. Treating the cohort as equal to a trial overclaims, and treating it as worthless turns the ladder into a rule for dismissing evidence.",
+    "bloom": "evaluate"
+   },
+   {
+    "prompt": "A regulator asks whether the invented Steady Breath app causes a harm that occurs in about 1 in 20,000 users. A randomized trial of 300 people recorded no cases. What does that trial support?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The harm is probably not serious, because a harm caused by the app would likely have appeared among 300 people"
+     },
+     {
+      "id": "b",
+      "text": "Monitoring would not help either, because a harm this rare is too uncommon for any design to detect"
+     },
+     {
+      "id": "c",
+      "text": "Little about so rare a harm, because 300 people are too few to expect a case and larger monitoring is needed"
+     },
+     {
+      "id": "d",
+      "text": "The harm is probably absent, because randomized trials rank above monitoring studies and this one recorded no cases"
+     }
+    ],
+    "correct": "c",
+    "why": "At 1 in 20,000, a trial of 300 people would be expected to see about 0.015 cases (300 divided by 20,000), so an empty result is what would happen whether or not the app causes the harm. Randomization protects the comparison and does not supply the numbers. Large observational monitoring of many users can see events of this size, at the price of weaker control over confounders.",
+    "bloom": "evaluate"
+   }
+  ],
+  "revisit": "Reread “Levels of Evidence” and “How Many People Is Enough? Sample Size and Power.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Convergence and questions the ladder does not rank",
+  "short": "Convergence",
+  "tag": "Beyond the single study",
+  "case": {
+   "title": "Case: weighing a body of evidence (invented)",
+   "text": "A clinic board is deciding whether to adopt an invented program. Members cite different pieces of evidence and different views about what counts. All numbers in this activity are invented for practice."
+  },
+  "intro": "<b>Step 5.<\/b> The strongest case rarely comes from one study at one level.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, Levels of Evidence",
+  "items": [
+   {
+    "prompt": "A clinician says only randomized trials count, so interviews with people who left therapy are irrelevant. Which response is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The clinician is largely right, because qualitative findings do not generate hypotheses that later trials could test"
+     },
+     {
+      "id": "b",
+      "text": "The clinician is right about questions of cause, because interview findings should be set aside when judging a program"
+     },
+     {
+      "id": "c",
+      "text": "The interviews address a different question, because why people leave is not ranked by the ladder or answered by a trial"
+     },
+     {
+      "id": "d",
+      "text": "The interviews rank alongside a trial for that question, because they belong at the same rung of the ladder"
+     }
+    ],
+    "correct": "c",
+    "why": "The ladder ranks designs for questions about whether a treatment causes improvement. Qualitative work answers other questions, such as why people leave treatment, and it generates hypotheses for later quantitative work. Ranking it on the ladder applies the wrong standard, and ignoring it discards information a trial cannot supply.",
+    "bloom": "evaluate"
+   },
+   {
+    "prompt": "Which pattern of evidence gives the strongest overall case for using the invented program in ordinary clinics?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Moderate trial effects, a process study, and a clinic cohort that agree, because convergence outweighs any single study"
+     },
+     {
+      "id": "b",
+      "text": "One large lab trial by the program’s developers with a large effect, because it is the top design for causal claims"
+     },
+     {
+      "id": "c",
+      "text": "A review pooling three small developer-run trials with a large pooled effect, because reviews rank at the top of the ladder"
+     },
+     {
+      "id": "d",
+      "text": "A case series of 40 clients in an ordinary clinic who nearly all improved, because it reflects real practice conditions"
+     }
+    ],
+    "correct": "a",
+    "why": "No single study, at any level, should decide how a treatment is used. The strongest case comes from convergence, in which trials, studies of the processes that carry change, studies in ordinary clinics, and monitoring of individual clients point the same way. One lab trial or a review of three allied trials leaves independence and ordinary-clinic conditions untested, and a case series cannot test the idea at all.",
+    "bloom": "evaluate"
+   },
+   {
+    "prompt": "A student writes, “The meta-analysis is at the top of the ladder, so its pooled estimate is settled.” What is the best correction?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The ladder does not apply to meta-analyses, because they are a different type of evidence from single studies"
+     },
+     {
+      "id": "b",
+      "text": "A meta-analysis ranks below a single randomized trial, because pooling many studies adds error to the estimate"
+     },
+     {
+      "id": "c",
+      "text": "Meta-analyses help only when the trials agree, because any disagreement among the included trials invalidates the pooled estimate"
+     },
+     {
+      "id": "d",
+      "text": "A pooled estimate can be precise and still wrong, because the included trials may share a flaw that pooling keeps"
+     }
+    ],
+    "correct": "d",
+    "why": "A meta-analysis is only as good as the studies that feed it. If every included trial used a waitlist and unblinded raters, the pooled diamond is a precise estimate of an effect tested only against a weak comparison. Pooling can also handle studies that disagree, and heterogeneity is something to report. It still belongs on the ladder, at the top, with the caveat that the top is a heuristic.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread “Levels of Evidence” and “Pooling the Evidence: Meta-Analysis.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you worked through",
+ "takeaway": "<b>Carry forward.<\/b> A design sets a ceiling on what its result can support, and moving up the ladder usually means better coverage of rival explanations. The ladder says where to look first for weaknesses. A well-run cohort can tell you more than a poorly run trial, some questions cannot be randomized, and the strongest case comes from several kinds of evidence that agree.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every study and number in it is invented."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

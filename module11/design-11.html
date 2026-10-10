@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trial Design Studio</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Trial Design Studio: Lantern</h1>
+    <p class="sub">Evaluate design options for a trial of an invented program through nine decisions, each with tradeoffs and feedback on what the choice would let the study claim.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "mcq",
+  "title": "Decision 1: the question",
+  "short": "Question",
+  "tag": "What will the trial ask",
+  "case": {
+   "title": "Case: the Lantern trial (invented)",
+   "text": "A research team (invented) is planning a trial of Lantern, an invented six-week app program for low mood and poor sleep. In a pilot, 40 adults at one clinic enrolled from 55 approached, 31 completed the post-program questionnaires, and the team met its feasibility targets (all invented). Among the 31 completers, the mood score fell by 7 points on average, and there was no comparison group. The team must settle the question before choosing anything else."
+  },
+  "intro": "<b>Decision 1 of 9.<\/b> The question sets what any result can say. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the option you can best defend. Each choice lets the study claim something and leaves something open.",
+  "items": [
+   {
+    "prompt": "Which question should the next trial ask?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Does Lantern added to usual care improve 12-week mood more than usual care alone, in adults like the pilot’s?"
+     },
+     {
+      "id": "b",
+      "text": "In a randomized pilot of about 60 adults, how does mood change with Lantern versus usual care, and how many drop out?"
+     },
+     {
+      "id": "c",
+      "text": "Does Lantern improve mood among adults who complete all six modules, compared with adults who start it and stop?"
+     },
+     {
+      "id": "d",
+      "text": "Does Lantern help adults with any mental health condition feel better in their everyday lives across settings?"
+     }
+    ],
+    "correct": "a",
+    "why": "The pilot met its feasibility targets, so the open question is efficacy. Each option allows a different claim.<ul style=\"margin:8px 0 0 18px;padding:0\"><li><b>Added benefit over usual care.<\/b> A positive result could support the claim that Lantern adds benefit for adults like these. Generalizing to other groups and other comparisons stays open. This is the best-supported choice, because a single-arm pilot cannot show efficacy, the pilot already met its feasibility targets, and this question can show efficacy.<\/li><li><b>Randomized pilot.<\/b> A randomized pilot is also a reasonable choice. It would estimate the effect and the dropout rate for planning, which helps when a team is unsure of either. It gives a wide interval and a claim too weak to settle efficacy. The reading defends moving to a controlled efficacy trial here, because the feasibility targets were met and a controlled trial is the next step.<\/li><li><b>Completers against stoppers.<\/b> People who finish differ from people who stop before treatment starts, so any difference mixes the program’s effect with who finishes. The claim about the program itself would stay open.<\/li><li><b>Any condition, everyday life.<\/b> No population, outcome, or comparison is named, so no result could support a specific claim. The question would have to be narrowed before any design could answer it.<\/li><\/ul>",
+    "bloom": "evaluate",
+    "src": "Module 11, What a Pilot Can and Cannot Show"
+   }
+  ],
+  "revisit": "Reread “What a Pilot Can and Cannot Show.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Decision 2: the comparator",
+  "short": "Comparator",
+  "tag": "What it is compared with",
+  "case": {
+   "title": "Case: the Lantern trial (invented)",
+   "text": "A research team (invented) is planning a trial of Lantern, an invented six-week app program for low mood and poor sleep. In a pilot, 40 adults at one clinic enrolled from 55 approached, 31 completed the post-program questionnaires, and the team met its feasibility targets (all invented). Among the 31 completers, the mood score fell by 7 points on average, and there was no comparison group. The question is whether Lantern adds benefit beyond the care these adults already receive."
+  },
+  "intro": "<b>Decision 2 of 9.<\/b> The comparator determines what question the trial can answer.",
+  "doThis": "Choose the option you can best defend. Each choice lets the study claim something and leaves something open.",
+  "items": [
+   {
+    "prompt": "Which comparison condition should the trial use?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A generic app that sends sleep tips and mood check-ins but has no Lantern content"
+     },
+     {
+      "id": "b",
+      "text": "Treatment as usual, meaning the care participants would otherwise receive at the clinic"
+     },
+     {
+      "id": "c",
+      "text": "A different structured program, such as therapist-delivered sleep treatment given in clinic"
+     },
+     {
+      "id": "d",
+      "text": "A waitlist, with participants offered Lantern after the 12-week assessment is completed"
+     }
+    ],
+    "correct": "b",
+    "why": "Each comparator answers a different question, and the best choice follows the question the trial asks. For the question in this case, treatment as usual is best supported. A different question would change the answer.<ul style=\"margin:8px 0 0 18px;padding:0\"><li><b>Waitlist.<\/b> The study could claim that Lantern beats waiting, and that contrast tends to give larger effects than a credible alternative. Whether it beats existing care stays open, and controlled follow-up beyond 12 weeks is lost once the waitlist is treated.<\/li><li><b>Treatment as usual.<\/b> The study could claim that Lantern adds benefit to what is available, which is the question in the case. It leaves open whether Lantern beats a specific alternative treatment. This is the best-supported choice, because a claim of better than existing care needs a comparator that represents existing care.<\/li><li><b>A different structured program.<\/b> An active comparison answers the hardest question and could support a claim of relative effectiveness. It usually calls for a larger sample because the difference is smaller. A strong choice for a later stage, and it leaves the added-benefit question open.<\/li><li><b>A generic app without Lantern content.<\/b> An attention-matched control could support the claim that Lantern’s specific content matters beyond attention and expectancy. If that were the question, this would be the better comparator. It leaves open whether Lantern beats usual care.<\/li><\/ul>",
+    "bloom": "evaluate",
+    "src": "Module 11, The Comparator"
+   }
+  ],
+  "revisit": "Reread “The Comparator.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Decision 3: the outcome and who rates it",
+  "short": "Outcome",
+  "tag": "What is measured and by whom",
+  "case": {
+   "title": "Case: the Lantern trial (invented)",
+   "text": "A research team (invented) is planning a trial of Lantern, an invented six-week app program for low mood and poor sleep. In a pilot, 40 adults at one clinic enrolled from 55 approached, 31 completed the post-program questionnaires, and the team met its feasibility targets (all invented). Among the 31 completers, the mood score fell by 7 points on average, and there was no comparison group. Participants will know whether they received Lantern. The trial also needs a safety protocol for participants who report worsening mood or thoughts of self-harm (invented), including 988 and 911 information."
+  },
+  "intro": "<b>Decision 3 of 9.<\/b> Choosing one primary outcome in advance and deciding who scores it limits the room for expectation and chance. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the option you can best defend. Each choice lets the study claim something and leaves something open.",
+  "items": [
+   {
+    "prompt": "Which outcome plan should the trial adopt?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The number of Lantern modules each person finishes, since a program that people use is a program that helps"
+     },
+     {
+      "id": "b",
+      "text": "One mood score at 12 weeks named in advance as primary, rated by an assessor who does not know the arm"
+     },
+     {
+      "id": "c",
+      "text": "A validated self-report mood questionnaire named in advance as primary, with a blinded subsample check"
+     },
+     {
+      "id": "d",
+      "text": "Six outcomes covering mood, sleep, worry, and work, all treated as primary, with significant ones reported first"
+     }
+    ],
+    "correct": "b",
+    "why": "The outcome plan decides what the result can claim.<ul style=\"margin:8px 0 0 18px;padding:0\"><li><b>One primary outcome, blinded rater.<\/b> The study could claim a mood difference scored by someone with no stake in the arm. It costs more and leaves open how participants judge their own change, which can be added as a secondary outcome. This is the best-supported choice, because a single registered primary outcome and an impartial rater protect the central claim when participants know their arm.<\/li><li><b>Validated self-report with a blinded check.<\/b> A reasonable and cheaper choice. A validated questionnaire is a standard primary outcome, and rating a subsample blind shows whether expectations drove the scores. The claim about mood stays open until that check comes back, and participants’ knowledge of their arm may still shape the main result.<\/li><li><b>Six primary outcomes.<\/b> With six tests of this kind, about one in twenty per test would clear the usual threshold by chance. The claim attached to whichever one wins is weak, and the others stay open.<\/li><li><b>Modules finished.<\/b> Use describes acceptability and feasibility, which the pilot already addressed. It supports no claim about mood, since people can use a program that does not help.<\/li><\/ul>",
+    "bloom": "evaluate",
+    "src": "Module 11, The Plan Before the Data"
+   }
+  ],
+  "revisit": "Reread “The Plan Before the Data.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Decision 4: who is analyzed",
+  "short": "Analysis",
+  "tag": "The analysis population",
+  "case": {
+   "title": "Case: the Lantern trial (invented)",
+   "text": "A research team (invented) is planning a trial of Lantern, an invented six-week app program for low mood and poor sleep. In a pilot, 40 adults at one clinic enrolled from 55 approached, 31 completed the post-program questionnaires, and the team met its feasibility targets (all invented). Among the 31 completers, the mood score fell by 7 points on average, and there was no comparison group. In the pilot, 31 of 40 provided post-program data. The team expects to lose more participants from the Lantern arm than from usual care."
+  },
+  "intro": "<b>Decision 4 of 9.<\/b> The group you count decides what the arms are comparing.",
+  "doThis": "Choose the option you can best defend. Each choice lets the study claim something and leaves something open.",
+  "items": [
+   {
+    "prompt": "Which analysis population should the primary analysis use?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Only participants who finish at least four of six modules, since they received a real dose"
+     },
+     {
+      "id": "b",
+      "text": "Only participants who provide the 12-week score, since their data are complete and easy to analyze"
+     },
+     {
+      "id": "c",
+      "text": "Everyone randomized, analyzed in the arm assigned, with a stated method for missing scores"
+     },
+     {
+      "id": "d",
+      "text": "Everyone randomized, except anyone who leaves in the first week, since they never tried the program"
+     }
+    ],
+    "correct": "c",
+    "why": "Each population supports a different claim.<ul style=\"margin:8px 0 0 18px;padding:0\"><li><b>Completers with a score.<\/b> The study could claim a difference among people who stayed. Staying was not randomized, so uneven dropout can inflate the effect, and the effect for everyone assigned stays open.<\/li><li><b>Four or more modules.<\/b> A per-protocol group addresses whether Lantern works when used as intended. Choosing by use removes the protection of random assignment, and the effect for people assigned to Lantern stays open.<\/li><li><b>Everyone randomized, assigned arm.<\/b> The study could claim an effect for people offered Lantern, including those who stopped, which reflects ordinary practice. The cost is some dilution of the estimate. This is the best-supported choice, because an intention-to-treat analysis keeps the groups comparable. It is the more conservative estimate for a question about whether Lantern is better than usual care, and it can flatter a trial meant to show that two treatments are equivalent.<\/li><li><b>Everyone except first-week leavers.<\/b> Dropping people after randomization based on what they did next reintroduces the selection that randomization removed. The claim would apply to a group no one could identify at enrollment.<\/li><\/ul>",
+    "bloom": "evaluate",
+    "src": "Module 11, Who Was Counted: Attrition and Intention-to-Treat"
+   }
+  ],
+  "revisit": "Reread “Who Was Counted: Attrition and Intention-to-Treat.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Decision 5: sample-size reasoning",
+  "short": "Sample size",
+  "tag": "How many people, and why",
+  "case": {
+   "title": "Case: the Lantern trial (invented)",
+   "text": "A research team (invented) is planning a trial of Lantern, an invented six-week app program for low mood and poor sleep. In a pilot, 40 adults at one clinic enrolled from 55 approached, 31 completed the post-program questionnaires, and the team met its feasibility targets (all invented). Among the 31 completers, the mood score fell by 7 points on average, and there was no comparison group. The pilot’s 7-point drop came from 31 completers with no comparison group."
+  },
+  "intro": "<b>Decision 5 of 9.<\/b> The planned effect size and the stopping rule determine whether the trial can tell a real effect from chance.",
+  "doThis": "Choose the option you can best defend. Each choice lets the study claim something and leaves something open.",
+  "items": [
+   {
+    "prompt": "Which reasoning should set the sample size?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Enroll 40 participants again, since the pilot showed that this number is practical to recruit"
+     },
+     {
+      "id": "b",
+      "text": "Take the pilot’s 7-point drop as the expected effect, and add people for dropout"
+     },
+     {
+      "id": "c",
+      "text": "Size the trial on the smallest change patients would notice, and add people for expected dropout"
+     },
+     {
+      "id": "d",
+      "text": "Keep enrolling and test after each batch, stopping as soon as the difference is significant"
+     }
+    ],
+    "correct": "c",
+    "why": "The sample-size basis decides what a null or positive result could mean.<ul style=\"margin:8px 0 0 18px;padding:0\"><li><b>The smallest change patients notice.<\/b> The study could claim to detect an effect of the size patients would notice and could read a null result as informative. It needs more participants and more cost. This is the best-supported choice, because the target is the smallest effect that matters, and small studies miss real effects and overstate the ones they find.<\/li><li><b>The pilot’s 7 points.<\/b> The 7-point drop came from 31 completers with no comparison group, so it likely includes time, regression to the mean, and hope, and it is probably overstated. A trial sized for an effect that large would be too small to detect a smaller true benefit, and a null result could not be read as informative.<\/li><li><b>A forty-person trial.<\/b> Feasibility of 40 does not tell you how many are needed to detect an effect. With about 20 per arm, the interval would be wide and a null result would be compatible with a worthwhile benefit.<\/li><li><b>Stop when significant.<\/b> Testing after every batch and stopping at the first significant result gives chance many chances to cross the line, so the false-positive rate rises well above one in twenty. The claim would be unreliable.<\/li><\/ul>",
+    "bloom": "evaluate",
+    "src": "Module 11, How Many People Is Enough? Sample Size and Power"
+   }
+  ],
+  "revisit": "Reread “How Many People Is Enough? Sample Size and Power.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Decision 6: follow-up",
+  "short": "Follow-up",
+  "tag": "How long people are tracked",
+  "case": {
+   "title": "Case: the Lantern trial (invented)",
+   "text": "A research team (invented) is planning a trial of Lantern, an invented six-week app program for low mood and poor sleep. In a pilot, 40 adults at one clinic enrolled from 55 approached, 31 completed the post-program questionnaires, and the team met its feasibility targets (all invented). Among the 31 completers, the mood score fell by 7 points on average, and there was no comparison group. The pilot’s measures stopped at the end of the six-week program, and the trial’s primary outcome will be at 12 weeks. People are harder to reach later."
+  },
+  "intro": "<b>Decision 6 of 9.<\/b> Whether gains lasted is a question people care about, and follow-up costs money and attrition.",
+  "doThis": "Choose the option you can best defend. Each choice lets the study claim something and leaves something open.",
+  "items": [
+   {
+    "prompt": "Which follow-up plan should the trial adopt?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A 12-week assessment plus a 6-month follow-up of participants who improved, to see whether gains held"
+     },
+     {
+      "id": "b",
+      "text": "A single assessment at 12 weeks, which keeps cost and dropout low and answers the primary question"
+     },
+     {
+      "id": "c",
+      "text": "A single assessment at two years, which would show the most lasting effect of the program"
+     },
+     {
+      "id": "d",
+      "text": "Assessments at 12 weeks and at 6 months, with every randomized participant contacted and counted"
+     }
+    ],
+    "correct": "d",
+    "why": "Follow-up choices decide whether the study can say anything about durability.<ul style=\"margin:8px 0 0 18px;padding:0\"><li><b>12 weeks only.<\/b> The study could claim a benefit at the primary time point. Whether gains lasted stays open, and a large improvement that fades may matter less than a smaller one that holds.<\/li><li><b>12 weeks plus 6 months, everyone.<\/b> The study could claim an effect at 12 weeks and report whether it held at 6 months, with an interval for each time point. It costs more and loses some people. This is the best-supported choice, because following everyone randomized keeps the comparison intact.<\/li><li><b>Follow up only the improvers.<\/b> Choosing who to follow by outcome removes the comparability of the arms, so any claim about lasting gains would be unsupported.<\/li><li><b>One assessment at two years.<\/b> The study could speak to the most lasting effect. Heavy attrition is likely, and the 12-week effect that the main question concerns would be unmeasured.<\/li><\/ul>",
+    "bloom": "evaluate",
+    "src": "Module 11, Watching Change Unfold: Baselines, Trends, and Follow-Up"
+   }
+  ],
+  "revisit": "Reread “Watching Change Unfold: Baselines, Trends, and Follow-Up.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Decision 7: preregistration",
+  "short": "Registration",
+  "tag": "What is fixed before the data",
+  "case": {
+   "title": "Case: the Lantern trial (invented)",
+   "text": "A research team (invented) is planning a trial of Lantern, an invented six-week app program for low mood and poor sleep. In a pilot, 40 adults at one clinic enrolled from 55 approached, 31 completed the post-program questionnaires, and the team met its feasibility targets (all invented). Among the 31 completers, the mood score fell by 7 points on average, and there was no comparison group. The team will have access to the data as it comes in and will be tempted, like any team, to look at it."
+  },
+  "intro": "<b>Decision 7 of 9.<\/b> A registered plan lets readers tell a tested hypothesis from a story told after the results.",
+  "doThis": "Choose the option you can best defend. Each choice lets the study claim something and leaves something open.",
+  "items": [
+   {
+    "prompt": "Which registration plan should the team adopt?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Register before enrolling the primary outcome, time point, and analysis population, and report departures"
+     },
+     {
+      "id": "b",
+      "text": "Write the plan in an internal team document before enrolling and keep it private until the results are in"
+     },
+     {
+      "id": "c",
+      "text": "Register before enrolling and list mood, sleep, and worry measures broadly as the trial’s outcomes"
+     },
+     {
+      "id": "d",
+      "text": "Register the general aim and decide on the primary outcome after seeing which measures changed"
+     }
+    ],
+    "correct": "a",
+    "why": "A registration decides whether departures from the plan can be detected.<ul style=\"margin:8px 0 0 18px;padding:0\"><li><b>General aim, outcome chosen later.<\/b> The study could claim only exploratory findings. The outcome would be chosen after seeing the data, so a chance result could pass as the plan.<\/li><li><b>Private internal plan.<\/b> Writing the plan down before enrolling is better than deciding afterward. A private document cannot be checked by readers, so a switched outcome or analysis would go undetected, and the claim would rest on the team’s word.<\/li><li><b>Full registration with departures reported.<\/b> The study could claim a confirmatory test of a stated hypothesis, and readers can compare the report with the registration. Departures are still allowed when explained. This is the best-supported choice, because it fixes what a reader needs to detect switching.<\/li><li><b>Broad outcome list.<\/b> Registering before enrolling helps, and a broad list leaves room to choose the winner afterward. The claim would be tied to whichever outcome was reported.<\/li><\/ul>",
+    "bloom": "evaluate",
+    "src": "Module 11, When Science Checks Itself: The Replication Crisis"
+   }
+  ],
+  "revisit": "Reread “When Science Checks Itself: The Replication Crisis.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Decision 8: the claim the design could support",
+  "short": "Claim",
+  "tag": "What a positive result would allow",
+  "case": {
+   "title": "Case: the Lantern trial (invented)",
+   "text": "A research team (invented) is planning a trial of Lantern, an invented six-week app program for low mood and poor sleep. In a pilot, 40 adults at one clinic enrolled from 55 approached, 31 completed the post-program questionnaires, and the team met its feasibility targets (all invented). Among the 31 completers, the mood score fell by 7 points on average, and there was no comparison group. Suppose the team made the choices that the earlier decisions defended, and the result favored Lantern."
+  },
+  "intro": "<b>Decision 8 of 9.<\/b> A design sets a ceiling on the claim. Choose the claim your design would support if the result is positive.",
+  "doThis": "Choose the option you can best defend. Each choice lets the study claim something and leaves something open.",
+  "items": [
+   {
+    "prompt": "Which statement is the strongest claim this design would support?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Lantern works for low mood and poor sleep in adults generally, as shown by a controlled trial of its effects"
+     },
+     {
+      "id": "b",
+      "text": "Lantern is better than therapist-delivered treatment for low mood, as shown by the larger gain in this trial"
+     },
+     {
+      "id": "c",
+      "text": "Lantern improves mood because it improves sleep first, and the improved sleep produces the better mood"
+     },
+     {
+      "id": "d",
+      "text": "In adults like those enrolled, Lantern plus usual care improved 12-week mood more than usual care alone"
+     }
+    ],
+    "correct": "d",
+    "why": "Each claim reaches past the design by a different amount.<ul style=\"margin:8px 0 0 18px;padding:0\"><li><b>Lantern works.<\/b> The statement drops the population, comparison, and time point. It would claim more than one trial against usual care in a single type of sample can support.<\/li><li><b>Added benefit for adults like those enrolled.<\/b> The claim names the population, the comparison, and the time point. The 6-month result, generalizing, and mechanism stay open. This is the best-supported choice, because it matches what the design could show.<\/li><li><b>Better than therapist-delivered treatment.<\/b> The trial had no therapist-delivered arm. Relative effectiveness against a different treatment needs a trial that includes it.<\/li><li><b>Works through sleep.<\/b> A mechanism claim needs the mediator measured and shown to change before the outcome. The trial as designed measures neither, so the mechanism stays open.<\/li><\/ul>",
+    "bloom": "evaluate",
+    "src": "Module 11, Levels of Evidence"
+   }
+  ],
+  "revisit": "Reread “Levels of Evidence.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Decision 9: revising the plan",
+  "short": "Revision",
+  "tag": "New information arrives",
+  "case": {
+   "title": "Case: the Lantern trial (invented)",
+   "text": "A research team (invented) is planning a trial of Lantern, an invented six-week app program for low mood and poor sleep. In a pilot, 40 adults at one clinic enrolled from 55 approached, 31 completed the post-program questionnaires, and the team met its feasibility targets (all invented). Among the 31 completers, the mood score fell by 7 points on average, and there was no comparison group. In month 14, 31 percent of the Lantern arm and 12 percent of the usual-care arm have missed the 12-week assessment, and those who left had higher baseline severity (invented)."
+  },
+  "intro": "<b>Decision 9 of 9.<\/b> Plans meet data. Decide what to change and what to keep.",
+  "doThis": "Choose the option you can best defend. Each choice lets the study claim something and leaves something open.",
+  "items": [
+   {
+    "prompt": "Which response should the team take?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Keep the registered intention-to-treat analysis, report attrition by arm, and run the missing-data checks"
+     },
+     {
+      "id": "b",
+      "text": "Change the primary outcome to module completion, which is available for everyone randomized and avoids missing scores"
+     },
+     {
+      "id": "c",
+      "text": "Switch the primary analysis to completers, since the missing 12-week scores are lowering the study’s power"
+     },
+     {
+      "id": "d",
+      "text": "Remove the highest-severity participants from both arms, so that the remaining attrition is roughly equal"
+     }
+    ],
+    "correct": "a",
+    "why": "Each response changes what the trial can claim.<ul style=\"margin:8px 0 0 18px;padding:0\"><li><b>Switch to completers.<\/b> The study could report a larger effect. It would depart from the registered plan, and a gap that comes from who stayed could pass as a treatment effect.<\/li><li><b>Remove the high-severity participants.<\/b> Dropping participants by baseline severity changes the population after randomization. The claim would apply to a narrower group, and the attrition problem would remain.<\/li><li><b>Keep ITT and report the pattern.<\/b> The study could still claim an effect for everyone assigned, with the missing data openly handled and the sensitivity of the result shown. Some uncertainty remains. This is the best-supported choice, because the registered analysis stays primary and departures are explained.<\/li><li><b>Change to module completion.<\/b> Switching the outcome after seeing the data is outcome switching, and module completion cannot support a claim about mood.<\/li><\/ul>",
+    "bloom": "evaluate",
+    "src": "Module 11, Who Was Counted: Attrition and Intention-to-Treat"
+   }
+  ],
+  "revisit": "Reread “Who Was Counted: Attrition and Intention-to-Treat.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you designed",
+ "takeaway": "<b>Carry forward.<\/b> Every design decision lets a study claim something and leaves something open. A question tied to the pilot’s next stage, a comparator that represents existing care, one registered primary outcome rated by someone who does not know the arm, an analysis of everyone randomized, a sample sized for an effect that matters, follow-up of everyone, and a registered plan together support a modest and specific claim. The strongest wording the design supports is narrower than the one a headline would use.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. The program, the team, and every number in it are invented."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

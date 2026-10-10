@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Challenge: Reading a Press Release Against Its Trial</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --line2:#eceae4;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --level-bg:#fbe7e0; --level-ink:#b0472a;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --sel-line:#c9d3c2;
+    --focus:#2f6f4f; --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px;}
+
+  .head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px;}
+  .back-ic{flex:0 0 auto;margin-top:4px;opacity:.6;}
+  .head h1{margin:0;font-size:24px;letter-spacing:-.01em;font-weight:700;}
+  .tabrow{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 22px;padding-left:38px;font-size:14px;}
+  .lvl{background:var(--level-bg);color:var(--level-ink);font-weight:700;border-radius:8px;padding:4px 12px;}
+  .tabrow .t{color:var(--muted);padding:4px 0;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;margin-bottom:20px;}
+  .panel h2{margin:0 0 14px;font-size:17px;font-weight:700;}
+  .panel p{margin:0 0 14px;font-size:15.5px;line-height:1.6;}
+  .panel p:last-child{margin-bottom:0;}
+  .scenario p.quote{color:#3a3833;}
+
+  .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
+  .qhead h2{margin:0;font-size:17px;font-weight:700;}
+  .qtype{flex:0 0 auto;font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:7px;padding:5px 10px;}
+  .qprompt{font-size:15.5px;margin:0 0 14px;line-height:1.55;}
+
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin-bottom:18px;}
+  .do b{color:var(--ink);font-weight:700;}
+
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font:inherit;font-size:15px;line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:14px;}
+  .opt .txt{flex:1 1 auto;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;}
+  .opt:disabled{cursor:default;}
+  /* answered states */
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.62;}
+
+  .verdict{margin:16px 0 0;font-size:15px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14.5px;color:#44413b;line-height:1.6;}
+
+  .qfoot{display:flex;justify-content:flex-end;margin-top:20px;}
+  .btn{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;transition:.12s;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .results h2{display:flex;align-items:center;gap:9px;}
+  .results .score{font-size:15.5px;margin:0;}
+  .ea-sub{color:var(--muted);font-size:14px;margin:-6px 0 14px;}
+  .book{flex:0 0 auto;opacity:.7;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+  @media(max-width:560px){ .wrap{padding:18px 14px 44px;} .tabrow{padding-left:0;} .head h1{font-size:20px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg class="back-ic" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 5l-5 5 5 5" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1 id="title"></h1>
+  </div>
+  <div class="tabrow" id="tabrow"></div>
+
+  <!-- Scenario (persistent) -->
+  <section class="panel scenario" id="scenario"></section>
+
+  <!-- Question area -->
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <!-- Results + Expert Analysis (hidden until finished) -->
+  <section class="panel results hidden" id="resultsPanel"></section>
+  <section class="panel hidden" id="eaPanel"></section>
+</div>
+
+<script>
+// Challenge data. Scenario, questions, and expert analysis are original and grounded in the module reading.
+const CHALLENGE = {
+ "title": "Reading a Press Release Against Its Trial",
+ "level": "Level 5: Evaluate",
+ "tabs": [
+  "What the Evidence Supports",
+  "The Weakest Link",
+  "What to See Next"
+ ],
+ "scenario": {
+  "heading": "Press Release and Trial Summary (invented)",
+  "paras": [
+   "Luz coordinates training at a community clinic (an invented case). A colleague forwards a press release about a new therapy and asks whether the clinic should train its staff in it. The release, the trial summary, and every number below are invented for this exercise. If anything here affects you personally, you can call or text 988 at any hour, and in an emergency you can call 911.",
+   "PRESS RELEASE (invented). “New therapy works by ending ‘safety behaviors’ and beats standard counseling, trial shows. Therapy X helps people with social anxiety because it teaches them to drop the small habits they use to feel safe, such as rehearsing sentences or avoiding eye contact,” said lead author Silas, who developed the therapy. “Patients who gave up these habits improved the most, and the therapy outperformed standard counseling.”",
+   "Trial summary, design. Therapy X, a twelve-week individual therapy, was compared with supportive counseling, a genuine active comparison, in adults with social anxiety who answered an advertisement at one university clinic. Assignment was random and allocation was concealed. Outcome raters did not know each person’s group. The registered primary outcome was the Social Anxiety Rating (an invented 0 to 60 scale, lower is better) at week 12, and the paper reports that same outcome as primary.",
+   "Trial summary, participants. Randomized: Therapy X 80, supportive counseling 80. Completed the week 12 assessment: 72 and 74. Analyzed, all 80 and 80 (intention-to-treat, with a stated method for missing scores).",
+   "Trial summary, results. Average change in the Social Anxiety Rating from baseline to week 12: Therapy X down 14.2 points, supportive counseling down 8.1 points. Difference 6.1 points, 95 percent confidence interval 2.9 to 9.3, p < .001. The smallest change patients in this population report noticing is 5 points (invented value).",
+   "Trial summary, mechanism. A Safety Behavior Checklist (invented) was completed at baseline and at week 12 only. Among people who received Therapy X, larger drops in safety behaviors went with larger drops in the Social Anxiety Rating (r = .52). There was no follow-up after week 12."
+  ]
+ },
+ "doThis": "Pick the best option. After you answer, read whether you were correct and why before advancing.",
+ "questions": [
+  {
+   "id": "q1",
+   "bloom": "evaluate",
+   "prompt": "Part 1. What do the design and the results table support?",
+   "options": [
+    {
+     "id": "a",
+     "text": "Therapy X probably beat supportive counseling in this sample and how it works is untested, since the comparison was well run and raters were blinded"
+    },
+    {
+     "id": "b",
+     "text": "Both halves of the headline are supported, since the group difference is significant and the link between safety behaviors and improvement is strong"
+    },
+    {
+     "id": "c",
+     "text": "Little is supported, since the developer of the therapy led the trial and a result from someone with a stake in it cannot be trusted"
+    },
+    {
+     "id": "d",
+     "text": "The advantage over counseling is doubtful, since 8 of 80 and 6 of 80 left (10 and 7.5 percent), so only the safety behavior finding can be relied on"
+    }
+   ],
+   "correct": "a",
+   "explanation": "The comparison is with a genuine active treatment, assignment was random and concealed, raters did not know group, the registered primary outcome is the reported one, and everyone randomized was analyzed. The difference of 6.1 points exceeds the 5-point value patients notice, although the lower end of the interval, 2.9, falls below it, so the size of the benefit is uncertain. The safety behavior claim rests on a correlation from two time points. A developer’s involvement is a reason to want independent confirmation and does not cancel a well-run comparison. Losing 8 of 80 and 6 of 80 participants (10 and 7.5 percent), with an intention-to-treat analysis, does not make the group difference doubtful."
+  },
+  {
+   "id": "q2",
+   "bloom": "evaluate",
+   "prompt": "Part 2. The headline says Therapy X works by ending safety behaviors. Which is the weakest link between the evidence and that claim?",
+   "options": [
+    {
+     "id": "a",
+     "text": "The lower end of the interval, 2.9 points, falls below the 5 points patients notice, so some of the benefit may go unnoticed"
+    },
+    {
+     "id": "b",
+     "text": "The trial used one university site and advertised volunteers and had no follow-up, so the results may not travel or last"
+    },
+    {
+     "id": "c",
+     "text": "Safety behaviors were measured only at baseline and week 12, so the data cannot show that they changed before anxiety did"
+    },
+    {
+     "id": "d",
+     "text": "The developer led the trial, so allegiance may have inflated the difference even though raters did not know group assignment"
+    }
+   ],
+   "correct": "c",
+   "explanation": "The headline makes a claim about mechanism, and a mediator must change before the outcome does. With the checklist given only at baseline and week 12, the two measures change over the same period, and a correlation between them is equally consistent with anxiety falling first and safety behaviors following, or with a third factor driving both. Allegiance, the interval, and limited generalization and follow-up are real concerns. Raters who did not know the group reduce the first, the interval concerns the size of the benefit and not the mechanism, and the last two apply to the effect and bear on the headline less directly than the missing order of change."
+  },
+  {
+   "id": "q3",
+   "bloom": "evaluate",
+   "prompt": "Part 3. Given the weakest link, which result would you most want to see next?",
+   "options": [
+    {
+     "id": "a",
+     "text": "Follow-up assessments at 6 and 12 months, so researchers can learn whether the advantage over counseling lasts after treatment ends"
+    },
+    {
+     "id": "b",
+     "text": "A trial that measures safety behaviors and anxiety at weeks 2, 4, 6, 8, and 12 with a registered plan, so the order of change can be checked"
+    },
+    {
+     "id": "c",
+     "text": "A repeat of the trial at an independent site by a team with no stake in Therapy X, so the effect is tested again by neutral researchers"
+    },
+    {
+     "id": "d",
+     "text": "The same trial repeated with several hundred more participants, so the confidence interval narrows and moves clear of the 5 points patients notice"
+    }
+   ],
+   "correct": "b",
+   "explanation": "Repeated measurement lets researchers check whether the change in safety behaviors comes before the change in anxiety, which is the condition mediation requires, and registering the plan in advance keeps the analysis from being shaped by the results. A larger trial would sharpen the estimate of the effect and leave the mechanism question untouched. Follow-up answers whether gains last. An independent repeat with the same two time points would test the effect again and could not show order of change. Each of these three would be a reasonable later step, and none addresses the weakest link."
+  }
+ ],
+ "expertAnalysis": {
+  "heading": "Expert Analysis",
+  "subhead": "Model answer and reasoning walkthrough",
+  "paras": [
+   "The headline joins two claims that need different evidence. The first is that Therapy X beat standard counseling. The design supports this reasonably well. The comparator was an active treatment, assignment was random and concealed, raters did not know group, the registered primary outcome is the one reported, and every randomized participant was analyzed, with 8 of 80 and 6 of 80 lost (10 and 7.5 percent). The 6.1-point difference exceeds the 5 points patients notice, though the interval from 2.9 to 9.3 leaves room for a benefit some patients would not notice. A fair summary says the therapy probably helped more than supportive counseling in this sample.",
+   "The second claim is that the therapy works by ending safety behaviors. Mechanism claims need the mediator to change before the outcome does. The checklist was given at baseline and week 12 only, so the study has two snapshots of change measured over the same twelve weeks. The correlation of .52 is compatible with safety behaviors driving the improvement, with improvement reducing the need for safety behaviors, and with a third factor such as overall readiness producing both. This is the weakest link, because the headline is built on it and the data cannot support it. The developer’s role, the single site, the lack of follow-up, and the interval are real limits, and each is smaller than a missing claim about order.",
+   "The most useful next step is a trial that measures safety behaviors and anxiety at several points during treatment, with the analysis plan registered first. If safety behaviors fall by week 4 and anxiety falls afterward, the mechanism claim gains support. A larger trial, a follow-up, and an independent replication would each add something, and none would change what the current data can say about how the therapy works. A clinic deciding whether to train staff could reasonably consider Therapy X promising for its effect and wait on the mechanism story."
+  ]
+ }
+};
+
+var idx = 0;            // current question index
+var answered = [];      // answered[i] = chosen option id or null
+var correctCount = 0;
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+var BOOK = '<svg class="book" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+
+function renderStatic(){
+  document.getElementById("title").textContent = CHALLENGE.title;
+  var tr = document.getElementById("tabrow");
+  tr.appendChild(el("span","lvl", esc(CHALLENGE.level)));
+  CHALLENGE.tabs.forEach(function(t){ tr.appendChild(el("span","t", esc(t))); });
+
+  var sc = document.getElementById("scenario");
+  sc.appendChild(el("h2",null, esc(CHALLENGE.scenario.heading)));
+  CHALLENGE.scenario.paras.forEach(function(p,i){
+    sc.appendChild(el("p", i===1?"quote":null, esc(p)));
+  });
+  answered = CHALLENGE.questions.map(function(){ return null; });
+}
+
+function renderQuestion(){
+  var q = CHALLENGE.questions[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var head = el("div","qhead");
+  head.appendChild(el("h2",null,"Question " + (idx+1) + " of " + CHALLENGE.questions.length));
+  head.appendChild(el("span","qtype","Multiple Choice"));
+  panel.appendChild(head);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> " + esc(CHALLENGE.doThis)));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls = "opt";
+    if(isAnswered){
+      if(o.id === q.correct) cls += " correct";
+      else if(o.id === chosen) cls += " wrong";
+      else cls += " dim";
+    }
+    var btn = el("button", cls);
+    btn.type = "button";
+    if(isAnswered) btn.disabled = true;
+    var mark = "";
+    if(isAnswered && o.id === q.correct) mark = CHECK;
+    else if(isAnswered && o.id === chosen) mark = CROSS;
+    btn.innerHTML = '<span class="k">'+o.id.toUpperCase()+'.</span>' +
+                    '<span class="txt">'+esc(o.text)+'</span>' +
+                    '<span class="mark">'+mark+'</span>';
+    if(!isAnswered){
+      btn.addEventListener("click", function(){ choose(o.id); });
+    }
+    opts.appendChild(btn);
+  });
+  panel.appendChild(opts);
+
+  if(isAnswered){
+    var right = chosen === q.correct;
+    if(right){
+      panel.appendChild(el("p","verdict ok","Correct!"));
+    } else {
+      var correctText = "";
+      q.options.forEach(function(o){ if(o.id===q.correct) correctText = o.text; });
+      panel.appendChild(el("p","verdict no","Incorrect. The correct answer is: " + esc(correctText)));
+    }
+    panel.appendChild(el("p","explain", esc(q.explanation)));
+
+    var foot = el("div","qfoot");
+    var last = idx === CHALLENGE.questions.length - 1;
+    var b = el("button","btn");
+    if(last){
+      b.innerHTML = 'View Expert Analysis ' + BOOK.replace('class="book" ','');
+      b.addEventListener("click", finish);
+    } else {
+      b.innerHTML = 'Next Question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      b.addEventListener("click", function(){ idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+    }
+    foot.appendChild(b);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(optId){
+  if(answered[idx] !== null) return;
+  answered[idx] = optId;
+  if(optId === CHALLENGE.questions[idx].correct) correctCount++;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("qpanel").classList.add("hidden");
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML = "";
+  rp.appendChild(el("h2",null, BOOK + "<span>Your Results</span>"));
+  rp.appendChild(el("p","score","Multiple Choice: " + correctCount + " / " + CHALLENGE.questions.length + " correct"));
+
+  var ea = document.getElementById("eaPanel");
+  ea.classList.remove("hidden");
+  ea.innerHTML = "";
+  ea.appendChild(el("h2",null, BOOK + "<span>" + esc(CHALLENGE.expertAnalysis.heading) + "</span>"));
+  ea.appendChild(el("p","ea-sub", esc(CHALLENGE.expertAnalysis.subhead)));
+  CHALLENGE.expertAnalysis.paras.forEach(function(p){ ea.appendChild(el("p",null, esc(p))); });
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderStatic();
+renderQuestion();
+</script>
+</body>
+</html>

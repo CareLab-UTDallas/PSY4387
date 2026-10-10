@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Effect Sizes and What They Mean</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Effect Sizes and What They Mean</h1>
+    <p class="sub">Interpret Cohen's d, confidence intervals, NNT, and the minimal important difference, then compare trials and conclusions.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "mcq",
+  "title": "Read Cohen's d",
+  "short": "Cohen's d",
+  "tag": "Gap in units of spread",
+  "case": {
+   "title": "Case: a trial of a worry program (invented)",
+   "text": "A student reads a trial of an invented worry program. The Worry Scale runs from 0 to 60 and lower scores are better. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Group<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">n<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Mean change in score<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">SD<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Program<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">70<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">-9.0<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">8<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Comparison<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">70<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">-5.0<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">8<\/td><\/tr><\/tbody><\/table>The between-group difference is 4 points, and the spread of scores (the SD) is about 8 points."
+  },
+  "intro": "<b>Step 1.<\/b> Cohen's d expresses a gap in units of how spread out the scores are.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, How Much Does It Help? Effect Size and Cohen's d",
+  "items": [
+   {
+    "prompt": "What Cohen's d does this trial report, and how does the field’s convention label it?",
+    "options": [
+     {
+      "id": "a",
+      "text": "About 4, a large effect, because the program group scored 4 points better than the comparison group"
+     },
+     {
+      "id": "b",
+      "text": "About 0.5, a medium effect, because the 4-point difference divided by the 8-point spread is one half"
+     },
+     {
+      "id": "c",
+      "text": "About 1.1, a large effect, because the program group’s own 9-point change exceeds one spread of scores"
+     },
+     {
+      "id": "d",
+      "text": "About 0.2, a small effect, because the two groups differ by less than one full spread of scores"
+     }
+    ],
+    "correct": "b",
+    "why": "Cohen's d is the between-group gap divided by the spread of scores, so 4 divided by 8 is 0.5. The field’s shorthand calls 0.5 medium. Dividing the program group’s own change by the spread ignores the comparison group, and the raw point difference has no standard scale.",
+    "bloom": "apply"
+   },
+   {
+    "prompt": "With d near 0.5, which statement does the evidence support?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Many comparison participants still did better than some program participants, because the two curves overlap a good deal"
+     },
+     {
+      "id": "b",
+      "text": "Nearly every program participant improved more than the comparison participants did, because an average effect applies to each person"
+     },
+     {
+      "id": "c",
+      "text": "A medium effect justifies adopting the program in most settings, because it is large enough whatever the cost"
+     },
+     {
+      "id": "d",
+      "text": "About half of the program participants recovered who otherwise would not have, because a medium effect means half of treated people benefit"
+     }
+    ],
+    "correct": "a",
+    "why": "Picture two overlapping bell curves. At a medium effect the treated curve has moved toward the better end, and plenty of comparison participants still did better than plenty of treated ones. An average effect describes the groups, and it says little about whether one person will benefit. Whether an effect is big enough also depends on cost, risk, and what else is available.",
+    "bloom": "analyze"
+   },
+   {
+    "prompt": "Trial A used the Worry Scale (0 to 60) and found a 6-point difference with a spread of 12 points. Trial B used a Sleep Index (0 to 28) and found a 3-point difference with a spread of 4 points. Which statement is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Trial A, because its scale has more points and each point may carry more information"
+     },
+     {
+      "id": "b",
+      "text": "Trial A, because 6 points is more than 3 points and the raw gap is what readers see first"
+     },
+     {
+      "id": "c",
+      "text": "Trial B, with d of 0.75 against 0.5, because dividing each gap by its own spread puts both trials on one common scale"
+     },
+     {
+      "id": "d",
+      "text": "The two cannot be compared, because the questionnaires measure different things on scales of different length"
+     }
+    ],
+    "correct": "c",
+    "why": "Raw differences depend on the instrument. A 3-point gap on a scale where scores spread by 4 points is a bigger shift than a 6-point gap on a scale where they spread by 12. Standardizing is what lets results from different measures be compared.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread “How Much Does It Help? Effect Size and Cohen's d.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Read the interval around the effect",
+  "short": "Intervals",
+  "tag": "Size and certainty",
+  "case": {
+   "title": "Case: how certain is the estimate? (invented)",
+   "text": "A student compares invented trials that report an effect with a 95 percent confidence interval. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Trial<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Comparison<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">n per arm<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">d<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">95% CI<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">P<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Waitlist<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">150<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.45<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.22 to 0.68<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Q<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Waitlist<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">20<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.45<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">-0.18 to 1.08<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">R<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Active treatment<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">60<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.10<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">-0.26 to 0.46<\/td><\/tr><\/tbody><\/table>"
+  },
+  "intro": "<b>Step 2.<\/b> A point estimate says how big the effect looks. The interval says what values the data leave plausible.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, How Much Does It Help? Effect Size and Cohen's d",
+  "items": [
+   {
+    "prompt": "Trials P and Q report the same d. Which statement is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Both trials support the same conclusion with similar confidence, because both found the same d"
+     },
+     {
+      "id": "b",
+      "text": "P’s data exclude no effect while Q’s fit anything from no effect to a large one, because P’s interval is narrower"
+     },
+     {
+      "id": "c",
+      "text": "P’s narrower interval shows that its effect is larger than Q’s, because greater precision raises the estimate"
+     },
+     {
+      "id": "d",
+      "text": "Q’s wider interval shows the program works across more varied participants, because width reflects variety in the sample"
+     }
+    ],
+    "correct": "b",
+    "why": "The two estimates are the same and the certainty around them differs. P’s interval stays above zero. Q’s runs from a slight worsening to a large benefit, so one small trial cannot tell the possibilities apart. Width reflects precision and carries no information about variety among participants or the size of the effect.",
+    "bloom": "analyze"
+   },
+   {
+    "prompt": "The authors of Trial R write, “The program is no better than the active treatment.” Which revision is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Superiority was not shown, because the data fit no difference and a modest benefit over the active treatment"
+     },
+     {
+      "id": "b",
+      "text": "The program is better than the active treatment, because the estimate of d is above zero in the data collected"
+     },
+     {
+      "id": "c",
+      "text": "The trial is uninformative, because a d below 0.2 means that no effect could be measured at all"
+     },
+     {
+      "id": "d",
+      "text": "The statement stands, because an interval that includes zero shows that the two treatments are equal"
+     }
+    ],
+    "correct": "a",
+    "why": "An interval that includes zero means the trial could not rule out no difference. It does not show that there is none, because the same interval includes benefits up to 0.46. The fair summary is that superiority was not shown. Treating a point estimate above zero as a win ignores the interval.",
+    "bloom": "evaluate"
+   },
+   {
+    "prompt": "Which change would narrow the interval in Trial Q the most?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Reporting a 99 percent interval in place of the 95 percent interval, because a higher level means greater certainty"
+     },
+     {
+      "id": "b",
+      "text": "Analyzing only the participants who improved, because their scores vary less than the scores of everyone enrolled"
+     },
+     {
+      "id": "c",
+      "text": "Reporting d to three decimal places, because a more exact number reflects a more exact estimate of the effect"
+     },
+     {
+      "id": "d",
+      "text": "Enrolling many more people, because width is driven mainly by the number of people in the trial"
+     }
+    ],
+    "correct": "d",
+    "why": "More participants shrink uncertainty, which is how pooling many trials in a meta-analysis produces a narrower diamond. A 99 percent interval is wider than a 95 percent one. Analyzing only the improvers biases the estimate, and extra decimals change the display and leave the uncertainty as it was.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread “How Much Does It Help? Effect Size and Cohen's d” and “Reading a Forest Plot.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Number needed to treat",
+  "short": "NNT",
+  "tag": "An effect as a count of people",
+  "case": {
+   "title": "Case: two programs, reported as NNT (invented)",
+   "text": "The number needed to treat (NNT) states an effect as a count of people. It equals 1 divided by the difference in the share of people who benefit, so a 25 percentage-point difference gives an NNT of 4. An NNT of 4 means that for every four patients treated, one benefits who would not have benefited without the treatment. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Program<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Improved meaningfully with program<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Improved with comparison<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Difference<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">NNT<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Cost per person<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">A<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">45%<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">20%<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">25 points<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">4<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">$400<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">B<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">30%<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">25%<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">5 points<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">20<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">$40<\/td><\/tr><\/tbody><\/table>"
+  },
+  "intro": "<b>Step 3.<\/b> NNT is one more way to state magnitude. It depends on how benefit was defined and on what the comparison was.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, How Much Does It Help? Effect Size and Cohen's d",
+  "items": [
+   {
+    "prompt": "What does the NNT of 4 mean for Program A?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Four people must be treated before any one of them improves, because the effect builds up across the group"
+     },
+     {
+      "id": "b",
+      "text": "One in four people treated improves and the other three get no benefit, because the NNT counts how many improve"
+     },
+     {
+      "id": "c",
+      "text": "For every four treated, about one improves who would not have otherwise, because the added share is 25 points"
+     },
+     {
+      "id": "d",
+      "text": "Program A fails in one of every four people treated and works in the other three, because NNT is a failure count"
+     }
+    ],
+    "correct": "c",
+    "why": "The count is about the extra benefit beyond what the comparison group got. Twenty percent improved anyway, so the program’s added share is 25 points, and 1 divided by 0.25 is 4. It does not say that the other three had no benefit, since some of them improved without the program too.",
+    "bloom": "apply"
+   },
+   {
+    "prompt": "A manager compares the programs. Which statement is best supported by the table?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Program B is better, because it costs $40 per person against $400 and so reaches more people for the same money"
+     },
+     {
+      "id": "b",
+      "text": "A helps more people and B costs less per added improvement, because each wins on a different criterion in the table"
+     },
+     {
+      "id": "c",
+      "text": "Program A is better, because a lower NNT usually means better value for the money spent on any program"
+     },
+     {
+      "id": "d",
+      "text": "The programs cannot be compared, because NNT is a statistic that applies mainly to medication trials and not to therapy"
+     }
+    ],
+    "correct": "b",
+    "why": "The cost per additional improved person is the NNT times the cost per person. For A it is 4 times $400, which is $1,600. For B it is 20 times $40, which is $800. A helps more people per hundred and B is cheaper for each additional improvement, so neither summary settles the decision. A real decision also needs the intervals around the estimates, what else is available, and how much an improvement matters to the people involved.",
+    "bloom": "evaluate"
+   },
+   {
+    "prompt": "Program A’s NNT of 4 came from a waitlist comparison. In a second trial against treatment as usual, 45 percent improved with the program and 33 percent with usual care. What does the pattern show?",
+    "options": [
+     {
+      "id": "a",
+      "text": "NNT depends on the comparison, because the same program has an NNT of 4 against waiting and about 8 against usual care"
+     },
+     {
+      "id": "b",
+      "text": "NNT is an unreliable statistic, because it changes from trial to trial and should not be used to summarize an effect"
+     },
+     {
+      "id": "c",
+      "text": "The program’s own improvement rate fell in the second trial, because its NNT rose from 4 to about 8"
+     },
+     {
+      "id": "d",
+      "text": "The second trial probably had flaws, because the results of a sound program should match across comparisons"
+     }
+    ],
+    "correct": "a",
+    "why": "A 12-point difference gives an NNT of about 8. The program’s own improvement rate is 45 percent in both trials. The comparison group improved more under usual care (33 percent) than under waiting (20 percent), which shrinks the difference. Effects tend to be larger against waitlist than against a credible alternative, which is the compared-to-what question again.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread “How Much Does It Help? Effect Size and Cohen's d” and “The Fair Test: Why We Need Comparison and Control.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Significant versus clinically important",
+  "short": "Significance",
+  "tag": "Beyond the p-value",
+  "case": {
+   "title": "Case: two depression trials (invented)",
+   "text": "Both trials report change on the Low Mood Index, an invented scale that runs from 0 to 27 with lower scores better. Negative differences favor the program. The smallest change patients notice on this scale, the minimal important difference, is set by asking patients about their own improvement and not by statistics. Suppose it is 5 points on this scale (an invented working value). All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Trial<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Total n<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Difference (program minus comparison)<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">95% CI<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">p<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">L<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">2,400<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">-1.4<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">-1.9 to -0.9<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">below .001<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">S<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">40<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">-5.5<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">-11.5 to +0.5<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">.07<\/td><\/tr><\/tbody><\/table>"
+  },
+  "intro": "<b>Step 4.<\/b> A significant result addresses chance. It does not address size, and size does not address whether a person would notice.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, Real vs. Meaningful: Statistical and Clinical Significance",
+  "items": [
+   {
+    "prompt": "Which conclusion about Trial L is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The effect is clinically important, because a result that is significant at a strict threshold matters to patients"
+     },
+     {
+      "id": "b",
+      "text": "The effect is large, because a p-value below .001 reflects a big difference between the two groups"
+     },
+     {
+      "id": "c",
+      "text": "The result should be disregarded, because a sample this large can make even meaningless differences significant"
+     },
+     {
+      "id": "d",
+      "text": "The benefit is probably small for most patients, because the interval lies below what patients notice"
+     }
+    ],
+    "correct": "d",
+    "why": "With 2,400 participants a small difference can clear the significance threshold. The p-value says chance is an unlikely explanation and says nothing about size. The interval tops out at 1.9 points, below the 5-point working value. A group average below that value is probably small for most patients, though some individuals may improve by more. The result is real and small, and a large sample is not a reason to disregard it.",
+    "bloom": "evaluate"
+   },
+   {
+    "prompt": "Which conclusion about Trial S is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The program may be harmful, because the interval reaches above zero and so includes a worsening in some people"
+     },
+     {
+      "id": "b",
+      "text": "The trial is inconclusive, because the interval spans a clear benefit and a slight worsening"
+     },
+     {
+      "id": "c",
+      "text": "The program does nothing, because the p-value is above .05 and the data show no clear effect of any kind"
+     },
+     {
+      "id": "d",
+      "text": "The program works, because the 5.5-point difference exceeds the working value for a noticeable change"
+     }
+    ],
+    "correct": "b",
+    "why": "With 40 participants the estimate is imprecise. The data are compatible with no benefit and with a benefit well past the working value for a noticeable change. A p of .07 shows the trial could not rule out chance and does not show that nothing is happening. The same imprecision makes the 5.5-point figure a weak basis for a claim.",
+    "bloom": "evaluate"
+   },
+   {
+    "prompt": "Which additional report would best show whether Trial L’s participants improved in a way they would notice?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A smaller p-value from a more sensitive test, because it would show more clearly that the difference is real"
+     },
+     {
+      "id": "b",
+      "text": "The number of items each participant completed, because it would show how complete the information was"
+     },
+     {
+      "id": "c",
+      "text": "The Cohen's d label for the same difference, because it would show how big the effect is"
+     },
+     {
+      "id": "d",
+      "text": "The share of each arm whose scores fell by at least 5 points, because a group average can hide how many individuals changed"
+     }
+    ],
+    "correct": "d",
+    "why": "A group average can hide how many individuals changed. Counting people who crossed a meaningful threshold speaks to individuals, and an interval shows how certain the count is. A smaller p-value addresses chance, a d label restates the group average, and item completion describes the data quality.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread “Real vs. Meaningful: Statistical and Clinical Significance” and “A Different Criterion: The Smallest Change a Person Would Notice.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Compare two trials",
+  "short": "Compare trials",
+  "tag": "Which supports a stronger conclusion",
+  "case": {
+   "title": "Case: a small trial and a large one (invented)",
+   "text": "Two invented trials test the same program against the same comparison. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Trial<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Total n<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">d<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">95% CI<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Plan registered in advance<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Who was analyzed<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">U<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">24<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.90<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.06 to 1.74<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">No<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Completers only (19 of 24)<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">V<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">480<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.35<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.17 to 0.53<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Yes<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Everyone randomized<\/td><\/tr><\/tbody><\/table>"
+  },
+  "intro": "<b>Step 5.<\/b> The larger point estimate belongs to the smaller trial. Decide what each trial supports.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, How Many People Is Enough? Sample Size and Power",
+  "items": [
+   {
+    "prompt": "Which trial supports the stronger conclusion about the program’s effect?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Trial U, because its larger d shows a stronger effect than Trial V’s, and the effect is what a trial is meant to find"
+     },
+     {
+      "id": "b",
+      "text": "Neither, because no single trial can support a conclusion about a medium effect however well it was run"
+     },
+     {
+      "id": "c",
+      "text": "Trial U, because its interval reaches higher than Trial V’s and so allows a larger benefit to patients"
+     },
+     {
+      "id": "d",
+      "text": "Trial V, because its narrow interval is above zero, its plan was registered, and everyone randomized was analyzed"
+     }
+    ],
+    "correct": "d",
+    "why": "Trial U’s interval is wide, so its data are compatible with an effect near zero and with a large one. Trial V’s interval excludes zero with room to spare, and it added a registered plan and an analysis of all randomized participants. A larger point estimate from a small trial is a weaker basis, and it does not strengthen the conclusion.",
+    "bloom": "evaluate"
+   },
+   {
+    "prompt": "If Trial U were repeated with 400 participants, what is the most likely result?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The same d near 0.90, because d is a stable property of the program that does not depend on the sample"
+     },
+     {
+      "id": "b",
+      "text": "A larger d, because adding participants strengthens the effect that the program has on each of them"
+     },
+     {
+      "id": "c",
+      "text": "An estimate nearer Trial V’s, because small studies that clear significance tend to overstate effects"
+     },
+     {
+      "id": "d",
+      "text": "No effect, because a significant result from a small study is usually a false positive that does not replicate"
+     }
+    ],
+    "correct": "c",
+    "why": "In a low-powered study the results that clear the threshold are often the unusually large ones, so a larger, calmer follow-up tends to find a smaller effect. A significant small study is not always a false positive, and more participants sharpen the estimate without enlarging the true effect.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread “How Many People Is Enough? Sample Size and Power.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Precise and small, or imprecise and large",
+  "short": "Precision",
+  "tag": "What each trial can claim",
+  "case": {
+   "title": "Case: another pair of trials (invented)",
+   "text": "Two further invented trials of a different program. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Trial<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Total n<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">d<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">95% CI<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">W<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">2,000<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.08<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">-0.01 to 0.17<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">X<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">60<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.60<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">0.08 to 1.12<\/td><\/tr><\/tbody><\/table>"
+  },
+  "intro": "<b>Step 6.<\/b> Precision and size are separate properties. A trial can say a great deal about a small effect or little about a large one.",
+  "doThis": "Choose the best-supported answer.",
+  "src": "Module 11, How Much Does It Help? Effect Size and Cohen's d",
+  "items": [
+   {
+    "prompt": "Which statement about the two trials is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Trial W supports a strong conclusion that the effect is at most small, because its interval is narrow and lies close to zero"
+     },
+     {
+      "id": "b",
+      "text": "Trial X is more convincing than Trial W, because 0.60 is the larger effect and its interval excludes zero"
+     },
+     {
+      "id": "c",
+      "text": "Both support the same conclusion, because both intervals come close to zero at one end of the range"
+     },
+     {
+      "id": "d",
+      "text": "Trial W supports a strong conclusion that the program works, because its sample is large and its interval is narrow"
+     }
+    ],
+    "correct": "a",
+    "why": "Trial W’s narrow interval rules out anything beyond a small effect. Trial X’s interval spans from barely above zero to large, so it supports the existence of some effect and little about its size. A large sample gives a precise answer, and here the precise answer is that the effect is small or absent.",
+    "bloom": "evaluate"
+   }
+  ],
+  "revisit": "Reread “How Much Does It Help? Effect Size and Cohen's d.”"
+ },
+ {
+  "type": "mcq",
+  "title": "One trial, two conclusions",
+  "short": "Two conclusions",
+  "tag": "The flaw depends on the claim",
+  "case": {
+   "title": "Case: Ease Hours (invented)",
+   "text": "A team randomized 200 adults to Ease Hours, an invented ten-week group program for anxiety, or to a waitlist. Participants rated their own anxiety on a 0 to 60 scale (lower is better) and knew their group. No outside rater was used and no usual-care arm was included. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Arm<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Randomized<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Provided week-10 data<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Mean drop in self-rated anxiety<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Ease Hours<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">100<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">90<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">11.0 points<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Waitlist<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">100<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">88<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">5.0 points<\/td><\/tr><\/tbody><\/table>Difference 6.0 points, 95% CI 3.4 to 8.6. The authors draw two conclusions. <b>Conclusion 1.<\/b> “Ease Hours beats waiting.” <b>Conclusion 2.<\/b> “Ease Hours is as good as the care clinics usually give.”"
+  },
+  "intro": "<b>Step 7.<\/b> One trial can support one conclusion better than another. The most serious flaw is the one that bears most directly on the claim being judged.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, The Comparator",
+  "items": [
+   {
+    "prompt": "Which limit bears most directly on Conclusion 1, that Ease Hours beats waiting?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Participants rated their own anxiety and knew their group, because expectations may have inflated the gap"
+     },
+     {
+      "id": "b",
+      "text": "The comparison was a waitlist, because a waitlist shows only a weak contrast and not a convincing one in practice"
+     },
+     {
+      "id": "c",
+      "text": "About 10 and 12 percent of the arms left, because the arms that remain may no longer be comparable at the end"
+     },
+     {
+      "id": "d",
+      "text": "The interval from 3.4 to 8.6 is wide, because the size of the gap may be much smaller than the 6 points reported"
+     }
+    ],
+    "correct": "a",
+    "why": "A waitlist is the right comparator for a claim about waiting, so it is a limit on Conclusion 2 and not on this one. Losing 10 and 12 participants is low and balanced, and the interval excludes zero by a margin. The weakness that bears on Conclusion 1 is that self-rated scores from people who knew their group are open to expectation, which can inflate a waitlist contrast.",
+    "bloom": "analyze",
+    "src": "Module 11, The Comparator"
+   },
+   {
+    "prompt": "Which limit bears most directly on Conclusion 2, that Ease Hours is as good as the care clinics usually give?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Participants rated their own anxiety and knew their group, because expectations may have inflated the gap"
+     },
+     {
+      "id": "b",
+      "text": "The interval from 3.4 to 8.6 is wide, because the trial may be too imprecise to show that two programs match"
+     },
+     {
+      "id": "c",
+      "text": "No usual-care arm was included, because the trial cannot say how Ease Hours compares with that care"
+     },
+     {
+      "id": "d",
+      "text": "About 10 and 12 percent of the arms left, because the arms that remain may no longer be comparable"
+     }
+    ],
+    "correct": "c",
+    "why": "Conclusion 2 is about usual care, and the trial never tested usual care. Self-rating inflates the waitlist contrast and it does not create a usual-care comparison. Balanced attrition of about 10 percent is not the main issue. A wide interval also limits a claim of equivalence, and it still concerns a contrast the trial did make. The missing arm decides this conclusion.",
+    "bloom": "evaluate",
+    "src": "Module 11, The Comparator"
+   }
+  ],
+  "revisit": "Reread “The Comparator.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you worked through",
+ "takeaway": "<b>Carry forward.<\/b> Cohen's d states a gap in units of spread, and the interval around it states how certain the estimate is. NNT states the same benefit as a count of people and depends on the comparison. A significant result addresses chance, and the minimal important difference addresses whether a person would notice. A small, imprecise trial with a large estimate supports less than a large, precise one with a modest estimate.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every trial and number in it is invented, including the working value for the smallest change patients notice."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

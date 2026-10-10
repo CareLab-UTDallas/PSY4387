@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evidence Appraisal: Treatment Claims and Their Trials</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --study-bg:#f2f4f8; --study-line:#c9d4e6; --study-ink:#2f4a72;
+    --tool-bg:#f3eef7; --tool-ink:#6d4a86; --tool-line:#d8c7e6;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .stagetabs{display:flex;gap:0;margin:16px 0 6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .stagetabs button{flex:1 1 0;border:none;background:#fff;padding:11px 10px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.25;}
+  .stagetabs button+button{border-left:1px solid var(--line);}
+  .stagetabs button[aria-selected="true"]{background:var(--accent);color:#fff;}
+  .stagetabs button:disabled{color:#b7b2a9;cursor:not-allowed;}
+  .stagetabs button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .stagetabs .sn{display:block;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+  .stagetabs .stt{display:block;font-weight:600;font-size:13px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:12px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .intro{background:var(--study-bg);border:1px solid var(--study-line);color:var(--study-ink);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;margin-bottom:16px;}
+  .intro b{font-weight:700;}
+
+  /* toolkit cards */
+  .toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  @media(max-width:620px){ .toolgrid{grid-template-columns:1fr;} }
+  .tool{border:1px solid var(--tool-line);background:var(--tool-bg);border-radius:12px;padding:13px 15px;}
+  .tool h3{margin:0 0 4px;font-size:14px;color:var(--tool-ink);}
+  .tool p{margin:0;font-size:13px;line-height:1.55;}
+  .tool .ask{margin-top:7px;font-size:12.5px;font-style:italic;color:var(--muted);}
+
+  .study{background:var(--study-bg);border:1px solid var(--study-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;}
+  .study .slabel{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--study-ink);background:#fff;border-radius:7px;padding:3px 9px;margin-bottom:8px;}
+  .study .sbody{font-size:14px;line-height:1.6;}
+  .study .sbody b{font-weight:700;}
+  .study .datarow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .study .chip{font-size:12px;background:#fff;border:1px solid var(--study-line);border-radius:7px;padding:4px 10px;color:var(--study-ink);}
+
+  .difficulty{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:6px;padding:3px 9px;display:inline-block;margin-bottom:10px;}
+  .difficulty.mod{background:var(--amber-bg);color:var(--amber-ink);}
+  .difficulty.hard{background:var(--no-bg);color:var(--no-ink);}
+
+  .qprompt{font-size:15px;line-height:1.5;margin:14px 0 12px;font-weight:600;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt .ol{font-weight:700;margin-right:7px;color:var(--muted);}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fnote{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+  .fnote .tool-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:#fff;border-radius:6px;padding:2px 8px;margin-bottom:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 6px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.62;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Evidence Appraisal: Four Treatment Claims</h1>
+    <p class="sub">Judging whether a trial supports a claim takes different skills from knowing the research terms. The seven questions below apply to four constructed claims about treatments. Each claim has several real limits, and the task is to find the one that bears most directly on what the claim says. The studies and numbers are invented for practice. If anything in these cases affects you personally, you can call or text 988 at any hour, and in an emergency you can call 911.</p>
+  </div>
+
+  <div class="stagetabs" id="tabs" role="tablist"></div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+</div>
+
+<script>
+// Appraisal toolkit and constructed studies (not real publications; nothing here should be cited as a finding).
+var TOOLS = [
+ {
+  "name": "Compared to what?",
+  "body": "A result can be interpreted only against a comparison. A waitlist shows whether a treatment beats waiting. An active comparison shows whether it beats a credible alternative. A claim about existing care needs a comparator that represents existing care.",
+  "ask": "Does the comparison group match the claim the headline makes?"
+ },
+ {
+  "name": "Who was counted?",
+  "body": "People leave trials, and the pattern of leaving matters as much as the amount. A completers analysis counts only people who finished and can inflate an effect. An intention-to-treat analysis keeps everyone in the group they were assigned to.",
+  "ask": "How many did each arm lose, and does the main analysis include everyone randomized?"
+ },
+ {
+  "name": "The plan before the data",
+  "body": "A registered plan names the primary outcome before data are collected. Comparing the registration with the report can reveal a switched outcome or selective reporting, which let a chance result look like the plan all along.",
+  "ask": "Does the outcome the paper highlights match the outcome the trial registered?"
+ },
+ {
+  "name": "Statistical versus clinical significance",
+  "body": "A significant difference says the gap probably is not zero. It does not say the gap is large enough to matter. With enough participants a tiny difference can be significant, and a threshold such as the smallest change patients notice puts the size in human terms.",
+  "ask": "How large is the difference, with its interval, compared with what patients would notice?"
+ },
+ {
+  "name": "Who ran it, paid for it, and rated it",
+  "body": "Developers, funders, and unblinded raters can shape results without anyone acting dishonestly. These facts do not show a result is wrong. They tell a reader how much independent confirmation to want.",
+  "ask": "Who had a stake, and did raters know which group each person was in?"
+ },
+ {
+  "name": "Would it travel?",
+  "body": "Random assignment protects the comparison inside a study. Whether the result holds for other people, settings, and time spans depends on who was enrolled, where, and for how long they were followed.",
+  "ask": "Do the participants, setting, and follow-up resemble the situation I care about?"
+ },
+ {
+  "name": "Match the flaw to the claim",
+  "body": "Every trial has limits. The most serious flaw is the one that bears most directly on the specific conclusion drawn. A flaw that is easy to see can matter less than one that undermines the claim the headline makes.",
+  "ask": "Which limit, if fixed, would most change what the headline is allowed to say?"
+ }
+];
+
+var ITEMS = [
+ {
+  "bloom": "analyze",
+  "diff": "mod",
+  "study": {
+   "label": "Claim A",
+   "body": "A press summary of a constructed trial says, “Therapy P cut panic symptoms nearly twice as much as an established alternative.” The trial compared Therapy P with cognitive therapy, an established treatment, in adults with panic symptoms over 12 weeks. The report analyzes the people who finished the program.",
+   "data": [
+    "Type: randomized trial, concealed assignment, blinded raters (constructed)",
+    "Randomized: Therapy P 100, cognitive therapy 100",
+    "Completed week 12: Therapy P 54, cognitive therapy 89",
+    "Main analysis: completers only",
+    "Average symptom drop among completers: Therapy P 15 points, cognitive therapy 8 points",
+    "Recruitment: referred by primary care physicians",
+    "Follow-up after week 12: none",
+    "Run by the team that developed Therapy P. Funding: public grant"
+   ]
+  },
+  "prompt": "Which is the most serious flaw for the claim the summary makes?",
+  "answer": "a",
+  "tool": "Who was counted?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Almost half of Therapy P’s arm left and few left the other, so counting only completers can inflate the difference"
+   },
+   {
+    "id": "b",
+    "text": "The team that developed Therapy P ran the trial, so allegiance may have inflated the difference between the two arms"
+   },
+   {
+    "id": "c",
+    "text": "There was no follow-up after week 12, so nobody knows whether the larger drop lasts once treatment has ended"
+   },
+   {
+    "id": "d",
+    "text": "Participants were referred by primary care physicians, so the results may not hold for people who seek care elsewhere"
+   }
+  ],
+  "why": "Therapy P lost 46 of its 100 people and cognitive therapy lost 11 of 100. When one arm loses four times as many people and the analysis counts only those who finished, the people left in that arm may be the ones who were doing well, so the 15 versus 8 comparison can be inflated. An intention-to-treat analysis of everyone randomized is the check to ask for. Referral from primary care, the missing follow-up, and developer involvement are real limits. Blinded raters reduce the last of these, and none of the three bears on the headline as directly as the loss of nearly half an arm."
+ },
+ {
+  "bloom": "analyze",
+  "diff": "mod",
+  "study": {
+   "label": "Claim B",
+   "body": "A health newsletter summarizes a constructed trial of a ten-week group program for low mood and writes, “Group Program G is as good as the antidepressant care that clinics already provide.” The trial compared the program with a waitlist.",
+   "data": [
+    "Type: randomized trial (constructed)",
+    "Randomized: group program 30, waitlist 30. Analyzed: 29 and 28",
+    "Waitlist offered the program after week 10",
+    "Raters blinded to group at week 10",
+    "Difference at week 10: d = 0.80, 95% CI 0.28 to 1.32",
+    "Antidepressant or other usual care: not part of the trial",
+    "Enrolled: adults who agreed to join a group"
+   ]
+  },
+  "prompt": "Which is the most serious flaw for the claim the newsletter makes?",
+  "answer": "d",
+  "tool": "Compared to what?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Only adults who agreed to join a group were enrolled, so the result may not apply to people who prefer one-to-one care"
+   },
+   {
+    "id": "b",
+    "text": "The interval runs from 0.28 to 1.32, so the size of the effect is estimated imprecisely and may be much smaller"
+   },
+   {
+    "id": "c",
+    "text": "Outcomes were measured at week 10 only, so how long any benefit lasts after the program ends is unknown"
+   },
+   {
+    "id": "d",
+    "text": "The comparison was a waitlist, so the trial can show the program beats waiting and cannot show it matches usual care"
+   }
+  ],
+  "why": "The newsletter claims the program is as good as existing antidepressant care. The trial never tested the program against that care. It compared the program with waiting, and effects against waitlist or no-treatment comparisons tend to be larger than effects against another credible treatment. The wide interval, the single time point, and the self-selected group are real limits. Each one concerns how well the trial answers the question it asked, and the comparator decides whether it asked the question the newsletter claims it answered."
+ },
+ {
+  "bloom": "evaluate",
+  "diff": "hard",
+  "study": {
+   "label": "Claim C",
+   "body": "A clinic newsletter reports a constructed trial of a ten-session therapy and states, “The therapy significantly improved sleep, the main outcome of the trial (p = .01).” A reader finds the trial’s public registration, filed before enrollment began, and places it beside the published paper.",
+   "data": [
+    "Type: randomized trial against a credible active comparison (constructed)",
+    "Randomized: 90 per arm. Analyzed: 88 and 87, intention-to-treat",
+    "Registered primary outcome: depression total at week 12",
+    "Registered secondary outcomes: sleep quality, work days missed",
+    "Paper’s stated primary outcome: sleep quality at week 12",
+    "Depression total at week 12: difference 1.2 points, p = .31 (supplementary table)",
+    "Sleep quality at week 12: difference 4.1 points, p = .01",
+    "Sleep quality is a self-rated questionnaire. Funding: public grant"
+   ]
+  },
+  "prompt": "Which is the most serious flaw for the claim the newsletter makes?",
+  "answer": "b",
+  "tool": "The plan before the data",
+  "options": [
+   {
+    "id": "a",
+    "text": "Sleep quality is self-rated, so participants’ expectations could have shaped the scores without anyone noticing"
+   },
+   {
+    "id": "b",
+    "text": "The paper’s primary outcome differs from the registered one, so the outcome with no clear difference was set aside"
+   },
+   {
+    "id": "c",
+    "text": "A single trial has not yet been independently replicated, so the finding should be treated as provisional by readers"
+   },
+   {
+    "id": "d",
+    "text": "A trial of 90 people per arm is small, so the 4.1-point difference may well overstate the true effect of the therapy"
+   }
+  ],
+  "why": "The registration names depression at week 12 as primary, and that outcome showed a difference of 1.2 points with p = .31. The paper presents sleep, a registered secondary outcome, as the main result, and sleep is the one outcome that reached p = .01. Switching the primary outcome after results are known lets a chance finding look like the plan all along, and the claim in the headline depends on it. Self-rated sleep, a modest sample, and the absence of replication are real limits that apply to many single trials, and none of them undermines the headline as directly as the switch."
+ },
+ {
+  "bloom": "evaluate",
+  "diff": "hard",
+  "study": {
+   "label": "Claim D",
+   "body": "A company press release about a constructed trial of a mood-tracking app says, “Our app significantly improves depression, a breakthrough for the millions of people living with low mood.” The trial compared the app with usual care.",
+   "data": [
+    "Type: randomized trial, registered primary outcome matches the paper (constructed)",
+    "Randomized: 1,200 per arm. Completed week 12: 1,068 and 1,080. Analysis: intention-to-treat",
+    "Depression scale (invented): 0 to 60, lower is better",
+    "Average drop: app 9.1 points, usual care 7.7 points",
+    "Difference: 1.4 points, 95% CI 0.6 to 2.2, p = .001",
+    "Smallest change patients report noticing (invented): 6 points",
+    "Raters blinded to group. Funding: the app’s maker"
+   ]
+  },
+  "prompt": "Which is the most serious flaw for the claim the press release makes?",
+  "answer": "c",
+  "tool": "Statistical versus clinical significance",
+  "options": [
+   {
+    "id": "a",
+    "text": "About one in ten participants left each arm, which could bias the comparison even with an intention-to-treat analysis"
+   },
+   {
+    "id": "b",
+    "text": "The app’s maker paid for the trial, so allegiance could have inflated the difference even though raters were blinded"
+   },
+   {
+    "id": "c",
+    "text": "The 1.4-point difference is significant and falls far below the 6 points patients notice, so the benefit is probably small"
+   },
+   {
+    "id": "d",
+    "text": "The app was compared with usual care only, so its advantage over other mood-tracking products remains unknown"
+   }
+  ],
+  "why": "The difference of 1.4 points is the app’s 9.1 minus usual care’s 7.7. With 1,200 people per arm, even a small difference clears the significance threshold (p = .001). The whole interval, 0.6 to 2.2, falls well short of the 6 points patients report noticing, so the average benefit is probably small for most patients, and “breakthrough” overreaches. Balanced attrition of about 10 percent in each arm, the funder, and the missing comparison with other products are real limits, and the size of the effect bears most directly on the claim."
+ }
+];
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var stage="toolkit", idx=0, answers=[];
+
+function init(){ answers=ITEMS.map(function(){return null;}); stage="toolkit"; idx=0; render(); }
+
+function renderTabs(){
+  var host=document.getElementById("tabs"); host.innerHTML="";
+  [["toolkit","Stage 1","The appraisal toolkit"],["appraise","Stage 2","Appraise the studies"]].forEach(function(t){
+    var b=el("button"); b.setAttribute("role","tab"); b.setAttribute("aria-selected",String(stage===t[0]));
+    var locked = t[0]==="appraise" && !toolkitSeen;
+    b.disabled=locked;
+    b.innerHTML='<span class="sn">'+esc(t[1])+'</span><span class="stt">'+esc(t[2])+'</span>';
+    if(!locked) b.addEventListener("click", function(){ stage=t[0]; render(); });
+    host.appendChild(b);
+  });
+}
+var toolkitSeen=false;
+
+function renderProgress(){
+  if(stage==="toolkit"){ document.getElementById("pbarfill").style.width="0%"; document.getElementById("pcount").textContent="Toolkit"; }
+  else { var d=answers.filter(function(x){return x!==null;}).length; document.getElementById("pbarfill").style.width=(d/ITEMS.length*100)+"%"; document.getElementById("pcount").textContent="Study "+Math.min(idx+1,ITEMS.length)+" of "+ITEMS.length; }
+}
+
+function render(){ renderTabs(); renderProgress(); if(stage==="toolkit") renderToolkit(); else renderAppraise(); }
+
+function renderToolkit(){
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("div","intro","<b>Seven tools for judging a claim.</b> Each names a question a careful reader asks of any study. You will use these by name in the next stage, so read the question each one poses. The point is not to distrust all research, it is to calibrate how much a given study can actually support."));
+  var grid=el("div","toolgrid");
+  TOOLS.forEach(function(t){
+    var c=el("div","tool");
+    c.appendChild(el("h3",null,esc(t.name)));
+    c.appendChild(el("p",null,esc(t.body)));
+    c.appendChild(el("div","ask","Ask: "+esc(t.ask)));
+    grid.appendChild(c);
+  });
+  p.appendChild(grid);
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var b=el("button","btn","Start appraising \u2192");
+  b.addEventListener("click", function(){ toolkitSeen=true; stage="appraise"; idx=0; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  foot.appendChild(b); p.appendChild(foot);
+}
+
+function renderAppraise(){
+  var it=ITEMS[idx], chosen=answers[idx];
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("span","difficulty "+(it.diff==="hard"?"hard":"mod"), it.diff==="hard"?"Harder":"Moderate"));
+  var st=el("div","study");
+  st.appendChild(el("span","slabel", it.study.label));
+  st.appendChild(el("div","sbody", it.study.body));
+  var dr=el("div","datarow"); it.study.data.forEach(function(d){ dr.appendChild(el("span","chip", esc(d))); }); st.appendChild(dr);
+  p.appendChild(st);
+  p.appendChild(el("div","qprompt", esc(it.prompt)));
+  var opts=el("div","opts");
+  it.options.forEach(function(o){
+    var b=el("button","opt"); b.type="button";
+    b.innerHTML='<span class="ol">'+esc(o.id.toUpperCase())+'</span>'+esc(o.text);
+    if(chosen!==null){
+      b.disabled=true;
+      if(o.id===chosen) b.classList.add(o.id===it.answer?"correct-pick":"wrong-pick");
+      else if(o.id===it.answer) b.classList.add("show-correct");
+      else b.classList.add("dim");
+    } else { b.addEventListener("click", function(){ answers[idx]=o.id; render(); }); }
+    opts.appendChild(b);
+  });
+  p.appendChild(opts);
+  if(chosen!==null){
+    var right=chosen===it.answer;
+    var note=el("div","fnote "+(right?"ok":"no"));
+    note.innerHTML='<span class="tool-tag">'+esc(it.tool)+'</span><br>'+(right?"<b>Sound appraisal.</b> ":"<b>Not the strongest reading.</b> ")+esc(it.why);
+    p.appendChild(note);
+  }
+  var foot=el("div","foot");
+  var back=el("button","btn secondary","\u2190 Back"); back.disabled=idx===0;
+  back.addEventListener("click", function(){ if(idx>0){idx--;render();} }); foot.appendChild(back);
+  var next=el("button","btn"); var last=idx===ITEMS.length-1; next.disabled=chosen===null;
+  next.innerHTML=last?"See results":"Next study \u2192";
+  next.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+  foot.appendChild(next); p.appendChild(foot);
+}
+
+function finish(){
+  var correct=0; ITEMS.forEach(function(it,i){ if(answers[i]===it.answer) correct++; });
+  var p=document.getElementById("cardPanel"); p.innerHTML=""; p.className="card results";
+  p.appendChild(el("h2",null,"Appraisal complete"));
+  p.appendChild(el("p","score","You chose the best-supported reading on <b>"+correct+" of "+ITEMS.length+"</b> studies."));
+  p.appendChild(el("p",null,"In each hard case the conclusion claimed more than the design could support, because the studies lacked a comparison, a mechanism measure, or a way to establish order in time."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Review the toolkit"); again.addEventListener("click", function(){ stage="toolkit"; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  var retry=el("button","btn","Try the studies again"); retry.addEventListener("click", function(){ init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); act.appendChild(retry); p.appendChild(act);
+  p.appendChild(el("div","selfnote","This activity runs entirely on your own screen. Nothing you select is saved, sent, or seen by anyone. The studies here are constructed for practice."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

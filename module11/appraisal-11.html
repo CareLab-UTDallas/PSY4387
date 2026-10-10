@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trial Appraisal Workshop</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Trial Appraisal Workshop</h1>
+    <p class="sub">Read three constructed trials, find the most serious threat in each, and judge what the data support.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "mcq",
+  "title": "Trial 1: Evening Wind-Down",
+  "short": "Trial 1",
+  "tag": "Read the table, find the flaw",
+  "case": {
+   "title": "Case: Trial 1, Evening Wind-Down (invented)",
+   "text": "A research team randomized 200 adults with insomnia to Evening Wind-Down, a six-week app program, or to a sleep-hygiene leaflet, 100 per arm. The trial was funded by a national health agency, and the authors had no role in developing the program. Allocation was concealed, interviewers who rated sleep did not know the group, and the primary outcome was registered before enrollment. The plan set the size in advance to detect a 3-point difference. The outcome is improvement on an insomnia severity score (0 to 28, higher is worse) at week 8. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Arm<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Randomized<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Completed week-8 assessment<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Mean improvement among completers<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Program<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">100<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">91<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">5.0 points<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Leaflet<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">100<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">55<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">4.6 points<\/td><\/tr><\/tbody><\/table>The analysis reported was completers only, and reasons for leaving were not reported. <b>Authors’ conclusion.<\/b> “Evening Wind-Down is no better than a sleep-hygiene leaflet, so clinics need not offer it.”"
+  },
+  "intro": "<b>Trial 1 of 3.<\/b> Several checks apply to every trial. The task is to find the one that bears most directly on this conclusion. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, Who Was Counted: Attrition and Intention-to-Treat",
+  "items": [
+   {
+    "prompt": "What is the single most serious threat to the authors’ conclusion?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The arms compared are no longer the arms randomized, because 45 percent of the leaflet arm and 9 percent of the program arm left"
+     },
+     {
+      "id": "b",
+      "text": "The leaflet is a minimal comparator, because the trial may show only that the program beats a modest alternative"
+     },
+     {
+      "id": "c",
+      "text": "The trial was small, because 100 people per arm may be too few to rule out a modest benefit of the program"
+     },
+     {
+      "id": "d",
+      "text": "Follow-up ended at week 8, because the trial may not show whether any gains lasted beyond that point"
+     }
+    ],
+    "correct": "a",
+    "why": "The conclusion says the program did no better than the leaflet, and that rests on a comparison of the people who stayed in each arm. Finishing was not randomized. People who leave a leaflet arm often leave because it is not helping them, and people who leave for other reasons may differ again, so the direction of any bias is unknown, and nearly half of one arm is missing. A minimal comparator would, if anything, make the program look better, so it does not explain a result of no difference. The size was set in advance for the effect the team cared about, and the short follow-up concerns durability, which the conclusion does not address.",
+    "bloom": "analyze",
+    "src": "Module 11, Who Was Counted: Attrition and Intention-to-Treat"
+   },
+   {
+    "prompt": "What do the data support about the program?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The data support no conclusion at all, because this much dropout undoes the value of random assignment"
+     },
+     {
+      "id": "b",
+      "text": "Completers improved about equally, and the full-sample gap could be larger, because many leaflet participants left"
+     },
+     {
+      "id": "c",
+      "text": "The conclusion is supported, because random assignment and blinded raters protect the whole comparison"
+     },
+     {
+      "id": "d",
+      "text": "The program does nothing for people who finish it, because completers in the two arms improved by similar amounts on this scale"
+     }
+    ],
+    "correct": "b",
+    "why": "Randomization and blinded raters protect the start of the trial and the scoring. They cannot protect a comparison between completers when completion differs so much by arm, and finishing was not randomized. The data show that completers improved about equally and leave the full-sample comparison open, so the right wording is more modest than the authors’ sentence. For illustration, if the 9 program leavers had improved by 3 points on average and the 45 leaflet leavers by 1 point, the means for everyone randomized would be about 4.8 and 3.0, a gap of about 1.8 points in place of 0.4. Dropout weakens the comparison and does not remove all information from it.",
+    "bloom": "evaluate",
+    "src": "Module 11, Who Was Counted: Attrition and Intention-to-Treat"
+   },
+   {
+    "prompt": "Which additional evidence would most change what you conclude?",
+    "options": [
+     {
+      "id": "a",
+      "text": "An analysis of all 200 as randomized, because it shows the comparison once the people who left are counted"
+     },
+     {
+      "id": "b",
+      "text": "A 6-month follow-up of the participants who completed the program, because it would show whether gains lasted"
+     },
+     {
+      "id": "c",
+      "text": "A repeat trial of the same size with the same completers-only analysis, because it would show whether the result recurs"
+     },
+     {
+      "id": "d",
+      "text": "The exact p-value for the difference between completers, because it would show how likely chance is to explain the gap"
+     }
+    ],
+    "correct": "a",
+    "why": "The open question is how the comparison looks when the people who left are counted. An intention-to-treat analysis answers it, and the reasons for leaving show whether the leavers differ. Longer follow-up of completers, a repeat with the same analysis, or a p-value for the completers all carry the same selection forward.",
+    "bloom": "evaluate",
+    "src": "Module 11, Who Was Counted: Attrition and Intention-to-Treat"
+   },
+   {
+    "prompt": "A press office writes two sentences. Sentence A: “People who finished the program improved about as much as people who finished the leaflet.” Sentence B: “The program is no better than a leaflet.” Which judgment is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Neither is supported, because this much dropout leaves nothing to say about those who finished"
+     },
+     {
+      "id": "b",
+      "text": "Sentence B is better supported than Sentence A, because a claim about the whole program is the one random assignment protects"
+     },
+     {
+      "id": "c",
+      "text": "Both are supported, because random assignment and blinded raters protect any comparison from the trial"
+     },
+     {
+      "id": "d",
+      "text": "Sentence A is supported and Sentence B is not, because B concerns everyone randomized and A concerns only completers"
+     }
+    ],
+    "correct": "d",
+    "why": "Sentence A matches what was measured, which is the gap between the people who stayed in each arm. Sentence B is a claim about everyone who would be offered the program, and the groups of completers are no longer the groups that were randomized, so B needs an analysis of everyone randomized. Dropout limits the second claim and leaves the first as a plain description. Random assignment protects the groups only as long as they are kept intact in the analysis.",
+    "bloom": "evaluate",
+    "src": "Module 11, Who Was Counted: Attrition and Intention-to-Treat"
+   }
+  ],
+  "revisit": "Reread “Who Was Counted: Attrition and Intention-to-Treat.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Trial 2: Mood-Lift Group",
+  "short": "Trial 2",
+  "tag": "The conclusion decides the threat",
+  "case": {
+   "title": "Case: Trial 2, Mood-Lift Group (invented)",
+   "text": "A research team randomized 120 adults with low mood, referred by primary care practices, to a 12-week group program or to a wellness education group that met for the same number of sessions, 60 per arm. Allocation was concealed, and raters who did not know the group scored a clinician-rated depression interview (0 to 60, lower is better) at week 12. The trial was funded by a public research agency and run by a team that did not develop the program. Everyone randomized was analyzed, with missing week-12 scores filled in by a stated imputation method. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Arm<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Randomized<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Provided week-12 data<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Mean score at week 12 (SD)<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Group program<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">60<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">55<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">21.0 (9)<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Wellness education group<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">60<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">56<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">26.4 (9)<\/td><\/tr><\/tbody><\/table>Difference 5.4 points, d = 0.60, 95% CI 0.22 to 0.98. <b>Authors’ conclusion.<\/b> “The Mood-Lift Group is more effective than the cognitive therapy that community clinics usually provide and should replace it.”"
+  },
+  "intro": "<b>Trial 2 of 3.<\/b> This trial has several imperfections. Which one matters most depends on what the authors claim. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, The Comparator",
+  "items": [
+   {
+    "prompt": "What is the single most serious threat to the authors’ stated conclusion?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Participants were referred by primary care practices, because the findings may not apply to adults who seek care elsewhere"
+     },
+     {
+      "id": "b",
+      "text": "Some participants in each arm lacked a week-12 score, because missing data may undermine the comparison between the arms"
+     },
+     {
+      "id": "c",
+      "text": "The comparison group got wellness education, because replacing cognitive therapy needs that therapy as the comparator"
+     },
+     {
+      "id": "d",
+      "text": "Outcomes were measured at week 12 only, because the trial cannot show whether the difference lasted"
+     }
+    ],
+    "correct": "c",
+    "why": "The conclusion says the program should replace the cognitive therapy that clinics usually provide. A wellness education group answers whether the program beats an attention-matched alternative and says nothing about cognitive therapy, and a claim about existing care needs a comparator that represents existing care. Raters did not know the group, the missing scores were few and balanced, and the analysis included everyone randomized, so those limits are small. Referral from primary care practices limits generalizing and the short follow-up limits claims about durability. Neither touches a comparison with cognitive therapy.",
+    "bloom": "analyze",
+    "src": "Module 11, The Comparator"
+   },
+   {
+    "prompt": "What do the data support?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A moderate advantage over wellness education and little about cognitive therapy, because cognitive therapy was never the comparator"
+     },
+     {
+      "id": "b",
+      "text": "The program has no demonstrated effect, because one trial of 120 people cannot demonstrate anything without replication"
+     },
+     {
+      "id": "c",
+      "text": "The program should replace cognitive therapy, because the interval excludes zero and the effect is moderate in size"
+     },
+     {
+      "id": "d",
+      "text": "The program beats cognitive therapy, because random assignment makes the comparison fair whatever the comparator"
+     }
+    ],
+    "correct": "a",
+    "why": "Random assignment makes the comparison fair for the question the design asks, which is the program against wellness education. The interval from 0.22 to 0.98 excludes zero, so a benefit over that comparison is likely, and it reaches from small to large, so the size is uncertain. One trial is a reason to want replication and does not erase the finding. A recommendation to replace cognitive therapy needs a comparison with cognitive therapy.",
+    "bloom": "evaluate",
+    "src": "Module 11, The Comparator"
+   },
+   {
+    "prompt": "Which additional evidence would most change the conclusion?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A 6-month follow-up of the same participants, because it would show whether the advantage lasts"
+     },
+     {
+      "id": "b",
+      "text": "A second trial against wellness education in another city, because it would show whether the result recurs"
+     },
+     {
+      "id": "c",
+      "text": "A randomized comparison with cognitive therapy as clinics deliver it, because only that trial can speak to replacing it"
+     },
+     {
+      "id": "d",
+      "text": "A meta-analysis pooling several education-comparison trials of the program, because it would give a more precise estimate"
+     }
+    ],
+    "correct": "c",
+    "why": "The authors’ claim concerns cognitive therapy, and only a trial that includes it can speak to the claim. More education-comparison evidence, pooled or not, gives a more precise estimate of the same contrast. If every pooled trial used the same comparator, the combined estimate is precise and answers the same limited question. A follow-up shows whether the advantage lasts and still leaves the comparator as it was.",
+    "bloom": "evaluate",
+    "src": "Module 11, The Comparator"
+   }
+  ],
+  "revisit": "Reread “The Comparator.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Trial 3: Steady Breath",
+  "short": "Trial 3",
+  "tag": "Registry against report",
+  "case": {
+   "title": "Case: Trial 3, Steady Breath (invented)",
+   "text": "A research team randomized 60 adults with frequent panic attacks to Steady Breath, an app program, or to an attention-control app (an app that gives similar time and attention but none of the program’s own content), 30 per arm. The trial was registered before enrollment and was funded by the program’s developer. Six outcomes were measured. All numbers in this activity are invented for practice.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Outcome<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Registered as<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Reported as<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Difference (program minus control)<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">p<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Panic attacks per week<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Primary<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Secondary<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">-0.4 (95% CI -1.3 to +0.5)<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">.38<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Anxiety sensitivity score<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">One of five secondary outcomes<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Primary<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">d = 0.58 (95% CI 0.05 to 1.10)<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">.03<\/td><\/tr><\/tbody><\/table>The other four secondary outcomes were reported in a supplement and none was significant. A 3-month follow-up was collected only from participants classed as responders at week 8.<table style=\"border-collapse:collapse;margin:8px 0 6px;font-size:13.5px;width:100%\"><thead><tr><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Arm<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Randomized<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Classed as responders at week 8<\/th><th style=\"text-align:left;padding:4px 10px;border-bottom:1px solid #d9c79a;font-weight:700\">Followed at 3 months<\/th><\/tr><\/thead><tbody><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Program<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">30<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">14<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">14<\/td><\/tr><tr><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">Control<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">30<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">6<\/td><td style=\"padding:4px 10px;border-bottom:1px solid #eadfc0;vertical-align:top\">6<\/td><\/tr><\/tbody><\/table><b>Authors’ conclusion.<\/b> “Steady Breath reduces panic-related anxiety, and the gains are maintained.”"
+  },
+  "intro": "<b>Trial 3 of 3.<\/b> Compare what was registered with what was reported. Several problems are present, and they are not equally serious. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best-supported answer for each question.",
+  "src": "Module 11, The Plan Before the Data",
+  "items": [
+   {
+    "prompt": "What is the single most serious threat to the claim that Steady Breath reduces panic-related anxiety?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The control was only an attention app, because the comparison may be weaker than a trial against an active treatment"
+     },
+     {
+      "id": "b",
+      "text": "The primary outcome was switched after seeing results, because the registered one was null and another was promoted"
+     },
+     {
+      "id": "c",
+      "text": "The developer funded the trial, because its result cannot be trusted and could be set aside by readers"
+     },
+     {
+      "id": "d",
+      "text": "The trial is underpowered, because any result that it reports may be uninterpretable whatever outcome is named"
+     }
+    ],
+    "correct": "b",
+    "why": "Six outcomes were measured, and when no effect exists about one in twenty tests would be expected to clear p of .05 by chance. Choosing the one that did after seeing the results turns a chance finding into a headline. The small sample explains why the registered result is inconclusive, and it does not explain how the reported outcome was chosen. An attention control is a respectable comparator. Funding raises the standard of confirmation wanted and does not show the result is wrong.",
+    "bloom": "analyze",
+    "src": "Module 11, The Plan Before the Data"
+   },
+   {
+    "prompt": "The authors say the gains are maintained at 3 months. What do the follow-up data support?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Durability is supported in the program arm only, because more of the program participants had responded earlier"
+     },
+     {
+      "id": "b",
+      "text": "Nothing about durability, because only responders were followed and the two groups are no longer comparable"
+     },
+     {
+      "id": "c",
+      "text": "Durability is supported, because every responder in both arms was retained at the 3-month assessment point"
+     },
+     {
+      "id": "d",
+      "text": "Durability cannot be assessed in any trial of fewer than 100 participants, because small trials are too noisy"
+     }
+    ],
+    "correct": "b",
+    "why": "Choosing who to follow by an outcome removes the protection of random assignment. Responders in each arm differ from non-responders, and more program participants were selected, so the follow-up compares a larger pool with a smaller pool of people who had already improved. Everyone randomized would need to be followed. Small trials can assess durability when they follow all participants, with wide intervals.",
+    "bloom": "evaluate",
+    "src": "Module 11, The Plan Before the Data"
+   },
+   {
+    "prompt": "What do the data support about panic attacks, the registered primary outcome?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The program does not reduce panic attacks, because the registered outcome has p = .38 and so shows no effect"
+     },
+     {
+      "id": "b",
+      "text": "The program reduces panic attacks, because the anxiety sensitivity result is significant at the .05 level"
+     },
+     {
+      "id": "c",
+      "text": "The data fit no difference and a drop of over one attack a week, because the trial was too small"
+     },
+     {
+      "id": "d",
+      "text": "The best estimate for a new patient is 0.4 fewer attacks per week, because the comparison was randomized"
+     }
+    ],
+    "correct": "c",
+    "why": "The interval runs from 1.3 fewer attacks per week to 0.5 more. A p of .38 means the trial could not separate the program from chance, and an interval this wide includes both nothing and a worthwhile reduction. A significant result on another outcome does not transfer to this one. Randomization makes the comparison fair, and with 60 participants the estimate is still imprecise.",
+    "bloom": "evaluate",
+    "src": "Module 11, The Plan Before the Data"
+   },
+   {
+    "prompt": "Which additional evidence would most change the conclusion?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A meta-analysis pooling this trial with the developer’s earlier uncontrolled pilot, because it would add participants"
+     },
+     {
+      "id": "b",
+      "text": "A reanalysis of the same data showing the anxiety result holds under other methods, because it would confirm the finding"
+     },
+     {
+      "id": "c",
+      "text": "A larger 3-month follow-up of the responders in the program arm, because it would confirm that the gains lasted"
+     },
+     {
+      "id": "d",
+      "text": "A new powered trial with the registered primary outcome and everyone followed, because it addresses all three problems"
+     }
+    ],
+    "correct": "d",
+    "why": "The issues are the choice of outcome after the fact, the small sample, and the selective follow-up. A new trial with a fixed primary outcome, enough participants, and everyone followed addresses all three. Reanalyzing the same data, extending the responder follow-up, or pooling with an uncontrolled pilot repeats the problems in new forms.",
+    "bloom": "evaluate",
+    "src": "Module 11, The Plan Before the Data"
+   }
+  ],
+  "revisit": "Reread “The Plan Before the Data” and “Who Paid, Who Wrote, and Who Rated.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you appraised",
+ "takeaway": "<b>Carry forward.<\/b> A critical reader looks for the threat that bears most directly on the conclusion the authors draw. The same trial can be sound for one claim and weak for another, so the wording of the conclusion decides which check comes first. The data support the narrowest claim that survives the threat, and the evidence that would change the conclusion is the evidence that removes it.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every trial, team, and number in it is invented."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>
