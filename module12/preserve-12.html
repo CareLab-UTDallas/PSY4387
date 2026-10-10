@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keep or Change? Adaptation Moves</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Keep or Change? Adaptation Moves</h1>
+    <p class="sub">Classify proposed adaptations by what they do to the mechanism, then choose and defend the best adaptation in harder cases.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Sort the moves",
+  "short": "Sort moves",
+  "tag": "Saoirse’s treatment",
+  "case": {
+   "title": "Case: Saoirse, 34",
+   "text": "Saoirse is an invented client. She moved across the country eight months ago for her partner’s job and has felt low and withdrawn since. Her clinician has chosen behavioral activation, and the mechanism is contact with reinforcing activity. Saoirse says her old weeks centered on a pottery class and long weekend walks with a friend, that evenings are the only time she has any energy, and that she dreads big plans because she expects to fail at them."
+  },
+  "intro": "<b>Step 1.<\/b> A clinician proposes nine moves for Saoirse. Each one changes something about the treatment, and the question is what it does to the mechanism. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose one. A move that keeps Saoirse scheduling, doing, and reporting activity that brings reward preserves the mechanism. A move that removes or replaces that process alters the model of change, and the original trials may no longer describe the treatment. A move that keeps the process but handles Saoirse poorly is a fit failure, and the clinician should ask and adjust.",
+  "cats": [
+   {
+    "id": "keep",
+    "label": "Preserves the mechanism"
+   },
+   {
+    "id": "model",
+    "label": "Alters the model of change"
+   },
+   {
+    "id": "fit",
+    "label": "Fit failure, mechanism intact"
+   }
+  ],
+  "src": "Module 12, The Preservation Rule",
+  "items": [
+   {
+    "text": "Because Saoirse expects to fail at big plans, the clinician cuts each activity to ten or fifteen minutes and lets her add length as she succeeds.",
+    "answer": "keep",
+    "why": "Smaller, graded activities still bring her into contact with reinforcing activity. The size of the task is delivery, and the mechanism is untouched.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Saoirse says evenings are when she has energy. The clinician moves the planned activities to evenings and asks her to rate how rewarding each one felt, so the review can start from her ratings.",
+    "answer": "keep",
+    "why": "She still schedules, does, and reports activity, and the ratings add information about reward. The timing changed and the process did not.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Saoirse says terms like pleasure and mastery ratings feel clinical and that she calls her low mood a gray patch. The clinician keeps the clinical terms in every session and handout.",
+    "answer": "fit",
+    "why": "Scheduling and tracking continue, so the mechanism is intact. The wording does not match how she names the problem, and asking her and using her phrase fixes it.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Because Saoirse ruminates at night, the clinician fills her evenings with sorting and cleaning tasks she says she does not care about, to keep her mind occupied, and reports this as behavioral activation.",
+    "answer": "model",
+    "why": "The aim has moved from contact with rewarding activity to distraction. Tasks she does not value do not restore reward, so the theory of change is different and the evidence for the original does not carry over.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Saoirse lives on her phone. The clinician sets a text reminder the evening before each planned activity and asks her to reply when it is done.",
+    "answer": "keep",
+    "why": "The reminder and the reply keep scheduling and reporting going through a medium she already uses. The process that produces change is unchanged.",
+    "bloom": "apply"
+   },
+   {
+    "text": "The clinician enrolls Saoirse in a newcomers’ group on the guess that she will want to meet people from her home region, without asking where she is from or whom she would like to meet.",
+    "answer": "fit",
+    "why": "Activity can still proceed, so the mechanism is intact. A guess about what a person in her position wants has replaced her own account, which is how stereotyping enters. Asking first fixes it.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Saoirse mentions that she used to walk with a friend who now lives far away. The clinician asks whether she would like a call with that friend to be one of her scheduled activities.",
+    "answer": "keep",
+    "why": "The activity comes from her own account, and she still schedules it, does it, and reports it. Asking before proposing keeps the wrapping hers.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Saoirse says her energy is best in the late morning. The clinician keeps her standing 4 p.m. slot because it suits the clinic’s calendar and does not mention the alternative.",
+    "answer": "fit",
+    "why": "The procedure is untouched, and the timing choice rests on the clinic’s convenience in place of her report. A conversation about the slot is the remedy.",
+    "bloom": "apply"
+   },
+   {
+    "text": "The clinician adds a daily gratitude journal and a guided meditation to each week and, to make room, retires the activity schedule, still calling the program behavioral activation.",
+    "answer": "model",
+    "why": "Scheduling activity is the mechanism, and it has been removed. The result is a different package, and the activation trials no longer describe what is delivered.",
+    "bloom": "apply"
+   }
+  ],
+  "revisit": "Reread “Oren: Moves That Keep the Mechanism and Moves That Lose It.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Name the change and its reason",
+  "short": "Name and reason",
+  "tag": "Hugo’s exposure",
+  "case": {
+   "title": "Case: Hugo, 41",
+   "text": "Hugo is an invented client who survived a bus collision nine months ago. He avoids buses and wakes from nightmares. His clinician has chosen prolonged exposure, and the mechanism is repeated approach to the memory and to avoided situations, which supports habituation and inhibitory learning."
+  },
+  "intro": "<b>Step 2.<\/b> This time you give the category and the reasoning. A correct category with a weak reason is not enough. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the assessment that names what the change does and gives the reason that follows from the mechanism.",
+  "src": "Module 12, The Preservation Rule",
+  "items": [
+   {
+    "prompt": "Hugo asks to open each imaginal exposure session with a short prayer his mother taught him and to include the memorial gathering in his account of the collision. The clinician agrees. What does this move do?",
+    "options": [
+     {
+      "id": "a",
+      "text": "It alters the model of change, because a prayer is not part of the protocol and the original trials had nothing like it, so the evidence base no longer applies"
+     },
+     {
+      "id": "b",
+      "text": "It is a fit failure, because the clinician has no training in the prayer and cannot judge whether it helps his recovery, so he should be referred"
+     },
+     {
+      "id": "c",
+      "text": "It preserves the mechanism, because Hugo still approaches the memory repeatedly and the prayer and gathering belong to his own account"
+     },
+     {
+      "id": "d",
+      "text": "It preserves the mechanism, because adding a cultural practice improves any treatment whatever it does to the procedure"
+     }
+    ],
+    "correct": "c",
+    "why": "Exposure still takes place, and the account now holds things that matter to him. The literature’s PTSD example describes narratives and healing rituals folded into exposure with habituation and inhibitory learning intact. The option that treats any addition as a change of model confuses new content with a new theory of change. The theory here is still approach and learning, and the prayer does not remove that. The option about the clinician’s training mistakes a competence question for a fit question. The client is being fitted well, and whether the clinician needs consultation is a separate issue. The option that praises any cultural addition skips the test. An addition that crowded out the approach to the memory would damage the mechanism, so the question is what the change does to the process.",
+    "bloom": "analyze",
+    "src": "Module 12, The Preservation Rule"
+   },
+   {
+    "prompt": "Hugo says he cannot face a bus. The clinician replaces the planned bus rides with relaxation training and calming imagery, so he can think about buses without distress, and reports the plan as prolonged exposure. What does this move do?",
+    "options": [
+     {
+      "id": "a",
+      "text": "It alters the model of change, because the plan keeps distress low and drops repeated approach, so the exposure trials no longer describe it"
+     },
+     {
+      "id": "b",
+      "text": "It preserves the mechanism, because relaxation training is part of the original treatment package and so adds nothing new"
+     },
+     {
+      "id": "c",
+      "text": "It preserves the mechanism, because Hugo still talks about buses in session and talking about them counts as contact, which is how he starts to approach them"
+     },
+     {
+      "id": "d",
+      "text": "It is a fit failure, because the clinician moved too fast, so Hugo should be asked how fast he wants to go and the plan slowed to that pace"
+     }
+    ],
+    "correct": "a",
+    "why": "Exposure works through approach and new learning. A plan built around staying calm before any contact removes approach, so the evidence for prolonged exposure does not carry over automatically. The option that counts talk as contact overlooks that the plan aims to keep distress down in place of approaching the avoided situation. Avoidance rewarded by relief stays in place. The option about pacing treats a missing procedure as a pace problem. A pace adjustment slows approach, and this plan has no approach in it. The option about relaxation assumes that anything found in the package keeps the whole plan inside it. Relaxation used to avoid contact is a different use from relaxation as a minor aid.",
+    "bloom": "analyze",
+    "src": "Module 12, The Preservation Rule"
+   },
+   {
+    "prompt": "Hugo says the memories come back in his first language and that his English feels flat when he describes the collision. The clinician asks which language he wants for the narration and arranges a trained interpreter, in place of asking his cousin to translate. What does this move do?",
+    "options": [
+     {
+      "id": "a",
+      "text": "It alters the model of change, because language is a deep-structure dimension and deep-structure changes always alter the theory of treatment"
+     },
+     {
+      "id": "b",
+      "text": "It preserves the mechanism, but only if the cousin interprets, because someone he trusts will make him comfortable enough to approach the memory"
+     },
+     {
+      "id": "c",
+      "text": "It is a fit failure, because a third person in the room makes disclosure harder, and the clinician should have used English throughout and asked him to manage"
+     },
+     {
+      "id": "d",
+      "text": "It preserves the mechanism, because approach to the memory continues in the language where the memory lives, with a trained interpreter"
+     }
+    ],
+    "correct": "d",
+    "why": "The process of repeated approach is untouched and probably better served. Language is a dimension along which delivery can change, and a trained interpreter in place of a relative protects what Hugo is able to say. The option that avoids the interpreter leaves the language question to the clinician’s convenience. Hugo’s own report about where the memory lives is the information that guides the fit. The option about deep-structure changes confuses two uses of the term. Deep in the Bernal framework refers to the client’s world. It does not tell you whether the treatment’s theory of change has moved. The option that favors the cousin trades fit for convenience. A relative in the room changes what Hugo can say and what the cousin hears, which is a reason trained interpreters are used.",
+    "bloom": "analyze",
+    "src": "Module 12, Two Layers: Surface and Deep Structure"
+   },
+   {
+    "prompt": "Hugo describes the aftermath as “a heat in my chest and a spirit that will not settle.” The clinician rewrites this as “anxiety symptoms” in every handout and tells him that is the correct term. What does this move do?",
+    "options": [
+     {
+      "id": "a",
+      "text": "It alters the model of change, because the clinical label brings a different theory of how the problem is maintained and so a different treatment"
+     },
+     {
+      "id": "b",
+      "text": "It is a fit failure, because exposure continues but the framing does not match how Hugo names the problem, so the clinician should ask"
+     },
+     {
+      "id": "c",
+      "text": "It preserves the mechanism and needs no adjustment, because clinical terms are more accurate than a client’s phrases"
+     },
+     {
+      "id": "d",
+      "text": "It preserves the mechanism and is a surface adaptation, because a change of wording is safe by definition and needs no further check"
+     }
+    ],
+    "correct": "b",
+    "why": "The procedure is untouched, so the mechanism is intact. The clinician replaced his way of naming the problem with a clinical label, which can leave him feeling that the treatment does not describe his experience. The option that treats the label as a model change overlooks that exposure runs the same way under either name. What is at stake is agreement on the problem, and the process is unchanged. The option that favors the clinical term treats the client’s phrase as an error. Cultural idioms of distress are ways of naming the problem, and the clinician can track and use his phrase. The option about surface changes treats the label as a conclusion. A change of wording can still be where a fit problem arises, and it still needs a check.",
+    "bloom": "analyze",
+    "src": "Module 12, Cultural Formulation: Five Domains of Questions"
+   }
+  ],
+  "revisit": "Reread “The Preservation Rule” and “Two Layers: Surface and Deep Structure.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Respectful, or still active?",
+  "short": "Respectful move",
+  "tag": "Leona’s exposure",
+  "case": {
+   "title": "Case: Leona, 36",
+   "text": "Leona is an invented client who avoids speaking up at work and in gatherings. Her clinician has chosen exposure, in which she approaches avoided situations repeatedly and notices what happens. Leona says that in the house where she grew up, putting yourself forward in a group was a way of being rude, and the practice tasks on the clinician’s list, such as asking questions in meetings and introducing herself to strangers, feel wrong to her. She also says she likes to be the person who makes sure new coworkers feel welcome."
+  },
+  "intro": "<b>Step 3.<\/b> A move can sound respectful and still remove the active procedure. Judge the proposal by what Leona will be doing and by how it sounds.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 12, The Preservation Rule",
+  "items": [
+   {
+    "prompt": "The clinician proposes to put the practice tasks on hold until Leona feels comfortable with the idea and to spend the meantime on supportive conversation about what speaking up means in her family. A supervisor says the plan sounds respectful and asks what it does to the mechanism. Which assessment is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "It preserves the mechanism, because respect for her values is part of the rationale for exposure and talk can stand in for practice in the short term"
+     },
+     {
+      "id": "b",
+      "text": "It is the best available adaptation, because exposure with a client who finds the tasks wrong cannot succeed and should be replaced"
+     },
+     {
+      "id": "c",
+      "text": "It removes the active procedure, since Leona will not be approaching the situations she avoids while the relationship improves"
+     },
+     {
+      "id": "d",
+      "text": "It is a fit failure only, because the clinician has repaired the mismatch and exposure can resume whenever Leona is ready and comfortable with the tasks"
+     }
+    ],
+    "correct": "c",
+    "why": "Respect for her values is real, and it can be honored while the approach continues. A hold with no end point means avoidance goes on unchallenged, and the wrapping is friendly with nothing inside. The option that lets talk stand in for practice assumes the rationale is enough. The rationale prepares for approach and does not replace it. The option about resuming when she is ready treats the hold as a pause with no cost. Readiness defined as comfort may never arrive for a person who is avoiding. The option that gives up on exposure treats her objection as final. The objection is information about which tasks to choose, and the tasks can change while the approach stays.",
+    "bloom": "evaluate",
+    "src": "Module 12, Oren: Moves That Keep the Mechanism and Moves That Lose It"
+   },
+   {
+    "prompt": "Which adaptation best serves both the mechanism and the fit?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Keep the clinic’s standard list and explain the rationale again, since changing the tasks would weaken the protocol and its evidence"
+     },
+     {
+      "id": "b",
+      "text": "Keep the approach practice and build the task list with Leona from roles she values, so the tasks fit her and the approach continues"
+     },
+     {
+      "id": "c",
+      "text": "Move to restructuring her belief that putting yourself forward is rude, since that belief makes the tasks feel wrong and keeps her avoiding"
+     },
+     {
+      "id": "d",
+      "text": "Replace the situation practice with relaxation before meetings, so she lowers distress without doing anything that feels wrong"
+     }
+    ],
+    "correct": "b",
+    "why": "Approach is retained, the tasks come from her answers, and the practice uses a role she named herself. The wrapping and the content changed while she keeps coming into contact with what she avoids. The option about keeping the standard list protects the procedure and ignores what she said. The tasks are delivery, and holding them fixed risks a rupture with no gain for the mechanism. The option about relaxation first removes approach. It lowers distress in the moment and leaves the avoidance intact, so it changes the model of change. The option about restructuring treats her value as a distortion. Her view of what is polite is hers to describe, and a clinician who labels it an error is assuming and no longer asking.",
+    "bloom": "evaluate",
+    "src": "Module 12, What the Evidence for Adaptation Shows"
+   }
+  ],
+  "revisit": "Reread “The Preservation Rule” and “Oren: Moves That Keep the Mechanism and Moves That Lose It.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Less rigor, same mechanism?",
+  "short": "Same mechanism",
+  "tag": "Kalani’s activation",
+  "case": {
+   "title": "Case: Kalani, 52",
+   "text": "Kalani is an invented client who works two jobs and has felt low for six months. His clinic delivers behavioral activation from a twelve-session manual with printed weekly forms and a fixed agenda. Kalani misses sessions when the forms pile up. His clinician considers replacing the printed forms with a daily voice memo or a photo of a handwritten calendar and shortening the agenda to three parts, which are reviewing last week’s activities, choosing this week’s, and planning for obstacles."
+  },
+  "intro": "<b>Step 4.<\/b> A change can look like a loss of rigor and still keep the mechanism. Decide which parts of the manual are the process and which are the delivery.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 12, The Preservation Rule",
+  "items": [
+   {
+    "prompt": "A colleague says that dropping the manual’s forms and fixed agenda departs from the treatment and gives up the rigor the trials relied on. Which reply best fits the preservation rule?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The colleague is right, because a change to the manual means the trials no longer describe what is delivered, so Kalani should go back to the full manual"
+     },
+     {
+      "id": "b",
+      "text": "The colleague is wrong, because a client who is missing sessions is entitled to a format that works, so no record of the change is needed"
+     },
+     {
+      "id": "c",
+      "text": "The colleague is partly right, because the forms may carry part of the process, so Kalani should use them for six sessions and switch only if his scores improve"
+     },
+     {
+      "id": "d",
+      "text": "The colleague is wrong, because the forms and agenda are delivery and Kalani still schedules, does, and reports activity, so the mechanism stays"
+     }
+    ],
+    "correct": "d",
+    "why": "The rule asks whether the client is still in contact with the process that produces change. A voice memo and a three-part agenda keep scheduling, doing, and reporting, so the mechanism and the documented change answer the colleague’s concern. The option that treats every manual change as a new treatment equates the manual with the mechanism. The trials describe the process, and the corollary applies when the theory of change moves. The option that skips the record leaves out planned and documented adaptation. Changes made for convenience or provider preference are the ones that tend to compromise effectiveness. The option that delays the switch treats the forms as the mechanism. He is already missing sessions because of them, so waiting for scores risks losing him before the process can operate.",
+    "bloom": "evaluate",
+    "src": "Module 12, The Preservation Rule"
+   },
+   {
+    "prompt": "Which chart note best supports the adaptation?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A note naming the change, its reason, and the mechanism it keeps, plus a review at sessions four and eight"
+     },
+     {
+      "id": "b",
+      "text": "No note, on the view that the adaptation keeps the mechanism and the original manual still describes his treatment"
+     },
+     {
+      "id": "c",
+      "text": "A note describing the work as a new program for working clients, with a new name, a new set of materials, and its own evaluation plan"
+     },
+     {
+      "id": "d",
+      "text": "A note saying the manual was shortened for Kalani’s trouble with the forms, filed with the date of the change and the clinician’s initials"
+     }
+    ],
+    "correct": "a",
+    "why": "A planned, documented adaptation names what changed, why, and how the outcome will be tracked. This note also names the mechanism, which makes it a record of the preservation test. The option that records only the reason shows who prompted the change and says nothing about the mechanism or how anyone will know whether activation is still happening. The option with no note assumes preservation makes documentation unnecessary. Without a record, nobody can later tell what was delivered or check whether it worked. The option about a new program claims a distinct intervention when the theory of change has not moved. It would also imply the work needs its own evidence base, which nobody is claiming.",
+    "bloom": "evaluate",
+    "src": "Module 12, The Preservation Rule"
+   }
+  ],
+  "revisit": "Reread “The Preservation Rule.”"
+ },
+ {
+  "type": "mcq",
+  "title": "When a belief is accurate",
+  "short": "Accurate belief",
+  "tag": "Cyrus’s reappraisal",
+  "case": {
+   "title": "Case: Cyrus, 31",
+   "text": "Cyrus is an invented client who has felt anxious and angry since starting at a new warehouse. His clinician uses cognitive reappraisal, which examines the evidence for a belief and builds a more accurate one. Cyrus says three supervisors in a row have corrected how he talks in front of other workers and that coworkers who started after him were promoted first. He believes he is being treated differently and that there is no point applying for anything there again."
+  },
+  "intro": "<b>Step 5.<\/b> Reappraisal assumes the belief goes beyond the evidence. Sometimes part of it does not. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 12, Cultural Formulation: Five Domains of Questions",
+  "items": [
+   {
+    "prompt": "The clinician labels the whole belief a thinking error and asks Cyrus to replace it with “My supervisors are doing their jobs.” Which assessment is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The proposal misapplies reappraisal, because part of the belief has real evidence behind it, so reappraisal fits only the rest"
+     },
+     {
+      "id": "b",
+      "text": "The proposal is a fit failure only, because the replacement belief is sound and a friendlier phrasing of it would keep the plan on track"
+     },
+     {
+      "id": "c",
+      "text": "The proposal preserves the mechanism, because reappraisal asks the client to replace a belief with a more balanced one whatever it is about"
+     },
+     {
+      "id": "d",
+      "text": "The proposal alters the model of change, because reappraisal does not suit beliefs about how other people treat the client at work"
+     }
+    ],
+    "correct": "a",
+    "why": "A belief that accurately reflects circumstances is not a distortion. Examining the evidence together separates what the evidence supports from what it does not, and the accurate part becomes a problem to solve. The option that applies reappraisal to any belief overlooks that the procedure examines evidence. Replacing an accurate belief treats it as an error, and that misuses the procedure. The option that rules reappraisal out for beliefs about others overcorrects. Many such beliefs go beyond the evidence in places, and the procedure can examine those parts with him. The option about friendlier phrasing leaves the replacement belief in place. The difficulty lies in what the belief is asked to become, and the tone of the request does not touch that.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Formulation: Five Domains of Questions"
+   },
+   {
+    "prompt": "In a team meeting, four clinicians each propose a change to reappraisal work like Cyrus’s. Which proposal would most likely make the delivered treatment a possibly distinct intervention that needs its own evaluation?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Rewrite the worksheet’s example beliefs in the client’s own words and preferred language, and add examples drawn from his own workplace"
+     },
+     {
+      "id": "b",
+      "text": "Add a step in which the client lists real barriers to be solved, and examine in the usual way only the beliefs that go beyond them"
+     },
+     {
+      "id": "c",
+      "text": "Start each session with a short check-in on the week, then move to the reappraisal exercise with the same steps as before"
+     },
+     {
+      "id": "d",
+      "text": "Drop the examination of evidence, spend sessions agreeing with the client’s view, and keep calling the work cognitive reappraisal"
+     }
+    ],
+    "correct": "d",
+    "why": "The theory of change has moved from examining evidence to agreement. The original trials no longer describe what is being delivered, so the result should be evaluated as a possibly different intervention. The option about the worksheet changes the wrapping. The client still examines evidence for and against a belief, so the original evidence base still describes what is delivered. The option about the check-in changes the session’s structure and leaves the exercise intact. The procedure that produces change still runs every session. The option that adds a problem-solving step keeps the examination of evidence for the beliefs that remain. It also follows the habit of asking whether a belief reflects circumstances, so it does not change the model.",
+    "bloom": "evaluate",
+    "src": "Module 12, The Preservation Rule"
+   }
+  ],
+  "revisit": "Reread “The Preservation Rule” and “Cultural Formulation: Five Domains of Questions.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Read the log",
+  "short": "Read the log",
+  "tag": "After the adaptation",
+  "case": {
+   "title": "Saoirse again (Step 1), with invented numbers",
+   "text": "After the adaptations in Step 1 (evening timing, shorter activities, and text reminders), the clinician tracks days with at least one activity from Saoirse’s text replies, plus a brief mood measure every two weeks. All numbers here are invented for practice."
+  },
+  "intro": "<b>Step 6.<\/b> An adaptation is tracked like any other part of the treatment. Read each series and decide what it supports.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 12, Tracking the Mechanism and the Symptoms",
+  "items": [
+   {
+    "prompt": "Weeks 2 to 6, days with at least one activity out of 7 were 1, 1, 2, 1, and 1. Saoirse attends every session and says the sessions feel better than before. What do the data support?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The adaptation is working, so the plan should continue unchanged until her mood measure moves"
+     },
+     {
+      "id": "b",
+      "text": "The adaptation has helped the relationship and is not reaching the mechanism, so the clinician should explore what blocks activity"
+     },
+     {
+      "id": "c",
+      "text": "Behavioral activation has failed for Saoirse, so the clinician should move to a different treatment now"
+     },
+     {
+      "id": "d",
+      "text": "Saoirse is not trying, so the clinician should restate the rules of the schedule and expect more effort from her each week"
+     }
+    ],
+    "correct": "b",
+    "why": "Rapport is real, and the log shows contact with reinforcing activity is not occurring. If the log shows no activities, the adaptation is not reaching the mechanism whatever it did for the alliance. The option about the alliance reads rapport as progress. The process that produces change in this treatment is activity, and the log shows little of it. The option that switches treatment concludes too early. The hypothesis has not been tested, because Saoirse has not yet been in contact with enough activity to test it. The option about effort puts the explanation inside Saoirse. Obstacles and activities that are too large are likelier explanations, and the clinician can ask.",
+    "bloom": "evaluate",
+    "src": "Module 12, Oren: Moves That Keep the Mechanism and Moves That Lose It"
+   },
+   {
+    "prompt": "Weeks 7 to 12, Saoirse logged 5, 6, 5, 6, 6, and 5 active days, and the mood measure at weeks 8, 10, and 12 has not changed from week 2. What is the best next step?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Raise the number of scheduled activities, since more activity is the missing dose and she can manage it"
+     },
+     {
+      "id": "b",
+      "text": "Keep the plan exactly as it is and stop reviewing, since the mechanism is working and mood will catch up in time"
+     },
+     {
+      "id": "c",
+      "text": "Treat the adaptation as reaching the mechanism, since activity is steady, and look for another factor"
+     },
+     {
+      "id": "d",
+      "text": "Conclude that the adaptation failed, because mood has not moved and the activity count does not matter without symptom change"
+     }
+    ],
+    "correct": "c",
+    "why": "Activity is happening, so the adaptation is doing its job. Mood that does not follow is a reason to revisit the formulation, including whether something else keeps the problem going. The option about mood alone ignores that the activity series moved. The mechanism is shifting and the symptoms have not followed, which is a different pattern from a failed adaptation. The option that stops reviewing treats lag as a promise. Flat mood after several weeks of steady activity is a prompt to look again. The option about a higher dose assumes more activity is the missing ingredient. She is already active on most days, so more of the same is unlikely to answer what is keeping mood low.",
+    "bloom": "evaluate",
+    "src": "Module 12, Tracking the Mechanism and the Symptoms"
+   }
+  ],
+  "revisit": "Reread “Oren: Moves That Keep the Mechanism and Moves That Lose It” and “Tracking the Mechanism and the Symptoms.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>Carry forward.<\/b> A proposed adaptation gets three tests. Which mechanism does the treatment rest on, is the client still in contact with it after the change, and does the original evidence base still describe what will be delivered. A change that sounds respectful can remove the procedure, and a change that looks like less rigor can leave it intact. Track the adaptation like any other part of the treatment.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every client in it is invented. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

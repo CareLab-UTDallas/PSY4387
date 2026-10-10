@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cultural Formulation Questions</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Cultural Formulation Questions</h1>
+    <p class="sub">Match questions to the five domains, judge which ones assume too much, follow the client when the answer surprises you, and respond to a rupture.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Match question to domain",
+  "short": "Match domains",
+  "tag": "Juno’s first visit",
+  "case": {
+   "title": "Case: Juno, 23",
+   "text": "Juno is an invented client, a college student who comes to the counseling center because she cannot sleep and worries most of the night. Her clinician uses the five general domains of the DSM-5 Outline for Cultural Formulation as headings for questions, as with every client. The separate Cultural Formulation Interview is a structured interview used with any patient. Below are practice questions the clinician could ask."
+  },
+  "intro": "<b>Step 1.<\/b> Each domain of the Outline is a heading for questions. Place each question under the domain it belongs to. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the domain that the question mainly asks about.",
+  "cats": [
+   {
+    "id": "ident",
+    "label": "Cultural identity"
+   },
+   {
+    "id": "concept",
+    "label": "Explanations of distress"
+   },
+   {
+    "id": "stress",
+    "label": "Psychosocial environment"
+   },
+   {
+    "id": "rel",
+    "label": "Client-clinician relationship"
+   },
+   {
+    "id": "overall",
+    "label": "Overall assessment"
+   }
+  ],
+  "src": "Module 12, Cultural Formulation: Five Domains of Questions",
+  "items": [
+   {
+    "text": "Which communities or groups matter most to who you are, and do they have a part in how you think about your sleep and worry?",
+    "answer": "ident",
+    "why": "The question asks which reference groups matter to her and how much, which is the cultural identity domain. It leaves open whether they matter to the problem at all.",
+    "bloom": "apply"
+   },
+   {
+    "text": "What do you call this problem when you talk about it with people close to you, if you do?",
+    "answer": "concept",
+    "why": "The question asks how she names the problem, which is the domain on cultural explanations of distress. It includes the possibility that she does not discuss it.",
+    "bloom": "apply"
+   },
+   {
+    "text": "What do you think is behind the sleeplessness?",
+    "answer": "concept",
+    "why": "A perceived cause is an explanation of distress, and this question gathers it directly. The answer feeds agreement on goals.",
+    "bloom": "apply"
+   },
+   {
+    "text": "How do you feel about working with me on this, and what would help you feel able to say what you think?",
+    "answer": "rel",
+    "why": "The question concerns the working relationship and what would make it safe for her to speak, which is the client-clinician relationship domain.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Here is how I am putting together what you have told me about how you see this problem. What have I gotten wrong or left out?",
+    "answer": "overall",
+    "why": "The overall assessment is the clinician’s synthesis, and it comes after the questions. Checking it with Juno is part of the domain.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Who do you turn to when things feel heavy, if anyone, and what do they do that helps?",
+    "answer": "stress",
+    "why": "The question explores supports and protective factors without assuming who they are. It belongs under the psychosocial environment.",
+    "bloom": "apply"
+   },
+   {
+    "text": "How do you describe your own background, and when does it come up for you on campus?",
+    "answer": "ident",
+    "why": "She is asked to describe her background in her own words, which belongs to cultural identity. The question does not say what the background is.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Is there anything about me, or about being in this office, that makes it harder to talk openly?",
+    "answer": "rel",
+    "why": "Differences between clinician and client can affect rapport and disclosure, and this question invites her to say so. It belongs to the domain on the relationship between client and clinician.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Based on what you have said, I would suggest a few changes to the plan. What are your reactions to them?",
+    "answer": "overall",
+    "why": "A plan shaped by the earlier answers and offered back to the client is the overall cultural assessment at work.",
+    "bloom": "apply"
+   },
+   {
+    "text": "What has been making things harder lately, and what has helped you through hard stretches before?",
+    "answer": "stress",
+    "why": "Stressors and supports belong to the domain on cultural factors in the psychosocial environment. Asking about both lets strengths appear alongside difficulties.",
+    "bloom": "apply"
+   }
+  ],
+  "revisit": "Reread “Cultural Formulation: Five Domains of Questions.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Which question assumes, which opens",
+  "short": "Assume or open",
+  "tag": "Reading the wording",
+  "case": {
+   "title": "Case: Juno, 23",
+   "text": "Juno has said she has slept badly for two months. In each item below, four questions could be asked next. The clinician wants questions that open a topic. A question assumes too much when it contains something about Juno that she has not said."
+  },
+  "intro": "<b>Step 2.<\/b> A question can sound warm and still carry an answer inside it. Read the wording of each option.",
+  "doThis": "Choose the option that the item asks for.",
+  "src": "Module 12, Cultural Humility as a Stance",
+  "items": [
+   {
+    "prompt": "Which question assumes something about Juno that she has not said?",
+    "options": [
+     {
+      "id": "a",
+      "text": "“Some people explain trouble like this through stress, health, or something else entirely. How do you explain it?”"
+     },
+     {
+      "id": "b",
+      "text": "“Many students lose sleep over family expectations about grades, so how much of this is that pressure?”"
+     },
+     {
+      "id": "c",
+      "text": "“What do you think is behind the sleep trouble, and when did you first notice it?”"
+     },
+     {
+      "id": "d",
+      "text": "“How do you make sense of the sleep trouble, and has anyone in your life offered an explanation?”"
+     }
+    ],
+    "correct": "b",
+    "why": "This question names a cause before she has described one and builds it on a pattern assumed from her situation. Knowledge about people in general should generate a question for her and should not answer it. This option asks for her own explanation and supplies none. It opens the topic. This option offers examples and leaves the answer to her. Naming a range of possible explanations does not assume one of them. This option asks about her sense-making and then whether others have offered theirs. The phrase has anyone allows a no.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Humility as a Stance"
+   },
+   {
+    "prompt": "Which question best opens the topic of Juno’s supports without assuming who they are?",
+    "options": [
+     {
+      "id": "a",
+      "text": "“Who, if anyone, do you turn to when things feel heavy, and what helps?”"
+     },
+     {
+      "id": "b",
+      "text": "“Tell me about your religious or community supports, and how often you use them.”"
+     },
+     {
+      "id": "c",
+      "text": "“How does your family support you through this, and how do they show it?”"
+     },
+     {
+      "id": "d",
+      "text": "“What part do your friends on campus play in this, and how often are you together?”"
+     }
+    ],
+    "correct": "a",
+    "why": "The words if anyone leave room for no one, and the question asks what helps without naming a person or a role. This question assumes she has family who support her and that they are involved. She has said neither. This question assumes she has friends on campus who help. It also narrows the answer to how they help and how often. This question assumes she has such supports and names the type. An open question would let her say which supports matter.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Formulation: Five Domains of Questions"
+   },
+   {
+    "prompt": "Which question assumes too much about the role of Juno’s background?",
+    "options": [
+     {
+      "id": "a",
+      "text": "“How would you describe your background in your own words?”"
+     },
+     {
+      "id": "b",
+      "text": "“Are there groups or communities you feel part of, and do they matter for this problem?”"
+     },
+     {
+      "id": "c",
+      "text": "“When, if ever, does your background come up for you here on campus?”"
+     },
+     {
+      "id": "d",
+      "text": "“How does being part of your community affect your ability to ask for help?”"
+     }
+    ],
+    "correct": "d",
+    "why": "The question assumes she belongs to a community that matters here and that it affects her ability to ask for help. It supplies a cause and a direction. This option asks whether before it asks how much. She can answer that they do not. This option asks her to supply the description, so it assumes nothing about what the background is or means. The words if ever allow the answer that it does not. The question opens the topic.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Formulation: Five Domains of Questions"
+   },
+   {
+    "prompt": "Which question best opens the topic of how differences between Juno and the clinician might matter?",
+    "options": [
+     {
+      "id": "a",
+      "text": "“I want you to feel at ease here, so please tell me you do, and then we can begin.”"
+     },
+     {
+      "id": "b",
+      "text": "“Sometimes something about me or the room makes it harder to talk. Is anything like that true here?”"
+     },
+     {
+      "id": "c",
+      "text": "“I understand that talking to someone from a different background can be hard. Is that true for you?”"
+     },
+     {
+      "id": "d",
+      "text": "“Do you think I can understand you, given that we have different backgrounds?”"
+     }
+    ],
+    "correct": "b",
+    "why": "It names the possibility without deciding that a difference exists, and it invites her to say yes or no. This option assumes the clinician’s background is different and that it is hard for her. She has said neither. This question asks her to confirm comfort before starting, which invites a polite yes in place of a report. This option assumes a difference and puts the burden on her to judge the clinician’s capacity. It also invites a polite yes.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Formulation: Five Domains of Questions"
+   }
+  ],
+  "revisit": "Reread “Cultural Humility as a Stance” and “Cultural Formulation: Five Domains of Questions.”"
+ },
+ {
+  "type": "multi",
+  "title": "Choose the open questions",
+  "short": "Open questions",
+  "tag": "Arlo’s interview",
+  "case": {
+   "title": "Case: Arlo, 27",
+   "text": "Arlo is an invented client who has been missing shifts at work and says he feels “run down.” His clinician wants to ask about each of the five domains. Eight possible questions are listed."
+  },
+  "intro": "<b>Step 3.<\/b> Build the interview by choosing. Your selection is scored on what you chose and what you left out.",
+  "prompt": "Select every question that opens its topic without assuming something Arlo has not said.",
+  "doThis": "Select the questions, then check your answer.",
+  "options": [
+   {
+    "id": "o1",
+    "label": "“What do you call what has been happening to you, and what do you think set it off?”"
+   },
+   {
+    "id": "x1",
+    "label": "“How does your family’s pride get in the way of asking for help?”"
+   },
+   {
+    "id": "o2",
+    "label": "“What has made things harder lately, and what has helped?”"
+   },
+   {
+    "id": "x2",
+    "label": "“Most people in your position keep problems to themselves. Is that why you waited?”"
+   },
+   {
+    "id": "o3",
+    "label": "“Is there anything about me or this setting that makes talking harder?”"
+   },
+   {
+    "id": "x3",
+    "label": "“How does your faith help you cope, and how often do you pray?”"
+   },
+   {
+    "id": "o4",
+    "label": "“Which groups or communities, if any, matter to how you see this?”"
+   },
+   {
+    "id": "x4",
+    "label": "“I treat every client the same way, so I do not expect my background to affect our work. Is that all right with you?”"
+   }
+  ],
+  "truth": [
+   "o1",
+   "o2",
+   "o3",
+   "o4"
+  ],
+  "reasons": {
+   "o1": "Present. It asks for his name for the problem and his own idea of its cause, which is the domain on cultural explanations of distress.",
+   "o2": "Present. It asks for stressors and for what has helped, so strengths can appear next to difficulties.",
+   "o3": "Present. It opens the client-clinician relationship domain and lets him say whether anything gets in the way.",
+   "o4": "Present. The words if any leave room for no group to matter.",
+   "x1": "Not present in the open set. It assumes his family has a particular pride and that it blocks him from asking for help.",
+   "x2": "Not present in the open set. It assigns him a habit on the basis of a group he did not name, and it supplies the reason he waited.",
+   "x3": "Not present in the open set. It assumes he has a faith, that it comforts him, and that he prays.",
+   "x4": "Not present in the open set. It asks him to agree that the clinician’s background does not matter, which closes the client-clinician relationship domain."
+  },
+  "src": "Module 12, Cultural Formulation: Five Domains of Questions",
+  "bloom": "evaluate",
+  "revisit": "Reread “Cultural Formulation: Five Domains of Questions.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Follow the client",
+  "short": "Follow the client",
+  "tag": "When the answer surprises",
+  "case": {
+   "title": "Case: Selma, 44",
+   "text": "Selma is an invented client who comes in feeling low. Her clinician has read that some clients describe distress through the body and that some want relatives in treatment, and expects either might apply. These are possibilities to ask about and they are not facts about Selma."
+  },
+  "intro": "<b>Step 4.<\/b> Selma’s answers contradict what the clinician expected. Following the client means changing the plan to match what she says. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 12, Cultural Humility as a Stance",
+  "items": [
+   {
+    "prompt": "Selma says, “It’s sadness. Plain sadness. I don’t have a body problem, so you can skip those questions.” Which response best follows her?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Use her word, sadness, in notes and handouts and ask what she wants to change, since her name for the problem guides the plan"
+     },
+     {
+      "id": "b",
+      "text": "Thank her but keep the bodily questions on the interview form, since they belong to a complete assessment"
+     },
+     {
+      "id": "c",
+      "text": "Check once more whether she may be minimizing physical symptoms, since many clients describe distress through the body"
+     },
+     {
+      "id": "d",
+      "text": "Explain the different ways distress can show up, since she may not know what to look for in her own experience"
+     }
+    ],
+    "correct": "a",
+    "why": "Her name for the problem is the information the formulation needs. Knowledge about how some people describe distress generates questions and does not answer them. The option that checks again puts the clinician’s expectation above her answer. A general fact about other people has been allowed to override what Selma said. The option that keeps the questions proceeds as though she had not answered. A complete assessment includes hearing her naming of the problem. The option that explains the possibilities treats her description as incomplete. It tells her what her experience might be where it could ask.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Humility as a Stance"
+   },
+   {
+    "prompt": "Later the clinician asks whether Selma would like a relative to join some sessions. Selma says, “No. Dinner at my mother’s is dinner. This one is mine.” What is the best response?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Note in the formulation that she keeps family out of treatment and treat this as a possible sign of isolation"
+     },
+     {
+      "id": "b",
+      "text": "Invite a relative to the next session anyway, since social support is associated with better outcomes"
+     },
+     {
+      "id": "c",
+      "text": "Ask why she does not want family involved, so the clinician can address what she may be avoiding"
+     },
+     {
+      "id": "d",
+      "text": "Accept it and ask what other supports she counts on, since the choice is hers to reopen"
+     }
+    ],
+    "correct": "d",
+    "why": "She answered the question, and the clinician can build from what she says. Her family can be part of her week and no part of treatment. The option that invites a relative anyway replaces her answer with a general finding. A guess about what families do has overridden what she said. The option that probes for avoidance assumes her no hides something. The question puts her in the position of defending a plain preference. The option about isolation turns a stated preference into a symptom. Isolation is a pattern to check for and cannot be inferred from one answer.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Humility as a Stance"
+   },
+   {
+    "prompt": "Which entry belongs in the clinician’s overall cultural assessment after these two answers?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Presents with sadness, consistent with expectations for her background, with limited insight into the role of family."
+     },
+     {
+      "id": "b",
+      "text": "Declined family involvement and bodily questions, suggesting guardedness, to be monitored in later sessions for signs of withdrawal."
+     },
+     {
+      "id": "c",
+      "text": "Names the problem as sadness, wants to work on it herself, and keeps family dinners apart from treatment. To check with her."
+     },
+     {
+      "id": "d",
+      "text": "Bodily symptoms likely under-reported. Family involvement recommended once she is ready, after she has built trust with the clinic."
+     }
+    ],
+    "correct": "c",
+    "why": "Every statement comes from Selma, and the entry is checked with her. The assessment is a synthesis after the questions, and it stays open to correction. The option about under-reported symptoms and later involvement writes the clinician’s expectations into the record over her answers. The option that cites expectations for her background assigns a group trait to her. It also describes her answer as limited insight. The option about guardedness turns two clear answers into a trait. It also leaves the record without her own name for the problem.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Formulation: Five Domains of Questions"
+   }
+  ],
+  "revisit": "Reread “Cultural Humility as a Stance” and “Cultural Formulation: Five Domains of Questions.”"
+ },
+ {
+  "type": "mcq",
+  "title": "After a rupture",
+  "short": "After a rupture",
+  "tag": "Repair",
+  "case": {
+   "title": "Case: Quincy, 34",
+   "text": "Quincy is an invented client who has been low and tense for months. In the third session he says a supervisor told him, in front of coworkers, to “speak normal” on the phone. The clinician replies, “I am sure they did not mean anything by it.” Quincy says, “Okay,” leans back, and answers the next three questions in one word each."
+  },
+  "intro": "<b>Step 5.<\/b> A cultural misunderstanding can rupture the alliance. Repair has four parts, which are to acknowledge without defensiveness, to validate, to explore the impact, and to show willingness to learn. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 12, Cultural Humility as a Stance",
+  "items": [
+   {
+    "prompt": "What did the clinician’s reply do?",
+    "options": [
+     {
+      "id": "a",
+      "text": "It dismissed what Quincy reported, since his shorter answers signal a rupture in the alliance"
+     },
+     {
+      "id": "b",
+      "text": "It was a problem of treatment wording and no rupture, since nothing was said about the relationship"
+     },
+     {
+      "id": "c",
+      "text": "It was a neutral remark, since the shorter answers show that he is tired after a long week of work"
+     },
+     {
+      "id": "d",
+      "text": "It reassured him and kept the alliance intact, since Quincy said okay and answered each question put to him"
+     }
+    ],
+    "correct": "a",
+    "why": "A reply that explains away what a client said tells him the report was not heard. The change in how he answers is information that the relationship has been affected. The option that counts okay as agreement reads the words and misses the change in his behavior. A client who leans back and shortens his answers is no longer open. The option about tiredness explains the signal away. The shift followed the reply, and the more likely explanation is the one tied to it. The option about wording separates the remark from the relationship. A rupture does not require talk about the relationship, only an effect on it.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Humility as a Stance"
+   },
+   {
+    "prompt": "Which statement best begins repair?",
+    "options": [
+     {
+      "id": "a",
+      "text": "“I did not mean to dismiss you. I only meant that people often act without thinking, and it may not have been aimed at you.”"
+     },
+     {
+      "id": "b",
+      "text": "“I want to make sure I understand what happened. Can you tell me the exact words your supervisor used and who was present?”"
+     },
+     {
+      "id": "c",
+      "text": "“I think I brushed past what you told me about being told to speak normal. I am sorry. How did my reply land for you?”"
+     },
+     {
+      "id": "d",
+      "text": "“Let’s leave that for now and get back to your sleep and mood questions, since we have limited time.”"
+     }
+    ],
+    "correct": "c",
+    "why": "It acknowledges the clinician’s part without defending it, validates his experience, and asks how the reply affected him. A willingness to learn can follow from his answer. The option that explains intent defends the clinician and repeats the dismissal. Repair acknowledges without defensiveness. The option that returns to the plan stays silent about the rupture. Silence out of discomfort risks compounding the injury. The option that investigates the event attends to the incident and passes over the effect of the reply. It also asks him to prove what happened.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Humility as a Stance"
+   },
+   {
+    "prompt": "Quincy answers the repair attempt with “It’s fine.” What is the best next step?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Offer a longer explanation of why the earlier reply was meant kindly, since he may then understand the clinician’s intent"
+     },
+     {
+      "id": "b",
+      "text": "Accept his answer for now, say the door stays open, and check in at the next session, since repair does not force an answer"
+     },
+     {
+      "id": "c",
+      "text": "Take “It’s fine” at face value and move on, since he has answered, the topic is closed, and the rupture is settled"
+     },
+     {
+      "id": "d",
+      "text": "Press him until he explains, since the rupture is not repaired until he says what he feels about the earlier reply"
+     }
+    ],
+    "correct": "b",
+    "why": "Repair does not force an answer. Saying the topic can be raised again, and returning to it, shows willingness to learn and gives him control over when. The option that presses treats repair as a demand. A client pushed to disclose may feel the same dismissal again. The option that moves on treats the words as a full report. A repeated one-word pattern suggests the rupture has not been resolved. The option about intent returns to defending the clinician. It asks Quincy to take on the job of reassuring the person who hurt him.",
+    "bloom": "evaluate",
+    "src": "Module 12, Cultural Humility as a Stance"
+   }
+  ],
+  "revisit": "Reread “Cultural Humility as a Stance.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>Carry forward.<\/b> The Outline for Cultural Formulation gives five general domains to use as headings for questions. The Cultural Formulation Interview is a separate structured interview, designed for any patient. Both are asked of every client. A question assumes too much when it holds an answer the client has not given, and it opens a topic when it allows for no. When the client’s answer contradicts what the clinician expected, the clinician follows the client. After a rupture, repair acknowledges, validates, explores the impact, and shows willingness to learn.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every client in it is invented. The questions are practice wording and no script. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

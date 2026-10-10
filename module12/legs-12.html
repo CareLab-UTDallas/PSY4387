@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>When the Three Legs Disagree</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>When the Three Legs Disagree</h1>
+    <p class="sub">Four constructed cases in which research, expertise, and the client’s values and context point different ways. Decide, defend, and revise when new information arrives.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Sort the client’s statements",
+  "short": "Sort statements",
+  "tag": "Beckett’s objection",
+  "case": {
+   "title": "Case: Beckett, 31",
+   "text": "Beckett is an invented client with panic attacks who has started avoiding highways and crowded stores. In this invented case, the clinic’s guideline lists exposure-based cognitive behavioral therapy as the first choice for his difficulty. The clinician explains this, and Beckett says no to exposure. Over two visits he says the statements below. The reading says values and goals, preferences about method, and practical constraints are each weighed differently."
+  },
+  "intro": "<b>Step 1.<\/b> Before anyone weighs the legs, the client leg needs sorting. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose what each statement is.",
+  "cats": [
+   {
+    "id": "val",
+    "label": "Value or goal"
+   },
+   {
+    "id": "pref",
+    "label": "Preference about method"
+   },
+   {
+    "id": "con",
+    "label": "Practical constraint"
+   }
+  ],
+  "src": "Module 12, Weighing the Legs",
+  "items": [
+   {
+    "text": "“I want to be able to drive my daughter to school without planning my route around highways.”",
+    "answer": "val",
+    "why": "A statement of what he wants his life to include. It is a goal that treatment should serve, and it is also a reason to take the problem seriously.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "“I can only come before work, and the clinic opens at nine.”",
+    "answer": "con",
+    "why": "A practical barrier. It can be solved with scheduling or format and says nothing about what he values.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "“Sessions cost more than I can manage every week.”",
+    "answer": "con",
+    "why": "A practical constraint on dose. It bears on how often sessions can run and which format fits.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "“My last therapist had me stand in a crowded store and never explained why. I quit after two sessions.”",
+    "answer": "pref",
+    "why": "A past experience that shapes what he will accept. The objection traces to how the earlier work was delivered, which a clinician can address.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "“Whatever we do, I want to still feel like myself at the end of it.”",
+    "answer": "val",
+    "why": "A value that the plan has to respect. It does not rule out any particular method.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "“I won’t do anything that makes my heart race on purpose.”",
+    "answer": "pref",
+    "why": "A preference about method. It may rest on fear or on the earlier experience, and the clinician can explore which.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread “Weighing the Legs.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Beckett in three decisions",
+  "short": "Beckett",
+  "tag": "Guideline versus refusal",
+  "case": {
+   "title": "Case: Beckett, 31",
+   "text": "The same invented client as in Step 1. He has said no to exposure for the reasons you sorted. The invented clinic guideline lists exposure-based treatment first, and his clinician has the skills to deliver it. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+  },
+  "intro": "<b>Step 2.<\/b> You will decide what to do, choose the defense of the decision, and then receive new information.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 12, When the Three Legs Disagree",
+  "items": [
+   {
+    "prompt": "Which plan best uses all three legs?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Explain what the practice is for, ask what went wrong last time, and let Beckett pick graded steps, since his objection can be addressed"
+     },
+     {
+      "id": "b",
+      "text": "Teach breathing and relaxation skills for several months and revisit exposure later, since his panic may settle on its own first"
+     },
+     {
+      "id": "c",
+      "text": "Keep exposure as the plan and tell him it has the strongest evidence, since the guideline names it first and he should reconsider"
+     },
+     {
+      "id": "d",
+      "text": "Respect the refusal and switch to supportive counseling for now, since the client leg outranks the guideline when the two disagree"
+     }
+    ],
+    "correct": "a",
+    "why": "The research leg is kept through the approach practice. The objection is traced to its source in a past experience and a schedule, and both can be changed. The option that outranks the guideline lets one leg decide. His objection traces to causes that can be addressed, so giving up the approach is early. The option that persuades with the guideline treats the research leg as the whole answer. His reasons are information about how to deliver the treatment. The option that postpones exposure removes the process that targets avoidance. Panic may not settle while he keeps avoiding, so the revisit date may never arrive.",
+    "bloom": "evaluate",
+    "src": "Module 12, Weighing the Legs"
+   },
+   {
+    "prompt": "Which statement is the best defense of that plan?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The guideline is the strongest evidence, so the clinician’s task is to persuade, and Beckett’s preferences guide mostly the wording"
+     },
+     {
+      "id": "b",
+      "text": "The objection traces to a past experience and a schedule the clinician can address, so the plan keeps approach and sets a review date"
+     },
+     {
+      "id": "c",
+      "text": "His reasons are values, so the plan should follow them in full and the research serves as background to the conversation"
+     },
+     {
+      "id": "d",
+      "text": "Clinical expertise permits setting aside a guideline when a client objects, so the plan follows the clinician’s judgment about what he will tolerate"
+     }
+    ],
+    "correct": "b",
+    "why": "The defense names the source of the conflict, what each leg keeps, and when the plan will be reviewed. It matches the steps for weighing the legs. The option about persuasion treats the third leg as decoration. His preferences shape the plan itself and extend past the language. The option about expertise stretches the second leg into an override. Expertise includes skilled delivery of an approach and monitoring whether it helps. The option that follows his reasons completely misreads them. Most are a method preference and a constraint, and his stated value, feeling like himself, does not rule out exposure.",
+    "bloom": "evaluate",
+    "src": "Module 12, Weighing the Legs"
+   },
+   {
+    "prompt": "After eight weeks, using steps he picked, Beckett’s attacks have fallen from about five a week to one (invented numbers). This week his daughter was admitted to the hospital. He is sleeping badly and asks to stop all practice for now. What is the best response?",
+    "options": [
+     {
+      "id": "a",
+      "text": "End treatment, since he is no longer willing to do the work and the gains are already in place and can be reviewed later"
+     },
+     {
+      "id": "b",
+      "text": "Continue exposure on schedule, since progress is real and stopping now risks losing the gains, and the hospital stay will pass soon enough"
+     },
+     {
+      "id": "c",
+      "text": "Add harder steps and more sessions, since the gains need to hold under the stress and not be lost during the hospital stay"
+     },
+     {
+      "id": "d",
+      "text": "Honor the pause since his circumstances changed, keep a short weekly check on panic and coping, and set a date to revisit exposure"
+     }
+    ],
+    "correct": "d",
+    "why": "The client leg now carries the weight. The plan stays connected to the evidence through brief monitoring and a revisit date, and it changes with what he is facing. The option that continues treats the research leg as the whole answer. A parent with a child in the hospital has changed what the plan can ask of him this week. The option that ends treatment reads a pause as a refusal. Ending removes monitoring and support at the point when both matter. The option about harder steps raises the demand when his capacity has dropped. Holding the gains under stress is a goal the clinician can pursue after the pause.",
+    "bloom": "evaluate",
+    "src": "Module 12, Weighing the Legs"
+   }
+  ],
+  "revisit": "Reread “Weighing the Legs” and “Leg Three: Patient Values, Culture, and Preferences.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Adaeze in three decisions",
+  "short": "Adaeze",
+  "tag": "Trials that did not look like her",
+  "case": {
+   "title": "Case: Adaeze, 44",
+   "text": "Adaeze is an invented client. She works night shifts as a hospital aide, helps care for her younger brother during the day, and has felt low and withdrawn for four months. The clinic’s usual first choice is a structured behavioral activation program. In this invented case, three randomized trials of it enrolled mostly full-time university students recruited by email and held weekly evening sessions. Adaeze says she wants help and cannot attend evenings. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+  },
+  "intro": "<b>Step 3.<\/b> The research leg is strong for the program and weak on resemblance. The clinician’s job is to say both.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 12, Leg One: The Best Available Research Evidence",
+  "items": [
+   {
+    "prompt": "How should the clinician use the program’s evidence?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Choose a supportive approach built around her situation, since fit matters more than evidence from other people"
+     },
+     {
+      "id": "b",
+      "text": "Set the program aside, since the trials did not include people like her and so offer no evidence for her, and choose again from scratch"
+     },
+     {
+      "id": "c",
+      "text": "Use the evidence as a guide to the mechanism, adapt the program to her shifts, and track results, since it was not tested in her situation"
+     },
+     {
+      "id": "d",
+      "text": "Deliver the program as tested, since randomized trials rank near the top of the ladder and she can rearrange her week"
+     }
+    ],
+    "correct": "c",
+    "why": "The research leg is stated in three parts, which are what it shows, how strong it is, and how closely the studied people resemble her. The plan keeps the mechanism and checks the fit with data. The option that delivers the program as tested ignores that she has said she cannot attend evenings. The ladder speaks to strength and says nothing about resemblance. The option that sets the program aside treats the mismatch as total. Trials describe a process that may well apply, and the open question is how much confidence to place in the delivery. The option about a supportive approach lets fit replace evidence. She can have both, because the mechanism can be delivered in a format that suits her.",
+    "bloom": "evaluate",
+    "src": "Module 12, Leg One: The Best Available Research Evidence"
+   },
+   {
+    "prompt": "A colleague objects, “You are changing a tested program, so you cannot call it evidence-based.” Which reply best defends the plan?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The colleague is right that the adapted version is untested, so the clinician should tell Adaeze it has no evidence behind it and let her choose"
+     },
+     {
+      "id": "b",
+      "text": "The evidence supports the process of activation, and the adapted delivery is untested, so the plan says so, records changes, and tracks results"
+     },
+     {
+      "id": "c",
+      "text": "Evidence-based means following the tested protocol closely, so the colleague is right and the clinic should refer her elsewhere to a program that can"
+     },
+     {
+      "id": "d",
+      "text": "The label applies to a treatment inspired by the research even when parts are changed, so the objection does not matter and nothing needs recording"
+     }
+    ],
+    "correct": "b",
+    "why": "Evidence-based practice integrates the research, the clinician’s expertise, and the client’s circumstances. The plan is open about what is untested and checks the result. The option that follows the protocol exactly confuses evidence-based practice with a packaged treatment. A referral may help if the clinic cannot adapt, and the label does not require it. The option about any inspired treatment drains the label. A change that moved the theory of change would need its own evaluation. The option that says no evidence overstates the gap. The mechanism has support, and the untested part is the delivery for her circumstances.",
+    "bloom": "evaluate",
+    "src": "Module 12, Locating a Claim on the Stool"
+   },
+   {
+    "prompt": "At week five, days with at least one activity out of 7 are 1, as at week one, and her mood score has not changed (invented numbers). She attends every session and says she likes them. What is the best next step?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Continue unchanged, since attendance shows engagement and effects often come late in treatment, especially at lower doses"
+     },
+     {
+      "id": "b",
+      "text": "Add more activities each week to raise the dose, since she is attending and has said she likes the sessions and can manage more"
+     },
+     {
+      "id": "c",
+      "text": "Conclude that the program does not work for people in her situation and change treatments right away, since five weeks is long enough"
+     },
+     {
+      "id": "d",
+      "text": "Explore what blocks activity, such as shift fatigue or caregiving hours, and revise the plan, since the series is flat"
+     }
+    ],
+    "correct": "d",
+    "why": "A flat activity series means the mechanism is not moving. Asking what blocks it is the first step, since the plan was a hypothesis about delivery as well as about the program. The option that changes treatments draws a conclusion about the program from one series. The adapted delivery has not yet been adjusted to what she reports. The option that continues unchanged reads attendance as progress. The mechanism measure is flat, and waiting only adds more weeks without contact with reinforcing activity. The option about a higher dose adds to a plan she has not been able to carry out. Smaller or better-timed activities are likelier to help.",
+    "bloom": "evaluate",
+    "src": "Module 12, Weighing the Legs"
+   }
+  ],
+  "revisit": "Reread “Leg One: The Best Available Research Evidence” and “Locating a Claim on the Stool.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Linus in three decisions",
+  "short": "Linus",
+  "tag": "A favored method with thin evidence",
+  "case": {
+   "title": "Case: Linus, 36",
+   "text": "Linus is an invented client with long-standing worry about work and health. He sees a clinician with twenty years of experience who is skilled at building relationships and who uses a method she calls imagery repatterning, which she developed herself. In this invented case, no controlled study of the method exists. She says her clients like it. She has not tracked outcomes with measures. In this invented case nothing suggests the method harms clients, and Linus has no risk factors that would make it unsafe for him. A better-tested approach for worry is available at the clinic. Linus has not heard of the method and has no stated preference."
+  },
+  "intro": "<b>Step 4.<\/b> Here the clinician’s preference is the leg that outruns the evidence. Weigh what experience does and does not establish.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 12, Leg Two: Clinical Expertise",
+  "items": [
+   {
+    "prompt": "Which plan best uses the three legs?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Describe the evidence for each approach, recommend the better-tested one, and let Linus choose, since he has no preference yet"
+     },
+     {
+      "id": "b",
+      "text": "Blend the two without separating which part produces the change, since each leg then keeps a place in the plan"
+     },
+     {
+      "id": "c",
+      "text": "Use the better-tested approach without mentioning the method, since the research leg should decide when the client has no preference"
+     },
+     {
+      "id": "d",
+      "text": "Use imagery repatterning, since twenty years of experience is strong evidence from the expertise leg, and her clients keep coming back"
+     }
+    ],
+    "correct": "a",
+    "why": "Each leg is stated. The recommendation follows the research leg, the client decides with real information, and the clinician’s skill is put to use in either approach. The option that relies on experience treats years as skill. Without tracked outcomes, years of practice show little about whether the method works. The option that withholds the choice treats a missing preference as permission to decide. Linus has not heard of the options, so he has had no chance to form one. The option that blends them looks like it honors every leg. It leaves nobody able to tell which part helped, so the clinician cannot learn from the result.",
+    "bloom": "evaluate",
+    "src": "Module 12, Leg Two: Clinical Expertise"
+   },
+   {
+    "prompt": "What does twenty years of experience establish about the method?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Enough to match a tested treatment, because clinical expertise is one of the three legs and carries equal weight"
+     },
+     {
+      "id": "b",
+      "text": "That the method works for her clients, because clients who like a treatment improve on it and would not keep coming"
+     },
+     {
+      "id": "c",
+      "text": "Nothing, because experience counts for little in evidence-based practice and trial results are what matter"
+     },
+     {
+      "id": "d",
+      "text": "It shows the clinician is practiced and clients stay, but not that the method works, as outcomes were not tracked"
+     }
+    ],
+    "correct": "d",
+    "why": "Experience is a describable skill when feedback keeps it growing. Without measures, clients liking the work leaves open whether the method moved the process. The option that gives experience no weight overlooks that expertise is one of the three legs. The skill of the clinician affects how well any method is delivered. The option that treats expertise as equal to a trial treats the second leg as an override. Each leg is stated for its own firmness. The option about liking reads satisfaction as outcome. People can like a treatment and fail to change on the measures that matter.",
+    "bloom": "evaluate",
+    "src": "Module 12, Leg Two: Clinical Expertise"
+   },
+   {
+    "prompt": "Linus hears both options and chooses imagery repatterning. He says a friend did it and it helped her, and he trusts the clinician. What is the best plan now?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Decline to offer it, since a method without a trial should not be given to a client, and refer him to the better-tested approach instead"
+     },
+     {
+      "id": "b",
+      "text": "Proceed with his informed consent, track worry and a mechanism measure, and set a review, since evidence is thin"
+     },
+     {
+      "id": "c",
+      "text": "Proceed and tell him the method is now evidence-based because he has chosen it and a friend of his improved on it"
+     },
+     {
+      "id": "d",
+      "text": "Proceed, and skip measures, since a client who has chosen a treatment will not need monitoring beyond how he says he feels"
+     }
+    ],
+    "correct": "b",
+    "why": "His informed choice is the client leg speaking, and a method with weak evidence can still be offered when no harm is expected. The review point gives the research leg a way back in. The option that declines reads missing trials as a prohibition. A request outside the strongest evidence is weighed, and the limits come from ethical duties about harm. The option that skips measures leaves the decision unreviewable. Monitoring matters more when the evidence is thinner. The option about the label confuses choice with evidence. A client’s preference is one leg and does not change what the research shows.",
+    "bloom": "evaluate",
+    "src": "Module 12, A Second Illustration: When the Evidence Points Away From the Request"
+   }
+  ],
+  "revisit": "Reread “Leg Two: Clinical Expertise” and “A Second Illustration: When the Evidence Points Away From the Request.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Ilse in three decisions",
+  "short": "Ilse",
+  "tag": "Data against impression",
+  "case": {
+   "title": "Case: Ilse, 25",
+   "text": "Ilse is an invented client in treatment for low mood. Her clinician sees someone who smiles, arrives on time, and talks more each week, and believes she is improving. The weekly mood questionnaire (PHQ-9, scored 0 to 27, higher is worse) reads 18, 19, 19, and 20 over four weeks, and the activity log shows 0 or 1 active days each week. These numbers are invented. The clinician has not shown Ilse the scores. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+  },
+  "intro": "<b>Step 5.<\/b> The clinician’s impression and the monitoring data point in different directions. Decide how to weigh them.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 12, Measurement-Based Care: Why Clinicians Need a Gauge",
+  "items": [
+   {
+    "prompt": "What is the best response to the disagreement?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Trust the clinical impression, since expertise includes reading a client in the room, and treat the scores as noise"
+     },
+     {
+      "id": "b",
+      "text": "Trust the scores and tell Ilse that her sense of improvement is mistaken, since the numbers show no change in activity"
+     },
+     {
+      "id": "c",
+      "text": "Take the numbers seriously, show them to Ilse, and say that impression and scores disagree, since she may know what is blocked"
+     },
+     {
+      "id": "d",
+      "text": "Wait another four weeks of scores before raising it with her, so the pattern is certain and the numbers are less likely to be noise"
+     }
+    ],
+    "correct": "c",
+    "why": "Measures exist so a clinician can notice what the room hides. Sharing them makes Ilse a partner and gives her the chance to say what is happening. The option that trusts the impression treats expertise as immune from feedback. Without measurement, a clinician can miss a stalling or worsening case for a long time. The option that corrects Ilse treats the scores as the whole truth. Her own view of the sessions is data too, and the clinician has not yet asked. The option that waits delays a conversation the data already justify. Four more weeks adds time with no activity and gives the problem more room.",
+    "bloom": "evaluate",
+    "src": "Module 12, Measurement-Based Care: Why Clinicians Need a Gauge"
+   },
+   {
+    "prompt": "Which explanation should the clinician test first?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Treatment has failed and a new diagnosis is needed to explain why she is not improving as expected"
+     },
+     {
+      "id": "b",
+      "text": "The questionnaire is invalid for her, so the scores should be set aside in favor of the clinician’s impression"
+     },
+     {
+      "id": "c",
+      "text": "The alliance improved while her withdrawal did not, so rapport is read as progress"
+     },
+     {
+      "id": "d",
+      "text": "She is exaggerating her symptoms on the forms, so the scores overstate how low she is"
+     }
+    ],
+    "correct": "c",
+    "why": "Both observations fit. She smiles and talks more because the relationship is better, and the log shows contact with reinforcing activity has not changed. The option that sets the scores aside is an unlikely first explanation. The activity log, a different measure, tells the same story. The option about exaggeration puts the explanation in Ilse’s motives. Nothing in the pattern points to it, and it would not explain the log. The option about a new diagnosis jumps from a flat series to a conclusion about the problem itself. The formulation has not yet been tested against what she says is blocking her.",
+    "bloom": "evaluate",
+    "src": "Module 12, Tracking the Mechanism and the Symptoms"
+   },
+   {
+    "prompt": "When shown the numbers, Ilse says, “The scores are right. I did not want to worry anyone here. Some nights I think my family would manage fine without me.” What is the best response?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Thank her, ask directly about thoughts of suicide, and follow the safety procedure with 988 and 911 information, since she described a risk"
+     },
+     {
+      "id": "b",
+      "text": "Reassure her that these thoughts are common and return to the activity plan, since that keeps the sessions structured"
+     },
+     {
+      "id": "c",
+      "text": "Increase activity scheduling right away, since activation will lift mood and the thoughts with it over the next few weeks"
+     },
+     {
+      "id": "d",
+      "text": "Note it in the chart and ask about it at the next scheduled session, since the questionnaire will show it if risk rises in the meantime"
+     }
+    ],
+    "correct": "a",
+    "why": "New information from the client changes the priority. Asking directly with care is the first step, and a safety plan with 988 and 911 information gives her somewhere to turn. The option that reassures and returns to the plan lets the disclosure pass. The statement calls for a direct question and a safety response. The option about faster activation gives a mechanism-based answer to a safety question. Activation may help, and it does not replace asking and planning. The option that waits relies on a measure to catch a risk she has just described aloud. A questionnaire item is no substitute for asking her now.",
+    "bloom": "evaluate",
+    "src": "Module 12, Measurement-Based Care: The Loop"
+   }
+  ],
+  "revisit": "Reread “Measurement-Based Care: Why Clinicians Need a Gauge” and “Tracking the Mechanism and the Symptoms.”"
+ },
+ {
+  "type": "multi",
+  "title": "Write the decision note",
+  "short": "Decision note",
+  "tag": "Linus’s plan",
+  "case": {
+   "title": "Case: Linus, 36 (Step 4)",
+   "text": "Linus chose imagery repatterning after hearing both options. His clinician now writes a decision note for the chart. Seven candidate elements are listed."
+  },
+  "intro": "<b>Step 6.<\/b> A defensible resolution can be reconstructed from the record. Choose what the note should contain.",
+  "prompt": "Select every element that belongs in a defensible decision note for Linus.",
+  "doThis": "Select the elements, then check your answer.",
+  "options": [
+   {
+    "id": "a",
+    "label": "What each leg says and how firmly, including that no controlled study of the method exists"
+   },
+   {
+    "id": "x1",
+    "label": "A line that the clinician’s long experience with the method supports using it by default for clients like Linus"
+   },
+   {
+    "id": "b",
+    "label": "Where the conflict lies and that Linus chose the method for stated reasons"
+   },
+   {
+    "id": "c",
+    "label": "What each leg gave up in the plan"
+   },
+   {
+    "id": "x2",
+    "label": "A note that the plan will be reviewed only if Linus asks for a change"
+   },
+   {
+    "id": "d",
+    "label": "The measures to be used, the review point, and what result would change the plan"
+   },
+   {
+    "id": "x3",
+    "label": "A summary that Linus’s informed choice settles the question, so the note records only the choice"
+   }
+  ],
+  "truth": [
+   "a",
+   "b",
+   "c",
+   "d"
+  ],
+  "reasons": {
+   "a": "Present. Stating each leg and its firmness is the first of the steps for weighing the legs.",
+   "b": "Present. Tracing the conflict to its source, here a preference with stated reasons, is the second step.",
+   "c": "Present. Naming what each leg gives up shows that the trade-offs were seen.",
+   "d": "Present. A defensible resolution says what data would change the decision and when it will be reviewed.",
+   "x1": "Not in a defensible note. Years of experience without tracked outcomes do not show the method works, and the note should say what the research leg shows and how firmly.",
+   "x2": "Not in a defensible note. A defensible resolution sets a review point in advance and does not wait for a request.",
+   "x3": "Not in a defensible note. A client’s informed choice is one leg and does not change what the research shows, so the note also records the other legs and the review."
+  },
+  "src": "Module 12, Weighing the Legs",
+  "bloom": "evaluate",
+  "revisit": "Reread “Weighing the Legs.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>Carry forward.<\/b> When the legs disagree, state what each one says and how firmly, trace the conflict to its source, look for the option that honors as much of each as possible, name what each gives up, and set a review date. New information from any leg can change the best answer, so the plan stays provisional and the data decide when it is revisited. In the United States, call or text 988, or call 911 in an emergency.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every client in it is invented, and all numbers are invented for practice."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

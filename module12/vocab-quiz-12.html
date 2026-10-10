@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 12 Vocabulary: Self-Test</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:2px 0 16px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .term-tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:2px 0 6px;line-height:1.4;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;
+    border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;
+    line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;margin-left:auto;}
+  .opt:disabled{cursor:default;}
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.6;}
+
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;}
+  .hintbtn{background:none;border:none;color:var(--accent-ink);font:inherit;font-size:13.5px;cursor:pointer;text-decoration:underline;padding:0;}
+  .hintbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .hintbox{margin-top:12px;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);
+    border-radius:10px;padding:10px 13px;font-size:13.5px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  /* results */
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;}
+  .results .score b{color:var(--accent-ink);}
+  .results .breakdown{margin:16px 0 0;border-top:1px solid var(--line);padding-top:14px;}
+  .results .brow{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .bi{flex:0 0 auto;margin-top:1px;}
+  .results .bt{flex:1 1 auto;}
+  .results .bt .bterm{font-weight:600;}
+  .results .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Evidence-Based Practice Vocabulary: Self-Test</h1>
+    <p class="sub">Ten questions on the core Module 12 terms. Each question applies a term in a short scenario. Pick an answer to see whether it is right and why.</p>
+  </div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <section class="panel results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// Data for this self-test. Items are original, scenario-based, and grounded in the module reading.
+var QUIZ = [
+ {
+  "term": "Empirically supported treatment",
+  "bloom": "understand",
+  "prompt": "Odalys manages a clinic that advertises, “We deliver only empirically supported treatments, so every bit of our care is evidence-based.” Which reply fits the module?",
+  "options": [
+   {
+    "id": "a",
+    "text": "A list of protocols covers the research leg, and evidence-based practice also weighs expertise and this client’s values"
+   },
+   {
+    "id": "b",
+    "text": "The two phrases mean the same thing in the field, so the clinic can use them interchangeably in its materials"
+   },
+   {
+    "id": "c",
+    "text": "The advertisement is misleading, since evidence-based practice excludes any treatment that comes as a manualized protocol"
+   },
+   {
+    "id": "d",
+    "text": "The advertisement is accurate, since a treatment that has cleared a research bar makes every decision about it evidence-based"
+   }
+  ],
+  "correct": "a",
+  "explain": "An empirically supported treatment is a specific protocol that cleared a research bar. Evidence-based practice is a way of making decisions that integrates the research with the clinician’s expertise and the client’s values, so a list of protocols supplies one of the three parts. The advertisement is not accurate, because choosing a tested protocol does not settle assessment, adaptation, or fit. It is also not misleading about protocols themselves, since a clinician can use them inside evidence-based practice. Treating the two phrases as synonyms is the confusion the module warns about.",
+  "hint": "One phrase names a product with a track record, and the other names a way of deciding.",
+  "src": "Module 12, Empirically Supported Treatments: The Label and Its Limits"
+ },
+ {
+  "term": "Therapist effects",
+  "bloom": "apply",
+  "prompt": "At one clinic, Milo and a colleague both deliver the same manualized treatment. Across several years of caseloads, Milo’s clients improve more on average, and the gap persists. Which term names what this pattern describes?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Therapist effects, the differences in client improvement that trace back to who delivers the treatment"
+   },
+   {
+    "id": "b",
+    "text": "Allegiance, the pull that makes a clinician’s favored approach look better than it is in the data"
+   },
+   {
+    "id": "c",
+    "text": "Treatment effects, the differences in client improvement that trace back to which protocol the clinic used"
+   },
+   {
+    "id": "d",
+    "text": "Regression to the mean, the drift of extreme scores toward average when they are measured again"
+   }
+  ],
+  "correct": "a",
+  "explain": "Both clinicians use the same protocol, so the gap cannot come from which treatment was delivered. A difference that traces to the person delivering the treatment and persists across caseloads is a therapist effect. Regression to the mean would not persist across years of caseloads. Allegiance describes bias toward a favored approach, and nothing here compares approaches.",
+  "hint": "Same manual, different people delivering it.",
+  "src": "Module 12, Treatment Effects, Therapist Effects, and the Common-Factors Debate"
+ },
+ {
+  "term": "Deliberate practice",
+  "bloom": "apply",
+  "prompt": "Efrat has seen clients for twelve years. Which of her habits is deliberate practice?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Taking on a larger caseload each year so that she meets a wider range of problems and a wider range of clients"
+   },
+   {
+    "id": "b",
+    "text": "Relying on a sense of how sessions go that she believes has grown more accurate with each year of experience"
+   },
+   {
+    "id": "c",
+    "text": "Choosing one weak moment in a recording, rehearsing a better response, and checking whether outcomes shift"
+   },
+   {
+    "id": "d",
+    "text": "Attending a two-day workshop each spring on a new protocol and adding its techniques to her usual work with clients"
+   }
+  ],
+  "correct": "c",
+  "explain": "Deliberate practice names a specific weakness, works on it in a focused way, gets honest feedback, and checks whether the change helps clients. Years on the job, a bigger caseload, and a growing confidence in her own impressions can all accumulate without feedback. Workshops add knowledge and still leave open whether her own delivery has improved.",
+  "hint": "Look for the habit that includes feedback and a check on results.",
+  "src": "Module 12, Keeping Skill Alive Across a Career"
+ },
+ {
+  "term": "Fidelity",
+  "bloom": "apply",
+  "prompt": "Rahel’s clinic adds a trained interpreter to a tested treatment and keeps every procedure the same. A reviewer says fidelity has been lost. Which reply fits the implementation literature in the reading?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Fidelity means delivery as designed and tested, so the question is whether the change keeps the core mechanism"
+   },
+   {
+    "id": "b",
+    "text": "Fidelity applies mainly to the content of sessions, so changes in who is present do not bear on it"
+   },
+   {
+    "id": "c",
+    "text": "An added person changes how the treatment was tested, so the change should be handled as a different intervention"
+   },
+   {
+    "id": "d",
+    "text": "The reviewer is right, since fidelity requires that delivery match the original trials closely"
+   }
+  ],
+  "correct": "a",
+  "explain": "Adaptation always occurs, so the useful question is which changes preserve the mechanism and which undermine it. Adding an interpreter leaves the procedures and the process of change intact. Requiring a match to the original trials in every element cannot be met by any real clinic. Calling the change a different intervention applies the rule for changes to the theory of change, which this one does not touch. Limiting fidelity to session content ignores that delivery matters too.",
+  "hint": "Ask what the change touches, the procedures or only the wrapping.",
+  "src": "Module 12, Adapting Without Losing the Mechanism"
+ },
+ {
+  "term": "Preservation rule",
+  "bloom": "apply",
+  "prompt": "Ivo is treating panic with a method built on facing feared body sensations. Which proposed change passes the preservation rule?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Replacing the practice with talk about the client’s history while still describing the work as the same method"
+   },
+   {
+    "id": "b",
+    "text": "Dropping the practice in weeks when the client feels nervous, with the clinician choosing which weeks"
+   },
+   {
+    "id": "c",
+    "text": "Keeping the practice and dropping the weekly record of it to save session time for other concerns"
+   },
+   {
+    "id": "d",
+    "text": "Explaining the rationale with a saying the client offers while the client still faces the sensations weekly"
+   }
+  ],
+  "correct": "d",
+  "explain": "The rule says to adapt the delivery and keep the mechanism. A client’s own saying changes the wrapping, and the practice that produces the learning continues. Replacing the practice with talk changes the theory of change while keeping the label. Dropping practice removes the contact with the process. Removing the record keeps the practice on paper and leaves nobody able to tell whether it is still happening.",
+  "hint": "Which change leaves the client still in contact with the process that produces change?",
+  "src": "Module 12, The Preservation Rule"
+ },
+ {
+  "term": "Cultural humility",
+  "bloom": "understand",
+  "prompt": "Reza is about to meet a new client whose family background is unfamiliar to him. Which plan reflects cultural humility?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Complete a checklist of group facts, then use it to decide which techniques the client is likely to accept"
+   },
+   {
+    "id": "b",
+    "text": "Arrive as a learner, ask how the client sees the problem, and treat the client as expert on their own life"
+   },
+   {
+    "id": "c",
+    "text": "Set background aside and treat the client as the clinic treats its other clients, to stay fair"
+   },
+   {
+    "id": "d",
+    "text": "Read a summary of the group’s typical values beforehand so that the first session matches what is expected"
+   }
+  ],
+  "correct": "b",
+  "explain": "Cultural humility is a stance of learning, with the client as the expert on their own cultural experience and the clinician as the expert on change processes. A summary of group values or a checklist of group facts turns knowledge about a group into assumptions about a person. Ignoring background gives up the questions that reveal what fits.",
+  "hint": "Knowledge about a group generates questions and does not answer them.",
+  "src": "Module 12, Cultural Humility as a Stance"
+ },
+ {
+  "term": "Cultural Formulation Interview",
+  "bloom": "understand",
+  "prompt": "Bram is learning the DSM-5 Cultural Formulation Interview. Which description of the interview, and of how it relates to the Outline for Cultural Formulation, is accurate?",
+  "options": [
+   {
+    "id": "a",
+    "text": "It is a structured interview for clients from minority backgrounds, where it screens for traits that call for a changed plan"
+   },
+   {
+    "id": "b",
+    "text": "It is a structured interview of its own, separate from the Outline, and it is designed for use with any patient"
+   },
+   {
+    "id": "c",
+    "text": "It is one intake question about ethnicity that goes in the chart, and the Outline is completed from the clinician’s impressions"
+   },
+   {
+    "id": "d",
+    "text": "It is the same document as the Outline, a scoring tool that places each client in a cultural category and recommends a treatment"
+   }
+  ],
+  "correct": "b",
+  "explain": "The Outline for Cultural Formulation describes general domains for assessing how culture shapes a person’s presentation, help seeking, and treatment. The Cultural Formulation Interview is a separate structured interview with its own domains, designed for use with any patient. Neither one assigns categories or traits to groups, and a single intake question would leave the domains unexplored.",
+  "hint": "Think about who is asked and what the answers are used for.",
+  "src": "Module 12, Cultural Formulation: Five Domains of Questions"
+ },
+ {
+  "term": "Shared decision-making",
+  "bloom": "apply",
+  "prompt": "Takoda has two supported options for her client, and they differ in length and in what each asks of her week. Which approach is shared decision-making?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The clinician describes only the option she favors, to keep the decision simple, and asks the client to agree"
+   },
+   {
+    "id": "b",
+    "text": "The clinician lays out the options with evidence, costs, and benefits, and the client weighs them against her goals"
+   },
+   {
+    "id": "c",
+    "text": "The clinician picks the option with the stronger research record and tells the client the choice at the next session"
+   },
+   {
+    "id": "d",
+    "text": "The client picks whichever option she likes on first hearing its name, and the clinician carries out the choice"
+   }
+  ],
+  "correct": "b",
+  "explain": "Shared decision-making treats the choice as a collaboration. The clinician brings accurate information about the options and the client brings values, goals, and circumstances. Announcing a choice, offering only one option, or handing the decision to a first reaction leaves one party out.",
+  "hint": "Ask who contributes what to the decision.",
+  "src": "Module 12, The Third Leg Up Close: Culture, Values, and Shared Decisions"
+ },
+ {
+  "term": "Dual tracking",
+  "bloom": "apply",
+  "prompt": "Matilda tracks a client’s weekly symptom score and a weekly count of ruminative episodes, which is the process her treatment targets. After eight weeks rumination has fallen steadily and the symptom score has barely moved. Which reading fits?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The treatment has failed, since a flat symptom score outweighs the other measures in the case"
+   },
+   {
+    "id": "b",
+    "text": "Symptoms are the only outcome of interest, so the rumination count adds nothing and can be dropped from the plan now"
+   },
+   {
+    "id": "c",
+    "text": "The mechanism is moving while symptoms are not, which points to a less central mechanism or another maintaining factor"
+   },
+   {
+    "id": "d",
+    "text": "Rumination is falling on its own, so the treatment deserves no credit and the clinician should stop it right away"
+   }
+  ],
+  "correct": "c",
+  "explain": "Dual tracking separates whether the process is moving from whether symptoms are improving. A moving mechanism with flat symptoms points toward revisiting the formulation, since the process may be less central than hypothesized or something else may keep the problem going. A flat symptom score alone would not show this. The data give no basis for crediting nothing to the treatment or for dropping the process measure.",
+  "hint": "Read the two series against each other.",
+  "src": "Module 12, Tracking the Mechanism and the Symptoms"
+ },
+ {
+  "term": "Regression to the mean",
+  "bloom": "apply",
+  "prompt": "Magnus scores 26 on a depression questionnaire at intake, the worst week he can remember. At his second visit, before any treatment has started in earnest, he scores 22. (The scores are invented.) Which reading is most defensible?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The drop is reliable change, since a four-point difference on this questionnaire counts as real improvement"
+   },
+   {
+    "id": "b",
+    "text": "The drop shows the intake interview acted as a treatment, since scores fall after most conversations with a clinician"
+   },
+   {
+    "id": "c",
+    "text": "The first score was probably a data entry mistake, so only the second score should be recorded in the chart"
+   },
+   {
+    "id": "d",
+    "text": "Some of the drop reflects regression to the mean, since an extreme score contains error that is unlikely to repeat"
+   }
+  ],
+  "correct": "d",
+  "explain": "People tend to seek treatment when symptoms are at their worst, and extreme scores contain a share of random error that is unlikely to repeat in the same direction. Some early improvement is therefore expected without any treatment effect. A fixed number of points does not establish reliable change, and nothing in the case suggests a recording error or that an interview worked as a treatment.",
+  "hint": "Consider what an extreme score usually includes besides the true level.",
+  "src": "Module 12, Pitfalls"
+ }
+];
+
+var idx = 0;
+var answered = [];   // chosen id or null
+var hintShown = {};
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK='<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS='<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+function init(){ answered = QUIZ.map(function(){return null;}); renderProgress(); renderQuestion(); }
+
+function renderProgress(){
+  var pct = (idx) / QUIZ.length * 100;
+  document.getElementById("pbarfill").style.width = pct + "%";
+  document.getElementById("pcount").textContent = "Question " + Math.min(idx+1,QUIZ.length) + " of " + QUIZ.length;
+}
+
+function renderQuestion(){
+  renderProgress();
+  var q = QUIZ[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var top = el("div","qtop");
+  top.appendChild(el("span","qn","Question " + (idx+1) + " of " + QUIZ.length));
+  top.appendChild(el("span","term-tag", esc(q.term)));
+  panel.appendChild(top);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> Choose the option that reflects the reading's meaning of the term rather than a familiar word. You'll see whether it's right and why before moving on."));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls="opt";
+    if(isAnswered){
+      if(o.id===q.correct) cls+=" correct";
+      else if(o.id===chosen) cls+=" wrong";
+      else cls+=" dim";
+    }
+    var b = el("button",cls);
+    b.type="button";
+    if(isAnswered) b.disabled=true;
+    var mark="";
+    if(isAnswered && o.id===q.correct) mark=CHECK;
+    else if(isAnswered && o.id===chosen) mark=CROSS;
+    b.innerHTML='<span class="k">'+o.id.toUpperCase()+'.</span><span class="txt">'+esc(o.text)+'</span><span class="mark">'+mark+'</span>';
+    if(!isAnswered) b.addEventListener("click",function(){ choose(o.id); });
+    opts.appendChild(b);
+  });
+  panel.appendChild(opts);
+
+  if(!isAnswered){
+    var foot = el("div","foot");
+    var hb = el("button","hintbtn", hintShown[idx] ? "Hide hint" : "Show a hint");
+    hb.addEventListener("click", function(){ hintShown[idx]=!hintShown[idx]; renderQuestion(); });
+    foot.appendChild(hb);
+    foot.appendChild(el("span","",""));
+    panel.appendChild(foot);
+    if(hintShown[idx]) panel.appendChild(el("div","hintbox", esc(q.hint)));
+  } else {
+    var right = chosen===q.correct;
+    panel.appendChild(el("p","verdict "+(right?"ok":"no"), right ? "Correct." : "Not quite."));
+    var ex = el("p","explain", esc(q.explain));
+    ex.innerHTML += '<div class="src">Reading: ' + esc(q.src) + '</div>';
+    panel.appendChild(ex);
+
+    var foot = el("div","foot");
+    foot.appendChild(el("span","",""));
+    var last = idx===QUIZ.length-1;
+    var nb = el("button","btn");
+    nb.innerHTML = last ? 'See your results' : 'Next question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    nb.addEventListener("click", function(){
+      if(last){ finish(); } else { idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); }
+    });
+    foot.appendChild(nb);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(id){
+  if(answered[idx]!==null) return;
+  answered[idx]=id;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("pbarfill").style.width = "100%";
+  document.getElementById("pcount").textContent = "Complete";
+  document.getElementById("qpanel").classList.add("hidden");
+  var correct = answered.filter(function(a,i){return a===QUIZ[i].correct;}).length;
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML="";
+  rp.appendChild(el("h2",null,"Your results"));
+  rp.appendChild(el("p","score","You answered <b>"+correct+" of "+QUIZ.length+"</b> correctly."));
+
+  var bd = el("div","breakdown");
+  QUIZ.forEach(function(q,i){
+    var right = answered[i]===q.correct;
+    var row = el("div","brow");
+    row.innerHTML = '<span class="bi">'+(right?CHECK:CROSS)+'</span>' +
+      '<span class="bt"><span class="bterm">'+esc(q.term)+'</span>'+(right?'':' (revisit in the reading: '+esc(q.src)+')')+'</span>';
+    bd.appendChild(row);
+  });
+  rp.appendChild(bd);
+
+  var act = el("div","actions");
+  var again = el("button","btn secondary","Retake the self-test");
+  again.addEventListener("click", function(){ idx=0; answered=QUIZ.map(function(){return null;}); hintShown={};
+    document.getElementById("qpanel").classList.remove("hidden"); rp.classList.add("hidden"); renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again);
+  rp.appendChild(act);
+
+  rp.appendChild(el("p","selfnote","This self-test scores only these multiple-choice items, and your score is not saved or sent anywhere. Terms you missed are the ones to practice producing from memory."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

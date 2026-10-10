@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evidence Appraisal: Adaptation and Monitoring Claims</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --study-bg:#f2f4f8; --study-line:#c9d4e6; --study-ink:#2f4a72;
+    --tool-bg:#f3eef7; --tool-ink:#6d4a86; --tool-line:#d8c7e6;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .stagetabs{display:flex;gap:0;margin:16px 0 6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .stagetabs button{flex:1 1 0;border:none;background:#fff;padding:11px 10px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.25;}
+  .stagetabs button+button{border-left:1px solid var(--line);}
+  .stagetabs button[aria-selected="true"]{background:var(--accent);color:#fff;}
+  .stagetabs button:disabled{color:#b7b2a9;cursor:not-allowed;}
+  .stagetabs button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .stagetabs .sn{display:block;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+  .stagetabs .stt{display:block;font-weight:600;font-size:13px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:12px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .intro{background:var(--study-bg);border:1px solid var(--study-line);color:var(--study-ink);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;margin-bottom:16px;}
+  .intro b{font-weight:700;}
+
+  /* toolkit cards */
+  .toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  @media(max-width:620px){ .toolgrid{grid-template-columns:1fr;} }
+  .tool{border:1px solid var(--tool-line);background:var(--tool-bg);border-radius:12px;padding:13px 15px;}
+  .tool h3{margin:0 0 4px;font-size:14px;color:var(--tool-ink);}
+  .tool p{margin:0;font-size:13px;line-height:1.55;}
+  .tool .ask{margin-top:7px;font-size:12.5px;font-style:italic;color:var(--muted);}
+
+  .study{background:var(--study-bg);border:1px solid var(--study-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;}
+  .study .slabel{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--study-ink);background:#fff;border-radius:7px;padding:3px 9px;margin-bottom:8px;}
+  .study .sbody{font-size:14px;line-height:1.6;}
+  .study .sbody b{font-weight:700;}
+  .study .datarow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .study .chip{font-size:12px;background:#fff;border:1px solid var(--study-line);border-radius:7px;padding:4px 10px;color:var(--study-ink);}
+
+  .difficulty{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:6px;padding:3px 9px;display:inline-block;margin-bottom:10px;}
+  .difficulty.mod{background:var(--amber-bg);color:var(--amber-ink);}
+  .difficulty.hard{background:var(--no-bg);color:var(--no-ink);}
+
+  .qprompt{font-size:15px;line-height:1.5;margin:14px 0 12px;font-weight:600;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt .ol{font-weight:700;margin-right:7px;color:var(--muted);}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fnote{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+  .fnote .tool-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:#fff;border-radius:6px;padding:2px 8px;margin-bottom:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 6px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.62;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Evidence Appraisal: Adaptation, Monitoring, and Guideline Claims</h1>
+    <p class="sub">Judging whether the evidence supports a claim about a treatment requires different skills from knowing the treatment. The seven appraisal questions below apply to claims and constructed studies about cultural adaptation, measurement-based care, therapist effects, and clinical guidelines. The studies are constructed for practice, and the reasoning carries over to real ones.</p>
+  </div>
+
+  <div class="stagetabs" id="tabs" role="tablist"></div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+</div>
+
+<script>
+// Appraisal toolkit and constructed studies (not real publications; nothing here should be cited as a finding).
+var TOOLS = [
+ {
+  "name": "Compared to what?",
+  "body": "A treatment that beats a waitlist or usual care has shown that it beats that comparison. A claim that it beats another active treatment needs a trial, or an analysis, in which that treatment was the comparison."
+ },
+ {
+  "name": "Averages and individuals",
+  "body": "A pooled average describes many studies that differ in treatment, problem, population, and type of change. Look at the spread and at how many studies fall near each end. An average supports an expectation and does not show that any single change will work."
+ },
+ {
+  "name": "Correlates and causes",
+  "body": "A feature that goes with larger effects in a pooled review, such as the language of delivery, is a correlate. Studies with that feature may also differ in problem, setting, or design, so the review does not show that adding the feature causes the larger effect."
+ },
+ {
+  "name": "Who is left to measure",
+  "body": "When more people leave one arm than the other, or those who leave differ at the start, the people remaining are no longer the groups that were randomized. Check the counts, the reasons for leaving, and what happened to the people who are missing."
+ },
+ {
+  "name": "Small caseloads and case mix",
+  "body": "An average over a handful of clients can swing widely by chance. Clinicians whose clients began with different levels of severity are not comparable until that difference is taken into account."
+ },
+ {
+  "name": "What a recommendation rests on",
+  "body": "A guideline is a strong starting point whose strength depends on the evidence its panel weighed, who ran those studies, and what they were compared with. Read the evidence behind the recommendation along with the recommendation."
+ },
+ {
+  "name": "Statistical versus clinical significance",
+  "body": "A difference can be detectable and still too small to matter in a person’s life. Ask how large the difference is against a threshold that would change what a clinician or client does."
+ }
+];
+
+var ITEMS = [
+ {
+  "diff": "mod",
+  "bloom": "evaluate",
+  "study": {
+   "label": "Claim A",
+   "body": "A review (constructed) pools trials of culturally adapted treatments and reports an average effect favoring the adapted versions over standard ones. The authors conclude, “Adaptation works. Every clinic should adapt every protocol, and any adaptation will raise effectiveness.”",
+   "data": [
+    "Type: meta-analysis of 30 trials (constructed)",
+    "Average effect: d = 0.40 favoring adapted treatments",
+    "Range across trials: d = −0.10 to 1.10",
+    "Trials with d below 0.20: 9 of 30",
+    "Adaptations pooled: language, added content, format, and framing, in different combinations"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "a",
+  "tool": "Averages and individuals",
+  "options": [
+   {
+    "id": "a",
+    "text": "The average supports expecting thoughtful adaptation to help on average, and the spread shows it cannot be read as a law for any one adaptation"
+   },
+   {
+    "id": "b",
+    "text": "Pooled reviews of published trials overstate effects because trials with no benefit tend to go unpublished, so the 0.40 is probably inflated"
+   },
+   {
+    "id": "c",
+    "text": "Combining adapted treatments for different problems into one average is invalid, so this review has little to offer any decision about adaptation"
+   },
+   {
+    "id": "d",
+    "text": "Nine trials with small effects show that adaptation harms clients in close to a third of studies, so clinics should avoid adapting protocols"
+   }
+  ],
+  "why": "The average describes thirty trials that changed different things for different problems. Its spread, from slightly negative to large with nine trials below 0.20, shows that some adaptations did little, so “any adaptation will raise effectiveness” turns an average into a law. The average still supports a reasonable expectation that thoughtful adaptation helps on average. Publication bias is a real concern for any pooled estimate, and nothing in this table points to it, while the spread is on the page. Pooling across problems limits what the average can say and leaves it informative. Small effects are not harm, since only the low end of the range dips below zero and by a small amount."
+ },
+ {
+  "diff": "hard",
+  "bloom": "evaluate",
+  "study": {
+   "label": "Claim B",
+   "body": "A clinic randomizes clients to therapists who receive weekly feedback on a symptom measure or to usual care. The report says, “Among clients with a week-12 score, the feedback group improved by 8.1 points on the PHQ-9 and the usual-care group by 5.0. Routine feedback improves outcomes.” All numbers are constructed.",
+   "data": [
+    "Randomized: 100 to feedback, 100 to usual care",
+    "Baseline mean PHQ-9, everyone randomized: 17 in each arm",
+    "Week-12 score available: 62 feedback, 90 usual care",
+    "Baseline mean, clients with no week-12 score: 20 feedback, 15 usual care",
+    "Baseline mean, clients with a week-12 score: 15.2 feedback, 17.2 usual care",
+    "Mean drop, clients with a week-12 score: 8.1 feedback, 5.0 usual care",
+    "Reasons for missing week-12 scores: not recorded"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "b",
+  "tool": "Who is left to measure",
+  "options": [
+   {
+    "id": "a",
+    "text": "Therapists in the feedback arm knew their results were being watched, so the gain reflects their own expectations and says little about the feedback itself"
+   },
+   {
+    "id": "b",
+    "text": "Far more feedback clients than usual-care clients lack a week-12 score and leavers differ at baseline, so the remaining groups no longer rest on random assignment"
+   },
+   {
+    "id": "c",
+    "text": "A single clinic produced the data, so the result cannot be generalized to other settings, which is reason to set the finding aside until other sites replicate it"
+   },
+   {
+    "id": "d",
+    "text": "Random assignment protects the comparison, so the difference among the clients who have scores is a sound estimate of the effect of feedback on outcomes in this clinic"
+   }
+  ],
+  "why": "Random assignment makes the two arms alike when everyone is counted. Here 38 of 100 feedback clients and 10 of 100 usual-care clients have no week-12 score, and the people missing from the feedback arm started sicker than the people missing from the usual-care arm. The 8.1 and 5.0 compare two subsets that were shaped differently by who left, so the protection of randomization is gone, and without the leavers’ outcomes or reasons the direction of the bias cannot be known. Single-site data and therapist awareness are real limits on any trial of feedback, and neither is as serious as a comparison that has lost the property that made it fair."
+ },
+ {
+  "diff": "mod",
+  "bloom": "evaluate",
+  "study": {
+   "label": "Claim C",
+   "body": "A clinic manager ranks four therapists by their average drop on a symptom questionnaire last year and plans to send every new client with severe symptoms to the top-ranked therapist. The manager writes, “Therapist effects are real, so this ranking shows who is most skilled.” All numbers are constructed.",
+   "data": [
+    "Edda: 9 clients, mean drop 9.0, mean intake score 12",
+    "Lars: 58 clients, mean drop 7.1, mean intake score 18",
+    "Callum: 61 clients, mean drop 6.8, mean intake score 17",
+    "Akira: 52 clients, mean drop 6.9, mean intake score 19"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "c",
+  "tool": "Small caseloads and case mix",
+  "options": [
+   {
+    "id": "a",
+    "text": "A symptom questionnaire is self-report, so a ranking built from it says little about the therapist who treated each client"
+   },
+   {
+    "id": "b",
+    "text": "Experience accounts for most of the difference between therapists, so the manager should rank by years in practice and route severe cases there"
+   },
+   {
+    "id": "c",
+    "text": "The top rank rests on nine clients with the mildest intake scores, and the other three differ little, so chance and case mix may explain it"
+   },
+   {
+    "id": "d",
+    "text": "Therapist effects are small next to treatment effects, so differences among clinicians are too minor to act on in a busy clinic setting"
+   }
+  ],
+  "why": "Edda’s average comes from nine clients, so chance can move it a long way, and those clients began with the mildest scores. The other three therapists have large caseloads and averages within 0.3 points of each other, which is too narrow a gap to rank. Therapist effects are real, which is why caseloads and case mix need to be handled before a ranking is read as skill. The module reports Wampold and Imel’s argument that differences between therapists account for more of the variation in outcomes than differences between treatments, so calling them minor misreads it. Years in practice are a weak predictor of outcomes. Self-report is a limit on any outcome measure, and it applies equally to all four therapists, so it cannot explain the ranking."
+ },
+ {
+  "diff": "hard",
+  "bloom": "evaluate",
+  "study": {
+   "label": "Claim D",
+   "body": "A regional health system adopts a guideline that recommends Treatment X as first-line care for a condition. The medical director writes, “The guideline recommends X, so X is better than Y and Z, and we will stop offering them.” The guideline’s evidence summary is below. All numbers are constructed.",
+   "data": [
+    "Trials supporting X: 12",
+    "Compared with a waitlist or usual care: 11 of 12",
+    "Compared with another bona fide treatment: 1 of 12, with no meaningful difference",
+    "Trials run by X’s developers: 7 of 12",
+    "Follow-up beyond 3 months: 4 of 12"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "d",
+  "tool": "What a recommendation rests on",
+  "options": [
+   {
+    "id": "a",
+    "text": "A guideline is written by a panel, and panels carry their own biases, so the director should set it aside in favor of each clinician’s judgment"
+   },
+   {
+    "id": "b",
+    "text": "Seven of twelve trials came from X’s developers, so the evidence base deserves little trust and X should be recommended to fewer clients in the region"
+   },
+   {
+    "id": "c",
+    "text": "Only four trials followed clients past three months, so X should not be recommended widely until long-term results are available from more studies"
+   },
+   {
+    "id": "d",
+    "text": "The trials show X beats no treatment, and the one direct comparison found no difference, so calling Y and Z inferior is unsupported"
+   }
+  ],
+  "why": "Eleven of the twelve trials compare X with waiting or usual care, which shows that X beats those conditions. They say nothing about whether X beats Y or Z, and the one direct comparison found no meaningful difference. The conclusion that Y and Z are inferior therefore goes beyond the evidence, and it also removes options that a client’s values and circumstances may favor. Developer allegiance and short follow-up are real limits that lower confidence in X’s record, and each calls for caution about how firm the recommendation is. Neither shows the recommendation should be discarded. A guideline remains a strong starting point whose evidence still needs reading."
+ }
+];
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var stage="toolkit", idx=0, answers=[];
+
+function init(){ answers=ITEMS.map(function(){return null;}); stage="toolkit"; idx=0; render(); }
+
+function renderTabs(){
+  var host=document.getElementById("tabs"); host.innerHTML="";
+  [["toolkit","Stage 1","The appraisal toolkit"],["appraise","Stage 2","Appraise the studies"]].forEach(function(t){
+    var b=el("button"); b.setAttribute("role","tab"); b.setAttribute("aria-selected",String(stage===t[0]));
+    var locked = t[0]==="appraise" && !toolkitSeen;
+    b.disabled=locked;
+    b.innerHTML='<span class="sn">'+esc(t[1])+'</span><span class="stt">'+esc(t[2])+'</span>';
+    if(!locked) b.addEventListener("click", function(){ stage=t[0]; render(); });
+    host.appendChild(b);
+  });
+}
+var toolkitSeen=false;
+
+function renderProgress(){
+  if(stage==="toolkit"){ document.getElementById("pbarfill").style.width="0%"; document.getElementById("pcount").textContent="Toolkit"; }
+  else { var d=answers.filter(function(x){return x!==null;}).length; document.getElementById("pbarfill").style.width=(d/ITEMS.length*100)+"%"; document.getElementById("pcount").textContent="Study "+Math.min(idx+1,ITEMS.length)+" of "+ITEMS.length; }
+}
+
+function render(){ renderTabs(); renderProgress(); if(stage==="toolkit") renderToolkit(); else renderAppraise(); }
+
+function renderToolkit(){
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("div","intro","<b>Seven tools for judging a claim.</b> Each names a question a careful reader asks of any study. You will use these by name in the next stage, so read the question each one poses. The point is not to distrust all research, it is to calibrate how much a given study can actually support."));
+  var grid=el("div","toolgrid");
+  TOOLS.forEach(function(t){
+    var c=el("div","tool");
+    c.appendChild(el("h3",null,esc(t.name)));
+    c.appendChild(el("p",null,esc(t.body)));
+    c.appendChild(el("div","ask","Ask: "+esc(t.ask)));
+    grid.appendChild(c);
+  });
+  p.appendChild(grid);
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var b=el("button","btn","Start appraising \u2192");
+  b.addEventListener("click", function(){ toolkitSeen=true; stage="appraise"; idx=0; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  foot.appendChild(b); p.appendChild(foot);
+}
+
+function renderAppraise(){
+  var it=ITEMS[idx], chosen=answers[idx];
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("span","difficulty "+(it.diff==="hard"?"hard":"mod"), it.diff==="hard"?"Harder":"Moderate"));
+  var st=el("div","study");
+  st.appendChild(el("span","slabel", it.study.label));
+  st.appendChild(el("div","sbody", it.study.body));
+  var dr=el("div","datarow"); it.study.data.forEach(function(d){ dr.appendChild(el("span","chip", esc(d))); }); st.appendChild(dr);
+  p.appendChild(st);
+  p.appendChild(el("div","qprompt", esc(it.prompt)));
+  var opts=el("div","opts");
+  it.options.forEach(function(o){
+    var b=el("button","opt"); b.type="button";
+    b.innerHTML='<span class="ol">'+esc(o.id.toUpperCase())+'</span>'+esc(o.text);
+    if(chosen!==null){
+      b.disabled=true;
+      if(o.id===chosen) b.classList.add(o.id===it.answer?"correct-pick":"wrong-pick");
+      else if(o.id===it.answer) b.classList.add("show-correct");
+      else b.classList.add("dim");
+    } else { b.addEventListener("click", function(){ answers[idx]=o.id; render(); }); }
+    opts.appendChild(b);
+  });
+  p.appendChild(opts);
+  if(chosen!==null){
+    var right=chosen===it.answer;
+    var note=el("div","fnote "+(right?"ok":"no"));
+    note.innerHTML='<span class="tool-tag">'+esc(it.tool)+'</span><br>'+(right?"<b>Sound appraisal.</b> ":"<b>Not the strongest reading.</b> ")+esc(it.why);
+    p.appendChild(note);
+  }
+  var foot=el("div","foot");
+  var back=el("button","btn secondary","\u2190 Back"); back.disabled=idx===0;
+  back.addEventListener("click", function(){ if(idx>0){idx--;render();} }); foot.appendChild(back);
+  var next=el("button","btn"); var last=idx===ITEMS.length-1; next.disabled=chosen===null;
+  next.innerHTML=last?"See results":"Next study \u2192";
+  next.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+  foot.appendChild(next); p.appendChild(foot);
+}
+
+function finish(){
+  var correct=0; ITEMS.forEach(function(it,i){ if(answers[i]===it.answer) correct++; });
+  var p=document.getElementById("cardPanel"); p.innerHTML=""; p.className="card results";
+  p.appendChild(el("h2",null,"Appraisal complete"));
+  p.appendChild(el("p","score","You chose the best-supported reading on <b>"+correct+" of "+ITEMS.length+"</b> studies."));
+  p.appendChild(el("p",null,"In each hard case the conclusion claimed more than the design could support, because the studies lacked a comparison, a mechanism measure, or a way to establish order in time."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Review the toolkit"); again.addEventListener("click", function(){ stage="toolkit"; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  var retry=el("button","btn","Try the studies again"); retry.addEventListener("click", function(){ init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); act.appendChild(retry); p.appendChild(act);
+  p.appendChild(el("div","selfnote","This activity runs entirely on your own screen. Nothing you select is saved, sent, or seen by anyone. The studies here are constructed for practice."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

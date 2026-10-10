@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Measurement-Based Care Case Tracker</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+
+  .tiles{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;}
+  .tile{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .tile.on{background:var(--accent);color:#fff;}
+  .tile.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .note{font-size:13.5px;line-height:1.55;margin:0 0 12px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;}
+  .note b{color:var(--ink);}
+  .note.safe{background:var(--wrong-bg);border-color:var(--wrong-line);color:#5b2320;}
+  .note.safe b{color:#5b2320;}
+  .note.illus{background:var(--amber-bg);border-color:var(--amber-line);color:#5d4a1f;}
+  .cardrow{margin:4px 0;font-size:14px;}
+  .cardrow b{color:var(--amber-ink);}
+  h2.hd{margin:0 0 8px;font-size:19px;}
+  h3.ch{margin:14px 0 4px;font-size:14.5px;font-weight:700;}
+  .chartbox{margin:0 0 4px;}
+  svg.chart{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:10px;}
+  svg.chart text{font-family:inherit;font-size:11.5px;fill:#44413b;}
+  svg.chart .grid{stroke:#e7e4de;stroke-width:1;}
+  svg.chart .axis{stroke:#8b877f;stroke-width:1;}
+  svg.chart .ln-s{stroke:#8a5a25;stroke-width:2.4;fill:none;}
+  svg.chart .ln-m{stroke:#2f4a72;stroke-width:2.4;fill:none;stroke-dasharray:7 4;}
+  svg.chart .mk-s{fill:#8a5a25;stroke:#fff;stroke-width:1;}
+  svg.chart .mk-m{fill:#fff;stroke:#2f4a72;stroke-width:2.2;}
+  svg.chart .vl{font-weight:700;}
+  svg.chart .dirnote{fill:#6b6862;font-size:11px;}
+  .key{font-size:12.5px;color:var(--muted);margin:2px 0 8px;}
+  .chg{font-size:13.5px;margin:6px 0 4px;}
+  details.tbl{margin:10px 0 12px;}
+  details.tbl summary{cursor:pointer;font-size:13.5px;font-weight:600;padding:4px 0;}
+  .tblwrap{overflow-x:auto;}
+  table.data{border-collapse:collapse;width:100%;font-size:13px;}
+  table.data caption{text-align:left;font-size:12.5px;color:var(--muted);padding:4px 0;}
+  table.data th,table.data td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;}
+  table.data th{background:#f3f1ec;}
+  table.data tr.latest td,table.data tr.latest th{font-weight:700;}
+  .opt.sel{border:2px solid var(--ink);background:#f7f6f4;padding:12px 14px;}
+  .opt .gl{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .opt .mark{flex:0 0 auto;min-width:20px;font-weight:700;}
+  fieldset.grp{border:none;margin:12px 0 0;padding:0;}
+  fieldset.grp legend{font-size:15px;font-weight:600;margin:0 0 8px;padding:0;}
+  .fbbox{margin-top:14px;}
+  .fbbox p{margin:6px 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .fbbox .lab{font-weight:700;color:var(--ink);}
+  .badge{display:inline-block;font-size:12.5px;font-weight:700;border-radius:7px;padding:3px 9px;border:1px solid var(--line);background:#f3f1ec;}
+  .badge.ok{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .badge.no{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .startfoot{margin-top:30px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);}
+  summary:focus-visible,.opt:focus-visible,.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  [tabindex="-1"]:focus{outline:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Measurement-Based Care Case Tracker</h1>
+    <p class="sub">Follow two invented clients session by session. Read the symptom score and the mechanism score together, decide what to do at each checkpoint, and choose the main reason.</p>
+  </div>
+  <div id="root"></div>
+  <p class="startfoot">Both clients and all scores are invented and illustrative. Nothing is saved or sent. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.</p>
+</div>
+<script>
+var DECS = [
+ {
+  "id": "continue",
+  "label": "Continue as planned",
+  "gloss": "Keep the plan and set the next review."
+ },
+ {
+  "id": "adjust",
+  "label": "Adjust the intervention",
+  "gloss": "Change how the intervention is delivered. The hypothesis stays."
+ },
+ {
+  "id": "revisit",
+  "label": "Revisit the formulation",
+  "gloss": "Treat the hypothesis about the mechanism as in doubt."
+ },
+ {
+  "id": "end",
+  "label": "Discuss ending",
+  "gloss": "Open a conversation about consolidating gains and finishing."
+ }
+];
+var CASES = [
+ {
+  "name": "Gus",
+  "label": "Case 1: Gus",
+  "story": "Gus is an invented client. He lost his job and has stopped going to his weekly climbing group. He stays in most days and describes his mood as flat and heavy.",
+  "formulation": "Pulling back from valued activity keeps his mood low, so activity is the process the plan targets.",
+  "plan": "Behavioral activation. Sessions 1 and 2 cover assessment and building a schedule of valued activities. Scheduled activities begin the week after session 2. The first planned review is session 6.",
+  "goal": "Gus's own goal is to be back at the climbing group each week with a mood rating of 12 or lower.",
+  "sym": {
+   "name": "Weekly Mood Rating",
+   "abbr": "WMR",
+   "min": 0,
+   "max": 27,
+   "better": "lower",
+   "desc": "invented scale, 0 to 27, higher means worse mood, so lower is better"
+  },
+  "mech": {
+   "name": "Valued Activity Count",
+   "abbr": "VAC",
+   "min": 0,
+   "max": 14,
+   "better": "higher",
+   "desc": "invented count of valued activities completed in the past week, 0 to 14, so higher is better"
+  },
+  "sessions": [
+   {
+    "sym": 20,
+    "mech": 2,
+    "note": "Intake and assessment.",
+    "n": 1
+   },
+   {
+    "sym": 19,
+    "mech": 2,
+    "note": "Schedule of valued activities agreed. The first small activities are set for the coming week.",
+    "n": 2
+   },
+   {
+    "sym": 22,
+    "mech": 3,
+    "note": "Gus says it was a hard week with family demands. He completed three scheduled activities.",
+    "n": 3
+   },
+   {
+    "sym": 19,
+    "mech": 5,
+    "note": "Back to his usual routine.",
+    "n": 4
+   },
+   {
+    "sym": 17,
+    "mech": 6,
+    "note": "Added a short walk with a neighbor.",
+    "n": 5
+   },
+   {
+    "sym": 16,
+    "mech": 8,
+    "note": "Went to the climbing group once.",
+    "n": 6
+   },
+   {
+    "sym": 14,
+    "mech": 8,
+    "note": "Two visits to the group.",
+    "n": 7
+   },
+   {
+    "sym": 13,
+    "mech": 9,
+    "note": "Says mornings feel easier.",
+    "n": 8
+   },
+   {
+    "sym": 12,
+    "mech": 9,
+    "note": "Climbing group every week.",
+    "n": 9
+   },
+   {
+    "sym": 12,
+    "mech": 10,
+    "note": "Says his mood feels like his usual self.",
+    "n": 10
+   }
+  ],
+  "items": [
+   {
+    "kind": "cp",
+    "session": 3,
+    "bloom": "analyze",
+    "src": "Pitfalls",
+    "best": "continue",
+    "prompt": "Session 3. The first week of scheduled activities is over. Decide what to do.",
+    "pattern": {
+     "label": "No pattern yet",
+     "text": "Only one week of activation has passed. The activity count moved up by one step and the mood rating moved up by three points. One week is too little to place the case in any of the four dual-tracking patterns."
+    },
+    "pitfall": "The pitfall here is one noisy point. A single reading carries measurement error and whatever happened that week, so it cannot separate a real change from noise. These scales are invented and have no reliability figures, so even the size of a real change is unknown here.",
+    "dec": {
+     "continue": "This matches the best response. The mechanism measure moved the right way in its first week and the mood rating is one reading above its session 2 level. Continuing keeps the review at session 6. It is still right to ask Gus about the week, because a rise in a score is also a prompt to ask directly about safety.",
+     "adjust": "Changing the plan after one reading treats a single point as a trend. The activity count rose in its first week of use, so nothing yet shows the intervention failing to reach its target.",
+     "revisit": "Revisiting the formulation fits when the hypothesis itself is in doubt. The mechanism measure moved in the expected direction, so after one week the data give no reason to doubt it.",
+     "end": "Ending is premature. Treatment has only begun to act on the target, and one week of higher activity does not show a lasting gain."
+    },
+    "reasons": [
+     {
+      "id": "a",
+      "sup": "end",
+      "text": "The activity count has started rising, so the target process is already moving and the main work of treatment is done.",
+      "fb": "This reasoning would support ending. One week of higher activity is a start and does not show a lasting change."
+     },
+     {
+      "id": "b",
+      "sup": "continue",
+      "text": "One high reading is a single point, and a trend needs more points. The activity count also rose slightly in its first week.",
+      "fb": "This is the best reason. It treats the reading as one point with error and keeps the first review at the planned time."
+     },
+     {
+      "id": "c",
+      "sup": "adjust",
+      "text": "The mood rating rose while the plan was running, so the plan is not working as delivered and the intervention should change now.",
+      "fb": "This reasoning would support a change of delivery, but it takes one point for a trend. One week of activation is a small dose."
+     },
+     {
+      "id": "d",
+      "sup": "revisit",
+      "text": "Mood rose in the same week that activity rose, so activity may not be what maintains his low mood and the formulation is suspect.",
+      "fb": "This reasoning would support revisiting the formulation. Two series moving in opposite directions for a single week does not show the hypothesis is wrong, and the mood reading may carry a week of family demands."
+     }
+    ],
+    "bestReason": "b"
+   },
+   {
+    "kind": "cp",
+    "session": 6,
+    "bloom": "evaluate",
+    "src": "Tracking the Mechanism and the Symptoms",
+    "best": "continue",
+    "prompt": "Session 6. This is the planned review. Decide what to do.",
+    "pattern": {
+     "label": "Pattern 1: mechanism and symptoms both moving",
+     "text": "The activity count moved first, from 2 to 8, and the mood rating is following more slowly, from 20 to 16. This is the first dual-tracking pattern. The data support the hypothesis that low activity is keeping his mood low."
+    },
+    "pitfall": "The pitfall here is reactivity. Keeping a weekly activity log can raise activity by itself, so check with Gus that the logged activities matter to him. Regression to the mean explains little here because the activity series climbed steadily over several sessions.",
+    "dec": {
+     "continue": "This matches the best response. Both series are moving the right way with the mechanism ahead. The example rule flags the mood change for review, and the review is where you read the pattern. Continue, set a second review a few sessions out, and show Gus both charts.",
+     "adjust": "The example rule flagged this case, and a flag prompts a look at the data. The data show the mechanism moving as predicted, so the delivery is reaching its target. Changing a plan that is working risks disrupting it.",
+     "revisit": "The mood rating has moved less than the activity count, which can tempt a clinician to doubt the hypothesis. A leading mechanism with symptoms that follow is the pattern the hypothesis predicts.",
+     "end": "Activity has risen, but mood is four points short of where Gus wants it. Discussing ending now would leave his symptom goal unmet."
+    },
+    "reasons": [
+     {
+      "id": "a",
+      "sup": "adjust",
+      "text": "The mood rating is under the example 25 percent line at session 6, so the rule says he is not responding and the plan must be changed.",
+      "fb": "This reasoning treats an illustration as a validated rule. The sources give no validated numeric cutoff, and the example only prompts a review."
+     },
+     {
+      "id": "b",
+      "sup": "end",
+      "text": "Activity has quadrupled and mood is better, so most of the work is done and sessions can begin to wind down in the coming weeks.",
+      "fb": "This reasoning weighs the mechanism measure and sets aside that Gus's own symptom goal has not been reached."
+     },
+     {
+      "id": "c",
+      "sup": "continue",
+      "text": "Activity rose first and mood is following more slowly, which fits the hypothesis. The example rule prompts a review and gives no order.",
+      "fb": "This is the best reason. It uses both series and treats the example rule as a trigger for review."
+     },
+     {
+      "id": "d",
+      "sup": "revisit",
+      "text": "Mood improved by only 4 of 20 points while activity quadrupled, so activity cannot be what drives his mood and the hypothesis should be reworked.",
+      "fb": "This reasoning looks at the symptom series alone. The mechanism series moved as predicted, and symptoms often follow the mechanism with a lag."
+     }
+    ],
+    "bestReason": "c"
+   },
+   {
+    "kind": "cp",
+    "session": 10,
+    "bloom": "evaluate",
+    "src": "The Loop as a Habit",
+    "best": "end",
+    "prompt": "Session 10. Gus asks how much longer treatment will go on. Decide what to do.",
+    "pattern": {
+     "label": "Pattern 1: mechanism and symptoms both moving, now holding",
+     "text": "Both series moved in the predicted directions. Mood has held at 12 for two sessions and activity has kept rising to 10, the order the hypothesis predicts."
+    },
+    "pitfall": "The pitfall here is one-case limits. The log may have helped by itself, and one client's series cannot show that the intervention caused the gains. Keep tracking as sessions space out so a return of symptoms shows early.",
+    "dec": {
+     "end": "This matches the best response. Discussing ending opens a conversation with Gus about spacing sessions, planning for setbacks, and continuing to track after treatment. It does not close treatment on the clinician's say alone.",
+     "continue": "Weekly sessions with no change in plan would run treatment on habit. Mood has held at Gus's goal and he is back at the group, and without a decision to review, continuing and stopping would both be decided by feel.",
+     "adjust": "A flat mood score would call for a changed approach if it stood above Gus's goal. Here the plateau is at the goal, so there is nothing to correct.",
+     "revisit": "The hypothesis has found support across the whole series, so there is nothing to revisit."
+    },
+    "reasons": [
+     {
+      "id": "a",
+      "sup": "end",
+      "text": "Mood has held at 12, Gus's own goal, for two sessions and he is back at the group every week, with the mechanism leading. That supports planning to end while tracking continues.",
+      "fb": "This is the best reason. It ties the decision to the client's own goals, the order of the two series, and a plan to keep tracking."
+     },
+     {
+      "id": "b",
+      "sup": "revisit",
+      "text": "Mood fell by 8 points while activity rose by 8, which is a weaker response than the hypothesis predicts, so the hypothesis only partly fits.",
+      "fb": "The two scales have different units, so equal point changes carry no meaning. The comparison gives no evidence about the hypothesis."
+     },
+     {
+      "id": "c",
+      "sup": "adjust",
+      "text": "A plateau after early progress means the current approach has run its course, so a changed approach is needed to restart the improvement.",
+      "fb": "This reasoning applies to a plateau above the client's goal. Here the goal has been reached."
+     },
+     {
+      "id": "d",
+      "sup": "continue",
+      "text": "The mood rating stopped falling at 12 after steady progress, so the plan has stalled and more weekly sessions are needed to bring it lower.",
+      "fb": "This reasoning treats the plateau as a stall. The plateau is at the level Gus named as his goal."
+     }
+    ],
+    "bestReason": "a"
+   },
+   {
+    "kind": "sum",
+    "bloom": "evaluate",
+    "src": "Feedback to the Patient",
+    "best": "c",
+    "prompt": "All ten sessions are in view. Choose the best summary of what the data showed and what you would tell Gus.",
+    "options": [
+     {
+      "id": "a",
+      "text": "Mood fell from 20 to 12, so the treatment worked and the gain is clear. The activity count added little beyond that, so I would stop tracking it, talk with Gus about finishing, and plan to end within a few weeks, showing him only the mood chart.",
+      "fb": "The mood fall is real in these data, but the activity series is what shows the improvement came through the targeted process. A symptom score alone cannot separate the first pattern from the second."
+     },
+     {
+      "id": "b",
+      "text": "Activity rose first and mood followed with a lag, which shows that more activity caused his mood to improve. Since the cause is confirmed, I would suggest ending now, dropping the weekly measures, and telling him that the plan worked as designed.",
+      "fb": "One series in one client shows a pattern that fits the hypothesis. It does not confirm a cause, because the log may have helped by itself and other changes in his life may have helped. Dropping the measures also removes the early warning for a return of symptoms."
+     },
+     {
+      "id": "c",
+      "text": "Activity rose first and mood followed with a lag. The high reading in session 3 was one point and did not signal failure. Both measures reached his goals, so I would suggest spacing out sessions and planning for setbacks while we keep tracking.",
+      "fb": "This is the best summary. It reports the order of the two series, names the early reading as one point, ties the next step to his own goals, and keeps tracking in place. It claims no more than a single case supports."
+     },
+     {
+      "id": "d",
+      "text": "Activity rose first and mood followed with a lag. The high reading in session 3 showed how unstable his mood is, so I would keep weekly sessions going and keep tracking until his mood is clearly below 12 and stays there for several weeks.",
+      "fb": "One early reading does not show unstable mood, and it recovered within a session. The new target of below 12 also moves the goal Gus set. Continuing weekly with no review point runs treatment on habit."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name": "Hiro",
+  "label": "Case 2: Hiro",
+  "story": "Hiro is an invented client. He avoids speaking in meetings and at work events because he expects people to decide that he is incompetent. He has started to turn down projects that would put him in front of others.",
+  "formulation": "He predicts that people will judge him as incompetent, and avoiding speaking keeps him from learning whether the prediction is true. The belief in that prediction is the process the plan targets.",
+  "plan": "Graded exposure to speaking situations. Sessions 1 and 2 cover assessment and building a ladder of tasks. Tasks begin the week after session 2. The first planned review is session 6.",
+  "goal": "Hiro wants to speak up in his weekly team meeting without dreading it for days beforehand.",
+  "sym": {
+   "name": "Social Worry Scale",
+   "abbr": "SWS",
+   "min": 0,
+   "max": 40,
+   "better": "lower",
+   "desc": "invented scale, 0 to 40, higher means more worry, so lower is better"
+  },
+  "mech": {
+   "name": "Judgment Belief Rating",
+   "abbr": "JBR",
+   "min": 0,
+   "max": 100,
+   "better": "lower",
+   "desc": "invented rating, 0 to 100, of how strongly he believes people will see him as incompetent in the situation he rated that week, so lower is better"
+  },
+  "sessions": [
+   {
+    "sym": 28,
+    "mech": 82,
+    "note": "Intake and assessment.",
+    "n": 1
+   },
+   {
+    "sym": 27,
+    "mech": 81,
+    "note": "Task ladder built. The first tasks are set for the coming week.",
+    "n": 2
+   },
+   {
+    "sym": 27,
+    "mech": 82,
+    "note": "Completed 2 of 3 planned tasks, both low on the ladder.",
+    "n": 3
+   },
+   {
+    "sym": 26,
+    "mech": 80,
+    "note": "Completed 3 of 3 planned tasks.",
+    "n": 4
+   },
+   {
+    "sym": 23,
+    "mech": 81,
+    "note": "Completed 3 of 3. Moved up the ladder to speaking once in a team meeting.",
+    "n": 5
+   },
+   {
+    "sym": 20,
+    "mech": 80,
+    "note": "Completed 4 of 4. Hiro says that before each task he rehearses what he will say word for word, and during it he watches listeners' faces for signs of boredom.",
+    "n": 6
+   },
+   {
+    "sym": 22,
+    "mech": 80,
+    "note": "Plan changed. Tasks now run without rehearsal and without face checking, and each has a prediction rated before and after.",
+    "n": 7
+   },
+   {
+    "sym": 24,
+    "mech": 79,
+    "note": "Completed tasks as changed. Says they feel much harder.",
+    "n": 8
+   },
+   {
+    "sym": 24,
+    "mech": 81,
+    "note": "Completed 4 of 4 as changed.",
+    "n": 9
+   },
+   {
+    "sym": 25,
+    "mech": 80,
+    "note": "Completed 4 of 4 as changed, with no rehearsal logged. Says his worry about meetings is back near where it started.",
+    "n": 10
+   }
+  ],
+  "items": [
+   {
+    "kind": "cp",
+    "session": 4,
+    "bloom": "analyze",
+    "src": "Decision Rules as Illustrations",
+    "best": "continue",
+    "prompt": "Session 4. Both series are close to where they began. Decide what to do.",
+    "pattern": {
+     "label": "No pattern yet",
+     "text": "Exposure tasks started only after session 2, so about two weeks of low-ladder tasks have been done. Flat scores at this dose cannot separate a delivery problem from a problem with the hypothesis, so none of the four dual-tracking patterns can be assigned yet."
+    },
+    "pitfall": "The pitfall here is treating an early flat line as failure. The plan set session 6 as the first review. A flat line is information, and at this point it shows that the dose has barely begun.",
+    "dec": {
+     "continue": "This matches the best response. The first review is session 6, the tasks have run for two weeks, and the notes show he is completing them. Continue, and plan to look closely at the belief rating at session 6, because a flat mechanism score will need an explanation then.",
+     "adjust": "A change of delivery is justified when the dose has been delivered and the target has not moved. Hiro has done two weeks of low-ladder tasks, so the dose is small.",
+     "revisit": "The belief rating has hardly moved, but two weeks of short tasks is too little exposure to test the belief. Doubting the hypothesis now would use the flat line before it can mean anything.",
+     "end": "Hiro has begun the tasks, but worry and belief are close to intake. Nothing in the data supports finishing."
+    },
+    "reasons": [
+     {
+      "id": "a",
+      "sup": "continue",
+      "text": "Tasks began two weeks ago and the first review is set for session 6. Flat scores at this dose cannot show whether delivery or the hypothesis is the problem.",
+      "fb": "This is the best reason. It counts the dose actually delivered and keeps the review at the planned time."
+     },
+     {
+      "id": "b",
+      "sup": "end",
+      "text": "Hiro is completing his tasks and avoiding less, so the avoidance has been addressed and treatment can begin to wrap up with a few more sessions.",
+      "fb": "Completing tasks is adherence and says nothing about whether the belief or the worry has changed."
+     },
+     {
+      "id": "c",
+      "sup": "adjust",
+      "text": "Neither series has moved across four sessions of treatment, which is the fourth pattern, so the way the tasks are delivered should change now.",
+      "fb": "Four sessions include two of assessment and ladder building, so the dose so far is about two weeks. The fourth pattern needs a dose that has been delivered."
+     },
+     {
+      "id": "d",
+      "sup": "revisit",
+      "text": "The belief rating is still near 80 after several tasks, so the belief is not the process maintaining his social worry and the formulation should be rebuilt around another process.",
+      "fb": "This reasoning needs more exposure before it holds. At two weeks the belief has had few chances to be tested."
+     }
+    ],
+    "bestReason": "a"
+   },
+   {
+    "kind": "cp",
+    "session": 6,
+    "bloom": "evaluate",
+    "src": "Tracking the Mechanism and the Symptoms",
+    "best": "adjust",
+    "prompt": "Session 6. This is the planned review. Decide what to do.",
+    "pattern": {
+     "label": "Pattern 2: symptoms improve without the mechanism moving",
+     "text": "The worry rating fell from 28 to 20 while the belief rating stayed near 80. The improvement may come from the alliance, from expectancy, from natural remission, or from regression to the mean after a high intake score, and it may not last. The session note shows a likely reason the belief has not been tested."
+    },
+    "pitfall": "The pitfall here is regression to the mean and nonspecific change. An intake score of 28 may have been a high week, and some early fall is expected without any treatment effect. The symptom series alone would have looked like success here.",
+    "dec": {
+     "adjust": "This matches the best response. The hypothesis still fits, because the note shows protective behaviors that keep him from testing his prediction. The delivery changes. Drop the rehearsing and face checking, set each task as an experiment with a prediction rated before and after, and explain the reason to Hiro with both charts in front of him.",
+     "continue": "The worry rating meets the example rule, so a rule-only view says he is on track. A dual-tracking view shows the belief has not moved and the note gives a reason. Continuing leaves in place the behaviors that protect the belief.",
+     "revisit": "The flat belief rating raises a question about the hypothesis. The note gives a delivery explanation that has not been tested yet. Changing delivery costs less and gives the hypothesis a clean test, and revisiting the formulation is the next step if that fails.",
+     "end": "A symptom gain with no mechanism change may not last. Ending now would rest on the symptom series alone."
+    },
+    "reasons": [
+     {
+      "id": "a",
+      "sup": "end",
+      "text": "Worry is 29 percent lower and he completes every task, so he is responding well, the goal is in reach, and sessions can begin to taper over the next few weeks.",
+      "fb": "This reasoning rests on one series and on completed tasks. Completing tasks shows adherence and does not show the belief has changed."
+     },
+     {
+      "id": "b",
+      "sup": "revisit",
+      "text": "The belief rating has not moved after six sessions of treatment, so the belief is not what maintains the social worry and the formulation is wrong. Another process must be involved.",
+      "fb": "This reasoning skips the delivery explanation in the note. Six sessions include two of assessment, and the belief could not be tested while safety behaviors were in place."
+     },
+     {
+      "id": "c",
+      "sup": "adjust",
+      "text": "Worry improved while the belief stayed flat, and the note describes rehearsing and face checking. Those protect his prediction from a test, so the delivery needs to change.",
+      "fb": "This is the best reason. It uses both series, uses the session note, and keeps the hypothesis while changing delivery."
+     },
+     {
+      "id": "d",
+      "sup": "continue",
+      "text": "The worry rating has improved by about 29 percent, which clears the example rule, so he is on track, and changing a plan that is working would only disrupt his progress.",
+      "fb": "This reasoning relies on the symptom series and an illustrative rule. The belief rating, which the plan targets, has not changed, and the rule says nothing about that."
+     }
+    ],
+    "bestReason": "c"
+   },
+   {
+    "kind": "cp",
+    "session": 10,
+    "bloom": "evaluate",
+    "src": "Four Steps",
+    "best": "revisit",
+    "prompt": "Session 10. The delivery change has been in place since session 7. Decide what to do.",
+    "pattern": {
+     "label": "Pattern 4: neither series is moving",
+     "text": "After the delivery change at session 7, three sessions of documented tasks without rehearsal or face checking left the belief rating near 80 and the worry rating close to its intake level. The usual first response to this pattern is a delivery check. That check has been done, so the hypothesis is the next thing to examine."
+    },
+    "pitfall": "The pitfall here is dismissing a drift as noise. Several readings in the same direction form a pattern, unlike the single high reading in session 3 of Gus's case.",
+    "dec": {
+     "revisit": "This matches the best response. Ask Hiro what he fears others notice, what he expects to follow, and whether something beyond judgments of competence keeps the worry going, such as a fear of being seen to be anxious. Revise the formulation with him using both charts, and choose the next step from the revised hypothesis.",
+     "adjust": "Adjusting delivery is the first response to a flat pair of series, and it was used at session 7. Three sessions of documented delivery are already behind it, so a further delivery change would test the same hypothesis again.",
+     "continue": "Three sessions of the changed plan have not moved either series, and waiting longer would repeat a question the data already answer.",
+     "end": "Worry is 25 against an intake of 28, a gain of about 11 percent, and it is drifting the wrong way. The data show no gain to consolidate."
+    },
+    "reasons": [
+     {
+      "id": "a",
+      "sup": "continue",
+      "text": "Tasks are being completed as planned, and exposure effects often take time to appear, so a few more sessions of the same plan will most likely show the change he wants.",
+      "fb": "This reasoning treats adherence as progress. The tasks have been completed as changed for three sessions and neither series has moved."
+     },
+     {
+      "id": "b",
+      "sup": "revisit",
+      "text": "Delivery was changed and documented for three sessions, yet neither series moved and worry is back near its start. That explanation has been tested, so the hypothesis is now in doubt.",
+      "fb": "This is the best reason. It shows that the first explanation, delivery, was tested before the hypothesis was questioned."
+     },
+     {
+      "id": "c",
+      "sup": "end",
+      "text": "Worry is still lower than at intake, so he has improved overall, the gain is real, and treatment can finish after a short wrap-up that reviews what helped him most.",
+      "fb": "A fall from 28 to 25 is small, and it follows a rise from 20. It does not show a gain that has held."
+     },
+     {
+      "id": "d",
+      "sup": "adjust",
+      "text": "Both series are flat, which is the fourth pattern, and the first response to that pattern is to change delivery again, for example by moving to harder tasks sooner.",
+      "fb": "This reasoning applies the right rule at the wrong time. Delivery was changed at session 7 and the change was documented, so repeating it would test the same idea again."
+     }
+    ],
+    "bestReason": "b"
+   },
+   {
+    "kind": "sum",
+    "bloom": "evaluate",
+    "src": "Feedback to the Patient",
+    "best": "b",
+    "prompt": "All ten sessions are in view. Choose the best summary of what the data showed and what you would tell Hiro.",
+    "options": [
+     {
+      "id": "a",
+      "text": "Worry fell early, so the exposure plan fit him until the harder tasks made him anxious again. I would tell him that the early gains show the approach works, and that we should add more tasks and move up the ladder faster.",
+      "fb": "Reading the early fall as success relies on the symptom series alone. The belief rating never moved, and worry returned after the delivery change, so the data do not show that the approach works for him."
+     },
+     {
+      "id": "b",
+      "text": "Worry fell early while the belief stayed flat, so his tasks were not testing his prediction. Changing how he did them left the belief flat and worry drifted back, so I would tell him we should rethink together what keeps the worry going.",
+      "fb": "This is the best summary. It uses both series in order, explains why the early fall was misleading, reports that the delivery check was done, and offers a shared next step. It does not claim the treatment failed for good."
+     },
+     {
+      "id": "c",
+      "text": "The belief rating never moved, so exposure does not work for Hiro. I would tell him this treatment was the wrong one for him, stop the tasks, and move on to a different treatment as soon as we can agree on one.",
+      "fb": "A flat belief rating after a delivery check casts doubt on the hypothesis. It does not show that exposure cannot work for him. The better step is to revisit the formulation with him and choose the next intervention from the revised hypothesis."
+     },
+     {
+      "id": "d",
+      "text": "Worry fell and then rose, which is measurement noise. The belief rating was the steadier measure and it did not change, so I would tell him to keep going with the same tasks, because the change we want is probably only a few more weeks away.",
+      "fb": "The belief rating was steady, and a steady rating at about 80 means the targeted process did not change. Four readings of worry drifting up are a pattern and are unlikely to be noise. Keeping the same tasks repeats a plan the data have answered."
+     }
+    ]
+   }
+  ]
+ }
+];
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+var DECLAB={}; DECS.forEach(function(d){DECLAB[d.id]=d.label;});
+function maxScore(){ var m=0; CASES.forEach(function(c){m+=c.items.length;}); return m; }
+function newState(){
+  return {phase:"intro", ci:0, sn:1, ii:0, sel:{dec:null,rs:null}, ans:CASES.map(function(c){return c.items.map(function(){return {done:false,first:null,firstReason:null,firstOk:false,reasonOk:null,score:0,sl:false,slPick:null,slOk:null};});}), sl:[], sli:0};
+}
+function reset(){ S=newState(); render("top"); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function curCase(){ return CASES[S.ci]; }
+function curItem(){ return curCase().items[S.ii]; }
+function curAns(){ return S.ans[S.ci][S.ii]; }
+function needOf(c,it){ return (it.kind==="cp")?it.session:c.sessions.length; }
+function dirWord(m,delta){ if(delta===0) return "no change"; var better=(m.better==="lower")?(delta<0):(delta>0); return (delta<0?"down ":"up ")+Math.abs(delta)+" point"+(Math.abs(delta)===1?"":"s")+(better?", which is better":", which is worse"); }
+function pctImprove(c,sn){ var f=c.sessions[0].sym, l=c.sessions[sn-1].sym; return Math.round((f-l)/f*100); }
+function changeLine(c,sn){
+  if(sn<2) return "This is the first reading. Later sessions show the change since session 1.";
+  var a=c.sessions[0], b=c.sessions[sn-1];
+  return "Since session 1, the "+esc(c.sym.abbr)+" is "+dirWord(c.sym,b.sym-a.sym)+". The "+esc(c.mech.abbr)+" is "+dirWord(c.mech,b.mech-a.mech)+".";
+}
+function ruleBox(c,sn){
+  var h='<div class="note illus"><b>Illustration only, not a validated rule.</b> One example from the course sources flags less than 25 percent improvement by session 6 for a review. The sources give no validated numeric cutoff for any measure. These scales are invented and have no reliability figures, so reliable change cannot be computed here. ';
+  if(sn<6){ h+='The example review point is session 6, which has not been reached.'; }
+  else if(sn===6){ var p=pctImprove(c,6); h+='At session 6 the symptom improvement is '+p+' percent. '+(p<25?'The example flags this case for review.':'The example does not flag this case.')+' A flag prompts a review and does not choose the action.'; }
+  else { h+='The example sets its review at session 6. For reference, the symptom improvement since session 1 is '+pctImprove(c,sn)+' percent.'; }
+  return h+'</div>';
+}
+function chart(c,which,upto){
+  var m=c[which], N=c.sessions.length, W=640,H=200,Lm=46,Rm=16,Tm=30,Bm=36;
+  function X(i){ return Lm+(W-Lm-Rm)*i/(N-1); }
+  function Y(v){ return Tm+(H-Tm-Bm)*(1-(v-m.min)/(m.max-m.min)); }
+  var vals=[], i;
+  for(i=0;i<upto;i++) vals.push(c.sessions[i][which]);
+  var aria=esc(m.name)+", "+esc(m.desc)+". Sessions 1 to "+upto+": "+vals.join(", ")+".";
+  var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+aria+'">';
+  [m.min,(m.min+m.max)/2,m.max].forEach(function(t){ s+='<line class="grid" x1="'+Lm+'" x2="'+(W-Rm)+'" y1="'+Y(t)+'" y2="'+Y(t)+'"/><text x="'+(Lm-6)+'" y="'+(Y(t)+4)+'" text-anchor="end">'+t+'</text>'; });
+  s+='<line class="axis" x1="'+Lm+'" x2="'+Lm+'" y1="'+Tm+'" y2="'+(H-Bm)+'"/><line class="axis" x1="'+Lm+'" x2="'+(W-Rm)+'" y1="'+(H-Bm)+'" y2="'+(H-Bm)+'"/>';
+  for(i=0;i<N;i++){ s+='<text x="'+X(i)+'" y="'+(H-Bm+16)+'" text-anchor="middle">'+(i+1)+'</text>'; }
+  s+='<text x="'+((Lm+W-Rm)/2)+'" y="'+(H-6)+'" text-anchor="middle">Session</text>';
+  s+='<text class="dirnote" x="'+(W-Rm)+'" y="14" text-anchor="end">'+(m.better==="lower"?"Lower is better":"Higher is better")+'</text>';
+  var cls=(which==="sym")?"s":"m", pts=[];
+  for(i=0;i<upto;i++) pts.push(X(i)+","+Y(vals[i]));
+  if(upto>1) s+='<polyline class="ln-'+cls+'" points="'+pts.join(" ")+'"/>';
+  for(i=0;i<upto;i++){
+    if(which==="sym") s+='<circle class="mk-s" cx="'+X(i)+'" cy="'+Y(vals[i])+'" r="5"/>';
+    else s+='<rect class="mk-m" x="'+(X(i)-4.5)+'" y="'+(Y(vals[i])-4.5)+'" width="9" height="9"/>';
+    s+='<text class="vl" x="'+X(i)+'" y="'+(Y(vals[i])-9)+'" text-anchor="middle">'+vals[i]+'</text>';
+  }
+  return s+'</svg>';
+}
+function table(c,upto){
+  var h='<details class="tbl" open><summary>Text table of the same data</summary><div class="tblwrap"><table class="data"><caption>Invented practice values for '+esc(c.name)+', sessions 1 to '+upto+'.</caption><thead><tr><th scope="col">Session</th><th scope="col">'+esc(c.sym.abbr)+' ('+c.sym.better+' is better)</th><th scope="col">'+esc(c.mech.abbr)+' ('+c.mech.better+' is better)</th><th scope="col">Session note</th></tr></thead><tbody>';
+  for(var i=0;i<upto;i++){ var r=c.sessions[i]; h+='<tr'+(i===upto-1?' class="latest"':'')+'><th scope="row">'+r.n+(i===upto-1?' (latest)':'')+'</th><td>'+r.sym+'</td><td>'+r.mech+'</td><td>'+esc(r.note)+'</td></tr>'; }
+  return h+'</tbody></table></div></details>';
+}
+function cap(t){ return t.charAt(0).toUpperCase()+t.slice(1); }
+function dataView(c,upto){
+  return '<h3 class="ch">'+esc(c.sym.name)+' ('+esc(c.sym.abbr)+')</h3><p class="key">'+esc(cap(c.sym.desc))+'. Solid line, round markers.</p><div class="chartbox">'+chart(c,"sym",upto)+'</div>'+
+    '<h3 class="ch">'+esc(c.mech.name)+' ('+esc(c.mech.abbr)+')</h3><p class="key">'+esc(cap(c.mech.desc))+'. Dashed line, square markers.</p><div class="chartbox">'+chart(c,"mech",upto)+'</div>'+
+    '<p class="chg">'+changeLine(c,upto)+'</p>'+table(c,upto);
+}
+function caseCard(c){
+  return '<div class="case"><b class="t">'+esc(c.label)+' (invented client, invented scores)</b>'+
+    '<div class="cardrow">'+esc(c.story)+'</div>'+
+    '<div class="cardrow"><b>Formulation (the hypothesis about the mechanism).</b> '+esc(c.formulation)+'</div>'+
+    '<div class="cardrow"><b>Plan.</b> '+esc(c.plan)+'</div>'+
+    '<div class="cardrow"><b>Goal.</b> '+esc(c.goal)+'</div>'+
+    '<div class="cardrow"><b>Measures.</b> '+esc(c.sym.abbr)+': '+esc(c.sym.name)+', '+esc(c.sym.desc)+'. '+esc(c.mech.abbr)+': '+esc(c.mech.name)+', '+esc(c.mech.desc)+'. All scores are illustrative practice values.</div><div class="cardrow"><b>Safety.</b> If a score rises or anything here affects you, call or text 988 at any hour, or call 911 in an emergency.</div></div>';
+}
+function tiles(){
+  var h='<div class="tiles" aria-label="Progress">';
+  CASES.forEach(function(c,ix){ var on=(S.phase!=="intro"&&S.phase!=="results"&&ix===S.ci&&S.phase!=="caseend"), done=(S.phase==="results"||ix<S.ci||(ix===S.ci&&S.phase==="caseend")); h+='<span class="tile'+(on?' on':(done?' done':''))+'">'+esc(c.label)+(on?' (current)':(done?' (done)':''))+'</span>'; });
+  return h+'<span class="tile'+(S.phase==="results"?' on':'')+'">Results'+(S.phase==="results"?' (current)':'')+'</span></div>';
+}
+function safetyNote(){ return '<p class="note safe"><b>Safety.</b> A score never replaces asking a person directly how they are. If anything in this activity affects you, call or text 988 at any hour, or call 911 in an emergency.</p>'; }
+function render(focus){
+  var h=tiles();
+  if(S.phase==="intro") h+=renderIntro();
+  else if(S.phase==="case") h+=renderCase();
+  else if(S.phase==="second") h+=renderSecond();
+  else if(S.phase==="caseend") h+=renderCaseEnd();
+  else h+=renderResults();
+  root.innerHTML=h; post();
+  try{
+    var el=null;
+    if(focus==="top"||focus==="panel"){ el=root.querySelector("#panelhead"); }
+    else if(focus){ el=root.querySelector(focus); }
+    if(el&&el.focus) el.focus();
+  }catch(e){}
+}
+function renderIntro(){
+  return '<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">Manage two courses of care with measures</h2>'+
+   '<p class="explain">You will follow two invented clients one session at a time. Each session adds one more week of data to a chart and a table. At each checkpoint choose what to do next and the main reason. Feedback follows each decision. After each case, any missed decision comes back for a second look at half credit.</p>'+
+   '<div class="note"><b>The four decisions.</b> Continue as planned, adjust the intervention, revisit the formulation (the hypothesis about the mechanism), or discuss ending.</div>'+
+   '<div class="note"><b>How to read the data.</b> Each client has a symptom score and a mechanism score. The direction of each scale is stated on the chart, and every chart has a text table. Read the two together. Mechanism and symptoms can both move, symptoms can improve while the mechanism does not, the mechanism can move while symptoms do not, or neither can move.</div>'+
+   '<div class="note illus"><b>Everything here is invented practice material.</b> Both clients are invented. All scores and scales are invented and illustrative. The decision example shown at session 6, less than 25 percent improvement, is an illustration from the course sources and is not a validated rule. The sources give no validated numeric cutoff for any measure.</div>'+
+   '<div class="note"><b>Measurement burden and the client\'s own data.</b> In practice, the course sources suggest keeping total measurement to about 10 to 15 minutes per session, because a long battery leads clients to drop out of measuring. Clients should see their own data and help read it. Explaining what is measured and why turns the client into a partner. Nothing on this page is saved or sent.</div>'+
+   safetyNote()+
+   '<div class="foot"><span></span><button class="btn" type="button" data-act="start">Begin Case 1</button></div></section>';
+}
+function renderCase(){
+  var c=curCase(), it=curItem(), a=curAns(), h=caseCard(c);
+  var upto=S.sn;
+  h+='<section class="panel" aria-live="polite"><h2 class="hd" id="panelhead" tabindex="-1">'+esc(c.label)+', session '+upto+' of '+c.sessions.length+'</h2>'+dataView(c,upto);
+  if(S.sn<needOf(c,it)){
+    h+='<div class="foot"><span class="qn">Next checkpoint '+(S.ii+1)+' of '+c.items.length+' comes at session '+it.session+'.</span><button class="btn" type="button" data-act="reveal">Show session '+(S.sn+1)+' data</button></div></section>';
+    return h;
+  }
+  if(it.kind==="cp"){ h+=ruleBox(c,upto)+(a.done?renderFeedback(c,it,a):renderDecision(c,it)); }
+  else { h+=a.done?renderSumFeedback(it,a):renderSum(it,false); }
+  return h+'</section>';
+}
+function optBtn(act,val,label,gloss,selected,disabled,extra){
+  return '<button class="opt'+(selected?' sel':'')+(extra||'')+'" type="button" aria-pressed="'+(selected?'true':'false')+'" data-act="'+act+'" data-val="'+val+'"'+(disabled?' disabled':'')+'><span class="mark" aria-hidden="true">'+(selected?'✓':'○')+'</span><span>'+label+(gloss?'<span class="gl">'+esc(gloss)+'</span>':'')+'</span></button>';
+}
+function renderDecision(c,it){
+  var h='<hr style="border:none;border-top:1px solid var(--line);margin:16px 0">'+
+   '<div class="qtop"><span class="qn">Checkpoint '+(S.ii+1)+' of '+c.items.length+'</span><span class="tag">'+esc(it.bloom)+'</span></div><p class="qprompt">'+esc(it.prompt)+'</p>';
+  h+='<fieldset class="grp"><legend>1. Your decision</legend><div class="options" role="group" aria-label="Decision">';
+  DECS.forEach(function(d){ h+=optBtn("dec",d.id,esc(d.label),d.gloss,S.sel.dec===d.id,false); });
+  h+='</div></fieldset>';
+  h+='<fieldset class="grp"><legend>2. The main reason</legend><div class="options" role="group" aria-label="Main reason">';
+  it.reasons.forEach(function(r,ix){ h+=optBtn("rs",r.id,'<b>'+String.fromCharCode(65+ix)+'.</b> '+esc(r.text),"",S.sel.rs===r.id,false); });
+  h+='</div></fieldset>';
+  var ready=S.sel.dec&&S.sel.rs;
+  h+='<div class="foot"><span class="qn">'+(ready?'Both choices made.':'Choose a decision and a reason to continue.')+'</span><button class="btn" type="button" data-act="lock"'+(ready?'':' disabled')+'>Lock in my decision</button></div>';
+  return h;
+}
+function patternBlock(it){ return '<p><span class="lab">What the data pattern supported.</span> <b>'+esc(it.pattern.label)+'.</b> '+esc(it.pattern.text)+'</p><p>'+esc(it.pitfall)+'</p>'; }
+function renderFeedback(c,it,a){
+  var ok=a.firstOk, rs=null; it.reasons.forEach(function(r){ if(r.id===a.firstReason) rs=r; });
+  var h='<div class="fbbox" id="fbbox" tabindex="-1"><p><span class="badge '+(ok?'ok':'no')+'">'+(ok?'Matches the best response':'Not the best response')+'</span> You chose: '+esc(DECLAB[a.first])+'. Best response: '+esc(DECLAB[it.best])+'.</p>';
+  h+='<p><span class="lab">Your decision.</span> '+esc(it.dec[a.first])+'</p>';
+  if(!ok) h+='<p><span class="lab">The best response.</span> '+esc(it.dec[it.best])+'</p>';
+  h+='<p><span class="lab">Your reason.</span> <span class="badge '+(a.reasonOk?'ok':'no')+'">'+(a.reasonOk?'Best reason':'Not the best reason')+'</span> '+esc(rs.fb);
+  if(rs.sup!==a.first) h+=' Your reason points toward '+esc(DECLAB[rs.sup].toLowerCase())+' and you chose '+esc(DECLAB[a.first].toLowerCase())+'.';
+  h+='</p>'+patternBlock(it)+'<p class="selfnote">Reading: '+esc(it.src)+'. Reason choices do not change the score.</p></div>';
+  var nxt=c.items[S.ii+1];
+  h+='<div class="foot"><span></span><button class="btn" type="button" data-act="nextitem">'+(nxt&&nxt.kind==="sum"?'Go to the final step for this case':'Show session '+(S.sn+1)+' data')+'</button></div>';
+  return h;
+}
+function renderSum(it,second){
+  var h='<hr style="border:none;border-top:1px solid var(--line);margin:16px 0">'+(second?'<div class="intro"><b>Second look.</b> You missed this one the first time. Answer again without the earlier explanation. A correct answer now counts for half a point.</div>':'')+
+   '<div class="qtop"><span class="qn">Final step for '+esc(curCase().name)+'</span><span class="tag">'+esc(it.bloom)+'</span></div><p class="qprompt">'+esc(it.prompt)+'</p><p class="explain">Choose one option. Nothing needs to be written.</p><div class="options" role="group" aria-label="Summary options">';
+  it.options.forEach(function(o,ix){ h+='<button class="opt" type="button" data-act="'+(second?'slsum':'sum')+'" data-val="'+o.id+'"><span class="k">'+String.fromCharCode(65+ix)+'.</span><span>'+esc(o.text)+'</span></button>'; });
+  return h+'</div>';
+}
+function sumResult(it,picked){
+  var h='<div class="options" role="group" aria-label="Summary options, answered">';
+  it.options.forEach(function(o,ix){ var cls="opt"+(o.id===it.best?" correct":(o.id===picked?" wrong":" dim")); h+='<button class="'+cls+'" type="button" disabled><span class="k">'+String.fromCharCode(65+ix)+'.</span><span>'+esc(o.text)+(o.id===it.best?' <b>(best summary)</b>':(o.id===picked?' <b>(your choice)</b>':''))+'</span></button>'; });
+  return h+'</div>';
+}
+function optById(it,id){ var r=null; it.options.forEach(function(o){ if(o.id===id) r=o; }); return r; }
+function renderSumFeedback(it,a){
+  var ok=a.firstOk, po=optById(it,a.first);
+  var h='<hr style="border:none;border-top:1px solid var(--line);margin:16px 0"><p class="qprompt">'+esc(it.prompt)+'</p>'+sumResult(it,a.first);
+  h+='<div class="fbbox" id="fbbox" tabindex="-1"><p><span class="badge '+(ok?'ok':'no')+'">'+(ok?'Best summary':'Not the best summary')+'</span></p><p><span class="lab">Your choice.</span> '+esc(po.fb)+'</p>';
+  if(!ok) h+='<p><span class="lab">The best summary.</span> '+esc(optById(it,it.best).fb)+'</p>';
+  h+='<p class="selfnote">Reading: '+esc(it.src)+'.</p></div><div class="foot"><span></span><button class="btn" type="button" data-act="nextitem">Continue</button></div>';
+  return h;
+}
+function misses(ci){ var m=[]; S.ans[ci].forEach(function(a,ix){ if(!a.firstOk) m.push(ix); }); return m; }
+function afterCase(){
+  var m=misses(S.ci);
+  if(m.length){ S.phase="second"; S.sl=m; S.sli=0; }
+  else { S.phase="caseend"; }
+  render("panel");
+}
+function renderSecond(){
+  var c=curCase(), ix=S.sl[S.sli], it=c.items[ix], a=S.ans[S.ci][ix];
+  var upto=(it.kind==="cp")?it.session:c.sessions.length;
+  var h=caseCard(c)+'<section class="panel" aria-live="polite"><h2 class="hd" id="panelhead" tabindex="-1">Second look '+(S.sli+1)+' of '+S.sl.length+', '+esc(c.name)+'</h2>'+dataView(c,upto);
+  if(it.kind==="cp"){
+    h+=ruleBox(c,upto)+'<div class="intro"><b>Second look.</b> You missed this one the first time. Answer again without the earlier explanation. A correct answer now counts for half a point.</div><div class="qtop"><span class="qn">Checkpoint at session '+it.session+'</span><span class="tag">'+esc(it.bloom)+'</span></div><p class="qprompt">'+esc(it.prompt)+'</p><div class="options" role="group" aria-label="Decision, second look">';
+    DECS.forEach(function(d){
+      var cls=""; if(a.sl){ cls=(d.id===it.best)?" correct":((d.id===a.slPick)?" wrong":" dim"); }
+      h+=optBtn("sldec",d.id,esc(d.label),a.sl?"":d.gloss,a.sl&&d.id===a.slPick,a.sl,cls);
+    });
+    h+='</div>';
+    if(a.sl){ h+='<div class="fbbox" id="fbbox" tabindex="-1"><p><span class="badge '+(a.slOk?'ok':'no')+'">'+(a.slOk?'Correct, half credit':'Not the best response')+'</span> Best response: '+esc(DECLAB[it.best])+'.</p><p>'+esc(it.dec[it.best])+'</p>'+patternBlock(it)+'</div>'; }
+  } else {
+    if(!a.sl) h+=renderSum(it,true);
+    else { h+=sumResult(it,a.slPick)+'<div class="fbbox" id="fbbox" tabindex="-1"><p><span class="badge '+(a.slOk?'ok':'no')+'">'+(a.slOk?'Correct, half credit':'Not the best summary')+'</span></p><p>'+esc(optById(it,it.best).fb)+'</p></div>'; }
+  }
+  if(a.sl) h+='<div class="foot"><span></span><button class="btn" type="button" data-act="slnext">'+(S.sli+1<S.sl.length?'Next second look':'Finish this case')+'</button></div>';
+  return h+'</section>';
+}
+function caseScore(ci){ var t=0; S.ans[ci].forEach(function(a){t+=a.score;}); return t; }
+function totalScore(){ var t=0; CASES.forEach(function(c,ci){t+=caseScore(ci);}); return t; }
+function r1(x){ return Math.round(x*10)/10; }
+function renderCaseEnd(){
+  var c=curCase(), last=(S.ci>=CASES.length-1);
+  var h='<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">'+esc(c.label)+' complete</h2><p class="explain">You scored '+r1(caseScore(S.ci))+' of '+c.items.length+' on this case. A second-look answer counts for half a point.</p>';
+  h+='<div class="foot"><span></span><button class="btn" type="button" data-act="'+(last?'toresults':'startnext')+'">'+(last?'See your results':'Begin Case '+(S.ci+2))+'</button></div></section>';
+  return h;
+}
+function renderResults(){
+  var tot=totalScore(), mx=maxScore(), rOk=0, rN=0;
+  var h='<section class="panel results"><h2 id="panelhead" tabindex="-1">Your results</h2><p class="score">You scored <b>'+r1(tot)+' of '+mx+'</b> on the decisions and final summaries. A decision or summary answered correctly on the second look counts for half a point. Reason choices are shown below and do not change the score.</p><div>';
+  CASES.forEach(function(c,ci){
+    c.items.forEach(function(it,ix){
+      var a=S.ans[ci][ix];
+      var lab=(it.kind==="cp")?(c.name+', session '+it.session+' checkpoint'):(c.name+', final summary');
+      var how=a.firstOk?'Best response on the first try.':(a.slOk?'Missed first, correct on the second look.':'Missed.');
+      var extra='';
+      if(it.kind==="cp"){ rN++; if(a.reasonOk) rOk++; extra=' You chose '+DECLAB[a.first]+'. Best response: '+DECLAB[it.best]+'.'+(a.reasonOk?' Your reason was the best one.':' Your reason was not the best one.'); }
+      h+='<div class="brow"><span class="bs">'+r1(a.score)+' / 1</span><span><b>'+esc(lab)+'.</b> '+esc(how+extra)+(a.firstOk?'':' Revisit: '+esc(it.src)+'.')+'</span></div>';
+    });
+  });
+  h+='</div><p class="score" style="margin-top:12px">Best reason chosen at '+rOk+' of '+rN+' checkpoints.</p>';
+  h+='<div class="take"><b>Carry forward.</b> The same flat mechanism line meant keep going at session 4 and change something at session 6, because the dose delivered and the session notes differed. A symptom score alone cannot tell the first pattern from the second. A rule such as the 25 percent example prompts a review and leaves the decision to the clinician and client. A single noisy point, regression to the mean, and reactivity each limit what one change can show. Clients should see their own charts and help read them.</div>';
+  h+='<div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">Both clients and every score are invented practice values. The decision example is an illustration and not a validated rule. In the United States, call or text 988 at any hour, or call 911 in an emergency.</p></section>';
+  return h;
+}
+function lockIn(){
+  var it=curItem(), a=curAns();
+  if(it.kind!=="cp"||a.done||!S.sel.dec||!S.sel.rs) return;
+  a.done=true; a.first=S.sel.dec; a.firstReason=S.sel.rs; a.firstOk=(a.first===it.best); a.reasonOk=(a.firstReason===it.bestReason);
+  a.score=a.firstOk?1:0; S.sel={dec:null,rs:null}; render("#fbbox");
+}
+function act(v,val){
+  var c=CASES[S.ci];
+  if(v==="start"){ S.phase="case"; S.ci=0; S.sn=1; S.ii=0; S.sel={dec:null,rs:null}; render("panel"); return; }
+  if(v==="reveal"){ S.sn++; render("panel"); return; }
+  if(v==="dec"){ if(curAns().done) return; S.sel.dec=val; render('[data-act="dec"][data-val="'+val+'"]'); return; }
+  if(v==="rs"){ if(curAns().done) return; S.sel.rs=val; render('[data-act="rs"][data-val="'+val+'"]'); return; }
+  if(v==="lock"){ lockIn(); return; }
+  if(v==="sum"){ var it=curItem(), a=curAns(); if(a.done) return; a.done=true; a.first=val; a.firstOk=(val===it.best); a.score=a.firstOk?1:0; render("#fbbox"); return; }
+  if(v==="nextitem"){
+    S.ii++; S.sel={dec:null,rs:null};
+    if(S.ii>=c.items.length){ afterCase(); return; }
+    if(S.sn<needOf(c,c.items[S.ii])) S.sn++;
+    render("panel"); return;
+  }
+  if(v==="sldec"||v==="slsum"){
+    var ix=S.sl[S.sli], it2=c.items[ix], a2=S.ans[S.ci][ix]; if(a2.sl) return;
+    a2.sl=true; a2.slPick=val; a2.slOk=(val===it2.best); if(a2.slOk) a2.score=0.5; render("#fbbox"); return;
+  }
+  if(v==="slnext"){ S.sli++; if(S.sli>=S.sl.length){ S.phase="caseend"; } render("panel"); return; }
+  if(v==="startnext"){ S.ci++; S.phase="case"; S.sn=1; S.ii=0; S.sel={dec:null,rs:null}; render("panel"); return; }
+  if(v==="toresults"){ S.phase="results"; render("panel"); return; }
+  if(v==="again"){ reset(); try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

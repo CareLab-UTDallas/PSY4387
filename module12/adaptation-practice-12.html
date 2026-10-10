@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adaptation Practice: A Conversation with Hattie</title>
+<style>
+  :root{ --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --panel:#fff; --accent:#8a5a25; --accent-ink:#6f4a20;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e; --mid-bg:#fffbef; --mid-line:#e7c98a; --mid-ink:#7a5f1f; --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72; --focus:#2f6f4f; }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  h1{margin:0;font-size:23px;letter-spacing:-.01em;} .sub{margin:6px 0 14px;color:var(--muted);font-size:14.5px;}
+  .masthead{padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .pills{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;} .pill{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .pill.on{background:var(--accent);color:#fff;} .pill.done{background:var(--ok-bg);color:var(--ok-ink);}
+  .case{background:var(--mid-bg);border:1px solid var(--mid-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);}
+  .panel:focus{outline:none;}
+  .skill{font-size:13px;color:var(--muted);margin:0 0 6px;}
+  .quote{font-size:17px;line-height:1.5;margin:6px 0 12px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .who{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:2px;}
+  .do{background:#f3f1ec;color:#57544e;border-radius:10px;padding:10px 13px;font-size:13px;margin:6px 0 14px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:disabled{cursor:default;} .opt .k{font-weight:700;color:var(--muted);min-width:15px;}
+  .opt.r2{background:var(--ok-bg);border-color:var(--ok-line);} .opt.r1{background:var(--mid-bg);border-color:var(--mid-line);} .opt.r0{background:var(--no-bg);border-color:var(--no-line);}
+  .opt.pick{box-shadow:0 0 0 2px var(--accent) inset;} .opt.dim{opacity:.6;}
+  .opt:focus-visible,.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .verdict{margin:16px 0 4px;font-size:14.5px;font-weight:600;} .verdict.r2{color:var(--ok-ink);} .verdict.r1{color:var(--mid-ink);} .verdict.r0{color:var(--no-ink);}
+  .explain{font-size:14px;color:#44413b;margin:6px 0;} .better{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:10px;padding:10px 13px;font-size:14px;margin:10px 0;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;flex-wrap:wrap;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;} .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;} .brow:last-child{border-bottom:none;} .brow .bs{flex:0 0 52px;font-weight:700;color:var(--accent-ink);}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .note{font-size:12.5px;color:var(--muted);margin-top:14px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead"><h1>Adapting Delivery, Keeping the Mechanism</h1><p class="sub">Practice five moments in a behavioral activation course with Hattie. Your choices change how she responds.</p></div>
+  <div id="root"></div>
+</div>
+<script>
+var SKILLS = [
+ "Asking before proposing",
+ "Restating the rationale in her terms",
+ "Choosing an activity that fits her week",
+ "Negotiating when a request removes the mechanism",
+ "Agreeing on tracking and a signal to revise"
+];
+var SCENARIO = "Hattie is an invented client, 52. She works overnight shifts at a distribution center, lives with her father, who is 84 and needs help with meals and appointments, and keeps the books for her building’s tenants’ association. She does not drive. She has felt low and withdrawn for about five months, and her assessment points to depression. You and she have agreed to use behavioral activation, which treats depression by restoring contact with activity that brings reward. This is the start of your second session.";
+var TURNS = [
+ {
+  "bloom": "apply",
+  "skill": 0,
+  "client": {
+   "start": "My doctor says I should do more things. Do more? I work nights, I look after my father, and I keep the books for our tenants’ association. And what I feel is a light turned down. I don’t see how a calendar fixes that."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Before I suggest anything, I would like to understand how you see this. What do you think has been going on since the light went down, and what in your week matters most to you?",
+    "reply": "Nobody has asked me that. My father matters, and the association. And I used to sing on Thursday evenings with a group of women. I stopped in the spring. I haven’t told anyone that.",
+    "why": "The response asks how she understands the problem and what matters to her, and it picks up her own phrase. The question comes before any proposal, and her answer supplies the material the plan will be built from."
+   },
+   {
+    "r": 1,
+    "t": "Tell me what a usual week looks like for you and where the free hours are. Then we can start putting some activities into the hours that are open.",
+    "reply": "Free hours. That is funny. Nights Sunday to Wednesday, my father’s clinic twice a week, and the association whenever someone loses a receipt. There are no free hours.",
+    "why": "Learning her week is necessary, and the question is easy to answer. It treats the problem as a scheduling task, though, and it skips how she understands what has happened and what matters to her. The plan would fit her calendar before it fits her."
+   },
+   {
+    "r": 1,
+    "t": "I would like to hear more about the phrase you use for it. After that I will explain how the treatment works, and I have a list of activities we can choose from.",
+    "reply": "Fine. It is about a light that has been turned low, like a lamp in a room nobody uses. Show me the list.",
+    "why": "Asking for her word respects how she names the problem. Announcing a list in the same breath shows that the activities are already chosen, and nothing in the question asks what matters to her."
+   },
+   {
+    "r": 0,
+    "t": "A calendar cannot fix a feeling by itself, but this treatment has good research behind it, so we will pick three activities from this list of pleasant things for this week, and you can tell me how it went.",
+    "reply": "Pleasant things. I will copy down the list. I already know I won’t do them.",
+    "why": "The response leads with the treatment’s authority and a generic list. She has said how she feels and how her week is built, and neither is taken up. Activities chosen from outside her life are unlikely to match what matters to her."
+   }
+  ],
+  "order": [
+   2,
+   3,
+   1,
+   0
+  ]
+ },
+ {
+  "bloom": "apply",
+  "skill": 1,
+  "client": {
+   "g": "So now what? You asked, and I told you about the singing. How is doing more supposed to turn the light back up? I don’t want one more job on the list.",
+   "m": "Okay. I’ll listen. How is doing more supposed to turn the light back up? It sounds like one more job.",
+   "p": "I keep coming back to the same thing. How is a list supposed to turn the light back up? It sounds like one more job."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "When the light is turned down, we pull back from what used to turn it up. The plan is to put a few of those things back into your week, chosen by you, and watch together what happens to the light.",
+    "reply": "So it is not a list from you. It is things that turn the light up, and I choose them. That I can follow.",
+    "why": "The rationale is restated in her image and keeps what the treatment does. She returns to activity that brings reward, chooses it, and checks the result with you. The wording changes and the process stays."
+   },
+   {
+    "r": 1,
+    "t": "Behavioral activation rests on research showing that withdrawal from rewarding activity deepens low mood, so scheduling activity in your week restores contact with reward, and each week we check how the schedule went and adjust it.",
+    "reply": "I understand the words. It sounds like something from a pamphlet. What does it mean for me?",
+    "why": "The explanation is accurate and the mechanism is complete. It uses none of her words and none of her week, so she asks what it means for her."
+   },
+   {
+    "r": 0,
+    "t": "Treat the plan as a weekly place to talk about what dimmed the light and what it has meant for you. There is some activity in it too, but that part is optional, whatever you feel like that week.",
+    "reply": "A place to talk. That I would like. And no pressure about the rest.",
+    "why": "The wording is warm and uses her image, but it changes what the treatment does. Talking takes the place of contact with reinforcing activity, and making the activity optional removes the mechanism. Her relief shows how comfortable the change is."
+   },
+   {
+    "r": 0,
+    "t": "The more activities you put in the week, the faster the light comes back, so we will fill the calendar as full as we can and see how quickly it works, and add more each week if it is going well.",
+    "reply": "Full? My calendar is already full. You want me to add more?",
+    "why": "The response uses her image and turns the mechanism into a count. The target is contact with activity that brings reward, so the number of activities is not the target. A fuller calendar adds load for a woman who has said she has no free hours."
+   }
+  ],
+  "order": [
+   2,
+   0,
+   1,
+   3
+  ]
+ },
+ {
+  "bloom": "analyze",
+  "skill": 2,
+  "client": {
+   "g": "Okay, the light and the things that turn it up. I can follow that. This is my week. Nights Sunday to Wednesday, ten to six. My father’s clinic is Tuesday and Friday mornings, and the bus takes an hour each way. Thursday I am off. The group I used to sing with meets Thursday evening across town, two hours of buses there and back.",
+   "m": "I still don’t know what that means for me, but I will tell you my week. Nights Sunday to Wednesday, ten to six. My father’s clinic is Tuesday and Friday mornings, and the bus takes an hour each way. Thursday I am off. The group I used to sing with meets Thursday evening across town, two hours of buses there and back.",
+   "p": "I am not sure this is working for me yet, but here is my week. Nights Sunday to Wednesday, ten to six. My father’s clinic is Tuesday and Friday mornings, and the bus takes an hour each way. Thursday I am off. The group I used to sing with meets Thursday evening across town, two hours of buses there and back."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Thursday is your night off, so we will start there. Go to the first part of the singing group when the buses allow, and other weeks sing along to a recording at the kitchen table for twenty minutes. Then rate the light from one to ten.",
+    "reply": "The kitchen table I can do. My father likes it when I hum. The group, some weeks. Thursday evening, before I think too hard about it.",
+    "why": "The activity comes from what she told you matters, it fits her real Thursday and her transport limits, and a fallback keeps it going on hard weeks. The rating afterward checks whether it brings reward, so contact with reinforcement is preserved."
+   },
+   {
+    "r": 1,
+    "t": "Singing with the group sounds like what matters most to you, so we will plan for you to go every Thursday evening for the next month and see how it feels, and we will talk about how it went at each session, and what you noticed each time.",
+    "reply": "Every Thursday, two hours of buses, after a night shift? I will try, but I doubt I will last.",
+    "why": "The activity is tied to what she values, which gives it a chance of being rewarding. It ignores the buses and the sleep she needs after Wednesday night, so the plan is likely to fail in the second week and teach her that she cannot do it."
+   },
+   {
+    "r": 1,
+    "t": "You already wait for the bus on clinic days, so we could add a ten-minute walk after the Friday visit, and you can tick it off on a card, which takes no extra travel time, and the card will show us how often it happens.",
+    "reply": "A walk. All right, it takes no extra time. It isn’t anything I care about, but I can tick a box.",
+    "why": "The activity fits her week and is easy to do. It was not chosen from what matters to her, so it is unlikely to bring much reward, and the plan could run on schedule while the mechanism stays idle."
+   },
+   {
+    "r": 0,
+    "t": "You already do a great deal. Your father’s care and the association’s books count as activity, so we can simply record those, and I would not want to add anything to a week that is as full as yours, so the plan stays as it is.",
+    "reply": "Good. That is less to worry about.",
+    "why": "These are existing obligations she has described as tiring. Recording them adds no new contact with activity that brings reward, so the treatment’s process is absent while the plan looks complete."
+   }
+  ],
+  "order": [
+   0,
+   1,
+   3,
+   2
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 3,
+  "client": {
+   "g": "I tried to picture the Thursday singing, and something in me said no. Can we plan rest instead? Rest is the only thing I allow myself. Something just for me, that is of no use to anyone, I can’t count as worthwhile.",
+   "m": "The plan we made is not sitting right with me. Can we plan rest instead? Rest is the only thing I allow myself. Something just for me, that is of no use to anyone, I can’t count as worthwhile.",
+   "p": "You said what I already do counts. Then can we make the plan about rest? Rest is the only thing I allow myself. Something just for me, that is of no use to anyone, I can’t count as worthwhile."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Rest is real, and it stays in the plan. I would like to keep one thing in the week that turns the light up, and it can give something to others too, since your father or the group receives your singing. Could we try it for two weeks, with rest afterward?",
+    "reply": "Giving something to the group, to him. That I can say yes to. Two weeks. And the rest afterward.",
+    "why": "The response honors the need behind the request, keeps the mechanism by holding one rewarding activity in the week, and offers a version that fits her own belief about what counts. It asks for her agreement and sets a review."
+   },
+   {
+    "r": 1,
+    "t": "Tell me more about the idea that something for yourself is not worthwhile. Where does that come from for you, and who taught it to you? I would like to understand it before we decide anything about the plan, because I want to get this right.",
+    "reply": "My mother used to say that idle hands are a waste. I know that is old. It is still in my head.",
+    "why": "The question asks and does not assume, and her answer is useful. The response stops there. Nothing is negotiated, so the conversation ends with the plan still open and the request for rest still standing."
+   },
+   {
+    "r": 0,
+    "t": "That makes sense, and you do need rest. We will plan two rest periods a day for the next two weeks, and we will review together how you feel when we meet again and decide what to do from there.",
+    "reply": "Good. Rest I can do. I will tell my father I have been told to rest.",
+    "why": "Rest is a real need, but a plan made only of rest has no contact with activity that brings reward. The mechanism is gone, and the review cannot show whether behavioral activation works for her because it is not being delivered."
+   },
+   {
+    "r": 0,
+    "t": "That belief is a thinking error, and it is likely keeping you stuck. We will work on changing it first and schedule activities once it has shifted, which may take a number of sessions, so for now we set the plan aside and put the schedule on hold until you are ready.",
+    "reply": "A thinking error. So my mother was wrong, and I am wrong. I don’t know about this.",
+    "why": "The response labels a value she holds as an error without asking what it protects. It also postpones the activity that is the treatment’s mechanism and risks a rupture with her."
+   }
+  ],
+  "order": [
+   3,
+   2,
+   0,
+   1
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 4,
+  "client": {
+   "g": "Okay. Two weeks of singing, then rest. And if it doesn’t work? I don’t want to keep doing something that isn’t helping, and I don’t want you to keep it going to be polite. How will we know?",
+   "m": "We talked about my mother and the idle hands, and I am still not sure what we are doing this week. How will we know if any of it is helping? I don’t want to keep doing something that isn’t.",
+   "p": "I am not sure where we are with the plan. How will we know if any of this is helping? I don’t want to keep doing something that isn’t."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "We can use a card where you tick each activity you do, and a short mood questionnaire at each session. We decide now what would change the plan. If the card shows fewer than half the planned activities, we change the plan. If you do the activity and your mood has not moved by our fourth meeting, we revisit the aim.",
+    "reply": "The card I can do. I like that we decide now what would make us change it. The fourth meeting, then.",
+    "why": "The plan tracks the mechanism (the activity) and the symptom (mood), names the review point, and states in advance what would make both of you revise. The numbers are an example for this case. You and she set and can change them."
+   },
+   {
+    "r": 1,
+    "t": "We will use a card in your bag. You tick it each time you do the activity, and if you miss it two weeks in a row, we sit down and change the plan so it fits your week better, and I can bring a few other ideas for your Thursdays.",
+    "reply": "Easy enough. Tick, tick. And if I do it every time and still feel dim, then what?",
+    "why": "The card tracks the mechanism and the rule names a signal. Without a mood measure the plan cannot show whether doing the activity is changing how she feels, and she asks the question the plan leaves open."
+   },
+   {
+    "r": 0,
+    "t": "We will see how you feel by next week and talk about it then. You will probably know whether it is helping, and if you do not, you can tell me and we will talk about what to try next.",
+    "reply": "Maybe. I am not sure I will know. When I feel dim I am not a good judge.",
+    "why": "There is no measure, no review point, and no agreed signal. The decision would rest on mood and memory, which are what a dim mood distorts."
+   },
+   {
+    "r": 0,
+    "t": "We will track as much as we can. Mood three times a day, sleep, every activity, the hours you spend on your father’s care, and a long questionnaire at every session, and I will look through all of it before each session to decide what to do next, since more information should make for better decisions, and I will bring a summary of all of it each week.",
+    "reply": "Three times a day? In the break room at three in the morning? That is another job.",
+    "why": "Everything is measured and no decision is attached to any of it. The burden is beyond what her week can carry, so the record is likely to stop, and there is no signal for revising the plan."
+   }
+  ],
+  "order": [
+   3,
+   0,
+   2,
+   1
+  ]
+ }
+];
+var REVISIT = [
+ "Ask how the client understands the problem and what matters to her before proposing anything. Review Cultural Formulation: Five Domains of Questions and Cultural Humility as a Stance.",
+ "Restate the rationale in the client’s own image and keep what the treatment does. Review The Preservation Rule and Oren: Moves That Keep the Mechanism and Moves That Lose It.",
+ "Choose an activity from what matters to the client, fit it to her real week and transport, and keep contact with reward. Review The Eight Dimensions and Oren: Moves That Keep the Mechanism and Moves That Lose It.",
+ "Keep the need behind the request, hold one rewarding activity in the plan, and negotiate the version with her. Review The Preservation Rule and Adapting Without Losing the Mechanism.",
+ "Track the activity and the mood, set the review point, and agree in advance what would make you both revise. Review Tracking the Mechanism and the Symptoms and Decision Rules as Illustrations."
+];
+var TAKE = "In this module’s model, adaptation changes how a treatment is delivered and keeps the process that produces change. The clinician asks how the client understands the problem and what matters, restates the rationale in the client’s terms, fits the activity to the client’s week and values, negotiates when a request would remove the mechanism, and tracks both the activity and the symptoms with a signal agreed in advance.";
+var NOTE = "This practice conversation is invented and scores only the choices shown. It practices adapting behavioral activation with one scripted client and is not clinical training. It does not describe any group of people, and Hattie’s context is hers alone. It is not a way to assess or treat yourself or anyone you know. If someone talks about harming themselves, respond to that first, and in the United States call or text 988, or call 911 in an emergency.";
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root"), S;
+var LABEL={2:"Skilled response",1:"Acceptable, with a gap",0:"Missed the skill"};
+function fresh(){ S={t:0,branch:"start",pick:null,retried:false,first:null,log:[],done:false}; render(); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function pills(){ return '<div class="pills" aria-hidden="true">'+TURNS.map(function(t,i){ return '<span class="pill'+(i===S.t&&!S.done?" on":(i<S.log.length?" done":""))+'">'+(i+1)+'. '+esc(SKILLS[t.skill])+'</span>'; }).join("")+'</div>'; }
+function clientLine(t){ return t.client[S.branch]||t.client.start||t.client.m; }
+function render(){
+  if(S.done){ return summary(); }
+  var t=TURNS[S.t], h=pills()+'<div class="case"><b class="t">Case: Hattie</b>'+esc(SCENARIO)+'</div><section class="panel" id="panel" tabindex="-1" aria-live="polite">';
+  h+='<p class="skill">Turn '+(S.t+1)+' of '+TURNS.length+'. Skill practiced: '+esc(SKILLS[t.skill])+'</p>';
+  h+='<p class="quote"><span class="who">Hattie</span>'+esc(clientLine(t))+'</p>';
+  h+='<div class="do"><b>Do this:</b> Choose the response you would say next. Each choice changes how Hattie answers.</div><div class="options">';
+  t.order.forEach(function(ix,pos){
+    var o=t.options[ix], cls="opt";
+    if(S.pick!==null){ cls+=" r"+o.r; if(S.pick===ix) cls+=" pick"; else cls+=" dim"; }
+    h+='<button type="button" class="'+cls+'" data-ix="'+ix+'"'+(S.pick!==null?" disabled":"")+'><span class="k">'+String.fromCharCode(65+pos)+'.</span><span>'+esc(o.t)+'</span></button>';
+  });
+  h+='</div>';
+  if(S.pick!==null){
+    var o=t.options[S.pick], best=t.options.filter(function(x){return x.r===2;})[0], eff=(S.retried?Math.min(o.r,1):o.r);
+    h+='<p class="verdict r'+o.r+'">'+LABEL[o.r]+(S.retried?" (second try, scored at most 1 of 2)":"")+'</p>';
+    h+='<p class="quote"><span class="who">Hattie</span>'+esc(o.reply)+'</p><p class="explain">'+esc(o.why)+'</p>';
+    if(o.r<2) h+='<div class="better"><b>A stronger response:</b> '+esc(best.t)+'</div>';
+    h+='<div class="foot">'+((o.r===0&&!S.retried)?'<button class="btn secondary" type="button" data-act="retry">Try this turn again</button>':'<span></span>')+'<button class="btn" type="button" data-act="next">'+(S.t>=TURNS.length-1?"See your results":"Continue the conversation")+'</button></div>';
+  }
+  h+='</section>'; root.innerHTML=h; post();
+  var p=document.getElementById("panel"); if(p&&S.pick!==null){ try{p.focus();}catch(e){} }
+}
+function commit(){
+  var t=TURNS[S.t], o=t.options[S.pick], sc=(S.retried?Math.min(o.r,1):o.r);
+  S.log.push({skill:t.skill,r:o.r,score:sc,retried:S.retried,first:S.first});
+  S.branch=(o.r===2?"g":(o.r===1?"m":"p"));
+}
+function summary(){
+  var tot=0; S.log.forEach(function(l){tot+=l.score;});
+  var worst=S.log.slice().sort(function(a,b){return a.score-b.score;})[0];
+  var h=pills()+'<section class="panel" id="panel" tabindex="-1"><h2 style="margin:0 0 4px;font-size:20px;">Your conversation with Hattie</h2><p>You scored <b>'+tot+' of '+(TURNS.length*2)+'</b> across the five skills. A retried turn counts for at most 1 point.</p><div>';
+  S.log.forEach(function(l){ h+='<div class="brow"><span class="bs">'+l.score+' / 2</span><span><b>'+esc(SKILLS[l.skill])+'.</b> '+(l.score===2?"Skilled response.":esc(REVISIT[l.skill]))+'</span></div>'; });
+  h+='</div>';
+  if(tot<TURNS.length*2){ h+='<div class="take"><b>Where to look again:</b> '+esc(REVISIT[worst.skill])+'</div>'; }
+  h+='<div class="take"><b>What carries forward:</b> '+esc(TAKE)+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="note">'+esc(NOTE)+'</p></section>';
+  root.innerHTML=h; post();
+}
+root.addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b||b.disabled) return;
+  if(b.hasAttribute("data-ix")){ if(S.pick!==null) return; S.pick=parseInt(b.getAttribute("data-ix"),10); if(!S.retried) S.first=S.pick; render(); return; }
+  var a=b.getAttribute("data-act");
+  if(a==="retry"){ S.retried=true; S.pick=null; render(); return; }
+  if(a==="next"){ commit(); S.pick=null; S.retried=false; S.first=null; if(S.t>=TURNS.length-1){ S.done=true; } else { S.t++; } render(); try{window.scrollTo({top:0,behavior:"smooth"});}catch(x){} return; }
+  if(a==="again"){ fresh(); return; }
+});
+fresh();
+
+</script>
+</body>
+</html>

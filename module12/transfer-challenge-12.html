@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Challenge: Adapt, Measure, Revise</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --line2:#eceae4;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --level-bg:#fbe7e0; --level-ink:#b0472a;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --sel-line:#c9d3c2;
+    --focus:#2f6f4f; --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px;}
+
+  .head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px;}
+  .back-ic{flex:0 0 auto;margin-top:4px;opacity:.6;}
+  .head h1{margin:0;font-size:24px;letter-spacing:-.01em;font-weight:700;}
+  .tabrow{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 22px;padding-left:38px;font-size:14px;}
+  .lvl{background:var(--level-bg);color:var(--level-ink);font-weight:700;border-radius:8px;padding:4px 12px;}
+  .tabrow .t{color:var(--muted);padding:4px 0;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;margin-bottom:20px;}
+  .panel h2{margin:0 0 14px;font-size:17px;font-weight:700;}
+  .panel p{margin:0 0 14px;font-size:15.5px;line-height:1.6;}
+  .panel p:last-child{margin-bottom:0;}
+  .scenario p.quote{color:#3a3833;}
+
+  .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
+  .qhead h2{margin:0;font-size:17px;font-weight:700;}
+  .qtype{flex:0 0 auto;font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:7px;padding:5px 10px;}
+  .qprompt{font-size:15.5px;margin:0 0 14px;line-height:1.55;}
+
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin-bottom:18px;}
+  .do b{color:var(--ink);font-weight:700;}
+
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font:inherit;font-size:15px;line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:14px;}
+  .opt .txt{flex:1 1 auto;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;}
+  .opt:disabled{cursor:default;}
+  /* answered states */
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.62;}
+
+  .verdict{margin:16px 0 0;font-size:15px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14.5px;color:#44413b;line-height:1.6;}
+
+  .qfoot{display:flex;justify-content:flex-end;margin-top:20px;}
+  .btn{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;transition:.12s;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .results h2{display:flex;align-items:center;gap:9px;}
+  .results .score{font-size:15.5px;margin:0;}
+  .ea-sub{color:var(--muted);font-size:14px;margin:-6px 0 14px;}
+  .book{flex:0 0 auto;opacity:.7;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+  @media(max-width:560px){ .wrap{padding:18px 14px 44px;} .tabrow{padding-left:0;} .head h1{font-size:20px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg class="back-ic" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 5l-5 5 5 5" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1 id="title"></h1>
+  </div>
+  <div class="tabrow" id="tabrow"></div>
+
+  <!-- Scenario (persistent) -->
+  <section class="panel scenario" id="scenario"></section>
+
+  <!-- Question area -->
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <!-- Results + Expert Analysis (hidden until finished) -->
+  <section class="panel results hidden" id="resultsPanel"></section>
+  <section class="panel hidden" id="eaPanel"></section>
+</div>
+
+<script>
+// Challenge data. Scenario, questions, and expert analysis are original and grounded in the module reading.
+const CHALLENGE = {
+ "title": "Adapt, Measure, Revise",
+ "level": "Level 5: Evaluate",
+ "tabs": [
+  "Keep and Change",
+  "What to Measure",
+  "Reading the First Data",
+  "Setting Revision Rules"
+ ],
+ "scenario": {
+  "heading": "Clinical Scenario",
+  "paras": [
+   "Cedar Row Community Clinic is invented for this exercise, and so is everyone in it. The clinic serves a neighborhood of mixed backgrounds and plans a twelve-week group program for adults with low mood, built on behavioral activation. The mechanism is contact with reinforcing activity, and the program as tested uses weekly activity scheduling, a log of what was done, and gradual progression to harder activities. In published trials the program ran in English, in weekly evening sessions, with goals framed around personal achievement.",
+   "The director, Freya, asked intake staff to put open questions to every new client and held a meeting with a community advisory group. Clients and advisors said the following, and the clinic treats each statement as one person’s report, to be checked with each client. Many want sessions in a language other than English, and a bilingual facilitator named Ulla is available for two groups. Several work early shifts or provide care in the evening, so weekday evenings are hard. Several said that a good week is one in which they helped someone, and that goals about their own achievement feel foreign. Two clients said the written worksheets felt like school.",
+   "Freya has a limit on clinician time, and she wants to monitor the program from the first week. She also wants to know in advance what result would make the team change the plan. Intake staff ask every client about thoughts of ending their life, and anyone who says yes gets a same-day safety conversation. If this scenario affects you personally, you can call or text 988 at any hour, and in an emergency you can call 911."
+  ]
+ },
+ "doThis": "Pick the best option. After you answer, read whether you were correct and why before advancing.",
+ "questions": [
+  {
+   "id": "q1",
+   "bloom": "evaluate",
+   "prompt": "Which adaptation plan best decides what to keep and what to change?",
+   "options": [
+    {
+     "id": "a",
+     "text": "Keep the English curriculum and translate the worksheets. Hold the evening slot so conditions stay close to the published trials"
+    },
+    {
+     "id": "b",
+     "text": "Shorten the program to six sessions by dropping the activity log, and use the time for open discussion of what low mood means"
+    },
+    {
+     "id": "c",
+     "text": "Keep scheduling, the activity log, and progression. Change the language, session time, and goal framing, after asking each client"
+    },
+    {
+     "id": "d",
+     "text": "Rebuild the program around helping others, as the advisory group described, and replace the activity log with group discussion to keep sessions informal"
+    }
+   ],
+   "correct": "c",
+   "explanation": "The plan keeps the three procedures that bring clients into contact with reinforcing activity and changes the wrapping the community described. It treats the advisory statements as questions to confirm with each person. Translating worksheets alone changes the surface and leaves the reported barriers of language in session and evening timing in place, so the plan would be correct in general and unlivable for these clients. Dropping the log removes a procedure that carries the mechanism, so discussion would replace the mechanism and the original trials would no longer describe the program. The fourth plan treats the advisory group’s statements as settled for every client, which risks stereotyping, and replacing the log with discussion removes a procedure that carries the mechanism."
+  },
+  {
+   "id": "q2",
+   "bloom": "evaluate",
+   "prompt": "Freya wants measurement to fit inside the 10 to 15 minute per-session cap and to inform decisions. Which measurement plan is the strongest design?",
+   "options": [
+    {
+     "id": "a",
+     "text": "The PHQ-9 (about 2 minutes) and the valued activity day count from the log (about 1 minute), weekly, plus a fit check on the items"
+    },
+    {
+     "id": "b",
+     "text": "The OQ-45, the PHQ-9, the GAD-7, and the PCL-5 at every session, so that no possible problem in any client in the group goes unnoticed"
+    },
+    {
+     "id": "c",
+     "text": "The count of valued activity days alone, since the activity is the mechanism and symptom scores add little once the process is moving"
+    },
+    {
+     "id": "d",
+     "text": "The PHQ-9 at week 1, week 6, and week 12 only, to keep the burden low for clients with busy weeks at work or at home, and for the staff who collect the scores"
+    }
+   ],
+   "correct": "a",
+   "explanation": "A weekly symptom measure with a weekly mechanism measure is dual tracking at low cost, and it leaves room under the cap. Asking whether the items describe the client’s experience guards against a measure that fits one group’s way of describing distress and misses another’s. Four full instruments take about fourteen minutes together by the times in the reading, so they fit under the cap and consume nearly all of it, and most of them would feed no decision. Three measurement points would let a stall run for weeks. Tracking only the activity count cannot show whether symptoms are improving, and the improvement the program exists to produce would go unread."
+  },
+  {
+   "id": "q3",
+   "bloom": "evaluate",
+   "prompt": "At session 6, the group data (invented) are in. Of 24 clients enrolled, 9 have stopped attending, and 7 of those 9 work early shifts. Among the 15 still attending, mean PHQ-9 moved from 16.0 to 15.0 and valued activity days per two weeks rose from 2 to 7. What should the team do?",
+   "options": [
+    {
+     "id": "a",
+     "text": "Revisit the formulation for the whole group, since symptom change is under 5 points by session 6 and that rule shows the mechanism is wrong for them"
+    },
+    {
+     "id": "b",
+     "text": "Declare the adapted program a failure and return to the original English evening version, since more than a third of the clients stopped coming"
+    },
+    {
+     "id": "c",
+     "text": "Treat the rise in activity days as the success measure and stop collecting the PHQ-9, since the mechanism is clearly moving as intended among the clients who remain"
+    },
+    {
+     "id": "d",
+     "text": "Continue the core procedures because activity moved first among those attending, ask the 9 who left what got in the way, and offer a second slot"
+    }
+   ],
+   "correct": "d",
+   "explanation": "Among the 15 still attending, activity rose while symptoms lag, which fits the mechanism moving first, and the pattern supports continuing the core while watching whether symptoms follow. These means describe only the 15 who stayed, so they cannot speak for the 9 who left (38 percent of 24). The dropout pattern is a fit signal, since 7 of the 9 who left share a scheduling constraint, and asking them is the way to learn what happened. The 5-point by session 6 threshold is an example in the sources and is not a validated rule, so treating it as evidence of a wrong mechanism is a mistake. Returning to the original version would reinstate the evening slot that the leavers could not attend. Dropping the symptom measure would leave no way to tell whether the activity gains translate into improvement for the clients who stayed."
+  },
+  {
+   "id": "q4",
+   "bloom": "evaluate",
+   "prompt": "The team writes revision rules before the program continues. Which set best specifies what result would make them change the plan?",
+   "options": [
+    {
+     "id": "a",
+     "text": "Revise if mean PHQ-9 has not fallen by at least 5 points by session 6, since the published example gives the team a clear standard for the whole group"
+    },
+    {
+     "id": "b",
+     "text": "Review at sessions 6 and 12 against provisional rules set with the advisory group, checking delivery when series stay flat and the target when activity rises alone"
+    },
+    {
+     "id": "c",
+     "text": "Wait until the twelve-week cycle ends, compare start and end scores for the clients who finished the program, and revise next year if the change is small"
+    },
+    {
+     "id": "d",
+     "text": "Revise a client’s plan whenever that client’s PHQ-9 rises between two visits, so that no worsening goes unaddressed and no client drifts unnoticed"
+    }
+   ],
+   "correct": "b",
+   "explanation": "A defensible rule names the measure, the review point, the pattern that counts, and the action each pattern triggers, and it carries numbers the team sets with reasons and revises. Pairing the two series separates a delivery problem from a problem with the target. A single threshold borrowed from an example treats an illustration as a validated rule. Waiting for the end of the cycle and reading only completers repeats the mistake of leaving out the clients who left, and gives no chance to correct anything while it matters. Reacting to a single rise ignores measurement noise, since a one-visit change can fall within it, so the reliable change logic is the floor for reading a client’s change as real."
+  }
+ ],
+ "expertAnalysis": {
+  "heading": "Expert Analysis",
+  "subhead": "Model answer and clinical reasoning walkthrough",
+  "paras": [
+   "The first decision is what to keep. Behavioral activation works through contact with reinforcing activity, so scheduling, the activity log, and gradual progression stay. The language of sessions, the time and format, the framing of goals, and the form of the materials are the wrapping, and each can change. The advisory statements generate questions. Ulla delivering in a preferred language, a second time slot or telehealth for people on early shifts, and goals the client frames around helping others all change delivery and leave the mechanism in place. Each is confirmed with the client in front of the clinician, since an advisory report describes some people and the clinic serves individuals. The team records what it changed and why, so the adapted program can be tracked like any other. If the team ever replaced scheduling with discussion, it would be running a different intervention and could no longer lean on the original trials.",
+   "The second decision is what to measure and how often. A weekly symptom measure and a weekly count of valued activity days give two series for about three minutes, well inside the cap, and a short question about whether the items fit the client’s experience checks that the measure describes the problem as the client sees it. The team reviews the data before each session and tells clients why the log matters. Each additional instrument would have to inform a decision the team could name, and a long battery risks losing clients from the measurement itself.",
+   "The third decision is how to read early data and when to revise. By session 6 the activity series has moved and the symptom series is lagging, which is the pattern the formulation predicts, so the core continues. These figures describe the 15 clients who remain. The dropout is a separate signal about fit. Seven of the nine clients who left share early shifts, so the team asks them and adds a slot. The 5-point example in the sources does not apply as a rule. The revision plan is written in advance with the advisory group and labeled provisional. If both series stay flat and attendance falls, delivery is examined first. If activity rises and symptoms stay flat through session 12, the team asks whether the target is central. Individual clients are read with the reliable change logic and not from a single score, and any client who reports thoughts of ending their life is met with the same-day safety conversation the clinic already uses. If you or someone you know is in distress, call or text 988, or call 911 in an emergency."
+  ]
+ }
+};
+
+var idx = 0;            // current question index
+var answered = [];      // answered[i] = chosen option id or null
+var correctCount = 0;
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+var BOOK = '<svg class="book" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+
+function renderStatic(){
+  document.getElementById("title").textContent = CHALLENGE.title;
+  var tr = document.getElementById("tabrow");
+  tr.appendChild(el("span","lvl", esc(CHALLENGE.level)));
+  CHALLENGE.tabs.forEach(function(t){ tr.appendChild(el("span","t", esc(t))); });
+
+  var sc = document.getElementById("scenario");
+  sc.appendChild(el("h2",null, esc(CHALLENGE.scenario.heading)));
+  CHALLENGE.scenario.paras.forEach(function(p,i){
+    sc.appendChild(el("p", i===1?"quote":null, esc(p)));
+  });
+  answered = CHALLENGE.questions.map(function(){ return null; });
+}
+
+function renderQuestion(){
+  var q = CHALLENGE.questions[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var head = el("div","qhead");
+  head.appendChild(el("h2",null,"Question " + (idx+1) + " of " + CHALLENGE.questions.length));
+  head.appendChild(el("span","qtype","Multiple Choice"));
+  panel.appendChild(head);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> " + esc(CHALLENGE.doThis)));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls = "opt";
+    if(isAnswered){
+      if(o.id === q.correct) cls += " correct";
+      else if(o.id === chosen) cls += " wrong";
+      else cls += " dim";
+    }
+    var btn = el("button", cls);
+    btn.type = "button";
+    if(isAnswered) btn.disabled = true;
+    var mark = "";
+    if(isAnswered && o.id === q.correct) mark = CHECK;
+    else if(isAnswered && o.id === chosen) mark = CROSS;
+    btn.innerHTML = '<span class="k">'+o.id.toUpperCase()+'.</span>' +
+                    '<span class="txt">'+esc(o.text)+'</span>' +
+                    '<span class="mark">'+mark+'</span>';
+    if(!isAnswered){
+      btn.addEventListener("click", function(){ choose(o.id); });
+    }
+    opts.appendChild(btn);
+  });
+  panel.appendChild(opts);
+
+  if(isAnswered){
+    var right = chosen === q.correct;
+    if(right){
+      panel.appendChild(el("p","verdict ok","Correct!"));
+    } else {
+      var correctText = "";
+      q.options.forEach(function(o){ if(o.id===q.correct) correctText = o.text; });
+      panel.appendChild(el("p","verdict no","Incorrect. The correct answer is: " + esc(correctText)));
+    }
+    panel.appendChild(el("p","explain", esc(q.explanation)));
+
+    var foot = el("div","qfoot");
+    var last = idx === CHALLENGE.questions.length - 1;
+    var b = el("button","btn");
+    if(last){
+      b.innerHTML = 'View Expert Analysis ' + BOOK.replace('class="book" ','');
+      b.addEventListener("click", finish);
+    } else {
+      b.innerHTML = 'Next Question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      b.addEventListener("click", function(){ idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+    }
+    foot.appendChild(b);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(optId){
+  if(answered[idx] !== null) return;
+  answered[idx] = optId;
+  if(optId === CHALLENGE.questions[idx].correct) correctCount++;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("qpanel").classList.add("hidden");
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML = "";
+  rp.appendChild(el("h2",null, BOOK + "<span>Your Results</span>"));
+  rp.appendChild(el("p","score","Multiple Choice: " + correctCount + " / " + CHALLENGE.questions.length + " correct"));
+
+  var ea = document.getElementById("eaPanel");
+  ea.classList.remove("hidden");
+  ea.innerHTML = "";
+  ea.appendChild(el("h2",null, BOOK + "<span>" + esc(CHALLENGE.expertAnalysis.heading) + "</span>"));
+  ea.appendChild(el("p","ea-sub", esc(CHALLENGE.expertAnalysis.subhead)));
+  CHALLENGE.expertAnalysis.paras.forEach(function(p){ ea.appendChild(el("p",null, esc(p))); });
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderStatic();
+renderQuestion();
+</script>
+</body>
+</html>
