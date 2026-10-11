@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Process, Three Diagnoses</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>One Process, Three Diagnoses</h1>
+    <p class="sub">One transdiagnostic process shown across three invented presentations. Decide what it predicts and what it does not, find a case where the diagnosis matters more, and weigh a process-matched plan against a diagnosis-matched one.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "What the shared process predicts",
+  "short": "Predictions",
+  "tag": "Teodor, Carmen, Malik",
+  "case": {
+   "title": "Invented presentations",
+   "text": "<b>Teodor, 22, social anxiety disorder.<\/b> Skips team meetings and sends written updates, and feels relief once he is out of the room. <b>Carmen, 38, major depressive disorder.<\/b> Has stopped cooking, the gym, and calls with friends, feels a little lighter each time she cancels, and then flatter. <b>Malik, 29, posttraumatic stress disorder after a car crash.<\/b> Avoids the road where it happened, skips news about accidents, and steers conversations away. The three labels differ. In each case, relief arrives now and the cost arrives later."
+  },
+  "intro": "<b>Step 1.<\/b> The process shared by the three is avoidance maintained by negative reinforcement. Some statements follow from that fact, some are open empirical questions that a direct comparison would have to answer, and some treat a shared process as more than it is. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose one for each statement. Decide what the shared process, taken alone, supports.",
+  "cats": [
+   {
+    "id": "follows",
+    "label": "Follows from the shared-process view"
+   },
+   {
+    "id": "test",
+    "label": "Open empirical question for a direct comparison"
+   },
+   {
+    "id": "no",
+    "label": "Does not follow, because it treats a shared process as more than it is"
+   }
+  ],
+  "src": "Module 14, What a Shared Process Predicts and What It Does Not",
+  "items": [
+   {
+    "text": "Because the process is shared, one avoidance-focused protocol must beat three separate diagnosis-specific protocols on symptom results.",
+    "answer": "no",
+    "why": "A shared process predicts that a treatment aimed at it should help across labels. It does not predict that one protocol will outperform three others, and direct comparisons of whole protocols found similar outcomes.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A single shared protocol would be finished by more of these three people than separate diagnosis-specific protocols would be.",
+    "answer": "test",
+    "why": "Completion is a separate outcome from symptom change, and the shared process does not settle it. One trial found higher completion for a transdiagnostic protocol, and one result in one setting needs replication before it generalizes.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "In each formulation, the clinician should ask what the avoidance spares the person in the short term and what it costs over the following weeks.",
+    "answer": "follows",
+    "why": "The same loop appears under three labels, so the same assessment questions apply. The answers will differ, and the questions carry over.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Because the process is shared, the three diagnoses can be dropped from each person's record and from referral and access-to-care paperwork.",
+    "answer": "no",
+    "why": "Diagnoses still serve communication, research, and access to care. The shared process changes what the clinician asks next and leaves those uses in place.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A technique that helps a person approach what they have been avoiding should be expected to help Teodor, Carmen, and Malik alike.",
+    "answer": "follows",
+    "why": "If the same process maintains the three problems, a treatment aimed at it should help across the labels. This is the first prediction the shared process supports.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Because the process is the same, Teodor, Carmen, and Malik should begin with the same exercise in the first session.",
+    "answer": "no",
+    "why": "The process is shared and its form is not. Meetings, activities and friends, and a particular road call for different first steps, and a clinician learns which by asking each person.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "For Malik, a shared avoidance-focused protocol would give results similar to a trauma-focused protocol designed for posttraumatic stress.",
+    "answer": "test",
+    "why": "The direct comparisons in the module covered other anxiety and depression diagnoses and did not include posttraumatic stress. Whether the same holds for his diagnosis is an open question that a direct comparison would have to answer.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread \"What a Shared Process Predicts and What It Does Not.\""
+ },
+ {
+  "type": "mcq",
+  "title": "Safety behaviors in a second case",
+  "short": "Chidi",
+  "tag": "Avoidance and checking",
+  "case": {
+   "title": "Invented case: Chidi, 26",
+   "text": "Chidi has an obsessive-compulsive presentation. Intrusive thoughts tell him he may have left the stove on. He avoids cooking, and before leaving his apartment he checks the stove six or seven times and texts his roommate to confirm it is off. Both the avoiding and the checking bring relief within seconds."
+  },
+  "intro": "<b>Step 2.<\/b> Avoidance is present in Chidi's case, and so are rituals that relieve distress right away. The module's account of safety behaviors says what rituals like these do to new learning.",
+  "doThis": "Choose the best answer.",
+  "src": "Module 14, Avoidance and the Reinforcement Cycle",
+  "items": [
+   {
+    "prompt": "Which statement best describes how the shared avoidance process fits Chidi?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The shared process may not apply, and his label is a different diagnosis from any in the transdiagnostic cases"
+     },
+     {
+      "id": "b",
+      "text": "The checking may be a separate problem that can wait until the avoidance has been treated for several weeks"
+     },
+     {
+      "id": "c",
+      "text": "Avoidance explains the whole presentation, and he may receive the same plan and the same first exercise as Teodor does"
+     },
+     {
+      "id": "d",
+      "text": "Avoidance is part of it, and the checking and texting are safety behaviors that may keep his stove prediction untested"
+     }
+    ],
+    "correct": "d",
+    "why": "The shared process applies and does not cover everything. The rituals relieve distress within seconds, so they keep the loop turning even when he approaches the stove. The option that assigns Teodor's plan treats a shared process as the entire formulation. Chidi has a second set of relief-driven behaviors that Teodor's case does not have. The option that rules out the process goes too far. Avoidance runs through his case, so the process view still informs the plan. The option about waiting treats the checking as unrelated. It is a safety behavior in the same loop, and leaving it in place may weaken each approach step.",
+    "bloom": "analyze",
+    "src": "Module 14, Avoidance and the Reinforcement Cycle"
+   },
+   {
+    "prompt": "Chidi starts graded cooking steps and keeps all of his checking and texting. What does the safety-behavior idea predict about these steps?",
+    "options": [
+     {
+      "id": "a",
+      "text": "They may teach him less than they could, because he can credit the checks for the stove being off"
+     },
+     {
+      "id": "b",
+      "text": "They may matter little to what he learns, because the checking happens before he leaves and the cooking happens at another time"
+     },
+     {
+      "id": "c",
+      "text": "They may teach him more than they otherwise would, because the checks keep him calm enough to stay in the kitchen"
+     },
+     {
+      "id": "d",
+      "text": "They may teach him just as much as they would without the checks, because facing the stove is what produces learning"
+     }
+    ],
+    "correct": "a",
+    "why": "Safety behaviors can block new learning, since the person can attribute a safe outcome to the ritual. The approach steps still help, and the rituals may blunt what he learns from them. Approaching the feared situation matters, and it is half of the picture. The rituals give him another explanation for a safe stove, which can limit what the approach teaches. Staying calm enough to approach is a reasonable thought, and it is the pull of any safety behavior. The reading's concern is that the calm comes from the ritual, so the prediction goes untested. The option treats the two behaviors as separate in time. Both bring relief from the same fear, and the checking can attach to the same prediction about the stove.",
+    "bloom": "analyze",
+    "src": "Module 14, Avoidance and the Reinforcement Cycle"
+   }
+  ],
+  "revisit": "Reread \"Avoidance and the Reinforcement Cycle.\""
+ },
+ {
+  "type": "mcq",
+  "title": "Process-matched or diagnosis-matched",
+  "short": "Compare plans",
+  "tag": "A clinic decision",
+  "case": {
+   "title": "Invented case, a campus counseling center",
+   "text": "A counseling center has 14 students waiting. Their diagnoses are panic disorder, generalized anxiety disorder, and social anxiety disorder, and several also report low mood. The center has one clinician with the time to run a single new group or to take on three diagnosis-specific individual caseloads. A staff member says \"the research settles this.\" A second student, seen on another day, describes posttraumatic stress after an assault."
+  },
+  "intro": "<b>Step 3.<\/b> Compare a process-matched plan with a diagnosis-matched plan using what the module reports. Read each claim for the comparison it makes. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer.",
+  "src": "Module 14, What a Shared Process Predicts and What It Does Not",
+  "items": [
+   {
+    "prompt": "Which statement about the head-to-head evidence is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The process-focused treatment beat the waitlist and usual care in pooled trials, which shows that it also beats a diagnosis-specific treatment"
+     },
+     {
+      "id": "b",
+      "text": "Diagnosis-specific protocols were shown to be better, because each was designed for one diagnosis and also beat the waitlist"
+     },
+     {
+      "id": "c",
+      "text": "The process-focused treatment was shown to be better, because more patients finished it in one trial at one site"
+     },
+     {
+      "id": "d",
+      "text": "The choice can rest on other reasons such as efficiency, because direct comparisons found similar symptom outcomes"
+     }
+    ],
+    "correct": "d",
+    "why": "Barlow and colleagues and Reinholt and colleagues each found similar outcomes. Other reasons for a choice can be weighed because outcomes do not separate the two. The option about completion treats a separate outcome as proof of overall superiority. Symptom results were equivalent in that trial, and the design could not support a claim of better results. The option about waitlists compares with the wrong condition. A win over a waitlist says nothing about a diagnosis-specific protocol, which also beat the waitlist. The option about diagnosis-specific superiority makes the same error from the other side. Design for one diagnosis does not show better results, and the trials found none.",
+    "bloom": "analyze",
+    "src": "Module 14, What a Shared Process Predicts and What It Does Not"
+   },
+   {
+    "prompt": "Two plans are defensible for the center. Which is the better choice, and why is the other weaker here?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A blend that gives every student some of each protocol, to hedge against the evidence being incomplete"
+     },
+     {
+      "id": "b",
+      "text": "Three diagnosis-specific caseloads, because diagnosis-specific treatment is the familiar default and shows large effects against inactive controls"
+     },
+     {
+      "id": "c",
+      "text": "One group protocol aimed at shared processes, because outcomes were similar and it serves mixed labels and comorbidity"
+     },
+     {
+      "id": "d",
+      "text": "One group protocol aimed at the shared processes, because it has been shown to produce better outcomes than diagnosis-specific treatment"
+     }
+    ],
+    "correct": "c",
+    "why": "The reasons are efficiency and comorbidity, and the equal outcomes mean nothing is lost by choosing them. None of the reasons claims better results. This one is defensible, because outcomes are similar and it would also work. It is weaker here because it ignores the center's constraints, with one clinician and several students who carry more than one diagnosis, and it assumes an advantage that the head-to-head trials did not show, since large effects against inactive controls come from a different comparison. This option reaches the same plan for a reason that overreaches. The head-to-head trials found similar outcomes, and a plan that rests on a claim of superiority would be hard to defend. The option about blending spreads effort thinly. A plan that gives a little of every protocol may give none of them enough repetition to take hold.",
+    "bloom": "evaluate",
+    "src": "Module 14, The Process-Based Approach and Treatment Matching"
+   },
+   {
+    "prompt": "The student who describes posttraumatic stress after an assault is on the same waiting list. The director says the group already covers the shared processes. Which response is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Place the student in the group, because the head-to-head trials showed that diagnoses make no difference to outcomes in general"
+     },
+     {
+      "id": "b",
+      "text": "Review a trauma-focused option alongside the group, because the trials left out this diagnosis and show no group advantage for it"
+     },
+     {
+      "id": "c",
+      "text": "Place the student in the group, because any person with distress shares the same processes as the others on the list already"
+     },
+     {
+      "id": "d",
+      "text": "Refer the student elsewhere without an assessment, because the center only runs one type of program and cannot adapt it"
+     }
+    ],
+    "correct": "b",
+    "why": "Both trials covered other anxiety and depression diagnoses. Placing the student in the group is also defensible, and the module gives no evidence that either choice would produce better results for this diagnosis, so the review rests on assessment. The option that dismisses diagnoses overstates the trials. They found similar outcomes for the diagnoses they included, and they did not test this one. The option about universal sharing assumes the conclusion. Shared processes are hypotheses to test in each case, and this case has a diagnosis the trials did not cover. The option about referral without assessment skips the formulation. A referral may follow, and it should follow a look at what this student needs.",
+    "bloom": "evaluate",
+    "src": "Module 14, Limits of the Shared-Process View"
+   }
+  ],
+  "revisit": "Reread \"What a Shared Process Predicts and What It Does Not\" and \"Limits of the Shared-Process View.\""
+ },
+ {
+  "type": "mcq",
+  "title": "Reading an outcomes table",
+  "short": "Read the table",
+  "tag": "Invented trial",
+  "case": {
+   "title": "Invented table, for practice",
+   "text": "<table style=\"border-collapse:collapse;margin:8px 0;font-size:13.5px;\"><tr><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Invented trial, adults with anxiety diagnoses<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Process-focused protocol<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Diagnosis-specific protocol<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Waitlist<\/th><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Randomized<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">60<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">60<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">30<\/td><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Finished treatment<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">54 (90%)<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">46 (77%)<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">not applicable<\/td><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Symptom change at end of treatment<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">-11.2<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">-11.8<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">-3.1<\/td><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Symptom change at 6 months<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">-12.0<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">-12.9<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">not collected<\/td><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Difference between the two protocols (95% CI)<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\" colspan=\"2\">End: 0.6 (-2.1 to 3.3). 6 months: 0.9 (-2.0 to 3.8)<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\"><\/td><\/tr><\/table>Negative numbers mean fewer symptoms. The trial planned in advance to call the protocols equivalent if the difference stayed within 4 points either way. One site. All numbers and the margin are invented."
+  },
+  "intro": "<b>Step 4.<\/b> Read the table and decide what it supports. Ask what each comparison is and which outcome it concerns.",
+  "doThis": "Choose the best answer.",
+  "src": "Module 14, Reading a Claim About Treatment",
+  "items": [
+   {
+    "prompt": "Which statement about symptom change is best supported by the table?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Both protocols show larger change than the waitlist, and the gap between them stayed inside the 4-point margin"
+     },
+     {
+      "id": "b",
+      "text": "The table shows nothing about either protocol, since the trial was too small to compare them"
+     },
+     {
+      "id": "c",
+      "text": "The process-focused protocol was better, with a higher share of its patients finishing the treatment they were given"
+     },
+     {
+      "id": "d",
+      "text": "The diagnosis-specific protocol was better, with a larger average change at both time points in this trial"
+     }
+    ],
+    "correct": "a",
+    "why": "Both protocol columns show symptom change of about 11 to 12 points against about 3 for the waitlist, although the table gives no interval for that comparison. The intervals for the difference between the protocols sit inside the margin, so the table supports no detected difference between them. The option about the larger average reads a point estimate without its interval. The intervals include zero and sit inside the margin, so the gap is within what chance could produce. The option about completion moves from one outcome to another. Symptom change and completion are separate outcomes, and the result on one does not carry over. The option that dismisses the table goes too far. Intervals within a stated margin support a conclusion of no detected difference, with the caution that the trial is small and at one site.",
+    "bloom": "analyze",
+    "src": "Module 14, Reading a Claim About Treatment"
+   },
+   {
+    "prompt": "A clinician says, \"the table proves the process-focused protocol is better, since 90 percent finished and only 77 percent finished the other.\" What is the best reply?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Only the symptom change should be read, so completion can be ignored in a trial table like this one"
+     },
+     {
+      "id": "b",
+      "text": "The completion figures are invented, so the table cannot support any claim about how the protocols compare"
+     },
+     {
+      "id": "c",
+      "text": "Completion is a separate outcome and the claim ignores equivalence on symptoms, so it calls for replication"
+     },
+     {
+      "id": "d",
+      "text": "Completion is the outcome that matters most to patients, so it settles the choice"
+     }
+    ],
+    "correct": "c",
+    "why": "The completion difference is real in this table and it concerns one outcome at one site. The design supports equivalence on symptoms, and a superiority claim would need a design that tests for it. The option that rejects the invented numbers dodges the reasoning. The numbers are invented for practice, and the question is how a real table would be read. The option that elevates completion asserts a ranking of outcomes the table does not make. A reader keeps each outcome apart and does not pick the one that favors a conclusion. The option that ignores completion throws away real information. Completion is an outcome that belongs in the report, and it needs reading for what it shows.",
+    "bloom": "evaluate",
+    "src": "Module 14, Reading a Claim About Treatment"
+   },
+   {
+    "prompt": "Which additional evidence would most improve confidence in choosing the process-focused protocol for a center like the one in Step 3?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A longer description of the shared processes in the manual used for the protocol"
+     },
+     {
+      "id": "b",
+      "text": "A replication at other sites with mixed diagnoses, including students who also have depression"
+     },
+     {
+      "id": "c",
+      "text": "A comparison of the process-focused protocol with a waitlist in a much larger sample of students"
+     },
+     {
+      "id": "d",
+      "text": "A table of effect sizes from published reviews of diagnosis-specific treatment, set beside this one"
+     }
+    ],
+    "correct": "b",
+    "why": "The table comes from one site and from anxiety diagnoses only. Replication in a setting that matches the center's students addresses the largest gaps. The option about a bigger waitlist comparison answers a question the table already answers. Both protocols already show larger changes than the waitlist, and the open question is the comparison between the protocols. The option about the second table compares different trials, controls, and samples. It cannot stand in for a head-to-head test. The option about the manual describes a mechanism and adds no outcome evidence. A clear account of the mechanism does not show that the protocol performs as hoped in this setting.",
+    "bloom": "evaluate",
+    "src": "Module 14, Reading a Claim About Treatment"
+   }
+  ],
+  "revisit": "Reread \"Reading a Claim About Treatment.\""
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>Carry forward.<\/b> A shared process predicts that a treatment aimed at it should help across labels. It does not predict that one protocol will beat separate diagnosis-specific protocols, and direct comparisons found similar outcomes. The reasons to consider a process-matched plan are efficiency, comorbidity, and shared mechanisms, and none of them is evidence of better results. Safety behaviors such as rituals can keep a loop going even while a person approaches what they fear, and for some conditions diagnosis-specific CBT shows larger effects against inactive controls, which is a different comparison from the head-to-head trials. In the United States, call or text 988, or call 911 in an emergency.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every person and the table in it are invented, and all numbers are invented for practice."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

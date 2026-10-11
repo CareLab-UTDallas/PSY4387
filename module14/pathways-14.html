@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equifinality and Multifinality Explorer</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Equifinality and Multifinality Explorer</h1>
+    <p class="sub">Classify scenarios, decide which inferences a case supports and which overreach, and choose what a clinician should assess first when two clients share a diagnosis and differ in history.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Classify the scenario",
+  "short": "Classify",
+  "tag": "Equifinality or multifinality",
+  "intro": "<b>Step 1.<\/b> Equifinality means different paths to the same outcome. Multifinality means the same start leading to different outcomes. A scenario can show neither. All people here are invented.",
+  "doThis": "Choose one for each scenario. Look at what varies, the start, the path, or the outcome.",
+  "cats": [
+   {
+    "id": "eq",
+    "label": "Equifinality"
+   },
+   {
+    "id": "mf",
+    "label": "Multifinality"
+   },
+   {
+    "id": "neither",
+    "label": "Neither"
+   }
+  ],
+  "src": "Module 14, Same Outcome, Different Paths",
+  "items": [
+   {
+    "text": "Isidro's depression began after a layoff and eased when he rebuilt a daily routine, and he has stayed well since.",
+    "answer": "neither",
+    "why": "This describes one person's course. Neither principle is shown, because both require a comparison across people or paths.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Ingrid's depression followed months of night-shift sleep loss. Leandro's followed the death of his brother and a year of seeing few people. Eun's followed a move that cut off every friend. All three now meet criteria for the same diagnosis.",
+    "answer": "eq",
+    "why": "The starting points and the paths differ, and the outcome is the same. A diagnosis does not reveal the route.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Two coworkers on the same night shift both develop insomnia after the same schedule change.",
+    "answer": "neither",
+    "why": "The start and the outcome are the same for both. Equifinality needs different routes and multifinality needs different outcomes.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "After a family relocation that followed a job loss, Finn developed an anxiety problem, Uriel began drinking heavily to settle his emotions, and Abena stayed well with the help of a stable teacher and close friends.",
+    "answer": "mf",
+    "why": "One shared start led to three different outcomes. A single starting event does not fix a single outcome.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Two children in one household live through a parent's long illness. One later develops depression, and the other has little difficulty.",
+    "answer": "mf",
+    "why": "The shared adversity is the start, and the outcomes diverge. Protective factors and other differences between the children may help explain it.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Three adults come to a clinic with social anxiety. One was bullied in school. One froze during a public presentation last year. One missed a year of school because of an illness.",
+    "answer": "eq",
+    "why": "The routes are different and the label is the same. This is a reason to record predisposing and precipitating factors separately for each person.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread \"Same Outcome, Different Paths.\""
+ },
+ {
+  "type": "mcq",
+  "title": "Which inference does the case support",
+  "short": "Inferences",
+  "tag": "Ingrid, Leandro, Eun and the siblings",
+  "case": {
+   "title": "Invented cases",
+   "text": "<b>Three adults.<\/b> Ingrid, Leandro, and Eun (invented) all meet criteria for depression by different routes, and all three now stay in most of the day and go over what went wrong. <b>Three siblings.<\/b> After the same relocation, Finn developed an anxiety problem, Uriel began drinking heavily, and Abena stayed well. Abena had a stable teacher and close friendships."
+  },
+  "intro": "<b>Step 2.<\/b> A case supports some inferences and invites others it cannot carry. Find the line between them.",
+  "doThis": "Choose the best answer.",
+  "src": "Module 14, Same Outcome, Different Paths",
+  "items": [
+   {
+    "prompt": "Which inference about treatment do the three adults support best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The routes differ, so each person needs a different type of treatment suited to the route taken"
+     },
+     {
+      "id": "b",
+      "text": "All three end in withdrawal and rumination, so one treatment is shown to be best for them in this case"
+     },
+     {
+      "id": "c",
+      "text": "The routes tell the clinician little about treatment, so histories can wait until later in treatment"
+     },
+     {
+      "id": "d",
+      "text": "A shared label shows neither route nor loops, so assess what maintains the problem in each person"
+     }
+    ],
+    "correct": "d",
+    "why": "This is the modest conclusion equifinality supports for treatment. The route does not tell the clinician which loops are running. The option about different treatments for different routes overreaches. A difference in routes gives no reason to expect one treatment to work better, and their current loops may overlap. The option about one best treatment draws a conclusion from overlap in loops. The overlap is a hypothesis to test in each person, and it does not rank treatments. The option that postpones the history is partly right, since the route does not choose the treatment. Predisposing and precipitating factors are still recorded separately because they help the clinician understand each person.",
+    "bloom": "evaluate",
+    "src": "Module 14, Same Outcome, Different Paths"
+   },
+   {
+    "prompt": "Which inference about the siblings goes beyond what the case supports?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Abena's good outcome suggests that the relocation carried no risk for Finn and Uriel"
+     },
+     {
+      "id": "b",
+      "text": "The relocation alone did not fix the outcome for the three siblings"
+     },
+     {
+      "id": "c",
+      "text": "Finn's and Uriel's problems differ in form and call for separate formulations"
+     },
+     {
+      "id": "d",
+      "text": "Abena's teacher and friendships are a plausible protective factor that she could be asked about"
+     }
+    ],
+    "correct": "a",
+    "why": "This is the overreach. One person's good outcome cannot show that a risk was absent for another, because the start does not fix the outcome in either direction. This inference is supported. Three outcomes from one start is the pattern multifinality describes. This inference is supported. The case names the factors, and the word plausible keeps it a hypothesis. This inference is supported. Different outcomes from one start call for separate formulations.",
+    "bloom": "analyze",
+    "src": "Module 14, Same Outcome, Different Paths"
+   },
+   {
+    "prompt": "Abena stayed well after the same relocation. Which is the better working explanation now?",
+    "options": [
+     {
+      "id": "a",
+      "text": "She may be resilient by temperament, and asking how she handled earlier hard events would test that"
+     },
+     {
+      "id": "b",
+      "text": "Finn and Uriel may have had less support than she did, and asking each of them about it would test that"
+     },
+     {
+      "id": "c",
+      "text": "Her stable teacher and friendships may have buffered her, and asking her what helped would test that"
+     },
+     {
+      "id": "d",
+      "text": "She may have been less exposed to the family stress than her siblings, and asking each of them about it would test that"
+     }
+    ],
+    "correct": "c",
+    "why": "The case names these protective factors, so this explanation has support in the facts. A question to Abena turns it into something that can be checked. This one is plausible, because exposure can differ between siblings. It is the weaker working explanation because the case gives no information about it, which makes it a question to ask in place of a lead to follow. Temperament is plausible, and the case does not describe it. Naming it from her outcome alone restates the result as a cause, and her earlier history would be needed to check it. This is plausible and the case is silent on it. It concerns the siblings who did not recover, so it leaves unexplained what helped Abena, which is the question at hand.",
+    "bloom": "evaluate",
+    "src": "Module 14, Same Outcome, Different Paths"
+   }
+  ],
+  "revisit": "Reread \"Same Outcome, Different Paths.\""
+ },
+ {
+  "type": "mcq",
+  "title": "What to assess first",
+  "short": "Assess first",
+  "tag": "Same diagnosis, different histories",
+  "case": {
+   "title": "Invented intake: Ingrid and Leandro",
+   "text": "Ingrid and Leandro both come to a counseling center with a diagnosis of major depression. Ingrid worked months of night shifts, and her sleep has fallen apart. Leandro's brother died last year, and he has seen few people since. In intake both say they stay in most of the day and go over what went wrong."
+  },
+  "intro": "<b>Step 3.<\/b> Two clients share a diagnosis and have different histories. Decide what the clinician should assess first, and what to do when a statement raises risk. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer.",
+  "src": "Module 14, Same Outcome, Different Paths",
+  "items": [
+   {
+    "prompt": "What should the clinician assess first in each client?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The route alone, because sleep loss points to sleep treatment and bereavement points to grief treatment"
+     },
+     {
+      "id": "b",
+      "text": "What maintains the problem now, such as withdrawal and rumination, because those loops can be changed now"
+     },
+     {
+      "id": "c",
+      "text": "A standard symptom checklist for the diagnosis, because it gives both clients the same baseline measure"
+     },
+     {
+      "id": "d",
+      "text": "A complete developmental history for each, because different routes need different treatments from the start"
+     }
+    ],
+    "correct": "b",
+    "why": "Equifinality says the diagnosis does not reveal the route, and the loops are what the clinician can act on. The histories still help and they come alongside, in place of coming first. The option about complete histories turns a difference in route into a requirement for a different plan. The history can wait on the work that identifies what is running now. A baseline measure is useful, and it describes how the problem looks. Two people with the same label can be kept stuck by different processes, and a checklist for the label does not find them. The option that reads treatment from the route links a cause to a treatment directly. A route is a separate matter from the process that keeps the problem going.",
+    "bloom": "analyze",
+    "src": "Module 14, Four Ways Formulations Go Wrong"
+   },
+   {
+    "prompt": "Leandro says, \"sometimes I think there is no point going on.\" Which response comes first?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Reassure him that bereavement is a common route to depression, and ask him to call a crisis line if he feels worse"
+     },
+     {
+      "id": "b",
+      "text": "Ask directly about suicidal thoughts and plans, and follow the safety procedure for what he says"
+     },
+     {
+      "id": "c",
+      "text": "Give him a crisis line number and carry on with the formulation questions, returning to his statement if it comes up again"
+     },
+     {
+      "id": "d",
+      "text": "Note the statement, ask about it at the next session, and tell him whom to call in the meantime"
+     }
+    ],
+    "correct": "b",
+    "why": "Safety comes before formulation. Asking directly is how a clinician finds out the level of risk. In the United States, 988 is available at any hour, and 911 is for an emergency. A crisis number is a useful step, and it does not replace asking. Without a direct question the clinician does not know whether he is at risk, so the number alone leaves the assessment incomplete. The reassurance offers a general statement in place of an assessment. A plan to call later puts the next move on him and leaves the clinician unaware of his level of risk. A plan for the time between sessions is sensible. It delays the question that matters most, and the intake can run late while a risk question should not wait.",
+    "bloom": "apply",
+    "src": "Module 14, Where the Pieces Meet"
+   },
+   {
+    "prompt": "After assessment, both clients show withdrawal and rumination. What can the clinician conclude about treatment?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Similar loops may keep both stuck and need testing in each, because overlap does not rank treatments"
+     },
+     {
+      "id": "b",
+      "text": "Different treatments may be best for each, because the two routes they took were different"
+     },
+     {
+      "id": "c",
+      "text": "The routes may predict how each will respond, because equifinality describes the course of recovery"
+     },
+     {
+      "id": "d",
+      "text": "The same treatment may be best for both, because the loops they show are similar in form and weight"
+     }
+    ],
+    "correct": "a",
+    "why": "Convergence of loops is a hypothesis in this module. A formulation tests it case by case, and overlap alone does not rank treatments. Similar loops do not show that the same treatment is best. The loops may differ in weight and in form for each person, and the module offers no ranking of treatments. The option about different treatments returns to route. The overlap in loops is a reason to look at what is running, and the route does not decide the plan. The option about predicted response stretches the principle. Both principles describe development, and they offer no forecast of how a person responds.",
+    "bloom": "evaluate",
+    "src": "Module 14, Same Outcome, Different Paths"
+   }
+  ],
+  "revisit": "Reread \"Same Outcome, Different Paths\" and \"Four Ways Formulations Go Wrong.\""
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>Carry forward.<\/b> Equifinality means a diagnosis does not reveal the route, and multifinality means a risk factor does not fix the outcome. For treatment, the modest conclusion is to assess what is maintaining the problem in each person. A difference in routes gives no reason to expect one treatment to work better, and overlap in loops stays a hypothesis to test. Safety questions come first when a client signals risk. In the United States, call or text 988, or call 911 in an emergency.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every person in it is invented."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

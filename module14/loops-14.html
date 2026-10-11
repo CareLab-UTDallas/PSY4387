@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find the Loop</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Find the Loop</h1>
+    <p class="sub">Four invented cases of rising difficulty. Name the maintaining loop, choose and defend a first point of interruption, read a measure series, and revise the plan when new information arrives.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "mcq",
+  "title": "Case 1, Imogen",
+  "short": "Imogen",
+  "tag": "Rumination and sleep",
+  "case": {
+   "title": "Invented case: Imogen, 31",
+   "text": "Imogen is an office manager at a dental practice. For about four months she has spent the hour before bed replaying the day's conversations and asking herself what she should have said. Her sleep was regular before this began. Now she falls asleep late, wakes around 4 a.m. with a sense of dread, and replays again. After a poor night she cancels the next morning's coffee with a friend, which brings relief, and she gets through the day tired and flat. When her clinician asked directly, she said she has not had thoughts of ending her life."
+  },
+  "intro": "<b>Step 1.<\/b> Read the case, name the loop, choose a first point to interrupt, and revise when news arrives. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer. Every option is something a careful reader might say, so check each one against the case.",
+  "src": "Module 14, Where to Start: Choosing an Interruption Point",
+  "items": [
+   {
+    "prompt": "Which description names the loop that keeps Imogen's problem going?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Her friends do not offer enough reassurance, and the loop closes when someone tells her she said the right things"
+     },
+     {
+      "id": "b",
+      "text": "Evening replay brings dread and broken sleep, the tired day leads to cancelled contact, and lost contact feeds the replay"
+     },
+     {
+      "id": "c",
+      "text": "The awkward conversations she replays are the cause, and the replay will stop once those moments are settled in her mind"
+     },
+     {
+      "id": "d",
+      "text": "Broken sleep brings dread, dread brings replay, and the replay is one more symptom of the insomnia that began the problem"
+     }
+    ],
+    "correct": "b",
+    "why": "This chain closes the circle. The replay, the sleep loss, the relief from cancelling, and the cost that feeds the next replay all appear in the case. The option that puts sleep first reads the order backward. The case says her sleep was regular until the replay began, so nothing in it shows that insomnia came first. The option about settling the old moments confuses cause with maintenance. The conversations started the replay, and the replay now feeds itself and the cancelling. The option about reassurance adds a response the case never describes. Reassurance can also keep a replay going by lending it relief.",
+    "bloom": "analyze",
+    "src": "Module 14, Maintaining Mechanisms: What Keeps a Problem Going"
+   },
+   {
+    "prompt": "Two points of interruption are defensible for Imogen. Which is the better first choice given what the case says?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The evening replay, with a plan to notice it and step out, because it came before her sleep change"
+     },
+     {
+      "id": "b",
+      "text": "The cancelled coffee, with a plan to keep the date, because the cancelling is the avoidance link in her loop"
+     },
+     {
+      "id": "c",
+      "text": "Her sleep schedule, as a gateway loop, because everything else is harder to change on little sleep"
+     },
+     {
+      "id": "d",
+      "text": "The conversations themselves, by working out what was said and whether she handled each one well, because the loop started there"
+     }
+    ],
+    "correct": "a",
+    "why": "The replay is the loop the case describes, it begins before the sleep trouble, and it is reachable at small doses. Starting here also tests the idea that the replay is driving the rest. This one is defensible, because a gateway loop that shifts can ease the others. It is the weaker first choice here because her sleep was regular until the replay began, and the reading asks clinicians to check sleep as a plausible contributor and not assume it. The option about the coffee is reachable and addresses a real link. It sits downstream of the replay and the tired mornings, so it leaves the process that supplies the dread running. The option about reconstructing the conversations aims at the origin. A past event cannot be changed on Monday, and the replay would continue on the next day's conversations.",
+    "bloom": "evaluate",
+    "src": "Module 14, Where to Start: Choosing an Interruption Point"
+   },
+   {
+    "prompt": "Three weeks later Imogen steps out of the evening replay on most nights and now replays for about 25 minutes in place of an hour. She kept two coffee dates. Her time to fall asleep has not changed, she watches the clock, and she says she is trying hard to sleep. How should the plan be revised?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Keep the replay work and add the clock-watching as the next target, because the targeted process has moved"
+     },
+     {
+      "id": "b",
+      "text": "Return to the original conversations to find out why the replay began, because the sleep is not responding"
+     },
+     {
+      "id": "c",
+      "text": "Continue exactly as planned for six more weeks, because the plan was reasoned and has been working on the replay"
+     },
+     {
+      "id": "d",
+      "text": "Drop the replay work and move to sleep, because her time to fall asleep has not moved"
+     }
+    ],
+    "correct": "a",
+    "why": "The process that was targeted has moved, and the new information adds a loop in place of showing the first one wrong. Treating the order of work as provisional is the third principle in the reading. The option that drops the replay work throws away a process that has moved. Part of the sleep problem may now sit in the effort to sleep, which is a reason to add a target and keep the gain. The option that continues unchanged treats the first plan as fixed. The clock-watching is new information, and a plan that ignores it stays blind to a loop that has appeared. The option about returning to the origin responds to a stalled outcome with a search for cause. The case offers a current loop to address, which is the work a clinician can do now.",
+    "bloom": "evaluate",
+    "src": "Module 14, Where to Start: Choosing an Interruption Point"
+   }
+  ],
+  "revisit": "Reread \"Where to Start: Choosing an Interruption Point.\""
+ },
+ {
+  "type": "mcq",
+  "title": "Case 2, Felix",
+  "short": "Felix",
+  "tag": "An interpersonal loop",
+  "case": {
+   "title": "Invented case: Felix, 19",
+   "text": "Felix is a college sophomore who shares an apartment with his older sister. He asks her \"are you sure you're not mad at me?\" about ten times a day, often by text. In the first weeks she answered warmly. Now her answers are short, and Felix reads the short answers as proof that she is angry, so he asks again. He says a knot in his stomach eases for a few minutes after each answer."
+  },
+  "intro": "<b>Step 2.<\/b> This loop runs between two people. The same questions apply, and one more does too. What is happening on the other side of the circle?",
+  "doThis": "Choose the best answer.",
+  "src": "Module 14, Interpersonal Loops",
+  "items": [
+   {
+    "prompt": "Which account of the loop is best supported by the case?",
+    "options": [
+     {
+      "id": "a",
+      "text": "His sister causes the loop by answering shortly, and changing the way she replies would end it"
+     },
+     {
+      "id": "b",
+      "text": "Worry about being disliked is the loop, and more reassurance would shrink it"
+     },
+     {
+      "id": "c",
+      "text": "Each question brings relief that strengthens asking, and her tired replies supply the evidence he fears"
+     },
+     {
+      "id": "d",
+      "text": "Only his belief that she is angry keeps the problem going, and one thought record would address it"
+     }
+    ],
+    "correct": "c",
+    "why": "Both halves appear. The relief trains the asking, and the replies close the circle by looking like the proof he expects. The option that blames her replies sees only one half. Her short answers followed his questions, and his questions are fed by relief, so each half feeds the other. The option that recommends more reassurance misreads the relief. The calm after each answer is what strengthens the asking, so more of it keeps the circle turning. The option about the belief names a real cognitive piece. It leaves out the asking and the sister's replies, which are the parts that carry the belief from one day to the next.",
+    "bloom": "analyze",
+    "src": "Module 14, Interpersonal Loops"
+   },
+   {
+    "prompt": "Two points are defensible. With Felix's agreement, which is the better first one to interrupt?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Felix's asking, by delaying and spacing each question, with his sister told what the plan is"
+     },
+     {
+      "id": "b",
+      "text": "His sister's answers, by asking her to reply fully and warmly every time, as she did at first"
+     },
+     {
+      "id": "c",
+      "text": "His earliest memories of feeling rejected, by tracing where the fear of being disliked began"
+     },
+     {
+      "id": "d",
+      "text": "His sister's replies, by agreeing with her on a single warm, steady answer and nothing beyond it"
+     }
+    ],
+    "correct": "a",
+    "why": "Felix is the client, and the asking is within his control from the first day. Telling his sister the plan lets her stop guessing without taking on a clinical role. This one is defensible, because a loop can be interrupted from any point on the circle. It depends on the participation of someone who is not the client, and the case does not say she is willing, so it is the weaker place to begin. The option about earliest memories aims at the origin. It may help later, and it gives Felix nothing to try this week while ten questions a day continue. The option about full warm answers repeats the original pattern. Reassurance on demand is part of what built the loop, and the sister's tiredness is already visible in her replies.",
+    "bloom": "evaluate",
+    "src": "Module 14, Where to Start: Choosing an Interruption Point"
+   },
+   {
+    "prompt": "Felix's sister comes to one session. She says she is not angry, she is exhausted by the number of questions, and she is afraid that refusing to answer would hurt him. She is willing to try a plan. What does this change?",
+    "options": [
+     {
+      "id": "a",
+      "text": "It means her feelings are outside the clinical question, so the plan stays exactly as it was before"
+     },
+     {
+      "id": "b",
+      "text": "It shows the first formulation was wrong, so her exhaustion and not his anxiety is the process"
+     },
+     {
+      "id": "c",
+      "text": "It shows the loop sits in the sister, so Felix's own part of the loop can be dropped from the plan now"
+     },
+     {
+      "id": "d",
+      "text": "It adds a prediction to test and a willing partner, so the plan can grow while his delay practice continues"
+     }
+    ],
+    "correct": "d",
+    "why": "The new information supplies a prediction to check and a second point on the circle. A plan stays provisional, and here it grows. The option that drops his part overcorrects. The asking and the relief still keep the loop turning, and his sister's tiredness is the result of it. The option that discards the first account replaces one half with the other. Her exhaustion fits inside the loop and does not displace it. The option that sets her feelings aside ignores what the session found. What happens next with the people around a client is part of the assessment.",
+    "bloom": "evaluate",
+    "src": "Module 14, Interpersonal Loops"
+   }
+  ],
+  "revisit": "Reread \"Interpersonal Loops.\""
+ },
+ {
+  "type": "mcq",
+  "title": "Case 3, Kasimir",
+  "short": "Kasimir",
+  "tag": "Reading a record",
+  "case": {
+   "title": "Invented case: Kasimir, 44",
+   "text": "Kasimir supervises a warehouse team. His father died in the spring. At work he tries not to feel grief, keeps busy, and holds his face flat. By evening the grief is intense, and he snaps at a colleague or at home, feels ashamed, and tries harder to hold it back the next day. His clinician is tracking two ratings from 0 to 10, and the clinician is not trying to remove his grief. In week 2 Kasimir began a five-minute scheduled break at lunch to name what he is feeling. All numbers are invented.<table style=\"border-collapse:collapse;margin:8px 0;font-size:13.5px;\"><tr><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Daily record<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Mon<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Tue<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Wed<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Thu<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Fri<\/th><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Week 1, effort to hold back at work<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">8<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">9<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">8<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">9<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">8<\/td><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Week 1, evening distress<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">7<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">8<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">7<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">8<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">8<\/td><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Week 4, effort to hold back at work<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">5<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">5<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">6<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">4<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">5<\/td><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Week 4, evening distress<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">7<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">7<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">8<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">7<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">7<\/td><\/tr><\/table>Snapped at someone: 5 times in week 1 and 3 times in week 4."
+  },
+  "intro": "<b>Step 3.<\/b> A plan is a hypothesis, and the record says what the hypothesis is doing. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer. Read the numbers before the options.",
+  "src": "Module 14, Checking the Gauges",
+  "items": [
+   {
+    "prompt": "Which description best names the loop in Kasimir's case?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A bleak view of the self, the world, and the future keeps his grief going, and it shapes every evening"
+     },
+     {
+      "id": "b",
+      "text": "A lack of any way to cope is the problem, and teaching him one regulation technique would end it"
+     },
+     {
+      "id": "c",
+      "text": "A colleague's reaction to the snapping drives him to hold the feeling back, and the next morning repeats it"
+     },
+     {
+      "id": "d",
+      "text": "Holding feeling back returns at night as irritability and shame, and the shame raises the next day's effort"
+     }
+    ],
+    "correct": "d",
+    "why": "This is holding the feeling back by day and having it return at night. It matches the day-by-day pattern in the case, and the circle closes when the shame raises the next day's effort. The option about bleak beliefs names a cognitive mechanism the case does not show. Nothing in the account describes bleak beliefs about himself or his future. The option about the colleague puts the loop between two people. The case describes his shame and his own effort, and it does not describe what the colleague does. The option about a missing skill treats the effort to hold back as no strategy at all. He is using a strategy, and the strategy is the part feeding the evening distress.",
+    "bloom": "analyze",
+    "src": "Module 14, Emotion Regulation Difficulties"
+   },
+   {
+    "prompt": "Reading the record, which statement is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The plan has failed, because evening distress is the same as in week 1 and the plan was meant to change it"
+     },
+     {
+      "id": "b",
+      "text": "The plan is working, because snapping fell from 5 to 3, and fewer snaps is the outcome that matters most"
+     },
+     {
+      "id": "c",
+      "text": "The plan should continue with a review, because the process is moving and the outcome has not yet moved"
+     },
+     {
+      "id": "d",
+      "text": "The effort ratings are too uncertain to guide the plan, because they rest on his own report and not on what a colleague observed"
+     }
+    ],
+    "correct": "c",
+    "why": "Effort at work fell from about 8 or 9 to about 5, while evening distress stayed at 7 or 8. This is the pattern in which the plan may need more time. The option that calls the plan a failure reads only the outcome row. The process row moved, and a lagging outcome is a different pattern from a flat process. The option about snapping rests on small counts in two single weeks. A fall of two incidents is too little to separate from ordinary variation. The option that sets the ratings aside throws away the process measure. Self-report has limits, and it is still the information that shows whether the targeted process is moving.",
+    "bloom": "analyze",
+    "src": "Module 14, Checking the Gauges"
+   }
+  ],
+  "revisit": "Reread \"Checking the Gauges.\""
+ },
+ {
+  "type": "mcq",
+  "title": "Case 4, Adrian",
+  "short": "Adrian",
+  "tag": "Safety behaviors",
+  "case": {
+   "title": "Invented case: Adrian, 35",
+   "text": "Adrian is a software tester. He goes to dinners with friends about twice a week, always stays by the door with his phone out, leaves soon after the food is finished, and counts this as getting out more. He says he is fine as long as he can see the exit and check his phone. Before each dinner he feels dread and predicts that he will have a panic attack and be unable to leave. His friends have said he seems distracted. All numbers below are invented.<table style=\"border-collapse:collapse;margin:8px 0;font-size:13.5px;\"><tr><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">Week<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">1<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">2<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">3<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">4<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">5<\/th><th style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;background:#f6edcf;\">6<\/th><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Dinners attended<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">1<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">2<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">2<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">3<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">2<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">3<\/td><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Minutes at the table with the phone away (of about 90)<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">0<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">0<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">5<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">0<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">5<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">0<\/td><\/tr><tr><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">Dread before dinner, 0 to 10<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">7<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">7<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">6<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">7<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">7<\/td><td style=\"border:1px solid #d9cfae;padding:4px 9px;text-align:center;\">6<\/td><\/tr><\/table>"
+  },
+  "intro": "<b>Step 4.<\/b> The surface of this case looks like progress. The loop sits somewhere else.",
+  "doThis": "Choose the best answer.",
+  "src": "Module 14, Avoidance and the Reinforcement Cycle",
+  "items": [
+   {
+    "prompt": "Which description of Adrian's loop is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "He avoids social dinners, and the loop closes each time he declines an invitation and feels relief"
+     },
+     {
+      "id": "b",
+      "text": "There is no loop, and the original fear of social situations has been overcome now that he attends dinners"
+     },
+     {
+      "id": "c",
+      "text": "Friends' comments about his distraction are the loop, and each comment raises his dread before the next dinner"
+     },
+     {
+      "id": "d",
+      "text": "The dinners are approach, and the seat and phone are safety behaviors that keep his prediction untested"
+     }
+    ],
+    "correct": "d",
+    "why": "The case says he goes to dinner. The relief comes from the seat and the phone, which keeps his prediction of panic untested. The option about declining invitations does not match the case. He attends about twice a week, so the avoidance is inside the situation. The option about the friends' comments proposes an interpersonal loop. The case gives only one mention of their remark and no sign that it changes what he does. The option that sees no loop counts attendance as the whole story. The seat and the phone keep the prediction of panic intact, so the fear has not been tested.",
+    "bloom": "analyze",
+    "src": "Module 14, Avoidance and the Reinforcement Cycle"
+   },
+   {
+    "prompt": "Reading the six weeks together, which statement is best supported?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Dread fell from 7 to 6, so the loop is loosening and the plan only needs more time to work"
+     },
+     {
+      "id": "b",
+      "text": "The process and dread have barely moved, so delivery and fit come before dropping the hypothesis"
+     },
+     {
+      "id": "c",
+      "text": "The safety-behavior idea is wrong, so the clinician should drop it and move to challenging his predictions"
+     },
+     {
+      "id": "d",
+      "text": "He attends one or two more dinners a week than at the start of the plan, so the plan is succeeding"
+     }
+    ],
+    "correct": "b",
+    "why": "Minutes with the phone away stayed near zero and dread moved about one point. When neither measure moves, the reading says to check delivery and fit first. The option about attendance reads the activity count as progress on the loop. Attendance rose while the safety behaviors held steady, which is the pattern the case was built to show. The option that abandons the idea moves too soon. A hypothesis cannot be judged until it has been delivered in full, and the record suggests it has hardly been tried. The option about the one-point fall treats a small change as a trend. A one-point change in single weeks is within ordinary variation.",
+    "bloom": "analyze",
+    "src": "Module 14, Checking the Gauges"
+   },
+   {
+    "prompt": "Adrian says that if he puts the phone away he is sure he will panic and not be able to leave. Which revision is the better next step?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Ask him to give up the phone and the exit seat together at the next dinner and every dinner after it"
+     },
+     {
+      "id": "b",
+      "text": "Write the prediction, then keep the phone face down in his pocket for twenty minutes of one dinner"
+     },
+     {
+      "id": "c",
+      "text": "Accept the phone as a coping tool, and shift the work to a different loop that is easier to reach"
+     },
+     {
+      "id": "d",
+      "text": "Tell him that panic does not happen at dinners and that he can put the phone away with confidence"
+     }
+    ],
+    "correct": "b",
+    "why": "The step is small enough to reach, it turns his prediction into a test, and the plan names what it leaves untouched. This is the choice the reading's first principle favors. This one is defensible, because partial safety behaviors can keep a loop going. It is the weaker choice here because it asks for much more than he is ready to try, which risks an early failure and a retreat. The option that accepts the phone leaves the process that holds the prediction in place. A different loop can be added later, and this one stays untested. The option about reassurance supplies a statement and no experience. A person told that a situation is safe has heard a statement, and he still has not watched what happens.",
+    "bloom": "evaluate",
+    "src": "Module 14, How Loops Break: The New-Learning Idea"
+   }
+  ],
+  "revisit": "Reread \"Avoidance and the Reinforcement Cycle\" and \"How Loops Break: The New-Learning Idea.\""
+ },
+ {
+  "type": "mcq",
+  "title": "Same loop, different surface",
+  "short": "Shared loop",
+  "tag": "Felix and Adrian",
+  "case": {
+   "title": "Invented cases, side by side",
+   "text": "<b>Felix<\/b> asks his sister for reassurance ten times a day, and his complaint is conflict with her. <b>Adrian<\/b> sits by the exit with his phone out at dinners, and his complaint is that he is distracted and tired of leaving early. A clinician sees both on the same day."
+  },
+  "intro": "<b>Step 5.<\/b> Different complaints can sit on one loop. The question is what the two cases share and what that means for the plan.",
+  "doThis": "Choose the best answer.",
+  "src": "Module 14, How Loops Break: The New-Learning Idea",
+  "items": [
+   {
+    "prompt": "What do Felix's asking and Adrian's phone and exit seat share?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Both come from a fear of being judged, so the shared fear is the maintaining mechanism in both cases"
+     },
+     {
+      "id": "b",
+      "text": "Each is a form of avoiding the situation, so both loops close when the person stops going out"
+     },
+     {
+      "id": "c",
+      "text": "Each eases dread now and prevents a test of the feared outcome, so each is kept going by relief"
+     },
+     {
+      "id": "d",
+      "text": "Nothing, so one is an interpersonal pattern with a sibling and the other an individual pattern"
+     }
+    ],
+    "correct": "c",
+    "why": "Both are negatively reinforced. The relief arrives in the moment, and the feared outcome never gets the chance to fail to happen. The option about avoiding the situation fits neither case. Felix stays in contact with his sister, and Adrian goes to dinners. The option that sees no overlap judges by the complaint. The process under both is the same, and an interpersonal loop can include a safety behavior. The option about a shared fear names a feeling and leaves out the response. The fear starts each round, and the relief-driven response is what keeps the rounds coming.",
+    "bloom": "analyze",
+    "src": "Module 14, Avoidance and the Reinforcement Cycle"
+   },
+   {
+    "prompt": "Which statement best describes the matching experience the plan should arrange for both?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Contact with the feared moment without the behavior, such as an unasked question or a phone-free dinner"
+     },
+     {
+      "id": "b",
+      "text": "More reassurance from the people around each, offered whenever either of them asks for it"
+     },
+     {
+      "id": "c",
+      "text": "A discussion of the childhood origins of each fear, with time to talk through the insight each one brings"
+     },
+     {
+      "id": "d",
+      "text": "A thought record for each, filled out before the next dinner or text and reviewed at the next session"
+     }
+    ],
+    "correct": "a",
+    "why": "The matching experience depends on the correction the loop blocks. In both cases that correction is learning that the feared outcome does not arrive without the safety response. The option about insight confuses understanding with new experience. A person can fully understand a fear and still feel it until something is watched to happen. The option about the thought record is a reasonable tool for a cognitive piece. It does not by itself deliver the experience the loop has been blocking. The option about added reassurance gives more of the response that built the loop. Each of them already receives enough of it to keep the relief going.",
+    "bloom": "evaluate",
+    "src": "Module 14, How Loops Break: The New-Learning Idea"
+   }
+  ],
+  "revisit": "Reread \"How Loops Break: The New-Learning Idea.\""
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "<b>Carry forward.<\/b> Name the loop as a circle with the arrow that returns the cost to the trigger. Choose the first point where change is most reachable or where a gateway loop may ease the others, say what the plan leaves untouched, and revise when new information arrives. Read the process measure and the outcome measure together, and do not take a rising activity count as proof that the loop moved. If you or someone you know is in distress, call or text 988 at any hour, or call 911 in an emergency.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every person in it is invented, and all numbers are invented for practice."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

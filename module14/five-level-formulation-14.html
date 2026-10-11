@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Five-Level Formulation Builder</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+
+  .note{font-size:13.5px;line-height:1.55;margin:0 0 12px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;}
+  .note.safe{background:var(--wrong-bg);border-color:var(--wrong-line);color:#5b2320;}
+  .note.illus{background:var(--amber-bg);border-color:var(--amber-line);color:#5d4a1f;}
+  h2.hd{margin:0 0 8px;font-size:19px;}
+  h3.ch{margin:16px 0 4px;font-size:14.5px;font-weight:700;}
+  p.explain{font-size:14.5px;line-height:1.6;margin:6px 0 10px;}
+  fieldset.grp{border:none;margin:14px 0 0;padding:0;}
+  fieldset.grp legend{font-size:15px;font-weight:600;margin:0 0 8px;padding:0;}
+  .opt.sel{border:2px solid var(--ink);background:#f7f6f4;padding:12px 14px;}
+  .opt .gl{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .opt .mark{flex:0 0 auto;min-width:20px;font-weight:700;}
+  ol.chain{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:#44413b;line-height:1.5;}
+  ol.chain li{margin:2px 0;}
+  .fact{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff;}
+  .fact .ft{font-size:14.5px;line-height:1.55;margin:0 0 6px;}
+  .fact .fh{font-size:12.5px;font-weight:700;color:var(--muted);margin:6px 0 2px;}
+  .cbrow{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 4px;}
+  .cb{font:inherit;font-size:13.5px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ink);}
+  .cb:hover{border-color:#cfc9bf;}
+  .cb:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .cb.sel{border:2px solid var(--ink);background:#f7f6f4;padding:5px 11px;font-weight:600;}
+  .tx{background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;padding:10px 14px;margin:6px 0 12px;font-size:14px;line-height:1.55;}
+  .tx p{margin:4px 0;}
+  table.data{border-collapse:collapse;width:100%;font-size:13px;}
+  table.data caption{text-align:left;font-size:12.5px;color:var(--muted);padding:4px 0;}
+  table.data th,table.data td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top;}
+  table.data th{background:#f3f1ec;}
+  .tblwrap{overflow-x:auto;}
+  .fbbox{margin-top:8px;} .fbbox p{margin:6px 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .badge{display:inline-block;font-size:12.5px;font-weight:700;border-radius:7px;padding:3px 9px;border:1px solid var(--line);background:#f3f1ec;}
+  .badge.ok{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .badge.alt{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .badge.no{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .cmp{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff;}
+  .cmp .ct{font-size:14px;margin:0 0 6px;font-weight:600;}
+  .cmp p{margin:5px 0;font-size:13.5px;line-height:1.55;color:#44413b;}
+  textarea.weak{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:14.5px;resize:vertical;}
+  textarea.weak:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  label.lb{display:block;font-size:14px;font-weight:600;margin:12px 0 6px;}
+  label.tick{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5;margin:6px 0;cursor:pointer;}
+  label.tick input{margin-top:3px;}
+  ul.plain{margin:6px 0 10px;padding-left:20px;font-size:14px;line-height:1.55;}
+  ul.plain li{margin:3px 0;}
+  [tabindex="-1"]:focus{outline:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Five-Level Formulation Builder</h1>
+    <p class="sub">Read an invented case, place the facts at five levels, choose the loop and the first point to interrupt, and compare your formulation with an expert one.</p>
+  </div>
+  <div id="root"></div>
+  <p class="selfnote">The patient and all numbers are invented and illustrative. Nothing is saved or sent. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.</p>
+</div>
+<script>
+var TOTAL = 60;
+var LEVELS = [
+ {
+  "id": "cog",
+  "label": "Cognitive"
+ },
+ {
+  "id": "int",
+  "label": "Interpersonal and social"
+ },
+ {
+  "id": "bio",
+  "label": "Biological"
+ },
+ {
+  "id": "emo",
+  "label": "Emotional"
+ },
+ {
+  "id": "dev",
+  "label": "Developmental"
+ }
+];
+var RATES = [
+ {
+  "id": "3",
+  "label": "Strong bearing on the problem now"
+ },
+ {
+  "id": "2",
+  "label": "Some bearing, it makes change harder or easier"
+ },
+ {
+  "id": "1",
+  "label": "Little bearing now, background"
+ }
+];
+var DIRS = [
+ {
+  "id": "toward",
+  "label": "Pushes toward the problem"
+ },
+ {
+  "id": "against",
+  "label": "Pushes against the problem, protective"
+ }
+];
+var CHECKS = [
+ "Names the maintaining loop as a circle, with the link that returns the cost to the trigger.",
+ "Names a first point to interrupt and gives a reason for choosing it.",
+ "Says how the levels feed one another, for example how shame, avoidance, sleep, and contact with other people connect.",
+ "Names a measure that would show whether the plan is working.",
+ "Names a limit, meaning something the formulation cannot yet explain."
+];
+var EXPERT_TEXT = "A shame spike in class leads Rohan to skip class, stay in bed, or play games, which brings relief now and leaves missed work, a later sleep window, and thinner contact to confirm his prediction that he will fail out, so the loop returns to its start. The first point to interrupt is the avoidance, as small graded returns to class with one planned contact a day, because that supplies the correction the loop has been blocking and is reachable. The levels feed one another, since the prediction and the shame drive the avoidance, and the later sleep and the roommates pulling back feed both. Classes attended each week would track the process, with the depression questionnaire as the outcome measure, and the file cannot say how much sleep contributes or what family expectations mean to him.";
+var CREATE_PTS = 10;
+var FACTS = [
+ {
+  "id": "f1",
+  "text": "Every night he replays the exam for about an hour, asks himself “why am I like this,” and predicts, “I will fail out and everyone will see.”",
+  "level": "cog",
+  "alt": [],
+  "rate": "3",
+  "rateAlt": [
+   "2"
+  ],
+  "dir": "toward",
+  "why": "Replaying and predicting are interpretation and repetitive thinking, which belong to the cognitive level. The prediction is also what he acts on when he skips class.",
+  "altWhy": "",
+  "rateWhy": "It runs every night and feeds the loop directly, so it keeps the problem going now. A middle rating is defensible if you judged that it works through the other links."
+ },
+ {
+  "id": "f2",
+  "text": "At the café he swaps any shift on which a classmate might come in, because he is sure they have heard that he failed.",
+  "level": "cog",
+  "alt": [
+   "emo"
+  ],
+  "rate": "3",
+  "rateAlt": [
+   "2"
+  ],
+  "dir": "toward",
+  "why": "The sure prediction that classmates know is the cognitive piece, and swapping shifts is the avoidance that follows from it. Behavior is the link that travels along the arrows between levels.",
+  "altWhy": "The emotional level is defensible, since swapping the shift also spares him a spike of dread. The cognitive level is closer because the fact is stated as a prediction.",
+  "rateWhy": "He has never tested the prediction, so it stays intact and keeps steering him. A middle rating is defensible if you judged it smaller than the nightly replay."
+ },
+ {
+  "id": "f3",
+  "text": "In class a wave of shame comes up. Afterward he goes numb, plays games or sleeps to get away from it, and cannot calm down once it starts.",
+  "level": "emo",
+  "alt": [],
+  "rate": "3",
+  "rateAlt": [],
+  "dir": "toward",
+  "why": "How a feeling rises, how long it lasts, and what the person does to end it are the emotional level. The escape brings relief now and teaches him that getting away is the only option he has.",
+  "altWhy": "",
+  "rateWhy": "The shame, the escape, and the relief are the core of the loop, so this one keeps the problem going now."
+ },
+ {
+  "id": "f4",
+  "text": "In high school he played guitar most evenings and said it was the one time his head went quiet. He has not played this year.",
+  "level": "emo",
+  "alt": [
+   "cog",
+   "dev"
+  ],
+  "rate": "2",
+  "rateAlt": [
+   "1"
+  ],
+  "dir": "against",
+  "why": "It names a way he once steadied strong feeling and could use again, which makes it a resource at the emotional level.",
+  "altWhy": "The cognitive level is defensible, since a quiet head describes a break from the circling thoughts. The developmental level is defensible, since it is a strength from earlier years. The emotional level is closer because the fact describes how he steadied strong feeling.",
+  "rateWhy": "A protective fact pushes against the problem, and it is not part of the loop. It has been out of use for a year, so some or little bearing now are both reasonable, and it may become a piece of the plan."
+ },
+ {
+  "id": "f5",
+  "text": "He wakes around one in the afternoon, goes to bed after three, and drinks coffee or an energy drink most afternoons.",
+  "level": "bio",
+  "alt": [],
+  "rate": "2",
+  "rateAlt": [],
+  "dir": "toward",
+  "why": "Sleep timing and caffeine belong to daily rhythm, which is part of the biological level.",
+  "altWhy": "",
+  "rateWhy": "Irregular sleep may lower daytime capacity and make every other loop harder to interrupt. It is a plausible contributor to check and is not proven here, so a middle rating is more accurate than the strongest one."
+ },
+ {
+  "id": "f6",
+  "text": "A physical exam last spring found nothing unusual, and he takes no medication.",
+  "level": "bio",
+  "alt": [],
+  "rate": "1",
+  "rateAlt": [],
+  "dir": "any",
+  "why": "It is a fact about the body and bears on whether a medical factor needs to be pursued. Nothing in it points to one.",
+  "altWhy": "",
+  "rateWhy": "It suggests nothing to change this week, so it is background. It does not rule out a medical factor, and a clinician would keep asking."
+ },
+ {
+  "id": "f7",
+  "text": "His mother calls or texts several times a day about school. Her messages urge him to get back on track, he says they sound like a lecture, and he answers shortly or lets the call ring out. She then calls more often.",
+  "level": "int",
+  "alt": [
+   "emo"
+  ],
+  "rate": "2",
+  "rateAlt": [
+   "3"
+  ],
+  "dir": "toward",
+  "why": "A pattern between two people in which each reply shapes the next is an interpersonal loop.",
+  "altWhy": "The emotional level is defensible, since the messages also raise his shame. The exchange between two people is what makes the interpersonal level the closer fit.",
+  "rateWhy": "It runs every day and adds pressure, so it contributes. It is a real loop that runs beside the main one, so a middle rating is the closer fit. A strong rating is also defensible if you judged that her pressure feeds his shame."
+ },
+ {
+  "id": "f8",
+  "text": "His roommates have stopped inviting him out, and he reads that as “they are done with me.”",
+  "level": "int",
+  "alt": [
+   "cog"
+  ],
+  "rate": "2",
+  "rateAlt": [
+   "3"
+  ],
+  "dir": "toward",
+  "why": "Other people pulling back after he withdrew is the social half of a withdrawal and disconnection loop.",
+  "altWhy": "The cognitive level is defensible, since his reading of the silence is an interpretation. The roommates’ behavior and his response to it are the loop, which favors the interpersonal level.",
+  "rateWhy": "It confirms his belief and thins his contact, so it contributes. The file holds only his reading of their reasons, which keeps the middle rating the safer one. A strong rating is also defensible."
+ },
+ {
+  "id": "f9",
+  "text": "He says that being seen to fail “is the worst thing that can happen.” He learned this early, when grades brought praise at home and mistakes brought long lectures.",
+  "level": "dev",
+  "alt": [
+   "cog"
+  ],
+  "rate": "2",
+  "rateAlt": [
+   "3"
+  ],
+  "dir": "toward",
+  "why": "An old rule, learned early and applied now where it is not needed, is the developmental level’s part in a formulation.",
+  "altWhy": "The cognitive level is defensible, since the belief is present-tense. The expert places it at the developmental level because the fact also says where the rule was learned.",
+  "rateWhy": "The rule makes every setback feel dangerous, so it contributes. It works through the loop and cannot be removed directly, which is why it is not the first thing to change."
+ },
+ {
+  "id": "f10",
+  "text": "Between the ages of nine and eleven his father checked his homework every night and was strict about it, and the family moved schools twice.",
+  "level": "dev",
+  "alt": [
+   "int"
+  ],
+  "rate": "1",
+  "rateAlt": [],
+  "dir": "any",
+  "why": "Earlier vulnerabilities are predisposing factors, and they belong to the developmental level.",
+  "altWhy": "The interpersonal level is defensible, since the facts involve other people. They are past events, which favors the developmental level.",
+  "rateWhy": "This is a cause. It helps explain why the loop caught him, and it cannot be undone, so it offers nothing to change now."
+ }
+];
+var LOOPS = [
+ {
+  "id": "lb",
+  "label": "The pursue-and-withdraw loop with his mother",
+  "pts": 3,
+  "closed": true,
+  "links": [
+   "His mother’s call or message urges him to get back on track.",
+   "He hears a lecture and answers shortly or lets the call ring out.",
+   "She calls and texts more often when he does not answer.",
+   "The added messages feel like more pressure, and he pulls back further."
+  ],
+  "fb": "A real loop, and it is in the case file. It involves one pair of people and one level, and it runs beside the larger loop in place of driving it. As the primary loop it leaves out the avoidance and the sleep, so it receives partial credit."
+ },
+ {
+  "id": "la",
+  "label": "The shame, avoidance, and withdrawal loop",
+  "pts": 6,
+  "closed": true,
+  "links": [
+   "A setback brings a shame spike and the thought, “I will fail out and everyone will see.”",
+   "He skips class, stays in bed, or plays games, and the shame eases for a while.",
+   "His sleep drifts later, and the nightly replay goes on.",
+   "Missed work piles up and his roommates stop inviting him out.",
+   "He reads the pile and the quiet as proof that he is failing.",
+   "The next hard moment brings a bigger shame spike."
+  ],
+  "fb": "This is the expert loop. It passes through the emotional, cognitive, biological, and social levels with behavior as the link, and its last step feeds its first step, so it closes. Skipping class is negatively reinforced by relief, which is why it repeats."
+ },
+ {
+  "id": "lc",
+  "label": "The childhood criticism story",
+  "pts": 0,
+  "closed": false,
+  "links": [
+   "His father was strict about homework when he was ten.",
+   "He learned to fear mistakes.",
+   "He failed the exam.",
+   "He feels shame about it."
+  ],
+  "fb": "This chain is a history. It says where the fear of failing came from, and no link carries back to its first step, so nothing in it is running now. A cause starts a problem and a maintaining loop keeps it going, and a clinician can only change the loop. The history belongs among the predisposing factors."
+ },
+ {
+  "id": "ld",
+  "label": "The sleep and daytime energy loop",
+  "pts": 3,
+  "closed": true,
+  "links": [
+   "He goes to bed after three.",
+   "He wakes around one in the afternoon.",
+   "He drinks coffee or an energy drink most afternoons.",
+   "The caffeine may keep him alert late into the night.",
+   "He goes to bed after three again."
+  ],
+  "fb": "Sleep belongs in the formulation as a plausible contributor, and it is not proven here. As the primary loop it explains the late schedule and leaves out why he avoids class once he is awake and what the shame is doing, so it receives partial credit."
+ }
+];
+var POINTS = [
+ {
+  "id": "p1",
+  "label": "The avoidance link, which is skipping class and staying in bed",
+  "cls": "expert",
+  "pts": 6,
+  "fb": "The expert first point. It delivers the correction the loop has been blocking, which is the discovery that he can sit in class and survive the shame. It is reachable in small doses, and early success builds momentum. The plan leaves the sleep and the nightly replay running until later steps address them."
+ },
+ {
+  "id": "p2",
+  "label": "The sleep window, with a fixed wake time and a caffeine cutoff",
+  "cls": "ok",
+  "pts": 4,
+  "fb": "Defensible as a gateway, since everything else is harder on little sleep. The cost is that the avoidance link keeps running unless another step returns him to class, and the sleep link is only a plausible contributor in this file."
+ },
+ {
+  "id": "p3",
+  "label": "The nightly replay, by noticing the circling and stepping out of it",
+  "cls": "ok",
+  "pts": 4,
+  "fb": "Defensible, because the replay feeds both the shame and the prediction. A rumination step usually works best when it is paired with a behavioral link, such as a return to class, because circling does not by itself deliver a new experience."
+ },
+ {
+  "id": "p4",
+  "label": "The pattern of calls and messages with his mother",
+  "cls": "ok",
+  "pts": 4,
+  "fb": "Defensible, since a loop between people can be interrupted from any point on the circle, and her part is understandable and carries no blame. Any step that involves his mother needs his own consent first. The cost is that the avoidance and the nightly replay keep running unless a later step addresses them."
+ },
+ {
+  "id": "p5",
+  "label": "The childhood pattern, by working through the criticism he grew up with",
+  "cls": "weak",
+  "pts": 0,
+  "fb": "The weakest choice. This history is a cause, and a cause cannot be un-started. It may matter for understanding him, and it gives a clinician nothing to change on Monday. The loop that is running now is where the plan has to begin."
+ },
+ {
+  "id": "p6",
+  "label": "All five levels together, with one small step at each from the first week",
+  "cls": "weak",
+  "pts": 0,
+  "fb": "Spreading effort over every level is the kitchen-sink pattern. Each process needs enough focus and repetition to take hold, and a plan this thin may give none of them enough. Skilled matching usually chooses one or two priorities and names the next ones."
+ }
+];
+var IVS = [
+ {
+  "id": "i1",
+  "label": "Small graded returns to class, with one planned contact each day",
+  "cls": "ok",
+  "tgt": "p1",
+  "fb": "Matches the avoidance link. Approach in small doses lets him find out what happens in class, and the daily contact keeps the social side from thinning further."
+ },
+ {
+  "id": "i2",
+  "label": "A fixed wake time, a wind-down routine, and a caffeine cutoff",
+  "cls": "ok",
+  "tgt": "p2",
+  "fb": "Matches the sleep window. It targets daily rhythm directly, and a clinician would watch whether his days actually change."
+ },
+ {
+  "id": "i3",
+  "label": "A short daily practice for noticing the replay and stepping out of it",
+  "cls": "ok",
+  "tgt": "p3",
+  "fb": "Matches the nightly replay. It works on the circling and leaves the avoidance in place unless it is paired with a behavioral step."
+ },
+ {
+  "id": "i4",
+  "label": "With Rohan’s consent, a joint session with his mother to agree on one check-in a day and a different way of replying",
+  "cls": "ok",
+  "tgt": "p4",
+  "fb": "Matches the pattern with his mother. Rohan is an adult of 22, so the session needs his own consent and a talk beforehand about what she will and will not be told, as Module 13 describes for consent and confidentiality. It also needs her agreement. It changes what each person gets back from the exchange."
+ },
+ {
+  "id": "i5",
+  "label": "Weekly sessions that trace how the criticism at home shaped him",
+  "cls": "weak",
+  "tgt": "p5",
+  "fb": "It matches the childhood point and shares that point’s weakness. It builds understanding of a cause and does not interrupt a running loop."
+ },
+ {
+  "id": "i6",
+  "label": "Activation, sleep work, thought records, a family session, and skills practice, all begun in week one",
+  "cls": "weak",
+  "tgt": "p6",
+  "fb": "It matches the all-at-once point and shares its weakness. Five starts in four weeks make it hard to tell what changed or why, and each one may get too little practice."
+ },
+ {
+  "id": "i7",
+  "label": "A standard depression manual from session 1, because his questionnaire score fits that label",
+  "cls": "weak",
+  "tgt": null,
+  "fb": "A label describes how the problem looks. Two people with the same label can be kept stuck by different processes, so a manual chosen from the label alone skips the step of finding what is running in Rohan."
+ }
+];
+var MEAS = [
+ {
+  "id": "m1",
+  "label": "Classes attended out of classes scheduled, counted each week",
+  "kind": "process",
+  "tgt": "p1",
+  "fb": "A process measure for the avoidance link. The case file already gives a baseline of 3 of 8 classes at intake and 1 of 8 two weeks later, so any change can be read against numbers that exist. A simple count is enough."
+ },
+ {
+  "id": "m2",
+  "label": "Nights each week on which his wake time falls inside a one-hour window",
+  "kind": "process",
+  "tgt": "p2",
+  "fb": "A process measure for the sleep window. The file gives an average wake time of 12:30 pm at intake and 1:10 pm two weeks later, which is a usable baseline. It shows whether the rhythm is changing."
+ },
+ {
+  "id": "m3",
+  "label": "Minutes of nightly replay, logged at bedtime",
+  "kind": "process",
+  "tgt": "p3",
+  "fb": "A process measure for the replay. The file says only about an hour each night, so a week of logging would set the baseline first. A brief questionnaire on repetitive negative thinking is another standard option."
+ },
+ {
+  "id": "m4",
+  "label": "Calls and texts from his mother, counted each day",
+  "kind": "process",
+  "tgt": "p4",
+  "fb": "A process measure for the pattern with his mother. The file gives no count, so a week of counting would come first. The count shows whether the contact is changing and does not show what the messages feel like to him."
+ },
+ {
+  "id": "m5",
+  "label": "The depression questionnaire alone, every two weeks",
+  "kind": "outcome",
+  "tgt": null,
+  "fb": "An outcome measure shows whether he is improving and cannot show whether the targeted process is the thing changing. The file gives a baseline of 15 at intake and 16 two weeks later, and a flat score could mean patience is needed or the match is wrong. The score cannot tell them apart. The expert plan pairs it with a process measure."
+ },
+ {
+  "id": "m6",
+  "label": "His general impression of how things are going, asked at the end of treatment",
+  "kind": "none",
+  "tgt": null,
+  "fb": "A single impression at the end sets no expected change and no date, and it ignores the baseline numbers in the file. A stalled plan could run for months before anyone saw it. Deciding in advance what change to expect, and by when, is the habit this step practices."
+ }
+];
+var GAPS = [
+ "Why shame hits him so hard. Temperament and other history are unknown, and the file cannot say what made him this sensitive to being seen failing.",
+ "What family expectations, work hours, money pressure, and asking for help mean to him. Culture and context are asked about and never assumed from a group.",
+ "How much the sleep pattern contributes. The file shows the pattern and gives no way to tell how much it lowers his days.",
+ "What the calls look like from his mother’s side. The file holds his account of her messages and nothing else.",
+ "Whether his mood was already low before the exam. The loop explains why it persists and cannot say when it began.",
+ "Whether anything else is contributing, such as substance use or a medical factor. One normal exam does not close the question."
+];
+var REVISIT = {
+ "facts": "Module 14, Reading One Person at Five Levels",
+ "loop": "Module 14, Maintaining Mechanisms: What Keeps a Problem Going",
+ "point": "Module 14, Where to Start: Choosing an Interruption Point",
+ "iv": "Module 14, The Process-Based Approach and Treatment Matching",
+ "ms": "Module 14, Checking the Gauges",
+ "write": "Module 14, Reading One Person at Five Levels"
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {phase:"case", lv:{}, rt:{}, dr:{}, loop:null, pt:null, iv:null, ms:null, refl:"", ticks:{}, chk:{}}; }
+function reset(){ S=newState(); render("top"); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function byId(list,id){ var r=null; list.forEach(function(x){ if(x.id===id) r=x; }); return r; }
+function lvLabel(id){ var l=byId(LEVELS,id); return l?l.label:"not placed"; }
+function rtLabel(id){ var r=byId(RATES,id); return r?r.label:"not rated"; }
+function drLabel(id){ var r=byId(DIRS,id); return r?r.label:"no direction"; }
+function wordCount(s){ var m=String(s||"").trim().match(/\S+/g); return m?m.length:0; }
+function factsDone(){ var ok=true; FACTS.forEach(function(f){ if(!S.lv[f.id]||!S.rt[f.id]||!S.dr[f.id]) ok=false; }); return ok; }
+function dirOk(f){ return f.dir==="any"||S.dr[f.id]===f.dir; }
+function checkCount(){ var n=0; CHECKS.forEach(function(c,i){ if(S.chk[i]) n++; }); return n; }
+function planDone(){ return !!(S.pt&&S.iv&&S.ms); }
+// ---- scoring (all rule based)
+function factScore(f){
+  var L=S.lv[f.id], R=S.rt[f.id];
+  var lp=(L===f.level)?2:((f.alt.indexOf(L)>=0)?1:0);
+  var sOk=(R===f.rate||f.rateAlt.indexOf(R)>=0), rp=(sOk&&dirOk(f))?1:0;
+  return {lp:lp, rp:rp, sOk:sOk, dOk:dirOk(f)};
+}
+function ivScore(){ var v=byId(IVS,S.iv); if(v.cls==="weak") return 0; return (v.tgt===S.pt)?4:2; }
+function msScore(){ var m=byId(MEAS,S.ms); if(m.kind==="process") return (m.tgt===S.pt)?4:1; if(m.kind==="outcome") return 2; return 0; }
+function scoreAll(){
+  var r={lvl:0,rate:0,loop:0,pt:0,iv:0,ms:0,cr:0,total:0};
+  FACTS.forEach(function(f){ var s=factScore(f); r.lvl+=s.lp; r.rate+=s.rp; });
+  r.loop=byId(LOOPS,S.loop).pts; r.pt=byId(POINTS,S.pt).pts; r.iv=ivScore(); r.ms=msScore();
+  r.cr=checkCount()*(CREATE_PTS/CHECKS.length);
+  r.total=r.lvl+r.rate+r.loop+r.pt+r.iv+r.ms+r.cr;
+  return r;
+}
+// ---- chrome
+function stepsRow(){
+  var names=["Case file","Five levels","The loop","The plan","Your formulation","Review"], order=["case","facts","loop","plan","reflect","final"], ix=order.indexOf(S.phase), h='<div class="steps" aria-label="Progress">';
+  names.forEach(function(n,i){ h+='<span class="stp'+(i===ix?' on':(i<ix?' done':''))+'">'+n+(i===ix?' (current)':(i<ix?' (done)':''))+'</span>'; });
+  return h+'</div>';
+}
+function safetyNote(){ return '<p class="note safe"><b>Safety.</b> A formulation never replaces asking a person directly how they are. If anything in this activity affects you, call or text 988 at any hour, or call 911 in an emergency.</p>'; }
+function optBtn(act,val,label,gloss,selected){
+  return '<button class="opt'+(selected?' sel':'')+'" type="button" aria-pressed="'+(selected?'true':'false')+'" data-act="'+act+'" data-val="'+val+'"><span class="mark" aria-hidden="true">'+(selected?'✓':'○')+'</span><span>'+label+(gloss?'<span class="gl">'+gloss+'</span>':'')+'</span></button>';
+}
+function cb(act,val,label,selected){
+  return '<button class="cb'+(selected?' sel':'')+'" type="button" aria-pressed="'+(selected?'true':'false')+'" data-act="'+act+'" data-val="'+val+'">'+(selected?'✓ ':'')+esc(label)+'</button>';
+}
+function render(focus){
+  var h=stepsRow();
+  if(S.phase==="case") h+=renderCase(); else if(S.phase==="facts") h+=renderFacts(); else if(S.phase==="loop") h+=renderLoop(); else if(S.phase==="plan") h+=renderPlan(); else if(S.phase==="reflect") h+=renderReflect(); else h+=renderFinal();
+  root.innerHTML=h; post();
+  try{ var el=null; if(focus==="top"||focus==="panel") el=root.querySelector("#panelhead"); else if(focus) el=root.querySelector(focus); if(el&&el.focus) el.focus(); }catch(e){}
+}
+// ---- 1 case file
+function renderCase(){
+  var h='<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">The case file</h2>'+
+   '<div class="note illus"><b>Everything here is invented.</b> Rohan, the numbers, and the expert formulation are invented for practice. The course sources give no validated cutoff for any measure. The expert formulation is a teaching design and is not clinical guidance.</div>'+
+   '<p class="explain">You will read the file, place ten facts at five levels and rate each one for strength and direction, choose the loop that keeps the problem going, choose where to interrupt it, and write a short formulation in your own words. Then you will see your choices and your writing beside an expert formulation, and you will score your own writing against a checklist. The activity scores out of '+TOTAL+' points (50 for the choices and 10 for the written formulation), gives credit where more than one answer is defensible, and saves and sends nothing.</p>'+
+   '<h3 class="ch">History</h3><p class="explain">Rohan is 22 and attends a community college. He works part time as a barista and lives with two roommates. Grades brought praise at home when he was growing up, and mistakes brought long lectures. Between the ages of nine and eleven his father checked his homework every night and was strict about it, and the family moved schools twice. A physical exam last spring found nothing unusual, and he takes no medication. In high school he played guitar most evenings and said it was the one time his head went quiet. A friend from his old band still texts him most weeks.</p>'+
+   '<h3 class="ch">Presentation</h3><p class="explain">Rohan came to counseling after failing an exam and then skipping the next two classes. He says he cannot switch his head off. Every night he replays the exam for about an hour, asks himself why he is like this, and predicts that he will fail out and everyone will see. At the café he swaps any shift on which a classmate might come in, because he is sure they have heard that he failed. In class a wave of shame comes up. Afterward he goes numb, plays games or sleeps to get away from it, and cannot calm down once it starts. He wakes around one in the afternoon, goes to bed after three, and drinks coffee or an energy drink most afternoons. His mother calls or texts several times a day about school. Her messages urge him to get back on track, he says they sound like a lecture, and he answers shortly or lets the call ring out. She then calls more often. He says that being seen to fail “is the worst thing that can happen.” His roommates have stopped inviting him out, and he reads that as “they are done with me.” He has not played guitar this year.</p>'+
+   '<h3 class="ch">Two measure points</h3>'+
+   '<div class="tblwrap"><table class="data"><caption>Invented values. Both points come before any treatment plan. Higher questionnaire scores are worse.</caption><thead><tr><th scope="col">Measure</th><th scope="col">Intake</th><th scope="col">Two weeks later</th></tr></thead><tbody>'+
+   '<tr><th scope="row">Depression questionnaire, 0 to 27</th><td>15</td><td>16</td></tr>'+
+   '<tr><th scope="row">Classes attended in the past two weeks, out of those scheduled</th><td>3 of 8</td><td>1 of 8</td></tr>'+
+   '<tr><th scope="row">Average wake time</th><td>12:30 pm</td><td>1:10 pm</td></tr></tbody></table></div>'+
+   '<h3 class="ch">Excerpt from the first session</h3><div class="tx" role="group" aria-label="Session excerpt, invented">'+
+   '<p><b>Clinician:</b> Tell me what has been going on since the exam.</p>'+
+   '<p><b>Rohan:</b> I failed it, so I skipped the next two classes. Now I am behind in everything. I cannot switch my head off. I just lie there going over it.</p>'+
+   '<p><b>Clinician:</b> What do you go over?</p>'+
+   '<p><b>Rohan:</b> Why I am like this. I keep thinking I am going to fail out and everyone will see.</p>'+
+   '<p><b>Clinician:</b> When you picture people seeing, what do you feel?</p>'+
+   '<p><b>Rohan:</b> Sick. Hot all over. Then nothing. I play games until it is gone, or I sleep.</p>'+
+   '<p><b>Clinician:</b> Have you had thoughts of ending your life?</p>'+
+   '<p><b>Rohan:</b> No. I just feel stuck. Like it is already over for school.</p></div>'+
+   '<p class="explain">This activity assumes the clinician continued with a full safety assessment and found no immediate risk. Culture and context are not assumed. Before building anything, a clinician would ask Rohan what family expectations, work hours, and getting help mean to him.</p>'+
+   safetyNote()+'<div class="foot"><span></span><button class="btn" type="button" data-act="start">Place the facts</button></div></section>';
+  return h;
+}
+// ---- 2 facts
+function renderFacts(){
+  var h='<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">Place ten facts at five levels</h2>'+
+   '<p class="explain">For each fact, choose the level it best informs, rate how strongly it bears on the problem, and say which way it pushes. Strength and direction are separate questions, since a strong fact can feed the problem or work against it. Behavior, such as avoiding or withdrawing, is the link between levels, so choose the level the fact describes most directly. Some facts can be placed at more than one level, and the review notes where that is defensible.</p>';
+  var n=0;
+  FACTS.forEach(function(f,i){
+    if(S.lv[f.id]&&S.rt[f.id]&&S.dr[f.id]) n++;
+    h+='<div class="fact"><p class="ft"><b>Fact '+(i+1)+'.</b> '+esc(f.text)+'</p><p class="fh">Level it best informs</p><div class="cbrow" role="group" aria-label="Level for fact '+(i+1)+'">';
+    LEVELS.forEach(function(l){ h+=cb("lv",f.id+"|"+l.id,l.label,S.lv[f.id]===l.id); });
+    h+='</div><p class="fh">How strongly it bears on the problem</p><div class="cbrow" role="group" aria-label="Strength for fact '+(i+1)+'">';
+    RATES.forEach(function(r){ h+=cb("rt",f.id+"|"+r.id,r.label,S.rt[f.id]===r.id); });
+    h+='</div><p class="fh">Which way it pushes</p><div class="cbrow" role="group" aria-label="Direction for fact '+(i+1)+'">';
+    DIRS.forEach(function(r){ h+=cb("dr",f.id+"|"+r.id,r.label,S.dr[f.id]===r.id); });
+    h+='</div></div>';
+  });
+  h+='<div class="foot"><span class="qn">'+n+' of '+FACTS.length+' facts placed, rated, and given a direction.</span><button class="btn" type="button" data-act="toloop"'+(factsDone()?'':' disabled')+'>Choose the maintaining loop</button></div></section>';
+  return h;
+}
+// ---- 3 loop
+function renderLoop(){
+  var h='<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">Choose the maintaining loop</h2>'+
+   '<p class="explain">Each candidate below is built from facts in the file. Choose the one you would treat as the primary loop, the circle that keeps the problem going now. A loop closes when its last step feeds its first step.</p>'+
+   '<fieldset class="grp"><legend>Which loop keeps this going?</legend><div class="options" role="group" aria-label="Candidate loops">';
+  LOOPS.forEach(function(l){
+    var chain='<ol class="chain">'; l.links.forEach(function(x){ chain+='<li>'+esc(x)+'</li>'; }); chain+='</ol>';
+    h+=optBtn("loop",l.id,'<b>'+esc(l.label)+'</b>'+chain,"",S.loop===l.id);
+  });
+  h+='</div></fieldset><div class="foot"><span class="qn">'+(S.loop?'Loop chosen.':'Choose one loop.')+'</span><button class="btn" type="button" data-act="toplan"'+(S.loop?'':' disabled')+'>Plan the first step</button></div></section>';
+  return h;
+}
+// ---- 4 plan
+function renderPlan(){
+  var h='<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">Plan the first step</h2>'+
+   '<p class="explain">Choose one point to interrupt first, one intervention, and one measure that will tell you whether the plan is working. A plan is a hypothesis, and the measure is how you check it.</p>'+
+   '<fieldset class="grp"><legend>1. The first point to interrupt</legend><div class="options" role="group" aria-label="Interruption point">';
+  POINTS.forEach(function(p){ h+=optBtn("pt",p.id,esc(p.label),"",S.pt===p.id); });
+  h+='</div></fieldset><fieldset class="grp"><legend>2. The intervention</legend><div class="options" role="group" aria-label="Intervention">';
+  IVS.forEach(function(p){ h+=optBtn("iv",p.id,esc(p.label),"",S.iv===p.id); });
+  h+='</div></fieldset><fieldset class="grp"><legend>3. The measure that tracks it</legend><p class="explain">The case file gives intake and two-week values for the depression questionnaire, classes attended, and wake time. A measure that already has a baseline can show change sooner.</p><div class="options" role="group" aria-label="Measure">';
+  MEAS.forEach(function(p){ h+=optBtn("ms",p.id,esc(p.label),"",S.ms===p.id); });
+  h+='</div></fieldset><div class="foot"><span class="qn">'+(planDone()?'All three chosen.':'Choose a point, an intervention, and a measure.')+'</span><button class="btn" type="button" data-act="toreflect"'+(planDone()?'':' disabled')+'>Continue to the reflection</button></div></section>';
+  return h;
+}
+// ---- 5 reflection
+function renderReflect(){
+  return '<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">Write your formulation</h2>'+
+   '<p class="explain">In two to four sentences, write the formulation you would give a colleague. Name the loop that keeps the problem going, the first point you would interrupt and why, how the levels feed one another, one measure you would watch, and one thing your formulation cannot yet explain. You will see the expert formulation only after you submit. Write at least 20 words. Your writing is not saved or sent.</p>'+
+   '<label class="lb" for="refl">Your formulation</label>'+
+   '<textarea class="weak" id="refl" rows="7">'+esc(S.refl)+'</textarea><p class="explain" id="wc">Write at least 20 words.</p>'+
+   '<div class="foot"><span></span><button class="btn" type="button" data-act="sent">Show the review</button></div></section>';
+}
+// ---- 6 final review
+function badge(kind){ return '<span class="badge '+kind+'">'+({ok:"Matches the expert",alt:"Also defensible",no:"Differs from the expert"}[kind])+'</span>'; }
+function pct(a,b){ return b?a/b:0; }
+function renderFinal(){
+  var sc=scoreAll(), h='<section class="panel results"><h2 id="panelhead" tabindex="-1">Your formulation beside the expert formulation</h2>'+
+   '<p class="score">Score: <b>'+sc.total+' of '+TOTAL+'</b> points. Task level: create.</p>'+
+   '<p class="explain">Placing facts at levels: '+sc.lvl+' of 20. Strength and direction together: '+sc.rate+' of 10. Loop: '+sc.loop+' of 6. First point: '+sc.pt+' of 6. Intervention: '+sc.iv+' of 4. Measure: '+sc.ms+' of 4. Written formulation, self-scored below: '+sc.cr+' of '+CREATE_PTS+'. Where more than one answer is defensible, the review says so and gives partial credit.</p>';
+  h+='<h3 class="ch">Your formulation, level by level</h3><ul class="plain">';
+  LEVELS.forEach(function(l){
+    var mine=[]; FACTS.forEach(function(f,i){ if(S.lv[f.id]===l.id) mine.push("Fact "+(i+1)+" ("+rtLabel(S.rt[f.id]).toLowerCase()+")"); });
+    h+='<li><b>'+esc(l.label)+'.</b> '+(mine.length?esc(mine.join(", ")):'No fact placed here.')+'</li>';
+  });
+  h+='</ul><h3 class="ch">Point by point: the ten facts</h3>';
+  FACTS.forEach(function(f,i){
+    var s=factScore(f), L=S.lv[f.id], R=S.rt[f.id], D=S.dr[f.id], lk=(s.lp===2?'ok':(s.lp===1?'alt':'no')), rk=(s.sOk?(R===f.rate?'ok':'alt'):'no'), dk=(s.dOk?'ok':'no');
+    h+='<div class="cmp"><p class="ct">Fact '+(i+1)+'. '+esc(f.text)+'</p>'+
+     '<p>'+badge(lk)+' <b>Level.</b> You chose '+esc(lvLabel(L))+'. The expert chose '+esc(lvLabel(f.level))+'. '+esc(s.lp===1?f.altWhy:f.why)+'</p>'+
+     '<p>'+badge(rk)+' <b>Strength.</b> You chose “'+esc(rtLabel(R))+'.” The expert chose “'+esc(rtLabel(f.rate))+'.” '+esc(f.rateWhy)+'</p>'+
+     '<p>'+badge(dk)+' <b>Direction.</b> You chose “'+esc(drLabel(D))+'.” '+(f.dir==="any"?'This is background, so the direction is not scored.':'The expert chose “'+esc(drLabel(f.dir))+'.”')+'</p></div>';
+  });
+  if(S.rt.f10!=="1") h+='<div class="fbbox"><p><b>Cause and maintenance.</b> You rated the history of strict homework checks and school moves as something other than background. A cause can matter for understanding a person, and it cannot be un-started. A maintaining mechanism is what feeds the problem now, which is where a plan can act.</p></div>';
+  var lp=byId(LOOPS,S.loop), ex=byId(LOOPS,"la");
+  h+='<h3 class="ch">Point by point: the loop</h3><div class="cmp"><p class="ct">You chose: '+esc(lp.label)+' ('+sc.loop+' of 6)</p><p>'+badge(S.loop==="la"?'ok':(lp.pts>0?'alt':'no'))+' '+esc(lp.fb)+'</p>';
+  if(S.loop!=="la"){ h+='<p><b>The expert loop, in order.</b></p><ol class="chain">'; ex.links.forEach(function(x){ h+='<li>'+esc(x)+'</li>'; }); h+='</ol>'; }
+  if(!lp.closed) h+='<p><b>Check for closure.</b> The last link in your chain does not feed the first. Without that arrow the chain describes a sequence in place of a loop.</p>';
+  h+='</div>';
+  var p=byId(POINTS,S.pt), v=byId(IVS,S.iv), m=byId(MEAS,S.ms);
+  h+='<h3 class="ch">Point by point: the plan</h3>'+
+   '<div class="cmp"><p class="ct">First point: '+esc(p.label)+' ('+sc.pt+' of 6)</p><p>'+badge(p.cls==="expert"?'ok':(p.cls==="ok"?'alt':'no'))+' '+esc(p.fb)+'</p>'+
+   (p.cls==="expert"?'':'<p><b>The expert chose</b> the avoidance link, as small graded returns to class with one planned contact each day. Defensible alternatives are the sleep window as a gateway, a rumination step, and easing the pattern with his mother (with his consent), because loops can break from any point and the order is provisional.</p>')+'</div>'+
+   '<div class="cmp"><p class="ct">Intervention: '+esc(v.label)+' ('+sc.iv+' of 4)</p><p>'+badge(sc.iv===4?'ok':(sc.iv>0?'alt':'no'))+' '+esc(v.fb)+'</p>'+
+   ((v.cls!=="weak"&&v.tgt!==S.pt)?'<p>This intervention targets a different point than the one you chose, so the plan pulls two ways. A plan reads best when the point, the intervention, and the measure all aim at the same link.</p>':'')+'</div>'+
+   '<div class="cmp"><p class="ct">Measure: '+esc(m.label)+' ('+sc.ms+' of 4)</p><p>'+badge(sc.ms===4?'ok':(sc.ms>0?'alt':'no'))+' '+esc(m.fb)+'</p>'+
+   ((m.kind==="process"&&m.tgt!==S.pt)?'<p>This measure tracks a link other than the one you chose to interrupt, so it cannot tell you whether your own plan is working.</p>':'')+'</div>';
+  if(S.pt==="p6"||S.iv==="i6") h+='<div class="fbbox"><p><b>Kitchen-sink pattern.</b> Beginning everything at once leaves too little focus on any one process, and a flat result cannot say which part to change.</p></div>';
+  if(S.iv==="i7") h+='<div class="fbbox"><p><b>Label and mechanism.</b> A diagnosis names how a problem looks. The expert formulation starts from the loop that is running in this person and then chooses a tool for it.</p></div>';
+  h+='<h3 class="ch">The expert formulation, for comparison</h3><div class="cmp">'+
+   '<p><b>Predisposing.</b> Early learning that mistakes bring lectures and that being seen to fail is dangerous, with two school moves.</p>'+
+   '<p><b>Precipitating.</b> The failed exam.</p>'+
+   '<p><b>Perpetuating.</b> Cognitive, rumination and a catastrophic prediction. Emotional, shame spikes met with escape in place of a regulation skill. Biological, irregular sleep that may lower daytime capacity, stated as a plausible contributor. Interpersonal and social, a pursue-and-withdraw pattern with his mother and roommates who stopped inviting him. Developmental, an old rule that visible failure is dangerous, applied where it is not needed. Behavior on the arrows, skipping class and staying in bed, negatively reinforced by relief.</p>'+
+   '<p><b>Protective.</b> The friend who still texts, the guitar, and his willingness to come in.</p>'+
+   '<p><b>First point and reason.</b> The avoidance link, as small graded returns to class plus one planned contact a day. It delivers the correction the loop has been blocking, it is reachable, and early success builds momentum. The plan leaves the sleep pattern and the replay running, and both are named as next steps.</p>'+
+   '<p><b>Measures.</b> Classes attended out of classes scheduled each week as the process measure, read against the file’s baseline of 3 of 8 at intake and 1 of 8 two weeks later, and the depression questionnaire every two weeks as the outcome measure, read against 15 and 16.</p>'+
+   '<p><b>Revision rule.</b> If the process moves and the outcome lags, continue and review again later. If the process stays flat after a fair trial, re-read the case for subtle escapes, such as attending class and sitting by the door with a phone, or for a mismatched mechanism. If both move, continue. The plan is provisional.</p></div>';
+  h+='<h3 class="ch">Your written formulation beside the expert one</h3><div class="cmp"><p class="ct">Yours</p><p>'+esc(S.refl)+'</p></div><div class="cmp"><p class="ct">The expert formulation, in brief (invented, a teaching design)</p><p>'+esc(EXPERT_TEXT)+'</p></div>'+
+   '<p class="explain">Score your own writing. Tick each element that your formulation contains. Each is worth '+(CREATE_PTS/CHECKS.length)+' points, and the score above updates as you tick. Your formulation does not need the expert wording, only the element.</p>';
+  CHECKS.forEach(function(c,i){ h+='<label class="tick"><input type="checkbox" data-act="chk" data-val="'+i+'"'+(S.chk[i]?' checked':'')+'> <span>'+esc(c)+'</span></label>'; });
+  h+='<p class="explain">Here are six things this formulation cannot explain. Tick any that your writing touched on. These ticks are for you and are not scored.</p>';
+  GAPS.forEach(function(g,i){ h+='<label class="tick"><input type="checkbox" data-act="tick" data-val="'+i+'"'+(S.ticks[i]?' checked':'')+'> <span>'+esc(g)+'</span></label>'; });
+  var secs=[{k:"facts",n:"placing and rating facts at five levels",a:sc.lvl+sc.rate,b:30},{k:"loop",n:"choosing the loop",a:sc.loop,b:6},{k:"point",n:"choosing the first point",a:sc.pt,b:6},{k:"iv",n:"matching an intervention",a:sc.iv,b:4},{k:"ms",n:"choosing a measure",a:sc.ms,b:4},{k:"write",n:"the written formulation",a:sc.cr,b:CREATE_PTS}];
+  var best=secs[0], worst=secs[0]; secs.forEach(function(x){ if(pct(x.a,x.b)>pct(best.a,best.b)) best=x; if(pct(x.a,x.b)<pct(worst.a,worst.b)) worst=x; });
+  h+='<h3 class="ch">Summary</h3><div class="take">';
+  if(sc.total===TOTAL) h+='<b>Full match.</b> Every choice matched the expert formulation. The next test is a real case, where the facts do not arrive sorted and several loops compete.';
+  else {
+    h+='<b>Strongest section.</b> '+esc(best.n)+', '+best.a+' of '+best.b+'. ';
+    if(pct(worst.a,worst.b)<1) h+='<b>Section to revisit.</b> '+esc(worst.n)+', '+worst.a+' of '+worst.b+'. Revisit: '+esc(REVISIT[worst.k])+'.';
+  }
+  h+='</div><p class="explain">A formulation is a working hypothesis. The expert version is one defensible account, and the review marks each place where another account also holds. A clinician would revise any version as new information arrives.</p>'+
+   '<div class="foot"><button class="btn secondary" type="button" data-act="again">Start over</button></div>'+
+   '<p class="selfnote">Rohan, the scores, and the expert formulation are invented, and your answers are not saved or sent. In the United States, call or text 988 at any hour, or call 911 in an emergency.</p></section>';
+  return h;
+}
+function act(v,val){
+  var a;
+  if(v==="start"){ S.phase="facts"; render("panel"); return; }
+  if(v==="lv"){ a=String(val).split("|"); S.lv[a[0]]=a[1]; render('[data-act="lv"][data-val="'+val+'"]'); return; }
+  if(v==="rt"){ a=String(val).split("|"); S.rt[a[0]]=a[1]; render('[data-act="rt"][data-val="'+val+'"]'); return; }
+  if(v==="dr"){ a=String(val).split("|"); S.dr[a[0]]=a[1]; render('[data-act="dr"][data-val="'+val+'"]'); return; }
+  if(v==="toloop"){ if(!factsDone()) return; S.phase="loop"; render("panel"); return; }
+  if(v==="loop"){ S.loop=val; render('[data-act="loop"][data-val="'+val+'"]'); return; }
+  if(v==="toplan"){ if(!S.loop) return; S.phase="plan"; render("panel"); return; }
+  if(v==="pt"||v==="iv"||v==="ms"){ S[v]=val; render('[data-act="'+v+'"][data-val="'+val+'"]'); return; }
+  if(v==="toreflect"){ if(!planDone()) return; S.phase="reflect"; render("panel"); return; }
+  if(v==="sent"){ var ta=root.querySelector("#refl"); var t=ta?ta.value:S.refl; S.refl=t; if(wordCount(t)<20){ var wc=root.querySelector("#wc"); if(wc) wc.innerHTML="Write at least 20 words. You have "+wordCount(t)+"."; return; } S.phase="final"; render("panel"); return; }
+  if(v==="tick"){ S.ticks[val]=!S.ticks[val]; return; }
+  if(v==="chk"){ S.chk[val]=!S.chk[val]; render('[data-act="chk"][data-val="'+val+'"]'); return; }
+  if(v==="again"){ reset(); try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

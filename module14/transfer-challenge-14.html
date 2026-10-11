@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Challenge: Same Label, Different Loops</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --line2:#eceae4;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --level-bg:#fbe7e0; --level-ink:#b0472a;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --sel-line:#c9d3c2;
+    --focus:#2f6f4f; --radius:16px; --r-sm:11px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px;}
+
+  .head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px;}
+  .back-ic{flex:0 0 auto;margin-top:4px;opacity:.6;}
+  .head h1{margin:0;font-size:24px;letter-spacing:-.01em;font-weight:700;}
+  .tabrow{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 22px;padding-left:38px;font-size:14px;}
+  .lvl{background:var(--level-bg);color:var(--level-ink);font-weight:700;border-radius:8px;padding:4px 12px;}
+  .tabrow .t{color:var(--muted);padding:4px 0;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;margin-bottom:20px;}
+  .panel h2{margin:0 0 14px;font-size:17px;font-weight:700;}
+  .panel p{margin:0 0 14px;font-size:15.5px;line-height:1.6;}
+  .panel p:last-child{margin-bottom:0;}
+  .scenario p.quote{color:#3a3833;}
+
+  .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
+  .qhead h2{margin:0;font-size:17px;font-weight:700;}
+  .qtype{flex:0 0 auto;font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:7px;padding:5px 10px;}
+  .qprompt{font-size:15.5px;margin:0 0 14px;line-height:1.55;}
+
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin-bottom:18px;}
+  .do b{color:var(--ink);font-weight:700;}
+
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font:inherit;font-size:15px;line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:14px;}
+  .opt .txt{flex:1 1 auto;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;}
+  .opt:disabled{cursor:default;}
+  /* answered states */
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.62;}
+
+  .verdict{margin:16px 0 0;font-size:15px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14.5px;color:#44413b;line-height:1.6;}
+
+  .qfoot{display:flex;justify-content:flex-end;margin-top:20px;}
+  .btn{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;transition:.12s;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .results h2{display:flex;align-items:center;gap:9px;}
+  .results .score{font-size:15.5px;margin:0;}
+  .ea-sub{color:var(--muted);font-size:14px;margin:-6px 0 14px;}
+  .book{flex:0 0 auto;opacity:.7;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+  @media(max-width:560px){ .wrap{padding:18px 14px 44px;} .tabrow{padding-left:0;} .head h1{font-size:20px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg class="back-ic" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 5l-5 5 5 5" stroke="#1f1e1c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1 id="title"></h1>
+  </div>
+  <div class="tabrow" id="tabrow"></div>
+
+  <!-- Scenario (persistent) -->
+  <section class="panel scenario" id="scenario"></section>
+
+  <!-- Question area -->
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <!-- Results + Expert Analysis (hidden until finished) -->
+  <section class="panel results hidden" id="resultsPanel"></section>
+  <section class="panel hidden" id="eaPanel"></section>
+</div>
+
+<script>
+// Challenge data. Scenario, questions, and expert analysis are original and grounded in the module reading.
+const CHALLENGE = {
+ "title": "Same Label, Different Loops",
+ "level": "Level 5: Evaluate",
+ "tabs": [
+  "Same Label, Different Loops",
+  "Plan and Measure",
+  "Cassius and the Specific Protocol"
+ ],
+ "scenario": {
+  "heading": "Clinical Scenario",
+  "paras": [
+   "A counselor at an invented university counseling center sees the three students described here, and everyone in this case is invented. Two students, Maeve and Orla, were each given a working diagnosis of major depressive disorder at intake, and their depression questionnaire scores fell in the same range (invented values). Maeve, 24, says she cannot stop going over a conversation from a team project last semester and asks herself why she said what she said. She still goes to class and to work and sleeps badly. Orla, 20, has stopped attending her lab section, canceled plans with friends she used to see every week, and spends most days in her room. She says she does not replay much of anything.",
+   "A third student, Cassius, 29, was referred eight months after a car crash. He avoids driving and the roads near the crash, has nightmares, and startles at sudden noise. His assessment is consistent with posttraumatic stress disorder (invented). The counselor has time to write a short plan for a supervisor and wants to justify each choice by the mechanism it targets. At every visit the center asks each student directly about thoughts of ending their life, and none of the three reported any. If this scenario affects you personally, you can call or text 988 at any hour, and in an emergency you can call 911."
+  ]
+ },
+ "doThis": "Pick the best option. After you answer, read whether you were correct and why before advancing.",
+ "questions": [
+  {
+   "id": "q1",
+   "bloom": "analyze",
+   "prompt": "What should the counselor conclude about Maeve and Orla before planning anything?",
+   "options": [
+    {
+     "id": "a",
+     "text": "They share a label and appear to be kept stuck by different processes, so the loop in each one needs assessment"
+    },
+    {
+     "id": "b",
+     "text": "They look different on the surface, so the working diagnosis for one of them is probably wrong and should be revised"
+    },
+    {
+     "id": "c",
+     "text": "They probably reached depression by different routes, so the history of each should decide the first step"
+    },
+    {
+     "id": "d",
+     "text": "They share a label and a score range, so one depression protocol in the same order should fit both of them"
+    }
+   ],
+   "correct": "a",
+   "explanation": "The label and the score describe how each problem looks. Maeve’s pattern points toward repetitive thinking, and Orla’s toward withdrawal and avoidance, and the counselor finds out which loops are running by assessing each student. Giving both the same protocol in the same order assumes that a label settles the process. A different presentation does not mean that one diagnosis is wrong, since two people can meet criteria through different symptom patterns. Routes matter for the formulation, and a difference in routes is not a reason to expect one first step to work better than another."
+  },
+  {
+   "id": "q2",
+   "bloom": "evaluate",
+   "prompt": "The counselor drafts a first step for Orla. Which plan and measure fit together best?",
+   "options": [
+    {
+     "id": "a",
+     "text": "A nightly practice for noticing replayed thoughts and stepping out of them, tracked by the minutes of replay logged each night at bedtime"
+    },
+    {
+     "id": "b",
+     "text": "Weekly sessions on the history of her family’s expectations, tracked by how she feels about the work at the final session of treatment"
+    },
+    {
+     "id": "c",
+     "text": "Small graded returns to the lab with one planned contact a week, tracked by sessions attended and contacts kept, plus the questionnaire"
+    },
+    {
+     "id": "d",
+     "text": "A fixed wake time and a wind-down routine, tracked by the depression questionnaire alone every two weeks as the single measure of change"
+    }
+   ],
+   "correct": "c",
+   "explanation": "Orla’s pattern is withdrawal, so the plan restores the activity and contact the withdrawal has been blocking, and the process measure counts exactly that. The questionnaire alongside it shows whether she is improving, and the two together separate patience from a mismatch. The nightly step-out practice and its measure fit Maeve’s replaying and leave Orla’s withdrawal running. Sleep work could be defensible for someone with a sleep problem, and Orla’s file shows none. A questionnaire alone cannot say whether the targeted process moved. Exploring family history builds understanding of a cause, and a single end-of-treatment impression sets no expected change and no date for checking it."
+  },
+  {
+   "id": "q3",
+   "bloom": "evaluate",
+   "prompt": "The counselor asks what the module’s evidence implies for Cassius. Which statement is best supported?",
+   "options": [
+    {
+     "id": "a",
+     "text": "A transdiagnostic protocol should replace it, since head-to-head trials show transdiagnostic treatment works better for trauma"
+    },
+    {
+     "id": "b",
+     "text": "A protocol written for posttraumatic stress disorder is a defensible first choice, paced by the formulation"
+    },
+    {
+     "id": "c",
+     "text": "He should receive Orla’s plan, since avoidance is the shared process and the plan should follow the process alone"
+    },
+    {
+     "id": "d",
+     "text": "The choice matters little, since well-established therapies produce similar average results and a clinician can pick by preference"
+    }
+   ],
+   "correct": "b",
+   "explanation": "The module reports larger effects of cognitive behavior therapy for posttraumatic stress disorder than for several other disorders, all against inactive controls, so a protocol written for his diagnosis is a defensible first choice. Those are not head-to-head comparisons. The module gives no evidence that a transdiagnostic protocol would do better for him, and none that the specific protocol would do better either, so the formulation guides how fast to go and what to track. The head-to-head trials in the module involved anxiety and depression presentations and found similar outcomes, so none of them supports a claim that a transdiagnostic protocol works better for trauma. Similar average results across therapies are a pattern in the field, and they do not make the choice arbitrary for one person. Avoidance appears in Cassius’s case, and his nightmares and startle are features that Orla’s plan does not address."
+  }
+ ],
+ "expertAnalysis": {
+  "heading": "Expert Analysis",
+  "subhead": "Model answer and clinical reasoning walkthrough",
+  "paras": [
+   "The first decision is how to read a shared label. Maeve and Orla look alike on paper and different in practice. Maeve circles over the past, which is repetitive negative thinking, and Orla pulls back from activity and people, which is behavioral withdrawal with its own interpersonal consequences. The diagnosis supports communication and access to care, and the counselor still has to find the loops. The counselor asks each student what happens before and after the behaviors that worry them and what the pattern gives them in the short term. The counselor also asks what family, work, and school expectations mean to each of them and does not infer it from background.",
+   "The second decision is a plan that aims at one process and a measure that checks it. For Orla the first point is the withdrawal, delivered as small graded returns and a planned contact each week. The process measure counts what the plan is meant to change, and an outcome measure shows whether she is improving. The counselor decides in advance what change to expect and by when. If attendance rises and the score stays flat, the plan continues with another review. If attendance stays flat after a fair trial, the counselor re-reads the case for subtle escapes or a mismatched process. A different first point, such as a rumination step, would be defensible for Maeve, and for each plan the counselor states what it leaves running.",
+   "The third decision shows the limit of the shared-process view. For Cassius the module reports large effects of cognitive behavior therapy for posttraumatic stress disorder against inactive controls, so a protocol written for his diagnosis is a defensible choice, and the counselor uses it while the formulation guides pacing, safety, and measures. Those figures do not show that it beats a transdiagnostic protocol, and the module has no evidence that a transdiagnostic protocol would do better for him. The head-to-head trials in anxiety and depression found similar outcomes, so the module supports choosing by process where the process is clear and using a protocol written for the diagnosis where it has strong support against inactive controls. A clinician who is concerned about any student’s safety asks directly and early. If you or someone you know is in distress, call or text 988, or call 911 in an emergency."
+  ]
+ }
+};
+
+var idx = 0;            // current question index
+var answered = [];      // answered[i] = chosen option id or null
+var correctCount = 0;
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+var BOOK = '<svg class="book" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 4.5h5.5c.8 0 1.5.7 1.5 1.5v9c0-.8-.7-1.5-1.5-1.5H3v-9Z" stroke="#6f6c66" stroke-width="1.3"/><path d="M17 4.5h-5.5c-.8 0-1.5.7-1.5 1.5v9c0-.8.7-1.5 1.5-1.5H17v-9Z" stroke="#6f6c66" stroke-width="1.3"/></svg>';
+
+function renderStatic(){
+  document.getElementById("title").textContent = CHALLENGE.title;
+  var tr = document.getElementById("tabrow");
+  tr.appendChild(el("span","lvl", esc(CHALLENGE.level)));
+  CHALLENGE.tabs.forEach(function(t){ tr.appendChild(el("span","t", esc(t))); });
+
+  var sc = document.getElementById("scenario");
+  sc.appendChild(el("h2",null, esc(CHALLENGE.scenario.heading)));
+  CHALLENGE.scenario.paras.forEach(function(p,i){
+    sc.appendChild(el("p", i===1?"quote":null, esc(p)));
+  });
+  answered = CHALLENGE.questions.map(function(){ return null; });
+}
+
+function renderQuestion(){
+  var q = CHALLENGE.questions[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var head = el("div","qhead");
+  head.appendChild(el("h2",null,"Question " + (idx+1) + " of " + CHALLENGE.questions.length));
+  head.appendChild(el("span","qtype","Multiple Choice"));
+  panel.appendChild(head);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> " + esc(CHALLENGE.doThis)));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls = "opt";
+    if(isAnswered){
+      if(o.id === q.correct) cls += " correct";
+      else if(o.id === chosen) cls += " wrong";
+      else cls += " dim";
+    }
+    var btn = el("button", cls);
+    btn.type = "button";
+    if(isAnswered) btn.disabled = true;
+    var mark = "";
+    if(isAnswered && o.id === q.correct) mark = CHECK;
+    else if(isAnswered && o.id === chosen) mark = CROSS;
+    btn.innerHTML = '<span class="k">'+o.id.toUpperCase()+'.</span>' +
+                    '<span class="txt">'+esc(o.text)+'</span>' +
+                    '<span class="mark">'+mark+'</span>';
+    if(!isAnswered){
+      btn.addEventListener("click", function(){ choose(o.id); });
+    }
+    opts.appendChild(btn);
+  });
+  panel.appendChild(opts);
+
+  if(isAnswered){
+    var right = chosen === q.correct;
+    if(right){
+      panel.appendChild(el("p","verdict ok","Correct!"));
+    } else {
+      var correctText = "";
+      q.options.forEach(function(o){ if(o.id===q.correct) correctText = o.text; });
+      panel.appendChild(el("p","verdict no","Incorrect. The correct answer is: " + esc(correctText)));
+    }
+    panel.appendChild(el("p","explain", esc(q.explanation)));
+
+    var foot = el("div","qfoot");
+    var last = idx === CHALLENGE.questions.length - 1;
+    var b = el("button","btn");
+    if(last){
+      b.innerHTML = 'View Expert Analysis ' + BOOK.replace('class="book" ','');
+      b.addEventListener("click", finish);
+    } else {
+      b.innerHTML = 'Next Question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      b.addEventListener("click", function(){ idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+    }
+    foot.appendChild(b);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(optId){
+  if(answered[idx] !== null) return;
+  answered[idx] = optId;
+  if(optId === CHALLENGE.questions[idx].correct) correctCount++;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("qpanel").classList.add("hidden");
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML = "";
+  rp.appendChild(el("h2",null, BOOK + "<span>Your Results</span>"));
+  rp.appendChild(el("p","score","Multiple Choice: " + correctCount + " / " + CHALLENGE.questions.length + " correct"));
+
+  var ea = document.getElementById("eaPanel");
+  ea.classList.remove("hidden");
+  ea.innerHTML = "";
+  ea.appendChild(el("h2",null, BOOK + "<span>" + esc(CHALLENGE.expertAnalysis.heading) + "</span>"));
+  ea.appendChild(el("p","ea-sub", esc(CHALLENGE.expertAnalysis.subhead)));
+  CHALLENGE.expertAnalysis.paras.forEach(function(p){ ea.appendChild(el("p",null, esc(p))); });
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderStatic();
+renderQuestion();
+</script>
+</body>
+</html>
