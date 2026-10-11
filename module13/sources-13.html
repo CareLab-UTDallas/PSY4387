@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sources of Authority</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Sources of Authority</h1>
+    <p class="sub">Sort hard questions by the source that governs them, decide which source controls when two pull apart, and say what to check when a policy and the code seem to disagree.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Find the governing source",
+  "short": "Find the source",
+  "tag": "Five sources",
+  "case": {
+   "title": "Practice setting (invented)",
+   "text": "Xavier is an invented trainee at an invented university training clinic. Over his first weeks he runs into the questions below. The reading sorts the answer to a hard question into five sources, which are the ethics code, law, agency or program policy, a supervisor’s direction, and professional judgment."
+  },
+  "intro": "<b>Step 1.<\/b> Before a clinician acts on a hard question, the first task is working out whose rule applies. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the source that is the first place to look for the answer and that most directly settles it.",
+  "cats": [
+   {
+    "id": "code",
+    "label": "Ethics code"
+   },
+   {
+    "id": "law",
+    "label": "Law"
+   },
+   {
+    "id": "pol",
+    "label": "Employer or program policy"
+   },
+   {
+    "id": "sup",
+    "label": "Supervisor"
+   },
+   {
+    "id": "jud",
+    "label": "Professional judgment"
+   }
+  ],
+  "src": "Module 13, Sources of Authority",
+  "items": [
+   {
+    "text": "Whether Xavier should take on a first couples case this month, with the clinic’s one couples supervisor on leave.",
+    "answer": "sup",
+    "why": "Whether a trainee is ready, and with what supervision available, is a question for the supervisor and the program. The supervisor’s direction on the case decides what Xavier does next.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "How to word an explanation of confidentiality limits for a shy nineteen-year-old client, when no law or policy dictates the wording.",
+    "answer": "jud",
+    "why": "Professional judgment covers the space the other sources leave open. The content of the limits comes from elsewhere, and the wording is a clinical choice.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Whether a licensing board’s rules allow a clinician to see a client by video while the client is physically in another state.",
+    "answer": "law",
+    "why": "The reading says whether a clinician may practice with a client in another state depends on licensing law. Board regulations are one form of law, and the clinician checks them before the first session.",
+    "bloom": "apply"
+   },
+   {
+    "text": "What Xavier must tell a client about his training status and his supervisor when the supervisor holds legal responsibility for the treatment.",
+    "answer": "code",
+    "why": "Standard 10.01(c) says the client is told the therapist is in training and supervised and is given the supervisor’s name. The code answers this question directly.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Whether Xavier has to follow his supervisor’s direction when he disagrees with it.",
+    "answer": "pol",
+    "why": "The code has no standard telling a trainee to follow a supervisor over the code. Programs set their own rules about this, and the handbook is where Xavier confirms them.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Whether Xavier is ready to take on a client with a type of problem he has not yet worked with, given what he has handled so far.",
+    "answer": "sup",
+    "why": "A supervisor knows the case, the setting, and the trainee’s level. Xavier’s supervisor is positioned to judge the match, and Xavier brings the question to her.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Whether the state where the clinic operates imposes a legal duty to protect a person whom a client has seriously threatened.",
+    "answer": "law",
+    "why": "Duty to protect is a legal term that does not appear in the code. Whether it is required, permitted, or absent depends on the jurisdiction, so the law of the place settles it.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Whether to run ten minutes over so a client can finish an important disclosure, at a clinic whose policy says nothing about session length.",
+    "answer": "jud",
+    "why": "No source speaks to it, so the question goes back to judgment. A prudent clinician weighs the client’s need, the next client, and whether the supervisor should hear about it afterward.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Whether Xavier may describe a stuck case to a colleague and what identifying details he has to remove first.",
+    "answer": "code",
+    "why": "Standard 4.06 limits what identifying information may be shared in a consultation. The code is the first place to look, and law and clinic policy can add rules.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Whether trainees at this clinic complete a risk assessment form after a client says something about not wanting to be alive.",
+    "answer": "pol",
+    "why": "Employers and programs usually add a protocol with a form and a sequence of steps. The clinic’s written policy is where Xavier finds it, and his supervisor walks him through it.",
+    "bloom": "apply"
+   }
+  ],
+  "revisit": "Reread “Sources of Authority.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Which source controls?",
+  "short": "Which controls",
+  "tag": "Two sources pull apart",
+  "case": {
+   "title": "Practice setting (invented)",
+   "text": "Xavier’s training clinic has a written policy for every trainee. A policy can ask for more than the code asks. In each case below, two sources pull in different directions and one of them controls what Xavier does."
+  },
+  "intro": "<b>Step 2.<\/b> The reading gives two relationships among the sources. When the code sets a higher standard than the law, the higher standard applies. When someone’s direction conflicts with the code, Standards 1.02 and 1.03 give the process. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the answer that names which source controls or what Xavier does, and gives the reasoning the reading gives.",
+  "src": "Module 13, Sources of Authority",
+  "items": [
+   {
+    "prompt": "The clinic’s policy requires a signed written release before any trainee contacts a client’s physician. Orson, an invented client, says out loud that Xavier may call his physician. Standard 4.05(a) allows disclosure with the client’s appropriate consent, and Standard 3.10(d) asks psychologists to document oral or written consent. Which source controls what Xavier does?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The clinic’s policy, because it can ask for more than the code asks and it requires the signed release first"
+     },
+     {
+      "id": "b",
+      "text": "Law, because questions about releases are legal ones, so Xavier should set the policy aside until he has looked up the state’s release rules"
+     },
+     {
+      "id": "c",
+      "text": "Professional judgment, because Orson’s wish is clear and a prudent clinician would not hold up his care over paperwork"
+     },
+     {
+      "id": "d",
+      "text": "The code, because it is the profession’s standard and it accepts documented oral consent, so Xavier may call once he writes down what Orson said"
+     }
+    ],
+    "correct": "a",
+    "why": "The code accepts documented consent, and the policy is stricter. Nothing in the policy conflicts with the code, so Xavier meets both by getting the signature. The code is not the only source. A clinic can set a stricter rule than the code, and a trainee works under the clinic’s rule as well as the code. Law may add requirements, and checking it is wise. The policy still applies in the meantime and is not suspended while Xavier looks. Judgment fills the space the other sources leave. Here the policy speaks directly, so the question is not open.",
+    "bloom": "analyze",
+    "src": "Module 13, Sources of Authority"
+   },
+   {
+    "prompt": "An invented jurisdiction’s statute says nothing about explaining the limits of confidentiality to clients. Standard 4.02(a) requires psychologists to discuss the relevant limits. A fellow trainee says the statute is the only enforceable source and the explanation is optional. What is the best response?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The standard applies mainly when a client asks about confidentiality, and Xavier may wait for the question"
+     },
+     {
+      "id": "b",
+      "text": "The standard waits for the clinic’s lawyer, and Xavier explains nothing until the lawyer says whether the statute applies"
+     },
+     {
+      "id": "c",
+      "text": "The standard still applies, and psychologists must meet the higher standard whenever the code sets one"
+     },
+     {
+      "id": "d",
+      "text": "The statute probably controls, and the explanation is a courtesy that Xavier may skip when time is short"
+     }
+    ],
+    "correct": "c",
+    "why": "The reading quotes this rule from the Introduction and Applicability section. Silence in the law does not remove a duty the code states. Law is one source and does not replace the others. The code’s standards are enforceable by a board or ethics committee even where a statute is silent. Standard 4.02 puts the discussion at the outset and again as circumstances change. It does not wait for the client to ask. The code applies to Xavier’s work whether or not the lawyer weighs in. The legal check matters for what the limits are, and the discussion still occurs.",
+    "bloom": "analyze",
+    "src": "Module 13, Sources of Authority"
+   },
+   {
+    "prompt": "Xavier’s supervisor tells him not to give clients her name, because it confuses people. Standard 10.01(c) calls for giving the client the supervisor’s name. Xavier believes the direction conflicts with the code. What is the best first move?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Raise the question on the end-of-term evaluation form, and keep giving clients the general mention of supervision until then"
+     },
+     {
+      "id": "b",
+      "text": "Follow the instruction, and treat the supervisor’s responsibility for the case as settling any conflict with the code"
+     },
+     {
+      "id": "c",
+      "text": "Tell the supervisor which standard he means, ask to revisit the instruction, and check the handbook"
+     },
+     {
+      "id": "d",
+      "text": "Give each client the name and say nothing to the supervisor, and let the disagreement about wording fade"
+     }
+    ],
+    "correct": "c",
+    "why": "The code has no standard telling a trainee to follow a supervisor over the code. Standards 1.02 and 1.03 call for clarifying a conflict and taking reasonable steps to resolve it, and many programs name a person above the supervisor. The code contains no standard that tells trainees to defer to supervisors. The program’s rules govern when a trainee follows a direction, and Xavier does not assume they say deference always wins. Meeting the code is right, and doing it silently skips the clarification step. The supervisor may not realize the instruction conflicts with a standard, and the question stays open. Clients are being seen now. Waiting leaves every new client without information the standard asks for.",
+    "bloom": "evaluate",
+    "src": "Module 13, Sources of Authority"
+   }
+  ],
+  "revisit": "Reread “Sources of Authority.”"
+ },
+ {
+  "type": "mcq",
+  "title": "When law and code collide, and when they only seem to",
+  "short": "Law and code",
+  "tag": "Standard 1.02",
+  "case": {
+   "title": "Practice setting (invented)",
+   "text": "Two different questions arise at Xavier’s clinic. The first is about what a real conflict between the code and a legal requirement asks of a psychologist. The second is about whether breaking one system means breaking the other."
+  },
+  "intro": "<b>Step 3.<\/b> The reading explains that the code gives no formula for a real conflict with law. It gives three actions and leaves the outcome to reasoning and consultation. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 13, Sources of Authority",
+  "items": [
+   {
+    "prompt": "In an invented place, a rule seems to require a clinician to take a step that the clinician believes the code forbids. What does Standard 1.02 tell the clinician to do?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Follow the law, because an earlier version of the standard allowed psychologists to follow the law when a conflict could not be resolved"
+     },
+     {
+      "id": "b",
+      "text": "Do nothing until a court rules, because a clinician cannot act while a legal question is unsettled and acting early could expose the clinician"
+     },
+     {
+      "id": "c",
+      "text": "Follow the code and disregard the rule, because the code outranks the law whenever the two conflict and the clinician has no need to tell anyone or explain the choice"
+     },
+     {
+      "id": "d",
+      "text": "Clarify the conflict, make known the commitment to the Ethics Code, and take reasonable steps to resolve it, because the standard names those three actions"
+     }
+    ],
+    "correct": "d",
+    "why": "These are the three actions the standard names. Consultation and reasoning carry the rest. The 2010 amendment removed that allowance. The standard in force gives no such permission. The code names no ranking of that kind. The clinician first works out whether the conflict is real and tells the relevant people about the commitment to the code. Inaction is still a choice with consequences for a client. The standard calls for reasonable steps to resolve the conflict, and waiting is not one of them.",
+    "bloom": "analyze",
+    "src": "Module 13, Sources of Authority"
+   },
+   {
+    "prompt": "A trainee says, “No court case was filed about the way we handled that client’s records, so there is no ethics problem either.” Which reply best reflects the reading?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The trainee is partly right, and only a court can address what a student did"
+     },
+     {
+      "id": "b",
+      "text": "The two are separate questions, and the absence of a lawsuit does not settle whether the code was violated"
+     },
+     {
+      "id": "c",
+      "text": "The trainee is right, and the code matters mainly when a violation leads to legal liability"
+     },
+     {
+      "id": "d",
+      "text": "The trainee is wrong, and every violation of the code creates civil liability that a lawsuit will eventually raise"
+     }
+    ],
+    "correct": "b",
+    "why": "The code is not intended as a basis of civil liability, and a violation does not by itself determine liability. A board or ethics committee can respond whether or not a court does. The two systems answer different questions. A clinician can meet the law and break the code, and different bodies respond differently. The reading says a violation does not by itself determine legal liability. The statement runs the two systems together in the other direction. Other bodies may sanction students whether or not they are APA members, and the program decides which rules govern a trainee’s conduct.",
+    "bloom": "evaluate",
+    "src": "Module 13, Sources of Authority"
+   }
+  ],
+  "revisit": "Reread “Sources of Authority” and “Standards, Sanctions, and Students.”"
+ },
+ {
+  "type": "mcq",
+  "title": "A policy and the code seem to disagree",
+  "short": "Policy and code",
+  "tag": "Weigh the response",
+  "case": {
+   "title": "Practice setting (invented)",
+   "text": "Clinics write policies, and some wording looks at first like it collides with the code. Xavier meets two such cases. In the first, the clinic’s script for the first session says, “Everything you tell me here is completely confidential.” In the second, the clinic requires a supervisor’s written sign-off before any information goes to a client’s school, and the client has already signed a release."
+  },
+  "intro": "<b>Step 4.<\/b> A disagreement can be real or only apparent. The first question is whether the two sources actually require different things. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question. In the first question two of the options are defensible, so choose the stronger one and notice why the other is weaker.",
+  "src": "Module 13, Sources of Authority",
+  "items": [
+   {
+    "prompt": "The script says everything is completely confidential, and Standard 4.02(a) requires discussing the relevant limits. Two of these responses are defensible. Which is stronger?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Add the limits of confidentiality to the greeting this week and tell the supervisor today that the script conflicts with 4.02(a)"
+     },
+     {
+      "id": "b",
+      "text": "Add the limits of confidentiality to the greeting this week and raise the conflict at the next scheduled weekly supervision meeting"
+     },
+     {
+      "id": "c",
+      "text": "Read the script as written this week and email the supervisor afterward about the conflict"
+     },
+     {
+      "id": "d",
+      "text": "Drop the script, add the limits, and keep the change to himself and avoid a dispute over the clinic’s wording"
+     }
+    ],
+    "correct": "a",
+    "why": "Xavier keeps the code’s duty in place while the question is open and raises the conflict at once with the people who can resolve it. This follows the steps Standard 1.03 names. Defensible, since clients hear the limits and the conflict does reach the supervisor. It is weaker because the director cannot clarify the script until the meeting, and the script stays in use with every other trainee’s clients in the meantime. Clients hear a promise that omits the limits while the question is open, and Standard 4.02(b) puts the discussion at the outset. Meeting the code is right, and the quiet approach skips the clarification the code asks for. The director may keep the script in use for every other trainee.",
+    "bloom": "evaluate",
+    "src": "Module 13, Sources of Authority"
+   },
+   {
+    "prompt": "Orson has signed a release for the school. The clinic requires a supervisor’s written sign-off before anything goes out. A trainee says the policy conflicts with Standard 4.05(a), which allows disclosure with appropriate consent. What is the best analysis?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A real conflict exists, and Xavier begins the clarification process under Standard 1.03 before he sends anything"
+     },
+     {
+      "id": "b",
+      "text": "No real conflict exists, and Xavier meets both sources by getting the supervisor’s sign-off before he sends anything"
+     },
+     {
+      "id": "c",
+      "text": "The signed release makes the policy moot, and the sign-off adds nothing that the client has not already authorized in writing"
+     },
+     {
+      "id": "d",
+      "text": "The state’s law decides, and Xavier holds the information until he has read its rules on school disclosures"
+     }
+    ],
+    "correct": "b",
+    "why": "A stricter policy can add a requirement to a permission. Both are met when the release is signed and the supervisor approves. Standard 1.03 applies when an organization’s demand conflicts with the code. A policy that adds a step to a permission demands nothing the code forbids. Consent satisfies one route in the code. The clinic’s policy is a separate source, and the clinic can require more. Checking law may matter, and it does not turn a stricter clinic rule into an open question. The sign-off is required now.",
+    "bloom": "analyze",
+    "src": "Module 13, Sources of Authority"
+   }
+  ],
+  "revisit": "Reread “Sources of Authority.”"
+ },
+ {
+  "type": "multi",
+  "title": "Say what to check",
+  "short": "What to check",
+  "tag": "A friend’s second opinion",
+  "case": {
+   "title": "Practice setting (invented)",
+   "text": "Xavier’s supervisor asks him to send the notes from a client’s sessions to a friend of the supervisor who is also a therapist, so the friend can give a second opinion. The reading asks the student, for a case like this, to say which sources to check and what to do first."
+  },
+  "intro": "<b>Step 5.<\/b> A trainee who does not yet know the answer names what must be checked and settles it by consulting. The unknown is recorded and not guessed. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "prompt": "Select every item Xavier should check or do before any notes leave the clinic.",
+  "doThis": "Select the items, then check your answer.",
+  "options": [
+   {
+    "id": "a",
+    "label": "Standards 4.05 and 4.06, which cover disclosure without consent and identifying details in a consultation"
+   },
+   {
+    "id": "x1",
+    "label": "Whether the friend has worked with clients who have the same presenting problem"
+   },
+   {
+    "id": "b",
+    "label": "The clinic’s written policy on records, consultation, and releases"
+   },
+   {
+    "id": "x2",
+    "label": "Whether the supervisor has sent records to this friend on earlier cases"
+   },
+   {
+    "id": "c",
+    "label": "The law and board rules where the clinic operates, recorded as an unknown until someone confirms them"
+   },
+   {
+    "id": "x3",
+    "label": "How soon the friend’s opinion is needed before the next session"
+   },
+   {
+    "id": "d",
+    "label": "What exactly would be sent, whether the client has consented, and whether a de-identified summary would serve"
+   }
+  ],
+  "truth": [
+   "a",
+   "b",
+   "c",
+   "d"
+  ],
+  "reasons": {
+   "a": "Present. Standard 4.05 gives the consent route and the law route, and Standard 4.06 limits identifying information in a consultation.",
+   "b": "Present. Program or employer policy is one of the sources that bind the decision, and it can be stricter than the code.",
+   "c": "Present. A trainee who does not know the law records it as an unknown to settle by consulting and does not fill the gap with a guess.",
+   "d": "Present. The content, the client’s consent, and a de-identified alternative decide which route applies and how much has to be shared.",
+   "x1": "Not present. The friend’s experience bears on the quality of the opinion and not on whether notes may leave the clinic. Consent, law, policy, and the content decide that.",
+   "x2": "Not present. An earlier practice does not supply the client’s consent or a legal basis, and a habit of sending records is a reason to ask about the policy and not a source.",
+   "x3": "Not present. Urgency may matter to the clinical plan and does not change what has to be checked before a disclosure."
+  },
+  "src": "Module 13, Sources of Authority",
+  "bloom": "evaluate",
+  "revisit": "Reread “Sources of Authority.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "A hard question gets sorted by source. The code names duties that apply in many settings and often defers to law. Law defines what is required, permitted, or forbidden where you work. Policy can be stricter than both. A supervisor knows the case and the trainee’s level, and the code contains no standard telling a trainee to follow a supervisor over the code. Professional judgment covers what the others leave open. Where the code sets a higher standard than the law, meet the higher one. Where a real conflict arises, clarify it, make known your commitment to the code, and take reasonable steps to resolve it. Where you do not know the answer, say what you would check.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every case in it is invented, and no case states the law of any place. Laws differ by state and country, so check your program, your employer, and the law where you work. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

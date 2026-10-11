@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boundaries and Multiple Relationships</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Boundaries and Multiple Relationships</h1>
+    <p class="sub">Apply the reasoning behind Standard 3.05 to gifts, friend requests, a former client, a small community, and a favor, and separate a crossing from a violation.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Crossing, violation, or not yet clear",
+  "short": "Crossing or violation",
+  "tag": "Whose need?",
+  "case": {
+   "title": "Practice settings (invented)",
+   "text": "Writers on ethics call a departure from the usual therapy frame a boundary crossing when it may be harmless or helpful and a boundary violation when it harms the client or takes advantage of the client. The code uses neither term and applies the conditional test in Standard 3.05. A helpful question is whose need the act serves. A clinician also asks the client what the act means to the client."
+  },
+  "intro": "<b>Step 1.<\/b> Sort each act by what the facts show. When the facts do not yet show harm or help, the right answer is to ask. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the category that the facts support.",
+  "cats": [
+   {
+    "id": "cross",
+    "label": "Boundary crossing"
+   },
+   {
+    "id": "viol",
+    "label": "Boundary violation"
+   },
+   {
+    "id": "ask",
+    "label": "Cannot tell yet, ask whose need it serves"
+   }
+  ],
+  "src": "Module 13, Boundaries and Multiple Relationships",
+  "items": [
+   {
+    "text": "A client who finished a year of therapy two weeks ago invites her former therapist to her wedding and says it would mean a great deal to her if he came.",
+    "answer": "ask",
+    "why": "The facts do not show whose need the invitation serves or what it means to her. A clinician asks about its meaning, consults a supervisor, and checks the program’s policy before answering.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A client is hospitalized after a car accident, and her therapist visits for ten minutes, brings nothing, tells the supervisor beforehand, and records the visit afterward.",
+    "answer": "cross",
+    "why": "The visit departs from the usual frame, serves the client’s need during a crisis, and was shared with the supervisor and recorded. Nothing in the facts shows harm or exploitation.",
+    "bloom": "apply"
+   },
+   {
+    "text": "A therapist begins asking a client to run errands for the therapist’s side business, and the client, who depends on the sessions, does not feel able to refuse.",
+    "answer": "viol",
+    "why": "The act serves the therapist’s financial need, and the client’s dependence makes refusal hard. This is exploitation of a person over whom the therapist has authority.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A client who runs a bakery leaves a box of pastries at the front desk for her trainee every week and says she wants him to know she is grateful. The trainee has not yet raised it with her.",
+    "answer": "ask",
+    "why": "A single gift and a standing arrangement differ. The facts do not yet show what the offer means to the client, so the trainee asks, consults, and checks policy.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A therapist moves a client’s session earlier for two weeks after the client’s layoff makes the usual time impossible.",
+    "answer": "cross",
+    "why": "A flexible schedule during a real hardship serves the client’s need, and it departs from the usual frame without harming anyone.",
+    "bloom": "apply"
+   },
+   {
+    "text": "A therapist going through a divorce describes it in detail over several sessions and asks the client for advice. The client starts to worry about the therapist and stops raising her own concerns.",
+    "answer": "viol",
+    "why": "The act serves the therapist’s emotional need, and the client has been harmed in that her own work has stopped. Whose need is served and what the act does to the client decide the category.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread “Boundaries and Multiple Relationships.”"
+ },
+ {
+  "type": "mcq",
+  "title": "A gift before the last session",
+  "short": "A gift",
+  "tag": "Nasrin and Patrik",
+  "case": {
+   "title": "Case (invented): A gift",
+   "text": "Nasrin, an adult client, has worked with Patrik, an invented trainee, for several months on anxiety. At the second to last session she gives him a hand-knit scarf and says she wanted to thank him before they end. The next session is the last. The clinic’s written policy says nothing about gifts. Patrik’s supervisor is available."
+  },
+  "intro": "<b>Step 2.<\/b> The code’s test is conditional. Ask whether there is a second role, a closely related person, or a promised future relationship. Then ask whether the overlap could reasonably be expected to impair objectivity, competence, or effectiveness, or to risk exploitation or harm. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question. In the second question two of the options are defensible, so choose the stronger one.",
+  "src": "Module 13, Boundaries and Multiple Relationships",
+  "items": [
+   {
+    "prompt": "A fellow trainee says that accepting any gift creates a multiple relationship under Standard 3.05(a), so Patrik must refuse. Which reply is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The fellow trainee is right only for expensive gifts, because the code’s concern is the amount"
+     },
+     {
+      "id": "b",
+      "text": "The fellow trainee is right, because a gift creates an obligation and any obligation is a second role"
+     },
+     {
+      "id": "c",
+      "text": "The fellow trainee is wrong, because gifts at the end of therapy are generally acceptable without further thought or a conversation"
+     },
+     {
+      "id": "d",
+      "text": "A single small gift is not a second role under 3.05(a), because the test asks what it means and whose need it serves"
+     }
+    ],
+    "correct": "d",
+    "why": "The standard defines a multiple relationship by a second role, a related person, or a promised future relationship. The reading adds that a gift can be harmless in one context and damaging in another. The standard does not define a second role by an obligation. The test is the expected effect on this relationship. A gift can also reflect pressure or exploitation. The reading says what a gift means is something only the client can say, so Patrik asks. The code names no dollar amount. The conditional test looks at expected impairment, exploitation, or harm.",
+    "bloom": "analyze",
+    "src": "Module 13, Boundaries and Multiple Relationships"
+   },
+   {
+    "prompt": "Two options below are defensible. Which is stronger?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Thank her, ask what the scarf means to her, take the question to the supervisor, and give her an answer at the last session"
+     },
+     {
+      "id": "b",
+      "text": "Thank her, accept the scarf, and tell no one, treating a small gift at the end of therapy as plainly harmless"
+     },
+     {
+      "id": "c",
+      "text": "Thank her, accept the scarf, and mention that they could stay in touch by email after therapy ends"
+     },
+     {
+      "id": "d",
+      "text": "Thank her, ask what the scarf means to her, accept it, and tell the supervisor and record the conversation in the chart afterward"
+     }
+    ],
+    "correct": "a",
+    "why": "Both defensible options ask what the gift means and involve the supervisor. This one decides after the supervisor has weighed in, and deferring is the more reversible choice, since a scarf can still be accepted next week and an accepted scarf is awkward to hand back. Defensible, since asking what the gift means and then telling the supervisor are the reading’s own steps. It is weaker only in order. The decision comes before the supervisor weighs in, and the choice is harder to undo. The act may be harmless. Not telling the supervisor removes the check on Patrik’s own judgment, which can be pulled by the wish to be liked. A promise of a future relationship is one of the three forms a multiple relationship can take. The offer serves Patrik’s social need more than Nasrin’s.",
+    "bloom": "evaluate",
+    "src": "Module 13, Boundaries and Multiple Relationships"
+   }
+  ],
+  "revisit": "Reread “Boundaries and Multiple Relationships.”"
+ },
+ {
+  "type": "mcq",
+  "title": "A friend request",
+  "short": "Social media",
+  "tag": "Eamon and Esther",
+  "case": {
+   "title": "Case (invented): A friend request",
+   "text": "Eamon, an adult client of Esther, an invented therapist, sends Esther a friend request on a personal account. Eamon says in the next session that he sent it because he “feels like we are friends now.” The code names neither friend requests nor searches for a client’s private information, and the program’s social media policy is the first place to look."
+  },
+  "intro": "<b>Step 3.<\/b> Digital contact creates new versions of old problems. Wu and Sonne (2021) found that both how often psychologists did several digital crossings and how ethical they judged them differed by crossing. The harm, if any, comes from what the contact does to the relationship. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question. In the second question two of the options are defensible, so choose the stronger one.",
+  "src": "Module 13, Boundaries and Multiple Relationships",
+  "items": [
+   {
+    "prompt": "Which reason best explains why accepting the request is a risk under the code’s reasoning?",
+    "options": [
+     {
+      "id": "a",
+      "text": "The code lists friend requests among the contacts it forbids, which makes any further reasoning about the relationship unnecessary"
+     },
+     {
+      "id": "b",
+      "text": "Any contact outside the session violates Standard 3.05, which lists the forms of outside contact that count as violations"
+     },
+     {
+      "id": "c",
+      "text": "It adds a second role in a visible space, which could impair her objectivity and expose the client’s privacy"
+     },
+     {
+      "id": "d",
+      "text": "A friend request is not a professional role, which puts it outside what the code regulates about a clinician’s professional work"
+     }
+    ],
+    "correct": "c",
+    "why": "The test is the expected effect on the relationship. Both effects are plausible, and the program’s policy is the first source to check. The code names neither friend requests nor client searches, so the answer comes from the conditional test and the program’s policy. The standard is conditional and does not list forms of contact. A multiple relationship is unethical only when it could reasonably be expected to impair or risk harm. A friendship is a second role the clinician could enter with a client. The standard covers it when it could reasonably be expected to impair the work.",
+    "bloom": "analyze",
+    "src": "Module 13, Boundaries and Multiple Relationships"
+   },
+   {
+    "prompt": "How should Esther respond? Two options are defensible, so choose the stronger one.",
+    "options": [
+     {
+      "id": "a",
+      "text": "Decline by private message today with a short explanation, and leave the subject out of the next session"
+     },
+     {
+      "id": "b",
+      "text": "Check the program’s social media policy and consult the supervisor, then raise the request with Eamon next session, ask what it means to him, and decline it"
+     },
+     {
+      "id": "c",
+      "text": "Accept the request, restrict what Eamon can see on the account, and raise it at the next session"
+     },
+     {
+      "id": "d",
+      "text": "Raise the request with Eamon next session, ask what it means to him, decline it, and check the program’s policy afterward"
+     }
+    ],
+    "correct": "b",
+    "why": "Both defensible options ask what the request means to Eamon and decline it in person. This one learns the program’s rule first, which the reading names as the first place to look, so the answer Eamon hears is the program’s and not a guess. Defensible, since declining in person and asking about its meaning are the right moves. It is weaker because the answer goes to Eamon before Esther knows what the program’s policy requires. The alliance can survive a respectful decline. Accepting creates a second role in a visible space, and the restrictions are not something Eamon controls. Eamon gets an answer, and the frame goes unexplained. A client who reached out with a sense of friendship is left with a refusal and no conversation.",
+    "bloom": "evaluate",
+    "src": "Module 13, Boundaries and Multiple Relationships"
+   }
+  ],
+  "revisit": "Reread “Boundaries and Multiple Relationships.”"
+ },
+ {
+  "type": "mcq",
+  "title": "A former client at the gym",
+  "short": "At the gym",
+  "tag": "Yasmin and Lucian",
+  "case": {
+   "title": "Case (invented): A former client",
+   "text": "Yasmin is an invented client who finished therapy with Lucian, an invented therapist, some months ago. They meet at Lucian’s gym. Yasmin greets him warmly and suggests they become workout partners. The therapy ended in good standing, and no future relationship was promised during treatment."
+  },
+  "intro": "<b>Step 4.<\/b> Standard 3.05(a) describes a second role at the same time as the professional role, a relationship with someone closely associated with the client, or a promise of a future relationship. Standard 10.08 addresses sexual intimacy with former clients. The code names no rule on friendships after therapy, so judgment applies. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 13, Boundaries and Multiple Relationships",
+  "items": [
+   {
+    "prompt": "Does the multiple relationship standard settle whether Lucian may agree?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Yes, because Standard 10.08 addresses relationships with former clients and so settles this one"
+     },
+     {
+      "id": "b",
+      "text": "Yes, because any later relationship with a former client is a multiple relationship and so unethical"
+     },
+     {
+      "id": "c",
+      "text": "Not directly, because the definition covers simultaneous or promised roles and the rest is judgment about the effect on Yasmin"
+     },
+     {
+      "id": "d",
+      "text": "Yes, because the code allows friendships with former clients whenever the former client suggests them"
+     }
+    ],
+    "correct": "c",
+    "why": "The standard’s text describes simultaneous roles and promised relationships. A new relationship after therapy ended is left to judgment and consultation. The standard is conditional and does not cover every later relationship. It does not say that a relationship after therapy is automatically barred. The code is silent on this, and a former client’s suggestion does not settle it. The reading’s test asks about expected harm. Standard 10.08 concerns sexual intimacies with former clients. It does not address workout partners.",
+    "bloom": "analyze",
+    "src": "Module 13, Boundaries and Multiple Relationships"
+   },
+   {
+    "prompt": "Which response best fits the reading’s reasoning?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Respond warmly, ask whose need a regular workout arrangement would serve, and consult a colleague before agreeing"
+     },
+     {
+      "id": "b",
+      "text": "Turn away without a word and change gyms, treating any contact as a risk to Yasmin"
+     },
+     {
+      "id": "c",
+      "text": "Agree at once, and treat a workout friendship as Yasmin’s choice alone and nothing to question"
+     },
+     {
+      "id": "d",
+      "text": "Tell Yasmin that the code bars any arrangement with a former client, and end the conversation there"
+     }
+    ],
+    "correct": "a",
+    "why": "The reading’s central question is whose need the act serves. Consultation tests the judgment, and a decision can wait until Lucian has thought it through. Yasmin’s warmth is real, and the clinician’s role carried a power difference. Agreeing at once serves the invitation and leaves the later effect unexamined. Changing gyms avoids a chance encounter and gives Yasmin no explanation. A warm answer is available. The code does not bar it, so the statement is inaccurate and may mislead Yasmin.",
+    "bloom": "evaluate",
+    "src": "Module 13, Boundaries and Multiple Relationships"
+   }
+  ],
+  "revisit": "Reread “Boundaries and Multiple Relationships.”"
+ },
+ {
+  "type": "mcq",
+  "title": "A dual role in a small community",
+  "short": "Small community",
+  "tag": "Pilar and Zephyr",
+  "case": {
+   "title": "Case (invented): A landlord",
+   "text": "Pilar is an invented therapist in a small community, who rents an office from a local landlord. Zephyr, an invented client, has been in therapy with Pilar for three months. Zephyr then buys the building and becomes Pilar’s landlord. Another therapist works in the next town, and telehealth is possible."
+  },
+  "intro": "<b>Step 5.<\/b> Standard 3.05(b) covers a multiple relationship that arises from unforeseen factors. The psychologist takes reasonable steps to resolve it with due regard for the best interests of the affected person and maximal compliance with the Ethics Code. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 13, Boundaries and Multiple Relationships",
+  "items": [
+   {
+    "prompt": "Which response best fits Standard 3.05(b)?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Continue unchanged and tell no one, and treat the lack of clinical content in the arrangement as settling the matter for the time being"
+     },
+     {
+      "id": "b",
+      "text": "Consult a colleague, tell Zephyr about the overlap, weigh moving the office or transferring care, and put his interests first"
+     },
+     {
+      "id": "c",
+      "text": "Ask Zephyr to sign a waiver and continue, and treat his informed consent as removing the risk"
+     },
+     {
+      "id": "d",
+      "text": "End therapy at once, and treat the new overlap as a violation that must stop before harm occurs"
+     }
+    ],
+    "correct": "b",
+    "why": "The overlap arose after treatment began, and the standard calls for reasonable steps with Zephyr’s best interests first. The consultation and the record make the reasoning auditable. The standard is conditional and calls for reasonable steps to resolve the overlap. An abrupt ending also skips pretermination counseling. The second role can cloud judgment, and the client is rarely in a position to push back. Silence removes the check. Zephyr’s agreement matters. A signature does not remove the expected effect on objectivity, which the standard asks about.",
+    "bloom": "evaluate",
+    "src": "Module 13, Boundaries and Multiple Relationships"
+   },
+   {
+    "prompt": "Which pair of events would most clearly show that the overlap is harming the work?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Zephyr mentions the building before a session, and Pilar answers briefly and returns to the work"
+     },
+     {
+      "id": "b",
+      "text": "Pilar avoids raising a late rent payment, and Zephyr begins to hold back in sessions"
+     },
+     {
+      "id": "c",
+      "text": "Zephyr asks Pilar to schedule his sessions around the building’s maintenance days, and Pilar agrees once"
+     },
+     {
+      "id": "d",
+      "text": "Pilar feels uneasy about the arrangement, and she mentions it in consultation with a colleague"
+     }
+    ],
+    "correct": "b",
+    "why": "The reading names signs such as the client holding back or the clinician’s own judgment feeling clouded. Both effects touch the work itself, and the arrangement is revisited when they appear. A mention of the building is expected given the arrangement. It becomes a sign only if it changes what either person says or does. Unease that is brought to consultation is the process working. The signs that matter are those that affect objectivity, candor, or exploitation in the sessions. A single scheduling accommodation can be a harmless crossing. It is a concern only if it becomes a pattern or reflects Pilar’s need more than Zephyr’s.",
+    "bloom": "analyze",
+    "src": "Module 13, Boundaries and Multiple Relationships"
+   }
+  ],
+  "revisit": "Reread “Boundaries and Multiple Relationships.”"
+ },
+ {
+  "type": "mcq",
+  "title": "A favor from a client",
+  "short": "A favor",
+  "tag": "Jorge and Roisin",
+  "case": {
+   "title": "Case (invented): A repair",
+   "text": "Jorge, an invented adult client who is a mechanic, says he lost his job and cannot pay the full fee. He offers to repair the car of Roisin, an invented counselor, in place of the fee. A sliding fee scale and a referral to a low-cost clinic both exist."
+  },
+  "intro": "<b>Step 6.<\/b> Standard 6.05 allows barter only if it is not clinically contraindicated and is not exploitative. Standard 3.08 forbids exploiting people over whom a psychologist has authority. Alternatives matter in the analysis. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 13, Boundaries and Multiple Relationships",
+  "items": [
+   {
+    "prompt": "What is the best analysis of Jorge’s offer?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Barter is acceptable when the repair is worth the same as the fee, and equal value settles the question"
+     },
+     {
+      "id": "b",
+      "text": "Barter is acceptable whenever the client proposes it, and Roisin may accept once Jorge confirms he chose it freely"
+     },
+     {
+      "id": "c",
+      "text": "The code bars all barter, and Roisin refuses the offer and says nothing further about the fee or the sliding scale"
+     },
+     {
+      "id": "d",
+      "text": "Barter is allowed only when it is not clinically contraindicated or exploitative, and Roisin weighs the alternatives that avoid a second role"
+     }
+    ],
+    "correct": "d",
+    "why": "The code allows barter conditionally. The sliding scale and the referral are alternatives that avoid the second role. Standard 6.05 allows barter when its two conditions are met. A flat refusal also skips the alternatives that serve Jorge. Standard 6.05 applies conditions that do not depend on who proposes it. A client facing job loss may feel unable to decline. Equal value does not settle whether the arrangement is clinically contraindicated or exploitative. It also leaves the second role in place.",
+    "bloom": "analyze",
+    "src": "Module 13, Boundaries and Multiple Relationships"
+   },
+   {
+    "prompt": "Which option best serves Jorge and keeps the work intact?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Offer the sliding fee, thank Jorge for the offer, explain that Roisin does not trade services, and tell the supervisor"
+     },
+     {
+      "id": "b",
+      "text": "Refuse the offer and say nothing about fees, and wait for Jorge to raise the problem again"
+     },
+     {
+      "id": "c",
+      "text": "Accept the repair and lower the fee, and let Jorge keep his dignity by contributing something he does well and is proud of"
+     },
+     {
+      "id": "d",
+      "text": "Refer Jorge to the low-cost clinic right away, and skip the conversation about ending"
+     }
+    ],
+    "correct": "a",
+    "why": "The act answers Jorge’s need without a second role and acknowledges the offer. The supervisor hears about it. It creates a second role in which Roisin depends on Jorge’s work, and the reading’s question of whose need is served applies. A response that ignores the fee problem leaves Jorge without a way to continue and may read as a rebuke. A referral may be right, and Standard 10.10(c) asks for pretermination counseling before termination. A different, cheaper option exists inside the clinic.",
+    "bloom": "evaluate",
+    "src": "Module 13, Boundaries and Multiple Relationships"
+   }
+  ],
+  "revisit": "Reread “Boundaries and Multiple Relationships.”"
+ },
+ {
+  "type": "multi",
+  "title": "State the distinction",
+  "short": "The distinction",
+  "tag": "Crossing and violation",
+  "case": {
+   "title": "Reasoning check",
+   "text": "The reading separates a boundary crossing from a boundary violation and ties both to the conditional test in Standard 3.05. Seven statements about the distinction are listed."
+  },
+  "intro": "<b>Step 7.<\/b> Choose the statements that accurately describe how the reading uses these ideas. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "prompt": "Select every statement that is accurate.",
+  "doThis": "Select the statements, then check your answer.",
+  "options": [
+   {
+    "id": "a",
+    "label": "A boundary crossing is a departure from the usual therapy frame that may be harmless or helpful"
+   },
+   {
+    "id": "x1",
+    "label": "A boundary crossing is a departure that a clinic’s policy forbids, and a violation is one that the code forbids"
+   },
+   {
+    "id": "b",
+    "label": "A boundary violation is a departure that harms the client or takes advantage of the client"
+   },
+   {
+    "id": "x2",
+    "label": "A multiple relationship is unethical whenever it exists, whatever it does to the client"
+   },
+   {
+    "id": "c",
+    "label": "The code uses neither term and applies the conditional test in Standard 3.05"
+   },
+   {
+    "id": "x3",
+    "label": "A boundary violation is any departure from the usual frame, including a schedule change for a client in hardship"
+   },
+   {
+    "id": "d",
+    "label": "The same act, such as accepting a small gift, can be harmless in one context and damaging in another"
+   }
+  ],
+  "truth": [
+   "a",
+   "b",
+   "c",
+   "d"
+  ],
+  "reasons": {
+   "a": "Present. This is the reading’s definition of a crossing.",
+   "b": "Present. This is the reading’s definition of a violation, and the harm or exploitation is what makes it one.",
+   "c": "Present. The reading says the code uses neither word, and Standard 3.05 is conditional on expected impairment, exploitation, or harm.",
+   "d": "Present. The reading uses the gift to show that the context and the client’s meaning decide the category.",
+   "x1": "Not present. The terms come from writers on ethics and the code does not use them. The categories depend on harm and exploitation and not on who forbids the act.",
+   "x2": "Not present. Standard 3.05(a) says multiple relationships that would not reasonably be expected to cause impairment or risk exploitation or harm are not unethical.",
+   "x3": "Not present. A departure that may be harmless or helpful is a crossing. A violation requires harm or exploitation, and a flexible schedule during a real hardship serves the client."
+  },
+  "src": "Module 13, Boundaries and Multiple Relationships",
+  "bloom": "remember",
+  "revisit": "Reread “Boundaries and Multiple Relationships.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "In these cases the harm lay in the relationship and not in a rule. Standard 3.05 asks whether there is a second role, a closely related person, or a promised future relationship, and whether the overlap could reasonably be expected to impair objectivity, competence, or effectiveness or to risk exploitation or harm. A multiple relationship that would not is not unethical. A boundary crossing may be harmless or helpful, and a boundary violation harms the client or takes advantage of the client. The code uses neither term. A helpful question is whose need the act serves, and what it means to the client is something only the client can say. When the facts do not show it yet, ask, consult, check policy, and record the reasoning.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every case in it is invented, and no case states the law of any place. Laws differ by state and country, so check your program, your employer, and the law where you work. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

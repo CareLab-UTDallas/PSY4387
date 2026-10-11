@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 13 Vocabulary: Self-Test</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:2px 0 16px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .term-tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:2px 0 6px;line-height:1.4;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;
+    border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;
+    line-height:1.5;cursor:pointer;transition:border-color .12s,background .12s;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt .mark{flex:0 0 auto;width:20px;height:20px;display:grid;place-items:center;margin-left:auto;}
+  .opt:disabled{cursor:default;}
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.correct .k{color:var(--correct-ink);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.wrong .k{color:var(--wrong-ink);}
+  .opt.dim{opacity:.6;}
+
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);}
+  .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;}
+  .hintbtn{background:none;border:none;color:var(--accent-ink);font:inherit;font-size:13.5px;cursor:pointer;text-decoration:underline;padding:0;}
+  .hintbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .hintbox{margin-top:12px;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);
+    border-radius:10px;padding:10px 13px;font-size:13.5px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  /* results */
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;}
+  .results .score b{color:var(--accent-ink);}
+  .results .breakdown{margin:16px 0 0;border-top:1px solid var(--line);padding-top:14px;}
+  .results .brow{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .bi{flex:0 0 auto;margin-top:1px;}
+  .results .bt{flex:1 1 auto;}
+  .results .bt .bterm{font-weight:600;}
+  .results .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Ethics and Professional Practice Vocabulary: Self-Test</h1>
+    <p class="sub">Ten questions on the core Module 13 terms. Each question applies a term in a short scenario. Pick an answer to see whether it is right and why.</p>
+  </div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="panel" id="qpanel" aria-live="polite"></section>
+
+  <section class="panel results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// Data for this self-test. Items are original, scenario-based, and grounded in the module reading.
+var QUIZ = [
+ {
+  "term": "Ethical Standards",
+  "bloom": "apply",
+  "prompt": "A student argues that Principle A, which asks psychologists to do no harm, means a board could sanction any psychologist whose hard case ended with less benefit than it might have. Which reply fits the structure of the Ethics Code?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The principles are the enforceable rules, while the standards are aspirations that explain them, since the lettered layer comes first and so outranks the numbered one"
+   },
+   {
+    "id": "b",
+    "text": "Neither layer can be enforced anywhere, since the code is only advice until a legislature copies it into law in the particular place where a clinician practices"
+   },
+   {
+    "id": "c",
+    "text": "Both layers are enforceable, and the principles apply only where no standard speaks to the case, since the code treats its own standards as incomplete"
+   },
+   {
+    "id": "d",
+    "text": "The principles are aspirational and are not a basis for sanctions, while the standards are the enforceable rules, since the code describes the layers that way"
+   }
+  ],
+  "correct": "d",
+  "explain": "The principles describe ideals, and the code says they do not form the basis for imposing sanctions. The numbered standards are the enforceable rules. The code is offered to bodies that choose to adopt it, so whether a particular board enforces the standards depends on whether it has adopted the code, and students check which code and rules their board applies. The claim that both layers are enforceable merges two layers the code keeps apart.",
+  "hint": "One layer describes ideals, and the other layer is what a complaint is measured against.",
+  "src": "Module 13, Principles A to E and the Standards Beneath Them"
+ },
+ {
+  "term": "Privilege",
+  "bloom": "analyze",
+  "prompt": "In a custody dispute, a lawyer asks a clinician to testify about what a client said in therapy. The clinician tells the client that her professional duty to protect what is shared is one question, and that whether a court can require testimony is a separate question. Which term names the second question?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Privilege, the legal rule about whether protected communications stay out of court, since what a court may require is always a question of law"
+   },
+   {
+    "id": "b",
+    "text": "Release, a client’s signed permission for a clinician to share information, since a court must accept the signed form as the final word on the question"
+   },
+   {
+    "id": "c",
+    "text": "Assent, a person’s agreement to take part in a service, since a client gives it when she decides whether to testify about her own therapy sessions"
+   },
+   {
+    "id": "d",
+    "text": "Privacy, a person’s broad claim to control information about themselves, since a court usually honors that claim whenever a client’s therapy comes up in a dispute"
+   }
+  ],
+  "correct": "a",
+  "explain": "Confidentiality is the professional's obligation. Privilege is the legal rule about court proceedings, and the law that defines it differs across jurisdictions, including who holds it. Privacy is the broad claim that the other two narrow. A release authorizes sharing with a named recipient and does not decide what a court may demand. Assent concerns agreement to a service.",
+  "hint": "One term concerns a professional duty, and the other concerns what a court may require.",
+  "src": "Module 13, Privacy, Confidentiality, and Privilege"
+ },
+ {
+  "term": "Duty to protect",
+  "bloom": "apply",
+  "prompt": "A trainee searches the Ethics Code for the section that requires warning a person a client has threatened and finds no such section. Which explanation fits?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Duty to protect comes from a federal rule that applies the same way in every state, since the code leaves the whole subject to national law and says nothing itself"
+   },
+   {
+    "id": "b",
+    "text": "Duty to protect is a legal term, and the code reaches disclosure to protect others only through Standard 4.05(b)(3), where law permits, since the duty comes from law"
+   },
+   {
+    "id": "c",
+    "text": "The code leaves the choice to each clinician, who may warn or stay silent as seems wise, since judgment generally outranks the law of the state"
+   },
+   {
+    "id": "d",
+    "text": "The code states the duty under another name in Standard 4.01, since that standard is worded broadly and the trainee probably overlooked it in a quick search"
+   }
+  ],
+  "correct": "b",
+  "explain": "The duty to protect, also called the duty to warn, is a legal obligation that some jurisdictions impose under some circumstances, and whether it is required, permitted, or absent varies. The code does not use the term. Standard 4.05(b)(3) permits disclosure to protect others from harm where law permits it. Standard 4.01 concerns the duty to protect confidential information and notes that law may regulate its limits. Judgment operates inside the law and the code and does not replace them.",
+  "hint": "Check whether the term is legal vocabulary or code vocabulary.",
+  "src": "Module 13, When a Client Threatens Someone"
+ },
+ {
+  "term": "Reasonable suspicion",
+  "bloom": "apply",
+  "prompt": "An eight-year-old client describes how a parent disciplines him, and his therapist wonders whether she must be sure that abuse occurred before a report is justified. Which understanding fits a reasonable suspicion standard as the module describes it?",
+  "options": [
+   {
+    "id": "a",
+    "text": "She needs a confirmation from the parent, since suspicion counts only once the person accused has had a fair chance to answer the concern"
+   },
+   {
+    "id": "b",
+    "text": "She needs the child’s own request to report, since a report made without his wishes would always breach the confidence he gave her in session"
+   },
+   {
+    "id": "c",
+    "text": "She needs only that a reasonable professional in her position would suspect abuse, since the agency confirms what happened"
+   },
+   {
+    "id": "d",
+    "text": "She needs enough evidence to support a legal finding, since the clinician and not an investigating agency usually decides whether abuse occurred"
+   }
+  ],
+  "correct": "c",
+  "explain": "Many reporting laws use a threshold of reasonable suspicion, which does not require proof. Confirming what happened is the job of the investigating agency. Who must report, what, and how quickly vary by jurisdiction, so the clinician checks the statute, the licensing board, and program policy, and asks a supervisor. A statement from the accused person is not a condition, and the child's wishes do not control a legal duty.",
+  "hint": "The standard asks what a reasonable professional would suspect, and it does not ask for proof.",
+  "src": "Module 13, Mandatory Reporting"
+ },
+ {
+  "term": "Multiple relationship",
+  "bloom": "analyze",
+  "prompt": "A therapist in a small town learns at an intake that her new client is the teacher of her own child. Which statement applies the test in Standard 3.05?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The overlap is not a multiple relationship, since the standard generally covers only relationships that the psychologist chose to enter and arrange in advance"
+   },
+   {
+    "id": "b",
+    "text": "It is a multiple relationship, and it is unethical only if it could reasonably be expected to impair her work or risk harm, since the test is expected effect"
+   },
+   {
+    "id": "c",
+    "text": "The overlap is acceptable whenever the client agrees to it, since a client’s consent removes any expected impairment from the second role in the therapy"
+   },
+   {
+    "id": "d",
+    "text": "The overlap is unethical from the moment it exists, since the code forbids any professional role from coexisting with another role in a client’s life or community"
+   }
+  ],
+  "correct": "b",
+  "explain": "Standard 3.05(a) defines a multiple relationship by the roles and ties involved, and it forbids entering one only when impairment, exploitation, or harm could reasonably be expected. Standard 3.05(b) addresses overlaps that arise from unforeseen factors, which calls for reasonable steps to resolve them with regard to the client's best interests. The test is the expected effect on this relationship. A second role does not settle it, and neither does the client's agreement.",
+  "hint": "The standard asks what the overlap could reasonably be expected to do to the work.",
+  "src": "Module 13, Boundaries and Multiple Relationships"
+ },
+ {
+  "term": "Boundary crossing",
+  "bloom": "analyze",
+  "prompt": "A therapist lets a client facing a hardship reschedule on short notice at no charge, and the client says this helped her stay in treatment. A colleague calls the act a boundary violation. Which reply fits writers on professional ethics?",
+  "options": [
+   {
+    "id": "a",
+    "text": "It fits boundary crossing better, since it departs from the usual frame to serve the client’s need and does not harm or take advantage of her"
+   },
+   {
+    "id": "b",
+    "text": "It is a boundary violation, since any departure from the usual frame harms the client whether or not she says that she benefited from the change"
+   },
+   {
+    "id": "c",
+    "text": "It is a boundary crossing, which the code prohibits as a class, since the code names crossings among the acts it bars from practice in every setting"
+   },
+   {
+    "id": "d",
+    "text": "It is a multiple relationship, since a flexible schedule creates a second role between the therapist and the client in the same hour of work"
+   }
+  ],
+  "correct": "a",
+  "explain": "Writers on ethics use crossing for a departure from the usual frame that may be harmless or helpful and violation for one that harms the client or takes advantage of her. Whose need the act serves is a useful question. The code uses neither word and applies the conditional test in Standard 3.05. A flexible schedule does not create a second role, and the code does not prohibit crossings as a class.",
+  "hint": "Ask whose need the departure serves and whether the client is harmed.",
+  "src": "Module 13, Boundaries and Multiple Relationships"
+ },
+ {
+  "term": "Psychotherapy notes",
+  "bloom": "apply",
+  "prompt": "A clinic in the United States asks whether a clinician's running analysis of session conversation may be kept apart from the rest of the record. Which statement about the federal privacy rule (HIPAA) fits the module?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Such notes are treated separately and generally need the client’s authorization to disclose, since the rule excludes items such as session times from them"
+   },
+   {
+    "id": "b",
+    "text": "Such notes include every item in the record, since session times and summaries of progress belong in them as well as in the ordinary chart kept at the clinic"
+   },
+   {
+    "id": "c",
+    "text": "Such notes are treated like every other part of the record, since the clinic must release them to any provider who asks for them in routine care without authorization"
+   },
+   {
+    "id": "d",
+    "text": "Such notes are governed by the rule in every country, since the clinic’s state law and employer policy have no say in where they are kept or read"
+   }
+  ],
+  "correct": "a",
+  "explain": "The rule separates a clinician's notes that document or analyze session conversation from the rest of the record, generally requires authorization to disclose them, and excludes items such as medication monitoring, session times, test results, and summaries of diagnosis, symptoms, treatment plan, and progress. It is United States federal law. State law may add rules, and employer policy decides where such notes are kept and who may read them.",
+  "hint": "Separate treatment applies to the analysis of conversation, and ordinary record items stay in the record.",
+  "src": "Module 13, What Goes In and What Stays Out"
+ },
+ {
+  "term": "Release",
+  "bloom": "apply",
+  "prompt": "A client wants her counselor to speak with her physician about medication concerns she raised in therapy. What is the usual route, and what should the counselor check?",
+  "options": [
+   {
+    "id": "a",
+    "text": "No further step, since sharing with another health professional is always allowed once the client has raised the concern in session and asked for help"
+   },
+   {
+    "id": "b",
+    "text": "A signed release specific to the recipient and purpose, since the counselor still confirms that it covers that physician, that topic, and the form"
+   },
+   {
+    "id": "c",
+    "text": "A signed release that names the physician and can be reused for any later recipient, since the paperwork is then done once and for all, with a copy kept in the chart"
+   },
+   {
+    "id": "d",
+    "text": "A court order, since any disclosure to another provider counts as a legal disclosure that only a judge can authorize, whatever the client wants"
+   }
+  ],
+  "correct": "b",
+  "explain": "A release is usually specific to a recipient and a purpose, and it is the usual route for disclosure with consent under Standard 4.05(a). Clinic policy and law may set its required form, so the counselor confirms that the document fits the physician and the topic. Other disclosures need a legal basis and a valid purpose, which a mention in session does not supply. A court order is not required for a consented disclosure.",
+  "hint": "Look for permission that matches this recipient and this purpose.",
+  "src": "Module 13, The Two-Part Question"
+ },
+ {
+  "term": "Assent",
+  "bloom": "apply",
+  "prompt": "A clinic treats a twelve-year-old whose parent has given permission. Which action reflects assent under Standard 3.10(b)?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Treating his quiet attendance at the first session as agreement, since he did not object when the plan was described to his parent in front of him at the intake"
+   },
+   {
+    "id": "b",
+    "text": "Telling him the plan once it has begun, since a child of that age cannot meaningfully agree to a service that adults have already arranged"
+   },
+   {
+    "id": "c",
+    "text": "Having the parent sign the form, since the law gives the parent the decision and makes the child’s own agreement unnecessary in treatment"
+   },
+   {
+    "id": "d",
+    "text": "Explaining the work in terms he can follow and asking whether he is willing, since the parent’s permission adds to his assent and does not replace it"
+   }
+  ],
+  "correct": "d",
+  "explain": "Assent is a person's agreement, in terms suited to age and understanding, when the person cannot legally consent. Standard 3.10(b) calls for an appropriate explanation, seeking the person's assent, and considering preferences and best interests, along with permission from a legally authorized person where the law permits or requires it. Parental permission adds to assent and does not replace it, and silence is not agreement.",
+  "hint": "Assent is the child's own agreement, sought in words he can follow.",
+  "src": "Module 13, Informed Consent in Therapy"
+ },
+ {
+  "term": "Supervision",
+  "bloom": "analyze",
+  "prompt": "A trainee asks a clinician at another site for advice on a case and later follows the advice. Her supervisor says responsibility for the client's care still involves the supervisor. Which statement separates supervision from consultation?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The two roles differ only in whether money changes hands, since both involve a more experienced person guiding a less experienced one through cases"
+   },
+   {
+    "id": "b",
+    "text": "A consultant holds evaluative authority over the trainee, while a supervisor only offers advice, since evaluation comes from whoever is more experienced at the site"
+   },
+   {
+    "id": "c",
+    "text": "A supervisor evaluates the trainee and shares responsibility for the clients, while a consultant advises and the consultee decides, since only supervision evaluates"
+   },
+   {
+    "id": "d",
+    "text": "Both roles carry shared responsibility for the clients, since advice that is followed becomes part of the decision and the adviser answers for it in the end"
+   }
+  ],
+  "correct": "c",
+  "explain": "Supervision involves evaluative authority and shared responsibility for a trainee's clinical work, and the legal meaning of that responsibility depends on the setting and the law. Consultation is a request for advice from a colleague, and the person who asks keeps responsibility for the decision. Standard 4.06 limits what identifying information may be shared in a consultation, which applies to the trainee's call.",
+  "hint": "Ask who evaluates the trainee and who keeps the final decision.",
+  "src": "Module 13, Competence, Supervision, and Scope"
+ }
+];
+
+var idx = 0;
+var answered = [];   // chosen id or null
+var hintShown = {};
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var CHECK='<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var CROSS='<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+function init(){ answered = QUIZ.map(function(){return null;}); renderProgress(); renderQuestion(); }
+
+function renderProgress(){
+  var pct = (idx) / QUIZ.length * 100;
+  document.getElementById("pbarfill").style.width = pct + "%";
+  document.getElementById("pcount").textContent = "Question " + Math.min(idx+1,QUIZ.length) + " of " + QUIZ.length;
+}
+
+function renderQuestion(){
+  renderProgress();
+  var q = QUIZ[idx];
+  var panel = document.getElementById("qpanel");
+  panel.innerHTML = "";
+  var chosen = answered[idx];
+  var isAnswered = chosen !== null;
+
+  var top = el("div","qtop");
+  top.appendChild(el("span","qn","Question " + (idx+1) + " of " + QUIZ.length));
+  top.appendChild(el("span","term-tag", esc(q.term)));
+  panel.appendChild(top);
+
+  panel.appendChild(el("p","qprompt", esc(q.prompt)));
+  panel.appendChild(el("div","do","<b>Do this:</b> Choose the option that reflects the reading's meaning of the term rather than a familiar word. You'll see whether it's right and why before moving on."));
+
+  var opts = el("div","options");
+  q.options.forEach(function(o){
+    var cls="opt";
+    if(isAnswered){
+      if(o.id===q.correct) cls+=" correct";
+      else if(o.id===chosen) cls+=" wrong";
+      else cls+=" dim";
+    }
+    var b = el("button",cls);
+    b.type="button";
+    if(isAnswered) b.disabled=true;
+    var mark="";
+    if(isAnswered && o.id===q.correct) mark=CHECK;
+    else if(isAnswered && o.id===chosen) mark=CROSS;
+    b.innerHTML='<span class="k">'+o.id.toUpperCase()+'.</span><span class="txt">'+esc(o.text)+'</span><span class="mark">'+mark+'</span>';
+    if(!isAnswered) b.addEventListener("click",function(){ choose(o.id); });
+    opts.appendChild(b);
+  });
+  panel.appendChild(opts);
+
+  if(!isAnswered){
+    var foot = el("div","foot");
+    var hb = el("button","hintbtn", hintShown[idx] ? "Hide hint" : "Show a hint");
+    hb.addEventListener("click", function(){ hintShown[idx]=!hintShown[idx]; renderQuestion(); });
+    foot.appendChild(hb);
+    foot.appendChild(el("span","",""));
+    panel.appendChild(foot);
+    if(hintShown[idx]) panel.appendChild(el("div","hintbox", esc(q.hint)));
+  } else {
+    var right = chosen===q.correct;
+    panel.appendChild(el("p","verdict "+(right?"ok":"no"), right ? "Correct." : "Not quite."));
+    var ex = el("p","explain", esc(q.explain));
+    ex.innerHTML += '<div class="src">Reading: ' + esc(q.src) + '</div>';
+    panel.appendChild(ex);
+
+    var foot = el("div","foot");
+    foot.appendChild(el("span","",""));
+    var last = idx===QUIZ.length-1;
+    var nb = el("button","btn");
+    nb.innerHTML = last ? 'See your results' : 'Next question <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    nb.addEventListener("click", function(){
+      if(last){ finish(); } else { idx++; renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); }
+    });
+    foot.appendChild(nb);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(id){
+  if(answered[idx]!==null) return;
+  answered[idx]=id;
+  renderQuestion();
+}
+
+function finish(){
+  document.getElementById("pbarfill").style.width = "100%";
+  document.getElementById("pcount").textContent = "Complete";
+  document.getElementById("qpanel").classList.add("hidden");
+  var correct = answered.filter(function(a,i){return a===QUIZ[i].correct;}).length;
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML="";
+  rp.appendChild(el("h2",null,"Your results"));
+  rp.appendChild(el("p","score","You answered <b>"+correct+" of "+QUIZ.length+"</b> correctly."));
+
+  var bd = el("div","breakdown");
+  QUIZ.forEach(function(q,i){
+    var right = answered[i]===q.correct;
+    var row = el("div","brow");
+    row.innerHTML = '<span class="bi">'+(right?CHECK:CROSS)+'</span>' +
+      '<span class="bt"><span class="bterm">'+esc(q.term)+'</span>'+(right?'':' (revisit in the reading: '+esc(q.src)+')')+'</span>';
+    bd.appendChild(row);
+  });
+  rp.appendChild(bd);
+
+  var act = el("div","actions");
+  var again = el("button","btn secondary","Retake the self-test");
+  again.addEventListener("click", function(){ idx=0; answered=QUIZ.map(function(){return null;}); hintShown={};
+    document.getElementById("qpanel").classList.remove("hidden"); rp.classList.add("hidden"); renderQuestion(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again);
+  rp.appendChild(act);
+
+  rp.appendChild(el("p","selfnote","This self-test scores only these multiple-choice items, and your score is not saved or sent anywhere. Terms you missed are the ones to practice producing from memory."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

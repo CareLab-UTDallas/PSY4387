@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ethics Dilemma Conversation with Vesna</title>
+<style>
+  :root{ --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --panel:#fff; --accent:#8a5a25; --accent-ink:#6f4a20;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e; --mid-bg:#fffbef; --mid-line:#e7c98a; --mid-ink:#7a5f1f; --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72; --focus:#2f6f4f; }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  h1{margin:0;font-size:23px;letter-spacing:-.01em;} .sub{margin:6px 0 14px;color:var(--muted);font-size:14.5px;}
+  .masthead{padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .pills{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;} .pill{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .pill.on{background:var(--accent);color:#fff;} .pill.done{background:var(--ok-bg);color:var(--ok-ink);}
+  .case{background:var(--mid-bg);border:1px solid var(--mid-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);}
+  .panel:focus{outline:none;}
+  .skill{font-size:13px;color:var(--muted);margin:0 0 6px;}
+  .quote{font-size:17px;line-height:1.5;margin:6px 0 12px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .who{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:2px;}
+  .do{background:#f3f1ec;color:#57544e;border-radius:10px;padding:10px 13px;font-size:13px;margin:6px 0 14px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:disabled{cursor:default;} .opt .k{font-weight:700;color:var(--muted);min-width:15px;}
+  .opt.r2{background:var(--ok-bg);border-color:var(--ok-line);} .opt.r1{background:var(--mid-bg);border-color:var(--mid-line);} .opt.r0{background:var(--no-bg);border-color:var(--no-line);}
+  .opt.pick{box-shadow:0 0 0 2px var(--accent) inset;} .opt.dim{opacity:.6;}
+  .opt:focus-visible,.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .verdict{margin:16px 0 4px;font-size:14.5px;font-weight:600;} .verdict.r2{color:var(--ok-ink);} .verdict.r1{color:var(--mid-ink);} .verdict.r0{color:var(--no-ink);}
+  .explain{font-size:14px;color:#44413b;margin:6px 0;} .better{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:10px;padding:10px 13px;font-size:14px;margin:10px 0;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;flex-wrap:wrap;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;} .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;} .brow:last-child{border-bottom:none;} .brow .bs{flex:0 0 52px;font-weight:700;color:var(--accent-ink);}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .note{font-size:12.5px;color:var(--muted);margin-top:14px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead"><h1>When a Client Discloses Something Mid-Session</h1><p class="sub">Practice five moments with Vesna after she says something that touches a limit of confidentiality. Your choices change how she responds.</p></div>
+  <div id="root"></div>
+</div>
+<script>
+var SKILLS = [
+ "Acknowledging the person before the procedure",
+ "Asking about risk before deciding",
+ "Explaining the limit without promising secrecy",
+ "Describing the record and the choices that exist",
+ "Planning the next step together"
+];
+var SCENARIO = "Vesna is an invented client, 27, a doctoral student in an engineering program who pays for her own care at a community clinic and sees you for stress and poor sleep. You are the clinic counselor, and your supervisor is in the building today. At intake she signed the consent form, and you went through the limits of confidentiality in plain language, including that a safety concern can be one of them. The clinic’s written protocol asks you to consult your supervisor before any disclosure about risk. You are not sure what the law where the clinic is located requires or permits in a case like this, and you would check it, because laws differ by place. This is your fourth session. If this scenario affects you, you can call or text 988 at any hour, or call 911 in an emergency.";
+var TURNS = [
+ {
+  "bloom": "apply",
+  "skill": 0,
+  "client": {
+   "start": "Can I tell you something and have you not freak out? Lately I keep thinking everyone would be better off if I weren’t around. I’m not going to do anything. I just needed to say it to somebody. Please don’t write that down, and please don’t tell anyone. If my advisor hears about it, I lose my funding."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Thank you for telling me. That sounds like a heavy thing to carry around, and I’m glad you said it here. Can you tell me more about what these thoughts are like?",
+    "reply": "It’s been a few weeks. Mostly late at night when I can’t sleep. It isn’t like a plan or anything. It’s more of a tired feeling.",
+    "why": "The response meets what she said before any procedure and invites more detail, which is the fact-finding the next step needs. What this keeps for Vesna is her willingness to keep talking and the chance of an accurate picture. What it puts at risk is little, and the limits can still be explained once you know more."
+   },
+   {
+    "r": 1,
+    "t": "Thank you for telling me. Before we go any further, I want to remind you of the limits of confidentiality we went over at the start, because what you said might touch one of them.",
+    "reply": "Right, the limits. I knew that was coming. That’s why I asked you not to write it down. Can I still talk to you or not?",
+    "why": "Recalling the limits is part of the duty, and honesty about them early is a strength. Leading with procedure answers her request before it hears her. What this keeps for Vesna is an honest start. What it puts at risk is her sense of being heard, and she now wonders whether talking is safe."
+   },
+   {
+    "r": 0,
+    "t": "I understand the worry about your funding, so this stays between us. Tell me what has been going on, and take whatever time you need to say it.",
+    "reply": "Okay. Okay, good. Thank you. I’ll hold you to that.",
+    "why": "A promise of secrecy made before you know what she will say can conflict with a limit you may have to honor, and Principle C asks psychologists to avoid unwise or unclear commitments. What this keeps for Vesna is momentary relief. What it puts at risk is her trust, since the promise may have to be broken."
+   },
+   {
+    "r": 0,
+    "t": "That is serious, and I take it seriously, so I am going to call the crisis team now and have you evaluated today, which is the safest thing I can do right now.",
+    "reply": "Wait, now? I just told you I’m not going to do anything. Forget I said it.",
+    "why": "Acting before any assessment treats the first sentence as the whole picture, and she has just said she has no intention to act. What this keeps for Vesna is a fast response if the risk were high. What it puts at risk is her willingness to speak openly again, and a more proportionate option was available."
+   }
+  ],
+  "order": [
+   1,
+   2,
+   0,
+   3
+  ]
+ },
+ {
+  "bloom": "analyze",
+  "skill": 1,
+  "client": {
+   "g": "I don’t know what else to say about it. It comes in waves, mostly after midnight, and then I feel stupid in the morning.",
+   "m": "I’m not sure how much to say. I told you what I told you, and I want to see what you do with it.",
+   "p": "I’m not sure where this is going. I’ll answer, but I’d rather keep it short."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "I have a few direct questions. How often do the thoughts come, have you thought about how, would you use anything, and has this happened before? What has kept you going so far?",
+    "reply": "Maybe twice a week, late at night. No plan, and nothing I’d use. Once in college it got worse, and I told nobody, and it passed. My sister and finishing this degree keep me going.",
+    "why": "The questions cover frequency, plan, means, history, and protective factors, so a reader could audit how you weighed the risk. What this keeps for Vesna is a response sized to what is true for her. What it puts at risk is a few uncomfortable minutes, and the answers support careful judgment either way."
+   },
+   {
+    "r": 1,
+    "t": "I need to ask you directly, and a plain answer is enough for me to go on. Are you going to hurt yourself, yes or no? Then we can decide together what to do with the rest of the hour, and I will not rush you.",
+    "reply": "No. I said that already. Why does everyone want a yes or no?",
+    "why": "Asking directly is right, and the question is necessary. A single yes or no gives no information about frequency, plan, means, or protective factors, and it sounds like a form. What this keeps for Vesna is a clear safety check. What it puts at risk is a fuller picture and some of her ease."
+   },
+   {
+    "r": 1,
+    "t": "What do you think is behind it? If we can find the cause, that might be the most useful thing for us to work on first, and it may take some of the pressure off you.",
+    "reply": "School, mostly. My advisor, the money, my parents expecting everything. It’s all stacked up.",
+    "why": "The question is open and she answers it, and the cause matters for treatment. It moves to the formulation before the risk has been assessed. What this keeps for Vesna is the sense of being understood. What it puts at risk is the assessment, because the thoughts themselves are left unexamined."
+   },
+   {
+    "r": 0,
+    "t": "I’d like you to promise me you will not hurt yourself. If you can do that, we can go on with the session and use the rest of our time on what is stressing you.",
+    "reply": "Sure. I promise. Can we move on?",
+    "why": "A promise stands in for an assessment and tells you what she will say, and it does not tell you what is true. What this keeps for Vesna is a smooth session. What it puts at risk is an accurate picture of her risk, and she has learned that a quick promise ends the questions."
+   }
+  ],
+  "order": [
+   0,
+   3,
+   1,
+   2
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 2,
+  "client": {
+   "g": "That’s everything. Are you going to tell someone? I need to know now.",
+   "m": "That’s about all I can tell you. Are you going to tell someone? I need to know now.",
+   "p": "Okay, I’ve said what I’m going to say. Are you going to tell someone? If you are, I’m done talking."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "I won’t promise secrecy I might not be able to keep. At the start we talked about situations where I might have to share information, and a risk to your safety is one of them, depending on the rules here. I’ll check with my supervisor, and when it is safe I will tell you what I decide. What do you make of that?",
+    "reply": "Okay. That’s more honest than I expected. I don’t love it, but I’d prefer to know.",
+    "why": "The response recalls the limit in a sentence, says what you will do and what you cannot promise, treats the legal rule as something to confirm, and asks how she understands it. What this keeps for Vesna is honesty and a say in what happens next. What it puts at risk is her comfort, since she did not hear the answer she wanted."
+   },
+   {
+    "r": 1,
+    "t": "Everything you say here is confidential except where the law says otherwise, and the law has exceptions, so I can’t say more until I have checked what applies, and I would prefer to be careful than guess, so please bear with me while I do that.",
+    "reply": "Exceptions. Is that a yes, then? I can’t tell what you’re saying.",
+    "why": "The statement is accurate and cautious about the law, and it admits what you do not yet know. It does not say what you will do next or check her understanding, so she cannot tell where she stands. What this keeps for Vesna is accuracy. What it puts at risk is clarity and her sense of control."
+   },
+   {
+    "r": 0,
+    "t": "I can promise this stays between us as long as you tell me you won’t act on these thoughts, and as long as nothing about them changes between now and our next session, and I will do my best to keep that promise to you.",
+    "reply": "Then I’m not going to act on them. I already told you that.",
+    "why": "A conditional promise of secrecy may be one you cannot keep, since the limit does not depend on what she says in the moment. It also pushes her to minimize. What this keeps for Vesna is brief reassurance. What it puts at risk is honest reporting and her trust if the promise breaks."
+   },
+   {
+    "r": 0,
+    "t": "Yes. Thoughts like these have to be reported, so I will tell the clinic and probably your program, because that is what the rules require when someone says something like this, and I would prefer that you heard it from me now than found out later.",
+    "reply": "My program? Then I take it back. I didn’t mean it. I was venting.",
+    "why": "The statement presents a legal rule as certain before you have checked what applies here, and it names a recipient that is not part of any plan. What this keeps for Vesna is nothing she can use. What it puts at risk is her funding fear, her honesty, and the alliance, and she now retracts what she said."
+   }
+  ],
+  "order": [
+   3,
+   2,
+   1,
+   0
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 3,
+  "client": {
+   "g": "Okay, I can live with that. About the note. What goes in the record? If my advisor ever sees it, I lose my funding.",
+   "m": "I still don’t know what you’re going to do. Also, the notes. What goes in the record? If my advisor ever sees it, I lose my funding.",
+   "p": "Maybe I overstated it. Just don’t write it down. I can’t have this in a record."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "A record helps whoever sees you next and shows what we decided and why. I’ll write what you told me, what we assessed, and our plan, in plain words, and you can read it with me. Who can see it depends on the law and clinic policy, which I’ll confirm.",
+    "reply": "I’d actually want to read it. Okay. That’s more than I expected, and I can live with that.",
+    "why": "The response says what the record is for, what will be written, and the honest limit on who sees it, and it offers her a real choice about reading it with you. What this keeps for Vesna is an accurate record and some control over it. What it puts at risk is her hope of keeping the matter out of the file."
+   },
+   {
+    "r": 1,
+    "t": "Records are required, so I will write down what you told me about the thoughts and what we discussed, and I will keep the wording short and factual and leave out any opinions about you. I can’t say more about who might see it right now, and I will find out for you.",
+    "reply": "It goes in, and you don’t know who sees it. That doesn’t reassure me much, but I guess it’s honest.",
+    "why": "The response keeps the clinically relevant material in the record, which is right, and it is honest about what you do not know. It gives no reason for the record and no choices, so it feels like a rule. What this keeps for Vesna is accuracy. What it puts at risk is her understanding of why the record matters."
+   },
+   {
+    "r": 0,
+    "t": "I can keep it out of the note, so nothing reaches your advisor, and we’ll keep working on the stress and sleep, which seems to be what is weighing on you right now, and which is what you came here to work on in the first place.",
+    "reply": "Thanks. Then it’s like I never said it. That’s all I wanted.",
+    "why": "Leaving out clinically relevant information to please a client serves none of the purposes Standard 6.01 lists, such as facilitating later services. What this keeps for Vesna is momentary comfort. What it puts at risk is continuity of care, your own accountability, and the honesty of the record."
+   },
+   {
+    "r": 0,
+    "t": "What goes in a note is my decision and not something clients negotiate. Your advisor won’t see it, so you can stop worrying about that, and we can get back to the work we came here to do together, which is the part that matters for you.",
+    "reply": "Okay. If you say so.",
+    "why": "The first sentence shuts her out and the second gives reassurance about access that you have not checked. What this keeps for Vesna is nothing she can rely on. What it puts at risk is her trust, and she may stop telling you things."
+   }
+  ],
+  "order": [
+   2,
+   0,
+   3,
+   1
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 4,
+  "client": {
+   "g": "Okay. What happens now? I said I’m not going to do anything, and I don’t want this to turn into a big thing.",
+   "m": "What happens now? I don’t want this to turn into a big thing.",
+   "p": "What happens now? I’m not sure why I said anything."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Here is what I suggest, and tell me what you would change. We write a short safety plan today, I talk with my supervisor this afternoon about what the clinic and the law require, and we meet again in three days. If the thoughts get stronger, call or text 988, or call 911 in an emergency.",
+    "reply": "Okay. The safety plan I can do. Three days is fine. That feels doable.",
+    "why": "The plan matches the risk she described, brings in the supervisor, sets a close review, gives 988 and 911, and invites her to change it. What this keeps for Vesna is safety, a say in the plan, and the alliance. What it puts at risk is the chance that the review shows higher risk, and then the plan changes with her."
+   },
+   {
+    "r": 1,
+    "t": "The safest step is for you to see the clinic’s on-call clinician before you leave today, and I will walk you over myself, so that someone with more training can check on how you are doing before you go home tonight, and so that you are not alone with this, and I will stay with you until the clinician is ready.",
+    "reply": "Today? I thought we were doing okay. Fine, but I don’t want this to be a big deal.",
+    "why": "Same-day contact with another clinician is a defensible, cautious choice when the picture is unclear or the risk is high. It moves faster than what she has told you supports and was decided without asking her. What this keeps for Vesna is short-term safety. What it puts at risk is her sense that speaking up leads to being handed off."
+   },
+   {
+    "r": 1,
+    "t": "I’ll write up a safety plan with the steps to follow, including 988, and email it to you tonight. I’ll tell my supervisor about it, and we’ll see how things are when we meet next week at our usual time, and you can reach the clinic in the meantime if you need to, since the front desk can pass on a message.",
+    "reply": "Okay. I guess I’ll read it. Next week is a while from now.",
+    "why": "The plan names 988 and brings in the supervisor, and the written plan is useful. She had no part in writing it, and the review is a week away, which is long for a new disclosure. What this keeps for Vesna is a plan and a contact route. What it puts at risk is her ownership of the plan and a closer review."
+   },
+   {
+    "r": 0,
+    "t": "Since you say you won’t act, we can put this aside and go back to your sleep and stress, and come back to it only if it comes up again, so that you are not spending our time on something that has already passed and that you want to leave behind, and you can bring it up again whenever you like.",
+    "reply": "Sure. That’s what I was hoping for. Let’s do that.",
+    "why": "The plan treats her reassurance as the end of the assessment, with no consultation, no record of the reasoning, no safety plan, and no review. What this keeps for Vesna is a comfortable session. What it puts at risk is her safety and the chance that a later worsening goes unseen."
+   }
+  ],
+  "order": [
+   2,
+   1,
+   0,
+   3
+  ]
+ }
+];
+var REVISIT = [
+ "Acknowledge the person and stay with what she said before turning to procedure. Review Talking With a Client About a Limit.",
+ "Ask how often the thoughts come, whether there is a plan, intent, or means, whether it has happened before, and what keeps her safe, before deciding anything. Review When the Risk Is to the Client.",
+ "Recall the limit in a sentence, say what you will do and cannot promise, treat the legal rule as something to confirm, and ask how she understands it. Review The Two-Part Question and Talking With a Client About a Limit.",
+ "Say what the record is for, what will be written, and the honest limit on who sees it, and do not omit clinically relevant information to please a client. Review What Goes In and What Stays Out.",
+ "Plan with her. Include a safety plan, consultation with the supervisor, a close review date, and the 988 and 911 information. Review When the Risk Is to the Client and The Course’s Decision Path."
+];
+var TAKE = "In this module’s model, a disclosure that tests a limit of confidentiality calls for acknowledging the person, assessing the risk, explaining the limit candidly without promising secrecy, saying what will be recorded and why, and planning the next step with the client and the supervisor. Defensible options can differ, such as a shared safety plan with a close review or same-day contact with an on-call clinician, and the better one depends on the assessment, the law, the clinic’s policy, and what the client can take part in. The aim is to meet the duty while keeping as much as possible for the client, including honesty, choice, and the alliance.";
+var NOTE = "This practice conversation is invented and scores only the choices shown. It practices one type of disclosure with one scripted client and is not clinical training or legal advice. Laws about disclosure differ by place, so confirm the rules and the clinic’s policy where you work. Vesna’s situation is her alone and does not describe any group of people. It is not a way to assess or treat yourself or anyone you know. If you or someone you know is thinking about suicide, call or text 988 at any hour, or call 911 in an emergency.";
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root"), S;
+var LABEL={2:"Skilled response",1:"Acceptable, with a gap",0:"Missed the skill"};
+function fresh(){ S={t:0,branch:"start",pick:null,retried:false,first:null,log:[],done:false}; render(); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function pills(){ return '<div class="pills" aria-hidden="true">'+TURNS.map(function(t,i){ return '<span class="pill'+(i===S.t&&!S.done?" on":(i<S.log.length?" done":""))+'">'+(i+1)+'. '+esc(SKILLS[t.skill])+'</span>'; }).join("")+'</div>'; }
+function clientLine(t){ return t.client[S.branch]||t.client.start||t.client.m; }
+function render(){
+  if(S.done){ return summary(); }
+  var t=TURNS[S.t], h=pills()+'<div class="case"><b class="t">Case: Vesna</b>'+esc(SCENARIO)+'</div><section class="panel" id="panel" tabindex="-1" aria-live="polite">';
+  h+='<p class="skill">Turn '+(S.t+1)+' of '+TURNS.length+'. Skill practiced: '+esc(SKILLS[t.skill])+'</p>';
+  h+='<p class="quote"><span class="who">Vesna</span>'+esc(clientLine(t))+'</p>';
+  h+='<div class="do"><b>Do this:</b> Choose the response you would say next. Each choice changes how Vesna answers.</div><div class="options">';
+  t.order.forEach(function(ix,pos){
+    var o=t.options[ix], cls="opt";
+    if(S.pick!==null){ cls+=" r"+o.r; if(S.pick===ix) cls+=" pick"; else cls+=" dim"; }
+    h+='<button type="button" class="'+cls+'" data-ix="'+ix+'"'+(S.pick!==null?" disabled":"")+'><span class="k">'+String.fromCharCode(65+pos)+'.</span><span>'+esc(o.t)+'</span></button>';
+  });
+  h+='</div>';
+  if(S.pick!==null){
+    var o=t.options[S.pick], best=t.options.filter(function(x){return x.r===2;})[0], eff=(S.retried?Math.min(o.r,1):o.r);
+    h+='<p class="verdict r'+o.r+'">'+LABEL[o.r]+(S.retried?" (second try, scored at most 1 of 2)":"")+'</p>';
+    h+='<p class="quote"><span class="who">Vesna</span>'+esc(o.reply)+'</p><p class="explain">'+esc(o.why)+'</p>';
+    if(o.r<2) h+='<div class="better"><b>A stronger response:</b> '+esc(best.t)+'</div>';
+    h+='<div class="foot">'+((o.r===0&&!S.retried)?'<button class="btn secondary" type="button" data-act="retry">Try this turn again</button>':'<span></span>')+'<button class="btn" type="button" data-act="next">'+(S.t>=TURNS.length-1?"See your results":"Continue the conversation")+'</button></div>';
+  }
+  h+='</section>'; root.innerHTML=h; post();
+  var p=document.getElementById("panel"); if(p&&S.pick!==null){ try{p.focus();}catch(e){} }
+}
+function commit(){
+  var t=TURNS[S.t], o=t.options[S.pick], sc=(S.retried?Math.min(o.r,1):o.r);
+  S.log.push({skill:t.skill,r:o.r,score:sc,retried:S.retried,first:S.first});
+  S.branch=(o.r===2?"g":(o.r===1?"m":"p"));
+}
+function summary(){
+  var tot=0; S.log.forEach(function(l){tot+=l.score;});
+  var worst=S.log.slice().sort(function(a,b){return a.score-b.score;})[0];
+  var h=pills()+'<section class="panel" id="panel" tabindex="-1"><h2 style="margin:0 0 4px;font-size:20px;">Your conversation with Vesna</h2><p>You scored <b>'+tot+' of '+(TURNS.length*2)+'</b> across the five skills. A retried turn counts for at most 1 point.</p><div>';
+  S.log.forEach(function(l){ h+='<div class="brow"><span class="bs">'+l.score+' / 2</span><span><b>'+esc(SKILLS[l.skill])+'.</b> '+(l.score===2?"Skilled response.":esc(REVISIT[l.skill]))+'</span></div>'; });
+  h+='</div>';
+  if(tot<TURNS.length*2){ h+='<div class="take"><b>Where to look again:</b> '+esc(REVISIT[worst.skill])+'</div>'; }
+  h+='<div class="take"><b>What carries forward:</b> '+esc(TAKE)+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="note">'+esc(NOTE)+'</p></section>';
+  root.innerHTML=h; post();
+}
+root.addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b||b.disabled) return;
+  if(b.hasAttribute("data-ix")){ if(S.pick!==null) return; S.pick=parseInt(b.getAttribute("data-ix"),10); if(!S.retried) S.first=S.pick; render(); return; }
+  var a=b.getAttribute("data-act");
+  if(a==="retry"){ S.retried=true; S.pick=null; render(); return; }
+  if(a==="next"){ commit(); S.pick=null; S.retried=false; S.first=null; if(S.t>=TURNS.length-1){ S.done=true; } else { S.t++; } render(); try{window.scrollTo({top:0,behavior:"smooth"});}catch(x){} return; }
+  if(a==="again"){ fresh(); return; }
+});
+fresh();
+
+</script>
+</body>
+</html>

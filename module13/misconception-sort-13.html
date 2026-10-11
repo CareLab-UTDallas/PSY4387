@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 13: Sort the Claims</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --myth-bg:#fbecec; --myth-line:#e3b9b9; --myth-ink:#a23b34;
+    --acc-bg:#eef5ee; --acc-line:#bcd6bd; --acc-ink:#3c6b3e;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --do-bg:#eef3fb; --do-line:#c9d9f0; --do-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:820px;margin:0 auto;padding:24px 20px 60px;}
+
+  .masthead{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:74ch;}
+
+  .thesis{display:flex;gap:10px;align-items:flex-start;background:var(--amber-bg);border:1px solid var(--amber-line);
+    color:var(--amber-ink);border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.55;margin:14px 0 8px;}
+  .thesis svg{flex:0 0 auto;margin-top:1px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:14px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .cardtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px;}
+  .cardtop .cn{font-size:13px;color:var(--muted);}
+  .cardtop .trap{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+
+  .claim{font-size:17px;line-height:1.5;font-weight:600;margin:0 0 4px;}
+  .claim .q{color:var(--muted);font-weight:400;font-size:14px;display:block;margin-bottom:8px;}
+
+  .sortrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 4px;}
+  @media(max-width:520px){ .sortrow{grid-template-columns:1fr;} }
+  .sortbtn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 16px;cursor:pointer;
+    font:inherit;font-size:15px;font-weight:600;color:var(--ink);transition:.12s;display:flex;align-items:center;gap:10px;justify-content:center;}
+  .sortbtn:hover:not(:disabled){border-color:#cfc9bf;}
+  .sortbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .sortbtn .ic{width:20px;height:20px;flex:0 0 auto;}
+  .sortbtn.myth-btn:hover:not(:disabled){border-color:var(--myth-line);}
+  .sortbtn.acc-btn:hover:not(:disabled){border-color:var(--acc-line);}
+  .sortbtn:disabled{cursor:default;}
+  .sortbtn.chosen.myth-btn{background:var(--myth-bg);border-color:var(--myth-line);color:var(--myth-ink);}
+  .sortbtn.chosen.acc-btn{background:var(--acc-bg);border-color:var(--acc-line);color:var(--acc-ink);}
+  .sortbtn.dim{opacity:.5;}
+  .sortbtn.right-answer{box-shadow:0 0 0 2px var(--acc-ink) inset;}
+
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--acc-ink);}
+  .verdict.no{color:var(--myth-ink);}
+  .reveal{margin-top:12px;background:#f5f3ef;border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;color:#413d36;}
+  .reveal .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:6px;}
+  .reveal .fix{margin-top:10px;padding-top:10px;border-top:1px solid #e6e3dd;}
+  .reveal .fix b{color:var(--ink);}
+  .reveal .src{color:var(--muted);font-size:12.5px;margin-top:8px;}
+
+  .whybox{margin-top:14px;}
+  .whybox label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
+  .whybox textarea{width:100%;min-height:64px;resize:vertical;border:1px solid var(--line);border-radius:10px;
+    padding:10px 13px;font:inherit;font-size:14px;background:#fff;}
+  .whybox textarea:focus{outline:none;border-color:var(--focus);}
+
+  .foot{display:flex;justify-content:flex-end;margin-top:18px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;
+    padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0;}
+  .results .score b{color:var(--accent-ink);}
+  .results .list{margin:16px 0 0;border-top:1px solid var(--line);padding-top:12px;}
+  .results .r{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .r:last-child{border-bottom:none;}
+  .results .r .ri{flex:0 0 auto;margin-top:1px;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Common Misconceptions: Sort the Claims</h1>
+    <p class="sub">Claims about ethics, law, and confidentiality often sound confident and settled. For each statement, decide whether it is a <strong>common misconception</strong> or an <strong>accurate</strong> claim, then check your reasoning against the module. Laws differ by place, so ask what the clinician would have to check where they work.</p>
+  </div>
+
+  <div class="thesis">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.3" stroke="currentColor" stroke-width="1.4"/><path d="M10 6.4v4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.4" r=".5" fill="currentColor" stroke="currentColor"/></svg>
+    <div>Some of these claims are accurate and some are common misconceptions. For each one, ask which source of authority would settle it and what the clinician would have to confirm.</div>
+  </div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+  <section class="card results hidden" id="resultsPanel"></section>
+</div>
+
+<script>
+// Data for this sort. Each item is original and grounded in the module reading.
+var ITEMS = [
+ {
+  "trap": "Boards and the code",
+  "bloom": "analyze",
+  "claim": "“A board that has adopted the code can ground a sanction in a numbered standard, while the lettered principles alone are not usually a basis for one.”",
+  "answer": "accurate",
+  "why": "The code describes the General Principles as aspirational and says they should not form the basis for imposing sanctions. The Ethical Standards are the enforceable rules, and bodies that choose to adopt the code can enforce them. Which code and rules a given board applies is something students check.",
+  "fix": "",
+  "src": "Module 13, Standards, Sanctions, and Students"
+ },
+ {
+  "trap": "Changing the plan",
+  "bloom": "apply",
+  "claim": "“A therapist who shifts from supportive talk to a new technique months into treatment should revisit consent first, whatever the intake paperwork says.”",
+  "answer": "accurate",
+  "why": "Agreement to one kind of work at intake does not carry over automatically to a different kind of work later. The code ties the discussion of limits to the outset and to new circumstances, and the same reasoning applies when the treatment itself changes.",
+  "fix": "",
+  "src": "Module 13, Informed Consent in Therapy"
+ },
+ {
+  "trap": "Law and the code",
+  "bloom": "analyze",
+  "claim": "“Once a clinician has confirmed that an action is lawful where she practices, she can generally treat the ethical question as settled.”",
+  "answer": "myth",
+  "why": "Law and the code are separate systems. The code says that when it sets a higher standard than the law requires, psychologists must meet the higher standard, so lawful conduct can still fall short. A clinician checks both and consults when they diverge.",
+  "fix": "<b>Accurate version.<\/b> Legal conduct can still fall short of the code, and where the code is stricter the clinician meets the stricter standard.",
+  "src": "Module 13, Sources of Authority"
+ },
+ {
+  "trap": "Scores and ending",
+  "bloom": "evaluate",
+  "claim": "“A run of unchanged questionnaire results can point toward ending, adjusting, or staying the course, depending on what else the clinician knows about the client.”",
+  "answer": "accurate",
+  "why": "Standard 10.10(a) sets criteria for when ending becomes required, and measurement data speak to one of them, whether the client is not likely to benefit, only together with judgment. A flat series can reflect noise, a poor fit, a missing mechanism, or a gain the measure does not capture.",
+  "fix": "",
+  "src": "Module 13, Continuing, Adjusting, or Ending Treatment"
+ },
+ {
+  "trap": "Contents of the record",
+  "bloom": "evaluate",
+  "claim": "“A clinician protects a client's confidentiality by leaving the client's remarks about risk out of the written record whenever the client asks for that.”",
+  "answer": "myth",
+  "why": "Standard 6.01 lists purposes of records that include facilitating later services and ensuring compliance with law. Omitting clinically relevant information to please a client undercuts both purposes. The clinician explains what the record is for and tells the client truthfully who can see it.",
+  "fix": "<b>Accurate version.<\/b> The clinician records the risk assessment with its questions, answers, and reasoning, and explains to the client what the record is for.",
+  "src": "Module 13, What Goes In and What Stays Out"
+ },
+ {
+  "trap": "Second roles",
+  "bloom": "analyze",
+  "claim": "“Holding a second role with a client, such as belonging to the same congregation, is itself a violation of the code.”",
+  "answer": "myth",
+  "why": "Standard 3.05(a) forbids a multiple relationship only when it could reasonably be expected to impair objectivity, competence, or effectiveness, or risk exploitation or harm. Overlaps that would not be expected to do so are not unethical, and unforeseen overlaps call for reasonable steps to resolve them.",
+  "fix": "<b>Accurate version.<\/b> A second role raises the question, and the answer depends on the expected effect on the work and on the client.",
+  "src": "Module 13, Boundaries and Multiple Relationships"
+ },
+ {
+  "trap": "Disclosure without consent",
+  "bloom": "analyze",
+  "claim": "“Where a law mandates a disclosure, the clinician needs no separate showing that the purpose is valid, and where law only permits one, the purpose must qualify under the code.”",
+  "answer": "accurate",
+  "why": "Standard 4.05(b) allows disclosure without consent only as mandated by law, or where permitted by law for a valid purpose such as the ones it lists. A mandate answers both questions. A permission answers only the first, so the purpose has to be checked against the code.",
+  "fix": "",
+  "src": "Module 13, The Two-Part Question"
+ },
+ {
+  "trap": "Clients reading notes",
+  "bloom": "evaluate",
+  "claim": "“Patients who can read their therapy notes often report greater trust, though most of the evidence comes from interviews and surveys and not from outcome trials.”",
+  "answer": "accurate",
+  "why": "A scoping review found mostly positive experiences, with negative ones tied to inaccurate notes, disrespectful language, and undiscussed diagnoses. The evidence was mostly qualitative or survey-based, and the expert predictions in the Delphi survey are opinions about likely effects and not outcome data.",
+  "fix": "",
+  "src": "Module 13, A Reader Over Your Shoulder"
+ },
+ {
+  "trap": "Threat statements",
+  "bloom": "analyze",
+  "claim": "“A client who says he could happily strangle a coworker obliges the clinician to warn that coworker, whichever state the clinician practices in.”",
+  "answer": "myth",
+  "why": "States differ on whether protecting a third party is required or only permitted, on how specific the threat and the victim must be, and on what actions satisfy the duty. Heated words and a real danger are different things, so clinicians first ask about plan, means, and history.",
+  "fix": "<b>Accurate version.<\/b> The duty is narrow in some formulations and broader in others, varies by jurisdiction, and starts with assessing how specific and serious the statement is.",
+  "src": "Module 13, When a Client Threatens Someone"
+ },
+ {
+  "trap": "Reporting threshold",
+  "bloom": "analyze",
+  "claim": "“When a clinician only suspects child abuse, the better course is usually to wait until the facts are firmly established before any report.”",
+  "answer": "myth",
+  "why": "Under a reasonable suspicion rule, a clinician with a sound basis to suspect abuse reports, and investigators establish the facts. Waiting for certainty can delay protection for a child. Statutes vary, so the clinician checks the local rule and consults a supervisor.",
+  "fix": "<b>Accurate version.<\/b> Under a reasonable suspicion standard, a clinician reports when a reasonable professional would suspect abuse or neglect, after checking the local statute and consulting a supervisor.",
+  "src": "Module 13, Mandatory Reporting"
+ },
+ {
+  "trap": "Gaps in the code",
+  "bloom": "evaluate",
+  "claim": "“When no standard addresses a situation, the code's silence does not show that the conduct is ethical.”",
+  "answer": "accurate",
+  "why": "The code says that conduct not specifically addressed by a standard is not necessarily either ethical or unethical. When the standards are silent, the question returns to judgment, consultation, the principles, and the other sources of authority.",
+  "fix": "",
+  "src": "Module 13, Principles A to E and the Standards Beneath Them"
+ },
+ {
+  "trap": "Promises of secrecy",
+  "bloom": "evaluate",
+  "claim": "“Telling a new client in the first meeting that anything said stays between the two of them generally builds trust and costs little.”",
+  "answer": "myth",
+  "why": "A promise made before the content is known may conflict with a limit the clinician must honor, and Principle C asks psychologists to avoid unwise or unclear commitments. Standard 4.02 has the clinician discuss the relevant limits at the outset, and a broken promise costs more trust than an honest account of the limits would have.",
+  "fix": "<b>Accurate version.<\/b> A clinician recalls the limits explained at the start, says what can and cannot be promised, and gives the client real choices where they exist.",
+  "src": "Module 13, Talking With a Client About a Limit"
+ }
+];
+
+var idx = 0;
+var chosen = [];   // 'myth' | 'accurate' | null, indexed by ITEMS index
+var order = [];    // display order: array of ITEMS indices, shuffled each run
+
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function currentItem(){ return ITEMS[order[idx]]; }
+function itemIndex(){ return order[idx]; }
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+
+var CHECK='<svg class="ic" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="currentColor" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var FLAG='<svg class="ic" viewBox="0 0 20 20" fill="none"><path d="M5 3v14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5 4h9l-2 3 2 3H5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+var MINI_CHECK='<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#3c6b3e" stroke-width="1.4"/><path d="M6.4 10.2l2.3 2.3 4.7-4.9" stroke="#3c6b3e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var MINI_CROSS='<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.2" stroke="#a23b34" stroke-width="1.4"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" stroke="#a23b34" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+function init(){
+  chosen = ITEMS.map(function(){return null;});
+  order = shuffle(ITEMS.map(function(_,i){return i;}));
+  idx = 0;
+  render();
+}
+
+function renderProgress(){
+  document.getElementById("pbarfill").style.width = (idx/ITEMS.length*100) + "%";
+  document.getElementById("pcount").textContent = "Claim " + Math.min(idx+1,ITEMS.length) + " of " + ITEMS.length;
+}
+
+function render(){
+  renderProgress();
+  var it = currentItem();
+  var ii = itemIndex();
+  var panel = document.getElementById("cardPanel");
+  panel.innerHTML="";
+  var pick = chosen[ii];
+  var isAnswered = pick!==null;
+
+  var top = el("div","cardtop");
+  top.appendChild(el("span","cn","Claim " + (idx+1) + " of " + ITEMS.length));
+  top.appendChild(el("span","trap", it.trap));
+  panel.appendChild(top);
+
+  panel.appendChild(el("p","claim", '<span class="q">A statement you might hear:</span>' + it.claim));
+
+  var row = el("div","sortrow");
+  var mBtn = el("button","sortbtn myth-btn"+(isAnswered && pick==="myth"?" chosen":"")+(isAnswered && it.answer!=="myth"?" ":""));
+  mBtn.type="button";
+  mBtn.innerHTML = FLAG + "Common misconception";
+  var aBtn = el("button","sortbtn acc-btn"+(isAnswered && pick==="accurate"?" chosen":""));
+  aBtn.type="button";
+  aBtn.innerHTML = CHECK + "Accurate claim";
+
+  if(isAnswered){
+    mBtn.disabled=true; aBtn.disabled=true;
+    // highlight correct answer
+    if(it.answer==="myth") mBtn.classList.add("right-answer"); else aBtn.classList.add("right-answer");
+    if(pick!==it.answer){ (pick==="myth"?mBtn:aBtn).classList.add("dim"); }
+  } else {
+    mBtn.addEventListener("click", function(){ choose("myth"); });
+    aBtn.addEventListener("click", function(){ choose("accurate"); });
+  }
+  row.appendChild(mBtn); row.appendChild(aBtn);
+  panel.appendChild(row);
+
+  if(!isAnswered){
+    var wb = el("div","whybox");
+    wb.innerHTML = '<label for="why">Optional: before you choose, jot the sign that gives it away.</label><textarea id="why" placeholder="What makes this accurate or a trap?"></textarea>';
+    panel.appendChild(wb);
+  } else {
+    var right = pick===it.answer;
+    panel.appendChild(el("p","verdict "+(right?"ok":"no"),
+      right ? "You got it." : "Not quite."));
+    var rv = el("div","reveal");
+    var head = it.answer==="myth" ? "Why this is a common misconception" : "Why this one is accurate";
+    rv.innerHTML = '<div class="lab">'+head+'</div>' + it.why +
+      (it.fix ? '<div class="fix">'+it.fix+'</div>' : '') +
+      '<div class="src">Reading: '+it.src+'</div>';
+    panel.appendChild(rv);
+
+    var foot = el("div","foot");
+    var last = idx===ITEMS.length-1;
+    var nb = el("button","btn");
+    nb.innerHTML = last ? 'See your results' : 'Next claim <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h11M11 6l4 4-4 4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    nb.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+    foot.appendChild(nb);
+    panel.appendChild(foot);
+  }
+}
+
+function choose(val){
+  var ii = itemIndex();
+  if(chosen[ii]!==null) return;
+  chosen[ii]=val;
+  render();
+}
+
+function finish(){
+  document.getElementById("pbarfill").style.width="100%";
+  document.getElementById("pcount").textContent="Complete";
+  document.getElementById("cardPanel").classList.add("hidden");
+  var correct = chosen.filter(function(c,i){return c===ITEMS[i].answer;}).length;
+
+  var rp = document.getElementById("resultsPanel");
+  rp.classList.remove("hidden");
+  rp.innerHTML="";
+  rp.appendChild(el("h2",null,"Your results"));
+  rp.appendChild(el("p","score","You sorted <b>"+correct+" of "+ITEMS.length+"</b> correctly."));
+
+  var list = el("div","list");
+  order.forEach(function(ii){
+    var it = ITEMS[ii];
+    var right = chosen[ii]===it.answer;
+    var r = el("div","r");
+    r.innerHTML = '<span class="ri">'+(right?MINI_CHECK:MINI_CROSS)+'</span>' +
+      '<span><b>'+it.trap+'</b>, '+(it.answer==="myth"?"common misconception":"accurate")+(right?'':' (revisit in the reading: '+it.src+')')+'</span>';
+    list.appendChild(r);
+  });
+  rp.appendChild(list);
+
+  var act = el("div","actions");
+  var again = el("button","btn secondary","Sort again");
+  again.addEventListener("click", function(){
+    document.getElementById("cardPanel").classList.remove("hidden"); rp.classList.add("hidden");
+    init(); window.scrollTo({top:0,behavior:"smooth"});
+  });
+  act.appendChild(again);
+  rp.appendChild(act);
+
+  rp.appendChild(el("p","selfnote","This sort scores only the misconception-versus-accurate choices, and nothing is saved or sent. It is practice and not legal advice. Compare your own reasoning for each claim with the explanation."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

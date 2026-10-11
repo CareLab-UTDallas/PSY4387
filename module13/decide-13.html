@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ethical Decision Path</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Ethical Decision Path</h1>
+    <p class="sub">Walk four invented cases through the course’s decision path, from naming the situation to reviewing the plan, and revise when new information arrives.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "mcq",
+  "title": "Case 1: A parent calls",
+  "short": "Case 1",
+  "tag": "Cleo and her mother",
+  "case": {
+   "title": "Case 1 (invented): Cleo, 24",
+   "text": "Baptiste is an invented trainee at an invented community clinic. Cleo is an adult client in her sixth session, working on anxiety. Her mother phones the clinic and asks Baptiste whether Cleo is attending and whether she is “taking it seriously,” because she pays for Cleo’s phone and worries. Cleo has signed the clinic’s consent forms, and nothing in them mentions family. Baptiste has not yet told his supervisor about the call."
+  },
+  "intro": "<b>Step 1.<\/b> You will walk each case through the course’s decision path. The path asks the clinician to name the situation and the client, gather facts, identify the sources that bind the decision, name the values in conflict, generate options, consult, decide, act, record, and review. The course’s path is its own tool and not a published model. Two clinicians can use it well and reach different defensible conclusions. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer at each stage of the path.",
+  "src": "Module 13, The Course's Decision Path",
+  "items": [
+   {
+    "prompt": "Baptiste is naming the situation and the people it affects. Which statement does that best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A payer is asking about her investment, and Baptiste owes Cleo’s mother an update on how Cleo is doing in treatment"
+     },
+     {
+      "id": "b",
+      "text": "An adult client’s mother asks about her, and those affected include Cleo and her trust in therapy, the mother, Baptiste, and the clinic"
+     },
+     {
+      "id": "c",
+      "text": "A scheduling question has reached the wrong person, and Baptiste forwards the call to the front desk and treats the matter as closed"
+     },
+     {
+      "id": "d",
+      "text": "A worried parent wants reassurance, and the people affected are Baptiste and Cleo’s mother, with the task being to reassure her kindly and end the calls"
+     }
+    ],
+    "correct": "b",
+    "why": "The client is Cleo, and her mother is a person with a stake and not a client. The stakeholder test widens the list beyond the obvious two. The framing treats the mother as the person Baptiste serves. The one whose information is at stake is missing from the list. Paying a phone bill does not make the mother a client or a payer for therapy. The code ties disclosure to consent or law, and the payment point does not supply either. The call touches whether a person is a client at all, which is itself confidential in many settings. Treating it as administrative leaves the situation unnamed.",
+    "bloom": "analyze",
+    "src": "Module 13, The Course's Decision Path"
+   },
+   {
+    "prompt": "Baptiste is identifying the sources that bind this decision. Which item is an unknown that he records and settles by consulting, and does not guess?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Whether Cleo is an adult, a point he settles by asking her mother for Cleo’s age"
+     },
+     {
+      "id": "b",
+      "text": "Whether the code allows disclosure with the client’s consent, a point he leaves open until the supervisor answers"
+     },
+     {
+      "id": "c",
+      "text": "Whether clinic policy and local law allow him to confirm that anyone is a client, a point he settles by consulting his supervisor"
+     },
+     {
+      "id": "d",
+      "text": "Whether the mother has a right to information as a contributor to Cleo’s expenses, a point he settles by judgment"
+     }
+    ],
+    "correct": "c",
+    "why": "He does not know either answer. The reading says a trainee records such gaps as unknowns to settle by consulting. Standard 4.05(a) already answers this. It is a known source and not an unknown. The case states that Cleo is 24. The mother has no part in establishing the client’s age. The code ties disclosure to the client’s consent or to law, so payment of a phone bill is not a source. Judgment fills spaces the other sources leave open, and this one is not open.",
+    "bloom": "analyze",
+    "src": "Module 13, The Course's Decision Path"
+   },
+   {
+    "prompt": "Baptiste is generating and weighing options. Which option best protects Cleo’s trust and leaves room for her mother’s involvement if Cleo wants it?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Tell the mother he cannot confirm who is a client, tell Cleo about the call, and offer a release"
+     },
+     {
+      "id": "b",
+      "text": "Confirm that Cleo attends without discussing content, and tell Cleo about the call at her next session"
+     },
+     {
+      "id": "c",
+      "text": "Call the mother back with general reassurance that therapy is going well, and mention the call to Cleo afterward"
+     },
+     {
+      "id": "d",
+      "text": "Say nothing to the mother and nothing to Cleo about the call, and keep the matter out of therapy altogether"
+     }
+    ],
+    "correct": "a",
+    "why": "It protects what Cleo has not authorized, keeps her informed, and leaves a route to family involvement that she controls. It is also the less drastic of the real choices. In many settings the fact that someone is a client is itself confidential. The mother has no consent and no legal basis, so confirming attendance falls outside the limits. General reassurance discloses that therapy is under way and offers a clinical judgment. The mother may also keep calling when she hears what she wants. Cleo would be left without the knowledge that her mother is trying to reach her therapist. A client surprised later has been treated unfairly.",
+    "bloom": "evaluate",
+    "src": "Module 13, The Course's Decision Path"
+   },
+   {
+    "prompt": "Baptiste considers telling the mother that Cleo is doing well. How does that option fare on two of the course’s tests?",
+    "options": [
+     {
+      "id": "a",
+      "text": "It passes the stakeholder test because it serves the mother and Cleo’s wish for a calm family, and the other tests add nothing"
+     },
+     {
+      "id": "b",
+      "text": "It passes the publicity test because the news is positive and Cleo would not mind, and it passes reversibility because Baptiste can correct the message later"
+     },
+     {
+      "id": "c",
+      "text": "It fails the future-self test only, because the other tests ask about outcomes and the outcome here is good"
+     },
+     {
+      "id": "d",
+      "text": "It fails the publicity test because Baptiste could not easily explain it to Cleo, and it fails reversibility because a disclosure cannot be taken back"
+     }
+    ],
+    "correct": "d",
+    "why": "Both tests count against it. Waiting and asking Cleo can be revisited later, and a disclosure cannot be taken back. A pleasant message is still a disclosure, and Baptiste has not asked Cleo. A statement already made cannot be retrieved by a later correction. The stakeholder test asks Baptiste to list those with a stake. It does not make every stakeholder’s wish binding, and the other tests do apply. The publicity and reversibility tests ask about process and consequences, and both are triggered. The future-self test is not the only one that applies.",
+    "bloom": "analyze",
+    "src": "Module 13, Four Tests From This Course"
+   },
+   {
+    "prompt": "Baptiste is recording the decision and planning a review. Which plan is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Tell the supervisor, record what was asked and Baptiste’s reasoning, and plan to raise a release with Cleo next session"
+     },
+     {
+      "id": "b",
+      "text": "Record that a call came in with no detail about its content or Baptiste’s reasoning, and plan to raise it with Cleo next session"
+     },
+     {
+      "id": "c",
+      "text": "Keep a private note outside the chart about the call and the mother’s worries, and plan to raise a release with Cleo next session"
+     },
+     {
+      "id": "d",
+      "text": "Record the call and the mother’s worries in detail in the clinical note, and tell the supervisor at the next scheduled meeting"
+     }
+    ],
+    "correct": "a",
+    "why": "The reading says a decision against dramatic action gets the same careful record as an action. The plan also schedules the review. The review is scheduled, and the entry leaves out what was asked and why Baptiste chose as he did. Writing the reasoning exposes gaps that stay hidden otherwise. Standard 6.01 ties records to purposes such as facilitating later services, and a third party’s worries in detail serve none of them. The supervisor also hears about the call late. The record exists to facilitate later services and ensure compliance with law. Informal notes are harder to audit and may fall outside the record’s protections.",
+    "bloom": "evaluate",
+    "src": "Module 13, The Course's Decision Path"
+   }
+  ],
+  "revisit": "Reread “The Course's Decision Path” and “Four Tests From This Course.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Case 2: An employer asks for more",
+  "short": "Case 2",
+  "tag": "Gabriel and HR",
+  "case": {
+   "title": "Case 2 (invented): Gabriel, 38",
+   "text": "Okoye is an invented therapist at an invented clinic. Gabriel’s employer referred him after a workplace incident. At intake Okoye explained that the clinic would confirm attendance to the employer’s human resources office when Gabriel signed a release for that purpose, and that nothing else would be shared. Gabriel signed. Now HR writes asking for a progress summary and an opinion on whether Gabriel is ready to return to full duties. Gabriel has not been told about the request."
+  },
+  "intro": "<b>Step 2.<\/b> The second case adds a third party who requested services. Standard 3.07 asks the psychologist to clarify the role, who the client is, and the probable uses of the information. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer at each stage of the path.",
+  "src": "Module 13, The Course's Decision Path",
+  "items": [
+   {
+    "prompt": "Okoye is naming the situation and the client. Which statement fits best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Gabriel and HR are both clients, and Okoye balances their interests equally in what she shares"
+     },
+     {
+      "id": "b",
+      "text": "Gabriel is the client, and the only issue is how quickly Okoye can answer HR’s paperwork"
+     },
+     {
+      "id": "c",
+      "text": "Gabriel is the client, and HR is asking for more than the attendance release covers, including an opinion that serves the employer"
+     },
+     {
+      "id": "d",
+      "text": "HR is the client, and Okoye owes it the summary it requests as the party that referred Gabriel to the clinic and likely pays for his sessions"
+     }
+    ],
+    "correct": "c",
+    "why": "The release covered attendance only, and what HR now asks departs from the uses Okoye explained. Standard 3.07 puts the probable uses of information in the clarification. Referral and payment by a third party do not by themselves change who the client is. Standard 3.07 asks for clarity at the outset about who the client is, and Okoye made that clear. The request involves information beyond what Gabriel authorized. Treating it as a speed problem misses the consent and role questions. The case describes an individual client and a third party who asked about him. Treating the employer as a co-client contradicts what Okoye told Gabriel at intake.",
+    "bloom": "analyze",
+    "src": "Module 13, The Course's Decision Path"
+   },
+   {
+    "prompt": "Okoye is locating the standards and the unknowns. Which statement is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Standards 3.07 and 4.05(a), plus unknowns about clinic policy and local law on third-party requests, settled with her supervisor"
+     },
+     {
+      "id": "b",
+      "text": "Standard 4.05(b), with the employer’s interest treated as a valid purpose and Okoye free to release a summary without Gabriel’s agreement"
+     },
+     {
+      "id": "c",
+      "text": "The clinic’s policy only, with the employer’s contract treated as the controlling document and the code silent about employers"
+     },
+     {
+      "id": "d",
+      "text": "Standard 4.04(a), with any summary allowed once it is kept short and germane to the employer’s question"
+     }
+    ],
+    "correct": "a",
+    "why": "These are the standards the reading ties to a third-party request, and the missing pieces are named as unknowns. Disclosure without consent needs a legal mandate, or legal permission plus a valid purpose. A request from an employer supplies neither on its own. The code speaks to third-party requests in Standard 3.07, and law and policy can add rules. Policy is one source among several. Standard 4.04(a) limits how much to say once a disclosure is permitted. It does not make a short disclosure permitted.",
+    "bloom": "analyze",
+    "src": "Module 13, The Course's Decision Path"
+   },
+   {
+    "prompt": "Okoye is generating and weighing options. Two of these are defensible. Which is stronger?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Reply to HR now with attendance only, which the release covers, decline the rest, and tell Gabriel at the next session"
+     },
+     {
+      "id": "b",
+      "text": "Send the full session notes with a cover note to HR today, and tell Gabriel afterward that HR asked for them"
+     },
+     {
+      "id": "c",
+      "text": "Refuse to reply to HR and keep the request out of the chart, and tell Gabriel only if HR writes again about it"
+     },
+     {
+      "id": "d",
+      "text": "Tell Gabriel about the request, then reply to HR with only what he authorizes and the supervisor approves"
+     }
+    ],
+    "correct": "d",
+    "why": "Gabriel hears of the request before HR gets a reply, and the answer rests on his authorization. This keeps him informed and the disclosure minimal. Defensible, since attendance is authorized and nothing else leaves. It is weaker because HR’s reply is already sent when Gabriel learns of the request, and he cannot shape it. Cooperation is not consent to this disclosure, and full notes exceed what the purpose needs. The release does not cover them. Silence leaves Gabriel unaware that his employer is asking about him. A client who learns later has been treated unfairly.",
+    "bloom": "evaluate",
+    "src": "Module 13, The Course's Decision Path"
+   },
+   {
+    "prompt": "A colleague suggests sending the notes now because Gabriel is expected to agree later. How does this option fare?",
+    "options": [
+     {
+      "id": "a",
+      "text": "It fails publicity because Okoye could not easily explain it to Gabriel, and it fails reversibility because HR cannot unread notes"
+     },
+     {
+      "id": "b",
+      "text": "It cannot be tested because the four tests apply only when the code is silent, and the code addresses third parties here"
+     },
+     {
+      "id": "c",
+      "text": "It passes reversibility because Okoye can ask the employer to destroy the notes if Gabriel objects"
+     },
+     {
+      "id": "d",
+      "text": "It passes because Gabriel’s expected agreement counts as consent, and the standards allow disclosure with consent once Okoye has asked him"
+     }
+    ],
+    "correct": "a",
+    "why": "A disclosure made before consent depends on a guess about the future. Asking first keeps the more reversible option available. Standard 4.05(a) calls for appropriate consent, which is given and not predicted. A guess about later agreement is not the route the code names. A request to destroy is not a retrieval, and Okoye cannot control what HR has read. The test asks whether the action can be undone, and this one cannot. The tests help weigh options at the option stage. The code naming a relevant standard does not remove the need to weigh.",
+    "bloom": "analyze",
+    "src": "Module 13, Four Tests From This Course"
+   },
+   {
+    "prompt": "Okoye is recording the decision and planning a review. Which plan is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Record the request and what was sent, and plan to revisit consent at termination when the employer’s interest ends"
+     },
+     {
+      "id": "b",
+      "text": "Record only what was sent, and treat a request that was declined or answered in part as outside the clinical record"
+     },
+     {
+      "id": "c",
+      "text": "Record the request, what was shared and why, and Gabriel’s authorization, and revisit consent at each new request"
+     },
+     {
+      "id": "d",
+      "text": "Keep an informal note outside the chart, and treat the request as coming from outside the therapy and the client’s care"
+     }
+    ],
+    "correct": "c",
+    "why": "The record shows what Okoye knew, whom she asked, and why she chose. A standing plan for new requests keeps the consent current. The declined request and the reasoning are part of what a reader would need to audit the decision. A decision made at one point is reviewed as facts change. Waiting until termination leaves every request in between unexamined. The request bears on the client’s care and on compliance with law and policy. Informal notes are harder to audit and may fall outside the record’s protections.",
+    "bloom": "evaluate",
+    "src": "Module 13, The Course's Decision Path"
+   }
+  ],
+  "revisit": "Reread “The Course's Decision Path” and “Identifying the Client.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Case 3: Anger at a former partner",
+  "short": "Case 3",
+  "tag": "Rafa and Saskia",
+  "case": {
+   "title": "Case 3 (invented): Rafa, 45",
+   "text": "Saskia is an invented trainee. Rafa, an adult client, is furious at a former business partner who he says cheated him. In session he says, “I could make him pay. Some days I think about waiting outside his office.” He mentions no plan, no weapon, and no past violence, and he laughs afterward. Saskia does not know what the law in her setting says about threats. Her supervisor is available later today. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+  },
+  "intro": "<b>Step 3.<\/b> Duty to protect is a legal term and not a code term. Whether a clinician may tell turns on law first. A legal mandate answers both parts of the question, and a disclosure that law only permits also needs a valid purpose under Standard 4.05(b). The first step in any of these situations is assessment.",
+  "doThis": "Choose the best answer at each stage of the path.",
+  "src": "Module 13, When a Client Threatens Someone",
+  "items": [
+   {
+    "prompt": "Saskia is naming the situation. Which statement does that best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "A confirmed threat against a named person, with the clinician’s duty to warn already triggered by the remark"
+     },
+     {
+      "id": "b",
+      "text": "A confidential statement made in session, with the clinician bound to silence and the question one of keeping it private"
+     },
+     {
+      "id": "c",
+      "text": "An anger management problem, with the task being to select a technique and the legal question not relevant"
+     },
+     {
+      "id": "d",
+      "text": "A statement that could be venting or a serious threat, with assessment coming before any legal question"
+     }
+    ],
+    "correct": "d",
+    "why": "The reading says a statement of rage is not automatically a threat, and a careful clinician asks about specificity, plan, means, and history. No one has confirmed anything. Rafa mentioned no plan or means, and whether any legal duty arises depends on jurisdiction and facts. Confidentiality has limits that depend on law and policy. Treating the statement as sealed skips the assessment. Anger work may be part of the plan. Naming the situation as only a skills problem leaves out the possible risk to another person.",
+    "bloom": "analyze",
+    "src": "Module 13, When a Client Threatens Someone"
+   },
+   {
+    "prompt": "Saskia is gathering facts. What is the best way for her to respond in the moment?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Acknowledge his anger, ask about specificity, plan, means, and history of violence, and recall the limits in a sentence"
+     },
+     {
+      "id": "b",
+      "text": "Tell him at once that she will have to report this, and ask him to say more about the former partner"
+     },
+     {
+      "id": "c",
+      "text": "Tell him it sounds like normal venting for someone in a conflict like his, and move on to the homework"
+     },
+     {
+      "id": "d",
+      "text": "Ask him to promise he will not act on the thought, and then continue the session as planned"
+     }
+    ],
+    "correct": "a",
+    "why": "The order is the person first, facts second, and limits recalled briefly. It keeps both the alliance and the honesty intact. Saskia has no facts yet and no knowledge of the law in her setting. Announcing action before assessment risks both the alliance and accuracy. Offering reassurance before asking questions closes the assessment. A risk that has not been evaluated cannot be weighed. A promise of this kind substitutes for the assessment and says little about the actual risk. It also risks an unwise or unclear commitment from Saskia about what she will do.",
+    "bloom": "evaluate",
+    "src": "Module 13, Talking With a Client About a Limit"
+   },
+   {
+    "prompt": "Saskia is identifying the sources that bind this decision. Which list names what she has to find out?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Whether the Tarasoff decision applies, and whether it is the national rule on duty to warn"
+     },
+     {
+      "id": "b",
+      "text": "What the code’s duty to warn standard requires, and which of its steps apply to Rafa"
+     },
+     {
+      "id": "c",
+      "text": "What other clinics in the region do about statements like this, and what Saskia’s classmates would do"
+     },
+     {
+      "id": "d",
+      "text": "What the law where she works requires or permits, what the clinic’s protocol says, and what Rafa was told about limits"
+     }
+    ],
+    "correct": "d",
+    "why": "These are the unknowns the reading lists for a duty-to-protect style situation. Saskia settles them by consulting her supervisor. The code names no duty to warn. The term is legal and comes from case law and statutes that vary by place. The case is California law. Other states adopted it in different forms, modified it, or declined to follow it. Other clinics’ habits and classmates’ views are not sources. Local law, the clinic’s protocol, and the supervisor are.",
+    "bloom": "analyze",
+    "src": "Module 13, When a Client Threatens Someone"
+   },
+   {
+    "prompt": "After her questions, Saskia learns that Rafa has no plan, no weapon, and no history of violence, and that the thought is a strong angry feeling he can name. Two of these are defensible. Which is stronger?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Consult the supervisor today about transferring Rafa to a more experienced clinician for the risk work, and record the reasoning"
+     },
+     {
+      "id": "b",
+      "text": "Consult the supervisor today about continuing the anger work with Saskia, agree on check-ins with Rafa, and record the reasoning"
+     },
+     {
+      "id": "c",
+      "text": "Contact the former partner today with a warning, and tell the supervisor afterward"
+     },
+     {
+      "id": "d",
+      "text": "Make a brief note that Rafa was angry, and revisit the matter only if he raises it again"
+     }
+    ],
+    "correct": "b",
+    "why": "It answers the risk inside treatment, leaves the disclosure question with the people who know the law, and keeps the more reversible path open. Defensible, since a trainee may reach her limits and both options start with the supervisor. It is weaker here because a transfer is harder to reverse than continuing and ends the alliance that made the assessment possible. It becomes the stronger choice if the supervisor judges the risk beyond a trainee’s level. A warning is one way of meeting a legal duty in places that have one, and the facts do not show that a duty has arisen. The step is irreversible. A decision against dramatic action still needs the same record and consultation. A thin note and no review leave the assessment unexamined.",
+    "bloom": "evaluate",
+    "src": "Module 13, The Course's Decision Path"
+   },
+   {
+    "prompt": "Saskia is recording the decision and planning a review. Which plan is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Record the questions, his answers, the conclusion, and the consultation, and reassess next session"
+     },
+     {
+      "id": "b",
+      "text": "Record that Rafa was angry and that the supervisor was consulted, and plan to reassess next session"
+     },
+     {
+      "id": "c",
+      "text": "Record the questions, his answers, and the conclusion, and plan the review only if Rafa raises the subject again"
+     },
+     {
+      "id": "d",
+      "text": "Leave the statement out of the note to avoid unfair use against Rafa, and plan to reassess next session"
+     }
+    ],
+    "correct": "a",
+    "why": "The reading says to record the reasoning whether or not action follows, and a risk assessment is recorded in enough detail that a reader can audit it. A bare label gives a reader nothing to audit. The questions and answers are the observable record. A decision is reviewed as the facts change, and waiting for the client to raise it leaves the review to chance. Omitting clinically relevant information to protect the client serves neither the purposes of the record nor Rafa. Standard 6.01 lists those purposes.",
+    "bloom": "evaluate",
+    "src": "Module 13, The Course's Decision Path"
+   }
+  ],
+  "revisit": "Reread “When a Client Threatens Someone” and “The Two-Part Question.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Case 4: A teen’s request, part one",
+  "short": "Case 4, part 1",
+  "tag": "Ignacio and Desmond",
+  "case": {
+   "title": "Case 4 (invented): Ignacio, 15, part one",
+   "text": "Desmond is an invented counselor at an invented community clinic. At intake, Desmond, Ignacio, and Ignacio’s father Ulrich agreed on three categories of information. Some material stays private to support the work, some is always shared such as serious safety concerns, and some is a gray zone that Desmond handles with Ignacio before anything is relayed. In the fifth session Ignacio says that when he is overwhelmed he has hurt himself a few times. He says he has no plan to end his life and does not want to die. He asks Desmond not to tell his father. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+  },
+  "intro": "<b>Step 4.<\/b> This case has two parts. Part one is the first session’s decision. The facts will change in part two, so your answers here should be ones you can revise. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer at each stage of the path. In the third question two of the options are defensible, so choose the stronger one.",
+  "src": "Module 13, Teens and Their Parents",
+  "items": [
+   {
+    "prompt": "Desmond is identifying who is affected. Which list is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Ignacio alone, the client, with his father’s role treated as over once treatment began"
+     },
+     {
+      "id": "b",
+      "text": "Ignacio, his father, Desmond and his supervisor, the clinic, and Ignacio’s willingness to seek help in future"
+     },
+     {
+      "id": "c",
+      "text": "Ignacio and his father, the two parties to the intake agreement, with the clinic’s protocol and the supervisor outside the case"
+     },
+     {
+      "id": "d",
+      "text": "Ignacio’s father alone, with the minor’s preferences treated as secondary to a parent’s responsibility"
+     }
+    ],
+    "correct": "b",
+    "why": "The stakeholder test asks for everyone with a stake beyond the obvious two. Ignacio’s future trust belongs on the list because it shapes whether he will seek help again. The clinic’s protocol and the supervisor are part of what binds Desmond. A shorter list hides options that serve more of them. In many places parents have legal rights to a minor’s information, and the intake agreement gave the father a part. His interest does not vanish. Standard 3.10(b) has the psychologist consider the minor’s preferences and best interests. The minor’s view is part of the analysis.",
+    "bloom": "analyze",
+    "src": "Module 13, Four Tests From This Course"
+   },
+   {
+    "prompt": "Desmond is locating the standards and the unknowns. Which statement is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "State law only, with the age of consent treated as the one fact that matters and the code silent"
+     },
+     {
+      "id": "b",
+      "text": "The intake agreement only, treated as settling what is shared with the family and what the clinic must do"
+     },
+     {
+      "id": "c",
+      "text": "Standards 3.10(b) and 4.02(a), the intake agreement, and unknowns about consent law and clinic protocol"
+     },
+     {
+      "id": "d",
+      "text": "Standard 3.10(b) only, with assent treated as enough for treatment and the father’s role as advisory"
+     }
+    ],
+    "correct": "c",
+    "why": "The consent side and the limits conversation come from the code, and the legal and policy rules are named as things to check. An agreement is part of the picture. It does not replace law, policy, or the supervisor, and the agreement itself anticipated a gray zone. Assent is a person’s agreement in terms suited to age. The code also asks for permission from a legally authorized person where law permits or requires it. The age and rules vary by state and need checking. The code also bears on consent, assent, limits, and the process.",
+    "bloom": "analyze",
+    "src": "Module 13, Teens and Their Parents"
+   },
+   {
+    "prompt": "Ignacio has hurt himself a few times, has no plan to die, and asks that his father not be told. The intake agreement says serious safety concerns are always shared. Two of these are defensible. Which is stronger?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Handle it as a gray-zone item, build a safety plan with Ignacio, and decide with the supervisor at the next session whether his father needs to hear it"
+     },
+     {
+      "id": "b",
+      "text": "Consult the supervisor today on whether this falls under the always-shared category, tell Ignacio what will happen, and plan with him how his father hears it"
+     },
+     {
+      "id": "c",
+      "text": "Promise Ignacio that nothing will go to his father, and keep the matter private from now on whatever the intake agreement says"
+     },
+     {
+      "id": "d",
+      "text": "Keep the disclosure private under the agreement, reading the always-shared category as covering only plans to end a life"
+     }
+    ],
+    "correct": "b",
+    "why": "The agreement named serious safety concerns as always shared, and repeated self-injury plausibly counts. Deciding now with the supervisor, and bringing Ignacio into how Ulrich is told, keeps the agreement and Ignacio’s trust together. Defensible, since self-injury without intent to die can be handled with the young person first and a review is close. It is weaker because it leaves open for a week whether the always-shared category applies, and the agreement may require Ulrich to be told before then. A promise of secrecy that might have to be broken conflicts with Principle C. The intake agreement also named material that is always shared. That reading narrows the agreement’s words without checking them with the supervisor or the clinic’s protocol. Self-injury is a safety concern even without a plan to die.",
+    "bloom": "evaluate",
+    "src": "Module 13, The Course's Decision Path"
+   },
+   {
+    "prompt": "Which test most clearly supports telling Ignacio what will happen before anything reaches his father?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Stakeholder, because the clinic’s interest in following its agreement outweighs every other interest on the list"
+     },
+     {
+      "id": "b",
+      "text": "Future-self, because a more experienced counselor would let a teenager decide who hears about his safety"
+     },
+     {
+      "id": "c",
+      "text": "Publicity, because Desmond can explain each step openly to Ignacio, to Ulrich, and to his supervisor"
+     },
+     {
+      "id": "d",
+      "text": "Reversibility, because a disclosure to Ulrich can be undone once Ignacio has been told"
+     }
+    ],
+    "correct": "c",
+    "why": "A plan that Desmond could describe to everyone involved passes. Telling Ulrich without Ignacio’s knowledge is the version that would be hard to explain. A disclosure cannot be taken back whether or not Ignacio is told first. Telling him first keeps his trust, and it does not make the disclosure reversible. Experienced counselors give a teenager a real say in how his family is told. They do not hand him the decision when the agreement names safety concerns as shared. The test lists everyone with a stake and does not rank them. It shows that the plan should serve Ignacio and Ulrich together.",
+    "bloom": "analyze",
+    "src": "Module 13, Four Tests From This Course"
+   }
+  ],
+  "revisit": "Reread “Teens and Their Parents” and “Four Tests From This Course.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Case 4: New information, part two",
+  "short": "Case 4, part 2",
+  "tag": "Revise the plan",
+  "case": {
+   "title": "Case 4 (invented): Ignacio, part two",
+   "text": "At the next session, a week later, Ignacio tells Desmond that things are worse. He says he has decided on how he would end his life and that he intends to act this weekend. He is still asking Desmond not to tell his father. Desmond’s supervisor is in the building. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+  },
+  "intro": "<b>Step 5.<\/b> The course’s last stage is to review and revise as the facts change. The facts have changed, so the best option from part one may no longer be the best option. If thoughts of suicide affect you or someone you know, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer. Your answers in part one may differ from the best answers here.",
+  "src": "Module 13, When the Risk Is to the Client",
+  "items": [
+   {
+    "prompt": "Which change in the facts matters most for the option Desmond chose in part one?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Ignacio may refuse the safety plan, a possibility that alone would determine the risk level"
+     },
+     {
+      "id": "b",
+      "text": "Ignacio now reports a plan and an intention to act, a shift to active risk that changes what the sources allow or require"
+     },
+     {
+      "id": "c",
+      "text": "Ignacio’s mood is worse, a change that calls for more frequent sessions and nothing else at this point"
+     },
+     {
+      "id": "d",
+      "text": "Ignacio still asks that his father not be told, a request that now binds Desmond more tightly than it did a week ago"
+     }
+    ],
+    "correct": "b",
+    "why": "The reading says that if the situation moved to an active plan and intent, the facts would shift and so would what the sources allow or require. The request is the same as before. A promise of secrecy that might have to be broken was never the right commitment under Principle C. More contact may help, and it does not respond to a stated plan and intent. The standard steps for an active risk differ. The reported plan and intent change the picture whether or not he cooperates. Cooperation affects what comes next, and it does not remove the new risk.",
+    "bloom": "analyze",
+    "src": "Module 13, When the Risk Is to the Client"
+   },
+   {
+    "prompt": "Which revised option is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Call Ulrich from the hallway without telling Ignacio, ask him to keep an eye on Ignacio, and return to finish the session"
+     },
+     {
+      "id": "b",
+      "text": "End the session politely, email the supervisor tonight with the details, and call Ulrich on Monday morning to tell him"
+     },
+     {
+      "id": "c",
+      "text": "Continue the safety plan as designed, review it at the next session, and ask Ignacio whether anything about it should change before the weekend begins"
+     },
+     {
+      "id": "d",
+      "text": "Stay with Ignacio, bring in the supervisor now, take immediate safety steps under the clinic’s protocol, and tell him what will happen and why"
+     }
+    ],
+    "correct": "d",
+    "why": "The facts moved, so the plan moves with them. Immediate steps include not leaving him alone, asking about access to the means, and arranging emergency help if the protocol calls for it. Ignacio stays informed and keeps real choices where choices exist. The safety plan was built for a lower risk. Staying with a plan that no longer matches the facts risks the outcome the plan was meant to prevent. Ignacio reports an intention to act this weekend. A delay of days does not fit the facts, and the supervisor is available now. Reaching his father may be part of the plan. Acting without telling Ignacio treats the disclosure as a trick, and the reading advises telling the client what must be done and why, when it is safe.",
+    "bloom": "evaluate",
+    "src": "Module 13, When the Risk Is to the Client"
+   },
+   {
+    "prompt": "Which way of telling Ignacio best protects both the alliance and honesty?",
+    "options": [
+     {
+      "id": "a",
+      "text": "“I will not tell your father yet, but if it gets worse you can call 988 and I will check in with you again on Monday morning, okay?”"
+     },
+     {
+      "id": "b",
+      "text": "“Thank you for telling me. With a plan like this, I am bringing in my supervisor and your father, and you can help decide how.”"
+     },
+     {
+      "id": "c",
+      "text": "“I need to think about whether anyone has to be told, and I will get back to you next week once I have looked into it.”"
+     },
+     {
+      "id": "d",
+      "text": "“I have to report this to your father and the clinic, and there is nothing you can do about it, and I do not want to argue.”"
+     }
+    ],
+    "correct": "b",
+    "why": "It acknowledges the person, recalls the limit in a sentence, says what will happen, and offers a real choice. It does not promise what Desmond cannot keep. It states the action and offers no choice and no warmth. Where real choices exist, the reading says to offer them. It delays on a risk with a stated weekend date and leaves Ignacio unsure what Desmond will do. Honesty about what will happen is part of the duty. The 988 line is useful and the reply still leaves an active plan and a date unaddressed. It also repeats a promise that the intake agreement did not support.",
+    "bloom": "evaluate",
+    "src": "Module 13, Talking With a Client About a Limit"
+   },
+   {
+    "prompt": "Which record and review plan is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Record that the session took place and the supervisor was consulted, to protect Ignacio’s privacy"
+     },
+     {
+      "id": "b",
+      "text": "Record the assessment after the weekend, once it is clear how things turned out for Ignacio"
+     },
+     {
+      "id": "c",
+      "text": "Record the assessment, Ignacio’s words about plan and intent, the consultation, the steps taken, and the next review"
+     },
+     {
+      "id": "d",
+      "text": "Record the assessment and also Desmond’s fear and how the session affected him personally that day"
+     }
+    ],
+    "correct": "c",
+    "why": "A risk assessment is recorded in enough detail for a reader to audit it, and the plan sets the review in advance. The record is meant to facilitate later services and ensure compliance with law. A bare note defeats both. The clinician’s own reactions belong in supervision and not in the progress note. The note records observable facts and the clinical judgment. The reasoning is recorded when it is made. Writing later with knowledge of the result misstates what Desmond knew when he chose.",
+    "bloom": "evaluate",
+    "src": "Module 13, The Course's Decision Path"
+   }
+  ],
+  "revisit": "Reread “When the Risk Is to the Client” and “Talking With a Client About a Limit.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "The course’s decision path asks you to name the situation and the client, gather facts, identify the sources that bind the decision, name the values in conflict, generate at least three options including a less drastic one, consult, decide, act, record, and review. The four tests help at the option stage. Publicity asks whether you could explain the choice openly. Reversibility favors the option that can be undone, and a required report can still be right with a higher bar of certainty. The stakeholder test widens the list, and the future-self test steps outside fear. The last case showed why review is part of the path. The best option for a risk with no plan was not the best option once Ignacio reported a plan and an intention. If a client you work with is in danger, a supervisor and your clinic’s protocol come first, and in the United States 988 and 911 are the immediate routes.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every case in it is invented, and no case states the law of any place. Laws differ by state and country, so check your program, your employer, and the law where you work. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

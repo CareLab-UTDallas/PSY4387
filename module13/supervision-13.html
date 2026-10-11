@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Competence, Supervision, and Scope</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Competence, Supervision, and Scope</h1>
+    <p class="sub">Place requests by competence, handle disclosure and consultation, decide whether to proceed, weigh self-care, and justify a choice between two defensible options.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Place each request",
+  "short": "Place requests",
+  "tag": "Competence and scope",
+  "case": {
+   "title": "Training clinic (invented)",
+   "text": "Wilhelmina and her peers are invented trainees at an invented training clinic. Standard 2.01 ties services to the boundaries of competence, which come from education, training, supervised experience, consultation, study, or professional experience. Where the work involves new populations, areas, techniques, or technologies, the psychologist gets relevant training, supervised experience, consultation, or study. The reading adds that where factors such as language are essential to effective service, the psychologist obtains the training, consultation, or supervision or makes a referral."
+  },
+  "intro": "<b>Step 1.<\/b> Place each request. Most of the answers depend on what the trainee has done and what support exists. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the category that best fits the request as described.",
+  "cats": [
+   {
+    "id": "in",
+    "label": "Within competence now"
+   },
+   {
+    "id": "sup",
+    "label": "Needs training, supervision, or consultation first"
+   },
+   {
+    "id": "ref",
+    "label": "Refer or decline"
+   }
+  ],
+  "src": "Module 13, Competence, Supervision, and Scope",
+  "items": [
+   {
+    "text": "In a rural area with no other provider for a hundred miles, a licensed clinician with related training is asked to see a client with a problem outside her usual practice.",
+    "answer": "sup",
+    "why": "Standard 2.01(d) allows services where appropriate mental health services are not available if the clinician makes a reasonable effort to obtain the competence through research, training, consultation, or study.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Wilhelmina has run individual therapy only and is asked to co-lead a group next week. Her supervisor has offered coaching before and after each session.",
+    "answer": "sup",
+    "why": "Standard 2.01(c) calls for supervised experience and consultation when the work is new. The coaching is the support, and the request is workable with it.",
+    "bloom": "apply"
+   },
+   {
+    "text": "Giselle took a weekend workshop on a technique and wants to try it with a client without telling her supervisor.",
+    "answer": "sup",
+    "why": "Standard 2.01(c) asks for training, supervised experience, or consultation when a technique is new. Skipping the supervisor skips the support the standard names.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A client asks her trainee to write a report on her fitness for a custody hearing. The trainee has no forensic training, and no one at the clinic has any.",
+    "answer": "ref",
+    "why": "The request is outside the trainee’s competence and outside the clinic’s services, and no supervision or consultation is available to build the competence. Declining and referring protects the client.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "Dalila has used the clinic’s behavioral activation protocol with three clients under weekly supervision and fidelity checks. A fourth client with a similar presentation is assigned.",
+    "answer": "in",
+    "why": "The work uses an approach Dalila has practiced under supervision on a familiar problem. It falls within the boundaries of competence she has built.",
+    "bloom": "apply"
+   },
+   {
+    "text": "A trainee who has led telehealth sessions under supervision for a semester is assigned a new video client with a presentation like those she has already treated.",
+    "answer": "in",
+    "why": "Standard 2.01(c) asks for preparation when technologies are new to a psychologist. The technology is no longer new to her, and she has supervised experience with this kind of case.",
+    "bloom": "apply"
+   },
+   {
+    "text": "A client’s first language is one the trainee does not speak, and the client says the problem is clearest in that language. The clinic has no interpreter, bilingual supervisor, or bilingual clinician, and none can be arranged this term.",
+    "answer": "ref",
+    "why": "Standard 2.01(b) calls for the training, consultation, or supervision needed to ensure competent service, or an appropriate referral. With no route to any of the three supports, referral is the option that protects the client.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A trainee is asked to run a school-based assessment for which he has had no coursework or supervised practice. The clinic’s assessment supervisor can train him and review each administration before any report goes out.",
+    "answer": "sup",
+    "why": "The work is new to him, and the support the standard names exists. Training and supervised review let him build the competence before any report goes to the school.",
+    "bloom": "analyze"
+   }
+  ],
+  "revisit": "Reread “Competence, Supervision, and Scope.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Disclosure and consultation",
+  "short": "Disclosure",
+  "tag": "What the trainee tells",
+  "case": {
+   "title": "Training clinic (invented)",
+   "text": "Hector is an invented trainee. In one week he forgets to ask a client about risk after the client mentioned feeling hopeless, he is asked by a client whether he is a real therapist, and he receives advice from a clinic consultant that differs from his supervisor’s. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+  },
+  "intro": "<b>Step 2.<\/b> Supervision is where a trainee brings the hardest cases, the doubts, and the mistakes. A mistake brought to a supervisor early becomes a chance to protect the client. The first step is telling the supervisor.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 13, Competence, Supervision, and Scope",
+  "items": [
+   {
+    "prompt": "Hector realizes he did not ask about risk after the client said she felt hopeless. What should he do first?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Tell the supervisor promptly, before the next session, and follow her guidance on contacting the client"
+     },
+     {
+      "id": "b",
+      "text": "Contact the client directly tonight, tell her about the oversight, and apologize before consulting anyone"
+     },
+     {
+      "id": "c",
+      "text": "Wait for the next session to see whether she brings it up, and ask about risk then if she does not raise it"
+     },
+     {
+      "id": "d",
+      "text": "Ask about risk at the next session, and say nothing about the earlier gap to the supervisor or anyone else"
+     }
+    ],
+    "correct": "a",
+    "why": "The reading says the first step is telling the supervisor, and whether and how to tell the client follows from the guidance and the program’s policy. A risk that has not been assessed cannot be weighed. Waiting leaves the gap open and the client unsupported. Telling the client may be right in time. The supervisor’s guidance and the program’s policy shape how, and Hector does not decide alone. The gap is addressed and the supervisor does not hear about it. A mistake that is hidden removes the chance to protect the client and learn.",
+    "bloom": "evaluate",
+    "src": "Module 13, Competence, Supervision, and Scope"
+   },
+   {
+    "prompt": "A client asks Hector, “Are you a real therapist?” What is the best answer?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Say the question is an important one, and ask what worries her about it before answering"
+     },
+     {
+      "id": "b",
+      "text": "Say he is fully qualified, and mention that his program has approved his work with clients"
+     },
+     {
+      "id": "c",
+      "text": "Say he is a therapist in training who is supervised, and give the supervisor’s name"
+     },
+     {
+      "id": "d",
+      "text": "Say he is in training and closely supervised, and offer the supervisor’s name if she asks later"
+     }
+    ],
+    "correct": "c",
+    "why": "Standard 10.01(c) says the client is told the therapist is in training and supervised and is given the supervisor’s name where the supervisor holds legal responsibility for the treatment. Standard 5.01(b) also bars deceptive statements about training. The statement overstates his training. Standard 5.01(b) forbids false or deceptive statements about training, experience, or competence. A general mention is not enough. The standard asks that the client be given the supervisor’s name. Exploring her concern is useful, and it comes after an honest answer. A deflection leaves her uninformed.",
+    "bloom": "analyze",
+    "src": "Module 13, Competence, Supervision, and Scope"
+   },
+   {
+    "prompt": "The consultant’s advice differs from the supervisor’s. What should Hector do?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Follow the consultant, and treat an outside expert’s view as more reliable than the supervisor’s"
+     },
+     {
+      "id": "b",
+      "text": "Follow whichever advice he agrees with, and mention the other adviser’s view later"
+     },
+     {
+      "id": "c",
+      "text": "Decide for himself, and treat the final choice as his alone as the clinician on the case"
+     },
+     {
+      "id": "d",
+      "text": "Bring the difference to the supervisor, who shares responsibility for his clients, and ask how the program wants conflicting advice handled"
+     }
+    ],
+    "correct": "d",
+    "why": "A supervisor holds evaluative authority and shares responsibility for the trainee’s clients, and a consultant advises. Programs set the rules for conflicting advice, so Hector asks and does not choose on his own. A consultant advises. Hector’s supervisor carries evaluative authority and shared responsibility for his clients, and the program decides how the two relate. The consultee keeps responsibility for a decision, and a trainee’s decisions sit within supervision. Setting both advisers aside risks the client. Agreement is not a source. The wish to be comfortable can pull a trainee toward the advice he likes.",
+    "bloom": "evaluate",
+    "src": "Module 13, Competence, Supervision, and Scope"
+   }
+  ],
+  "revisit": "Reread “Competence, Supervision, and Scope.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Deciding to proceed",
+  "short": "To proceed",
+  "tag": "Wilhelmina’s group",
+  "case": {
+   "title": "Case (invented): Wilhelmina’s group",
+   "text": "Wilhelmina has been asked to co-lead a group that starts next week. She has led only individual sessions. Her supervisor will be away for the first two meetings, and the backup supervisor the program lists has not agreed to cover. The group’s members are clients who have waited for a place."
+  },
+  "intro": "<b>Step 3.<\/b> Standard 2.05 has psychologists who delegate work authorize only responsibilities that the person can be expected to perform competently, either independently or with the level of supervision provided. That duty sits with the supervisor and program that assign the work. Wilhelmina’s own duty comes from Standard 2.01(c), which asks for supervised experience and consultation when the work is new. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question. In the first question two of the options are defensible, so choose the stronger one.",
+  "src": "Module 13, Competence, Supervision, and Scope",
+  "items": [
+   {
+    "prompt": "Wilhelmina is deciding what to do. Two of these options are defensible. Which is stronger?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Tell the program before the first meeting that no supervisor will be present, and ask for a backup supervisor who agrees to be reachable by phone during both meetings"
+     },
+     {
+      "id": "b",
+      "text": "Decline the assignment and withdraw from group work, and revisit it next semester"
+     },
+     {
+      "id": "c",
+      "text": "Co-lead as planned, and debrief with her supervisor when she returns"
+     },
+     {
+      "id": "d",
+      "text": "Tell the program before the first meeting that no supervisor will be present, and ask to delay the start or pair with an experienced co-leader"
+     }
+    ],
+    "correct": "d",
+    "why": "Both defensible options bring the gap to the program before the group meets. This one puts supervision or an experienced co-leader in the room during the first meetings, when the group’s norms are being set. Defensible, since the gap reaches the program and a named backup is some support. It is weaker because phone guidance arrives after a problem has appeared, and the group has no one with supervision authority in the room. The supervisor approved the assignment and the members are waiting, and the first meetings still run without the supervision the plan relied on. A problem would be found afterward. Group work is a normal part of developing competence under supervision. Withdrawing altogether is more than the situation requires.",
+    "bloom": "evaluate",
+    "src": "Module 13, Competence, Supervision, and Scope"
+   },
+   {
+    "prompt": "From the supervisor’s side, which question should be answered under Standard 2.05 before authorizing Wilhelmina to co-lead the group?",
+    "options": [
+     {
+      "id": "a",
+      "text": "How long the group members have already waited, because delay is a harm that outweighs further preparation for the first two meetings"
+     },
+     {
+      "id": "b",
+      "text": "Whether the supervision actually available matches the competence the task needs, because the standard turns on the supervision provided"
+     },
+     {
+      "id": "c",
+      "text": "How eager Wilhelmina is to learn the work, because motivation predicts performance in a new setting for a new group leader"
+     },
+     {
+      "id": "d",
+      "text": "Whether the program has a written policy on trainee-led groups, because a written policy settles what a trainee may do on her own"
+     }
+    ],
+    "correct": "b",
+    "why": "The standard binds the psychologist who delegates and turns on the level of supervision provided. Motivation is useful, and it does not substitute for supervision or competence. Wanting to learn does not meet the standard. Delay is a cost and a real one. It does not make an unsupported first group safe. A policy matters and may require supervision. It does not by itself show that the supervision exists.",
+    "bloom": "analyze",
+    "src": "Module 13, Competence, Supervision, and Scope"
+   }
+  ],
+  "revisit": "Reread “Competence, Supervision, and Scope.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Impairment and self-care",
+  "short": "Self-care",
+  "tag": "Florian’s month",
+  "case": {
+   "title": "Case (invented): Florian",
+   "text": "Florian is an invented trainee whose parent died three weeks ago. He is sleeping badly, his attention drifts in sessions, and last week he missed a client’s statement about hopelessness and caught it only on rereading his notes. He wonders whether to push through, because his clients are depending on him. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+  },
+  "intro": "<b>Step 4.<\/b> Standard 2.06(a) has psychologists refrain from initiating an activity when they know or should know there is a substantial likelihood that personal problems will prevent competent performance. Standard 2.06(b) asks for appropriate measures, such as consultation or assistance, and a decision about whether to limit, suspend, or terminate work duties.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 13, Competence, Supervision, and Scope",
+  "items": [
+   {
+    "prompt": "What is the best next step for Florian?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Bring the problem to his supervisor, describe what happened, and decide with her whether to limit his caseload or add support"
+     },
+     {
+      "id": "b",
+      "text": "Push through, and treat his clients’ dependence on him as outweighing his own struggles"
+     },
+     {
+      "id": "c",
+      "text": "Cancel his clients quietly for a few weeks, and tell the supervisor once he is ready to return"
+     },
+     {
+      "id": "d",
+      "text": "Keep seeing clients and ask a close friend for support, and tell the supervisor only if a client complains"
+     }
+    ],
+    "correct": "a",
+    "why": "Standard 2.06(b) names consultation or assistance and a decision about limiting, suspending, or ending duties. A trainee brings the problem to a supervisor. A depleted clinician who pushes through does the client no favors. The missed statement is evidence that the harm is already occurring. He protects clients in the short term and removes the supervisor from decisions about them. Clients also need a transition plan. Personal support is useful, and a supervisor who hears only after a complaint cannot act in time. The standard asks him to take appropriate measures himself.",
+    "bloom": "evaluate",
+    "src": "Module 13, Competence, Supervision, and Scope"
+   },
+   {
+    "prompt": "Which feature of Florian’s situation most strongly signals a substantial likelihood that his personal problems will prevent competent work?",
+    "options": [
+     {
+      "id": "a",
+      "text": "His poor sleep, a risk factor for errors in attention and judgment during client sessions this month"
+     },
+     {
+      "id": "b",
+      "text": "His doubt about whether he can cope, a sign that he already senses a problem with his work"
+     },
+     {
+      "id": "c",
+      "text": "The missed statement about hopelessness, a lapse in the work itself that followed the loss"
+     },
+     {
+      "id": "d",
+      "text": "The death of his parent three weeks ago, a major loss that affects many people’s concentration"
+     }
+    ],
+    "correct": "c",
+    "why": "The standard concerns personal problems that prevent competent performance. An observed lapse in the work is the clearest sign. Grief is a risk factor. The code asks about the effect on performance, and a clinician may keep working with support. Poor sleep raises the chance of errors. The standard looks at whether personal problems will prevent competent work, and the lapse already shows that. Doubt is a reason to consult. It does not show that performance has suffered.",
+    "bloom": "analyze",
+    "src": "Module 13, Competence, Supervision, and Scope"
+   }
+  ],
+  "revisit": "Reread “Competence, Supervision, and Scope.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Choose and justify, part one",
+  "short": "Choose",
+  "tag": "Quentin’s trauma work",
+  "case": {
+   "title": "Case (invented): Quentin",
+   "text": "Mirela is an invented trainee. Her client Quentin is making progress on anxiety, and he has now said he wants to start trauma-focused work on an event from his past. Mirela has read about trauma-focused treatment and attended one workshop, and she has not delivered it. The clinic has a consultant with trauma training, Mirela’s supervisor meets with her weekly, and Quentin does not describe the event as urgent."
+  },
+  "intro": "<b>Step 5.<\/b> The last two steps work together. First choose between two defensible options. Then choose the elements of a written justification that would hold up in supervision. The summary at the end gives a model justification to compare with your own thinking. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Two of the options are defensible. Choose the stronger one.",
+  "src": "Module 13, Competence, Supervision, and Scope",
+  "items": [
+   {
+    "prompt": "Which option is stronger?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Continue the anxiety work for now, and raise trauma-focused work again at the end of the training year"
+     },
+     {
+      "id": "b",
+      "text": "Arrange training and weekly consultation with the trauma consultant, and begin the work only when the supervisor and the consultant agree she is ready"
+     },
+     {
+      "id": "c",
+      "text": "Begin trauma-focused work next week from the workshop materials, and tell the supervisor afterward"
+     },
+     {
+      "id": "d",
+      "text": "Consult the trauma consultant and the supervisor now, and if they agree, refer Quentin to a clinician trained in trauma-focused work with pretermination counseling"
+     }
+    ],
+    "correct": "b",
+    "why": "Both defensible options start by consulting the people who know the work. Standard 2.01(c) names training, supervised experience, consultation, and study, and this plan builds competence while keeping the alliance and the progress Quentin is making. Defensible, since a trainee may refer and the consultation comes first. It is weaker here because the support to build competence exists, Quentin is progressing, and the event is not urgent, so ending the alliance has a cost that the other plan avoids. It becomes the stronger option if the consultant judges that training would take too long. A weekend workshop is not supervised experience. The work would start without the support Standard 2.01(c) names. The plan avoids unsupported work and leaves Quentin’s stated goal waiting with no plan for building the competence in the meantime.",
+    "bloom": "evaluate",
+    "src": "Module 13, Competence, Supervision, and Scope"
+   }
+  ],
+  "revisit": "Reread “Competence, Supervision, and Scope.”"
+ },
+ {
+  "type": "multi",
+  "title": "Choose and justify, part two",
+  "short": "Justify",
+  "tag": "A defensible justification",
+  "case": {
+   "title": "Case (invented): Quentin, continued",
+   "text": "Mirela writes the justification for her choice to bring to supervision. Seven candidate elements are listed. The elements that belong are those that a supervisor, a board, or Quentin could read and follow."
+  },
+  "intro": "<b>Step 6.<\/b> A defensible justification states the criterion, the evidence, the alternatives considered, and what the clinician cannot know. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "prompt": "Select every element that belongs in a strong justification for Mirela’s choice.",
+  "doThis": "Select the elements, then check your answer.",
+  "options": [
+   {
+    "id": "a",
+    "label": "The competence gap, including that Mirela has read about the treatment and attended one workshop but has not delivered it"
+   },
+   {
+    "id": "x1",
+    "label": "Quentin’s wish to start the work, offered as the reason Mirela is ready to begin it"
+   },
+   {
+    "id": "b",
+    "label": "The support planned, including what the consultant reviews and what the supervisor reviews"
+   },
+   {
+    "id": "x2",
+    "label": "The supervisor’s approval, with no description of what the supervisor will review"
+   },
+   {
+    "id": "c",
+    "label": "The alternative considered, referral, and the reasons it was judged weaker given the available support and Quentin’s progress"
+   },
+   {
+    "id": "x3",
+    "label": "A plan to start trauma-focused sessions next week and review her competence after the first month"
+   },
+   {
+    "id": "d",
+    "label": "What would change the plan, such as the consultant becoming unavailable, and how Quentin will be told about her training status and her supervisor’s name"
+   }
+  ],
+  "truth": [
+   "a",
+   "b",
+   "c",
+   "d"
+  ],
+  "reasons": {
+   "a": "Present. A defensible decision states what the clinician cannot yet do, which is the basis for the support that follows.",
+   "b": "Present. The justification names who supports what, so a reader can see how the supervision matches the work.",
+   "c": "Present. Naming the alternative and why it was weaker shows the reasoning and keeps referral available.",
+   "d": "Present. A plan states what would change it and keeps Quentin informed as Standard 10.01(c) calls for.",
+   "x1": "Not present. Quentin’s wish bears on the treatment goal. It does not show that Mirela is competent to deliver the work, which Standard 2.01(c) ties to training, supervised experience, consultation, or study.",
+   "x2": "Not present. Supervision supports competence only when it is described. An approval with no stated review leaves a reader unable to see what supports the work.",
+   "x3": "Not present. Standard 2.01(c) asks for the preparation before the services begin. Reviewing competence after a month of sessions reverses that order."
+  },
+  "src": "Module 13, Competence, Supervision, and Scope",
+  "bloom": "evaluate",
+  "revisit": "Reread “Competence, Supervision, and Scope.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "Competence is built through education, training, supervised experience, consultation, and study, and it is judged against what the supervision actually provided can support. A trainee brings errors and doubts to a supervisor early, tells clients about training status and the supervisor’s name, and keeps consultation and supervision distinct. Personal problems that threaten competent work go to the supervisor under Standard 2.06. <b>A model justification<\/b> for Mirela’s choice follows. “Quentin wants trauma-focused work. I have read about it and attended one workshop and have not delivered it, so I am not yet competent to begin alone. The clinic has a consultant with trauma training, and Quentin is progressing and not in urgent need. I will continue the current work, complete training, meet the consultant weekly, and review recordings with my supervisor and the consultant. I will begin when both agree I can deliver it with that support. Referral is the alternative, and I judged it weaker because it ends a working alliance when support exists. If the consultant becomes unavailable, I will revisit referral. Quentin knows I am in training and who my supervisor is. I cannot know whether training will go as planned, so I will review the plan each month.”",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every case in it is invented, and no case states the law of any place. Laws differ by state and country, so check your program, your employer, and the law where you work. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

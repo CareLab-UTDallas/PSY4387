@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confidentiality and Its Limits</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Confidentiality and Its Limits</h1>
+    <p class="sub">Sort disclosures by route, say what to check when the answer depends on the jurisdiction, and work through teen, telehealth, writing, and risk situations.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Inside or outside the limits",
+  "short": "Inside or outside",
+  "tag": "Leif’s week",
+  "case": {
+   "title": "A clinic’s week (invented)",
+   "text": "Leif is an invented trainee at an invented clinic, and the situations below come from his first weeks. The code has two routes for disclosure. One is consent from the client or another legally authorized person. The other applies without consent, only as mandated by law or where permitted by law for a valid purpose. Laws differ by state and country, so a disclosure on the second route also needs a legal check where the clinic operates."
+  },
+  "intro": "<b>Step 1.<\/b> Place each disclosure under the route that fits, or mark it as outside the limits as described. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the route that best fits what is described.",
+  "cats": [
+   {
+    "id": "cons",
+    "label": "Consent route (4.05(a))"
+   },
+   {
+    "id": "law",
+    "label": "Without consent, mandated by law or permitted by law for a valid purpose (4.05(b))"
+   },
+   {
+    "id": "out",
+    "label": "Outside the limits as described"
+   }
+  ],
+  "src": "Module 13, The Two-Part Question",
+  "items": [
+   {
+    "text": "The legal guardian of a ten-year-old client signs a release for the clinic to send a treatment summary to the child’s school counselor.",
+    "answer": "cons",
+    "why": "Standard 4.05(a) names consent from another legally authorized person on behalf of the client. The guardian’s signed release is the consent route, and the summary is limited to what the school counselor needs.",
+    "bloom": "apply"
+   },
+   {
+    "text": "A client has a past-due balance and was told in writing that collection is next. The billing office gives a collection agency only her name, the amount owed, and the dates of service, and the clinic has confirmed that local law permits this.",
+    "answer": "law",
+    "why": "Obtaining payment is a valid purpose under 4.05(b)(4), and the disclosure is limited to the minimum necessary. No consent is involved, so the route is the second one with the legal check done.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A client asks her therapist to send her college dean a letter confirming attendance and signs a release naming the dean and the purpose.",
+    "answer": "cons",
+    "why": "A release that names a recipient and a purpose is the usual consent route. The therapist sends only what the purpose needs.",
+    "bloom": "apply"
+   },
+   {
+    "text": "A therapist tells her spouse at dinner about an unusual client, leaving out the name but mentioning the client’s employer and a news story the client was in.",
+    "answer": "out",
+    "why": "No consent, no legal basis, and no professional purpose. Standard 4.04(b) allows discussing confidential information only for appropriate professional purposes and with persons clearly concerned, and the employer and the news story could identify the client.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A trainee posts a lightly changed story from a session on a personal blog, changing only the client’s first name, in a small town where the client’s job is unusual.",
+    "answer": "out",
+    "why": "Standard 4.07 requires reasonable steps to disguise the person, written consent, or legal authorization. A changed first name in a small town may not disguise anyone.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A client who plans to seriously harm a named person tells her therapist so, and after consulting the supervisor the therapist contacts the person where the jurisdiction’s law permits.",
+    "answer": "law",
+    "why": "Protecting others from harm is a valid purpose under 4.05(b)(3), and the code says it applies only where permitted by law. Whether the law requires, permits, or is silent varies by jurisdiction.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "A client arrives confused and unable to answer questions, and the therapist gives the paramedics her diagnosis and medication list so they can treat her. The clinic has confirmed that local law permits this.",
+    "answer": "law",
+    "why": "No consent is available in the moment, so the route is the second one. Providing needed professional services and protecting the client from harm are valid purposes under 4.05(b), and the law check has been done.",
+    "bloom": "analyze"
+   },
+   {
+    "text": "The mother of an adult client phones and asks the therapist what her daughter talks about in sessions, because she is worried.",
+    "answer": "out",
+    "why": "The mother has no consent from the client and no stated legal basis. Her worry, however sincere, does not supply either route.",
+    "bloom": "apply"
+   }
+  ],
+  "revisit": "Reread “The Two-Part Question.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Teens, telehealth, and writing",
+  "short": "Teens and telehealth",
+  "tag": "Say what to check",
+  "case": {
+   "title": "Three situations (invented)",
+   "text": "Each situation below has a part the reading does not settle and a part the clinician should check. The best answer says what to check or whom to ask, and it does not state a rule for any one place."
+  },
+  "intro": "<b>Step 2.<\/b> A clinician who cannot answer from the sources names what to find out. The reading’s jurisdiction caveat applies to every item. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Choose the best answer to each question. In the last question two of the options are defensible, so choose the stronger one.",
+  "src": "Module 13, Teens and Their Parents",
+  "items": [
+   {
+    "prompt": "Cormac, the father of a fifteen-year-old client named Sorin, phones and asks what Sorin says in sessions. Which response is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Check the intake agreement, the clinic’s policy, and the law on parents’ access, and talk with Sorin before saying anything to Cormac"
+     },
+     {
+      "id": "b",
+      "text": "Tell Cormac what Sorin said, and treat a teen’s trust as secondary to a parent’s right to a minor’s information, whatever the intake agreement says"
+     },
+     {
+      "id": "c",
+      "text": "Tell Cormac nothing and keep the call from Sorin, treating a teen’s therapy as private in every respect"
+     },
+     {
+      "id": "d",
+      "text": "Refer the call to the receptionist and note it in the chart, treating the question as one for administration"
+     }
+    ],
+    "correct": "a",
+    "why": "The reading describes three categories agreed at the start and says the age of consent and what parents may see differ by state. The reading says in many places parents have legal rights, and it also says rules differ. A flat rule for every place is not supported, and the intake agreement matters. The agreement named some information that is always shared, and Sorin has a say in what is handled in the gray zone. A call that is concealed from him costs trust. The question is clinical as well as administrative. It needs a clinician’s answer based on the agreement and the law.",
+    "bloom": "analyze",
+    "src": "Module 13, Teens and Their Parents"
+   },
+   {
+    "prompt": "Leif’s video client says she has joined the session from her aunt’s house in another state, where she is staying for the week. What should Leif settle about this session?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Check that licensing law allows it, and confirm that her insurer covers sessions delivered across state lines"
+     },
+     {
+      "id": "b",
+      "text": "Check that the platform is secure, and confirm that her consent form was signed before she traveled"
+     },
+     {
+      "id": "c",
+      "text": "Confirm her exact address for an emergency, and confirm that the platform meets the clinic’s security standard for sessions with clients who are traveling"
+     },
+     {
+      "id": "d",
+      "text": "Check that licensing law allows him to see a client in that state, and confirm her exact address in case an emergency response is needed"
+     }
+    ],
+    "correct": "d",
+    "why": "The reading says whether a clinician may practice with a client in another state depends on licensing law and should be checked before the first session. It also says a clinician working by video needs to know where the client is in case an emergency response is necessary. Both checks apply, and the reading does not rank one above the other. Licensing is one of the two checks the reading names. Coverage is a practical question that may arise later, and it leaves out the emergency location. The address matters because an emergency response may be needed. Platform security matters too, and the answer leaves out whether licensing law permits the session at all. Consent covers the platform and its risks, and security is worth checking. Neither answers whether Leif may practice with a client in another state or where to send help.",
+    "bloom": "analyze",
+    "src": "Module 13, Telehealth and Digital Tools"
+   },
+   {
+    "prompt": "A video client lowers her voice and says her roommate can probably hear her. What is the best response, according to the reading’s telehealth guidance?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Move the conversation to text for the rest of the session, and continue from there"
+     },
+     {
+      "id": "b",
+      "text": "Continue as planned, and leave the privacy risk with a client who chose to take the session at home"
+     },
+     {
+      "id": "c",
+      "text": "Pause to ask about privacy and work out a plan with her, such as another room or headphones, and note the discussion"
+     },
+     {
+      "id": "d",
+      "text": "End the session at once and require in-person visits from now on"
+     }
+    ],
+    "correct": "c",
+    "why": "Standard 4.02(c) asks psychologists who offer services by electronic transmission to inform clients of the risks to privacy and the limits of confidentiality. The problem is addressed with the client. The clinician shares responsibility for informing clients about risks to privacy. Ignoring the roommate leaves the risk unaddressed. The step is drastic, and it goes beyond what the risk requires. A less drastic option exists in the session. Text brings its own risks to privacy and security. The reading lists text among tools that raise the risk of unintended breaches.",
+    "bloom": "evaluate",
+    "src": "Module 13, Telehealth and Digital Tools"
+   },
+   {
+    "prompt": "Katarina wants to use a client’s story in a class case paper. Standard 4.07 allows this when the psychologist takes reasonable steps to disguise the person, has the person’s written consent, or has legal authorization. Two of these are defensible. Which is stronger?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Submit the paper as written after checking program policy, with a note asking the instructor to keep it confidential"
+     },
+     {
+      "id": "b",
+      "text": "Ask the client for written consent after checking program policy and the supervisor, and share the paper with the client first"
+     },
+     {
+      "id": "c",
+      "text": "Write a composite that no one in the client’s town could trace, after checking program policy and the supervisor"
+     },
+     {
+      "id": "d",
+      "text": "Change the client’s name only, after checking program policy and the supervisor, and tell the instructor"
+     }
+    ],
+    "correct": "c",
+    "why": "It takes the disguise route without asking a current client for a favor, and it checks the program’s rules. The paper is also reviewed by someone who knows the setting. Defensible, because the standard names written consent and sharing the paper is careful. It is weaker because the request comes from someone with a power advantage, so the client may feel unable to refuse, and the request enters the therapy. In a small setting a distinctive story can identify someone, so a new name may not be a reasonable step. A promise by the instructor does not satisfy the standard. The paper itself must be disguised, consented to, or legally authorized.",
+    "bloom": "evaluate",
+    "src": "Module 13, Writing About Clients"
+   }
+  ],
+  "revisit": "Reread “Teens and Their Parents,” “Telehealth and Digital Tools,” and “Writing About Clients.”"
+ },
+ {
+  "type": "mcq",
+  "title": "Risk to others and to the client",
+  "short": "Risk situations",
+  "tag": "Ask or check",
+  "case": {
+   "title": "Three risk situations (invented)",
+   "text": "Leif’s client Thaddeus says in an angry session that he would like to hit his landlord. No plan or means has been mentioned. Another client, an adult, tells Leif that an uncle abused her as a child and still coaches a children’s team. A third, an adult named Marisol, says she has had thoughts of not wanting to be alive, with no plan and no intention, and asks that her parents not be told. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+  },
+  "intro": "<b>Step 3.<\/b> Duty to protect and mandatory reporting are legal terms, and neither appears in the code. A clinician starts with assessment and then asks what the law, the clinic’s policy, and a supervisor say. Whether a duty exists, and how it is met, varies by jurisdiction.",
+  "doThis": "Choose the best answer to each question.",
+  "src": "Module 13, When a Client Threatens Someone",
+  "items": [
+   {
+    "prompt": "Which response best fits Thaddeus’s statement?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Ask about specificity, plan, means, and history, recall the limits, consult the supervisor, and ask what law and policy require"
+     },
+     {
+      "id": "b",
+      "text": "Treat it as venting, do nothing further, and note that the code names no duty to warn"
+     },
+     {
+      "id": "c",
+      "text": "Tell Thaddeus the session cannot continue until he promises not to act, and resume after the promise"
+     },
+     {
+      "id": "d",
+      "text": "Treat it as a confirmed threat, call the landlord today, and tell the supervisor afterward"
+     }
+    ],
+    "correct": "a",
+    "why": "The reading says a statement of rage is not automatically a threat. Assessment comes first, and the legal question is settled with the people who know the law. The reading says the duty is narrow in some formulations and starts with assessment. A duty to warn is not triggered by every statement. The code’s silence returns the question to law and judgment. Whether a legal duty exists varies by jurisdiction. A promise substitutes for assessment, and conditioning the session on it risks the alliance and ends the work when the client is most in need.",
+    "bloom": "evaluate",
+    "src": "Module 13, When a Client Threatens Someone"
+   },
+   {
+    "prompt": "Regarding the uncle who still coaches a children’s team, which response is best?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Tell the client she must report her uncle herself, and treat the clinic’s role as listening"
+     },
+     {
+      "id": "b",
+      "text": "Ask about the uncle’s current access to children, consult the supervisor, and check the reporting rules and program policy"
+     },
+     {
+      "id": "c",
+      "text": "Treat it as the client’s history only, and note that the code has no standard on reporting it"
+     },
+     {
+      "id": "d",
+      "text": "Report to the authorities at once, and tell the supervisor and the client what was done afterward"
+     }
+    ],
+    "correct": "b",
+    "why": "The reading says a central question is whether a current child may be at risk, and the answer depends on the facts and the law. Who must report, what, and to whom vary by jurisdiction. A trainee also checks what a trainee must personally do. The code names no reporting duty, and the law may. A current child’s possible risk is a fact to explore. The statement assigns a legal duty to the client without checking whether any duty exists or whom it binds.",
+    "bloom": "evaluate",
+    "src": "Module 13, Mandatory Reporting"
+   },
+   {
+    "prompt": "Marisol asks Leif not to tell her parents. What should Leif check and do?",
+    "options": [
+     {
+      "id": "a",
+      "text": "Tell her parents the same day, treating the code as requiring disclosure when a client reports thoughts of not wanting to be alive, even with no plan"
+     },
+     {
+      "id": "b",
+      "text": "Assess thoughts, plan, and means, review the limits discussed, involve the protocol and supervisor, and check the law on disclosure"
+     },
+     {
+      "id": "c",
+      "text": "Wait to see whether she raises the thoughts again, treating a single mention as too little to act on"
+     },
+     {
+      "id": "d",
+      "text": "Promise to keep it from her parents and handle it alone, treating her adult status as settling the request"
+     }
+    ],
+    "correct": "b",
+    "why": "The code permits disclosure to protect the client from harm only where permitted by law, and the law varies. The protocol and supervisor guide a trainee. A promise of secrecy that may have to be broken conflicts with Principle C, and a trainee does not handle a risk alone. The code names no self-harm exception. Disclosure without consent needs a legal mandate, or legal permission plus a valid purpose. A risk that has not been assessed cannot be weighed. A careful assessment is itself ethical practice.",
+    "bloom": "evaluate",
+    "src": "Module 13, When the Risk Is to the Client"
+   }
+  ],
+  "revisit": "Reread “When a Client Threatens Someone,” “When the Risk Is to the Client,” and “Mandatory Reporting.”"
+ },
+ {
+  "type": "multi",
+  "title": "Say what to check",
+  "short": "What to check",
+  "tag": "Thaddeus and the landlord",
+  "case": {
+   "title": "Case: Thaddeus, continued (invented)",
+   "text": "After assessment, Leif finds that Thaddeus’s statement was an angry feeling with no plan, no means, and no history of violence, and that Thaddeus can name what set it off. Leif is still a trainee and does not know the law in his setting."
+  },
+  "intro": "<b>Step 4.<\/b> The reading says a trainee records the unknown as an unknown to settle by consulting. Choose what Leif should check or do before deciding whether any action beyond the treatment is called for. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "prompt": "Select every item Leif should check or do.",
+  "doThis": "Select the items, then check your answer.",
+  "options": [
+   {
+    "id": "a",
+    "label": "Whether the law where the clinic operates requires or permits protective action, how specific the threat and the person must be, and what satisfies the duty"
+   },
+   {
+    "id": "x1",
+    "label": "Which standard of the code lists the steps for a duty to warn"
+   },
+   {
+    "id": "b",
+    "label": "The clinic’s written protocol and the supervisor’s direction on a statement like this"
+   },
+   {
+    "id": "x2",
+    "label": "How a nearby state with a mandatory rule treats statements like this"
+   },
+   {
+    "id": "c",
+    "label": "What Thaddeus was told about the limits of confidentiality at the start of treatment"
+   },
+   {
+    "id": "x3",
+    "label": "Whether a written no-harm agreement from Thaddeus would settle the question"
+   },
+   {
+    "id": "d",
+    "label": "How he will record the assessment, the consultation, and the reasoning, and when the assessment will be reviewed"
+   }
+  ],
+  "truth": [
+   "a",
+   "b",
+   "c",
+   "d"
+  ],
+  "reasons": {
+   "a": "Present. States differ on whether protection is required or permitted, on how specific the threat and the victim must be, and on what actions satisfy the duty.",
+   "b": "Present. Employers and programs usually add a protocol, and a trainee follows it with a supervisor.",
+   "c": "Present. Standard 4.02 asks the clinician to discuss limits at the outset, and what Thaddeus was told shapes how Leif speaks with him now.",
+   "d": "Present. The reasoning is recorded whether or not action follows, and the decision is reviewed as facts change.",
+   "x1": "Not present. The code names no duty to warn. The term is legal, and the code’s side is Standard 4.05(b)(3), which applies only where permitted by law.",
+   "x2": "Not present. Laws differ by jurisdiction and change over time, so another state’s rule does not tell Leif what applies where he works.",
+   "x3": "Not present. A written promise stands in for the assessment and settles nothing about the law or the risk. The reading names assessment, law, protocol, and supervision."
+  },
+  "src": "Module 13, When a Client Threatens Someone",
+  "bloom": "evaluate",
+  "revisit": "Reread “When a Client Threatens Someone.”"
+ }
+];
+var SUMMARY = {
+ "title": "What you traced",
+ "takeaway": "The question of whether a clinician may tell runs in order. The clinician checks whether law mandates or permits the disclosure here. A legal mandate answers both parts of the question, and a disclosure that law only permits also needs a valid purpose under Standard 4.05(b). Consent opens the other route, and the release should cover the recipient and the topic. Duty to protect, mandatory reporting, and privilege are legal ideas that vary by place, and the code names none of them. Assessment comes first. The clinician then checks the law, the licensing board, the program’s policy, and the supervisor’s direction, and records unknowns as unknowns. For teens, telehealth, and writing about clients, the same habit applies. Say what you would check and whom you would ask.",
+ "note": "This activity scores only the machine-checkable items, and nothing is saved or sent. Every case in it is invented, and no case states the law of any place. Laws differ by state and country, so check your program, your employer, and the law where you work. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>
