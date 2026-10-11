@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claim Court: Four Claims on Trial</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --study-bg:#f2f4f8; --study-line:#c9d4e6; --study-ink:#2f4a72;
+    --tool-bg:#f3eef7; --tool-ink:#6d4a86; --tool-line:#d8c7e6;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .stagetabs{display:flex;gap:0;margin:16px 0 6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .stagetabs button{flex:1 1 0;border:none;background:#fff;padding:11px 10px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.25;}
+  .stagetabs button+button{border-left:1px solid var(--line);}
+  .stagetabs button[aria-selected="true"]{background:var(--accent);color:#fff;}
+  .stagetabs button:disabled{color:#b7b2a9;cursor:not-allowed;}
+  .stagetabs button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .stagetabs .sn{display:block;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+  .stagetabs .stt{display:block;font-weight:600;font-size:13px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:12px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .intro{background:var(--study-bg);border:1px solid var(--study-line);color:var(--study-ink);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;margin-bottom:16px;}
+  .intro b{font-weight:700;}
+
+  /* toolkit cards */
+  .toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  @media(max-width:620px){ .toolgrid{grid-template-columns:1fr;} }
+  .tool{border:1px solid var(--tool-line);background:var(--tool-bg);border-radius:12px;padding:13px 15px;}
+  .tool h3{margin:0 0 4px;font-size:14px;color:var(--tool-ink);}
+  .tool p{margin:0;font-size:13px;line-height:1.55;}
+  .tool .ask{margin-top:7px;font-size:12.5px;font-style:italic;color:var(--muted);}
+
+  .study{background:var(--study-bg);border:1px solid var(--study-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;}
+  .study .slabel{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--study-ink);background:#fff;border-radius:7px;padding:3px 9px;margin-bottom:8px;}
+  .study .sbody{font-size:14px;line-height:1.6;}
+  .study .sbody b{font-weight:700;}
+  .study .datarow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .study .chip{font-size:12px;background:#fff;border:1px solid var(--study-line);border-radius:7px;padding:4px 10px;color:var(--study-ink);}
+
+  .difficulty{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:6px;padding:3px 9px;display:inline-block;margin-bottom:10px;}
+  .difficulty.mod{background:var(--amber-bg);color:var(--amber-ink);}
+  .difficulty.hard{background:var(--no-bg);color:var(--no-ink);}
+
+  .qprompt{font-size:15px;line-height:1.5;margin:14px 0 12px;font-weight:600;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt .ol{font-weight:700;margin-right:7px;color:var(--muted);}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fnote{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+  .fnote .tool-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:#fff;border-radius:6px;padding:2px 8px;margin-bottom:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 6px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.62;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Claim Court: Four Claims on Trial</h1>
+    <p class="sub">Judging whether the evidence supports a claim takes different skills from knowing the terms. Seven tools frame the questions to ask. Four claims follow, each with two questions, one on the best reading and one on the check that would most change the conclusion. Claims A, B, and C are constructed for practice and every number in them is invented. Claim D's flyer is constructed and is not a quotation from any paper, and one chip in Claim D summarizes a real published abstract. If anything in these cases affects you personally, you can call or text 988 at any hour, and in an emergency you can call 911.</p>
+  </div>
+
+  <div class="stagetabs" id="tabs" role="tablist"></div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+</div>
+
+<script>
+// Appraisal toolkit and constructed studies (not real publications; nothing here should be cited as a finding).
+var TOOLS = [
+ {
+  "name": "Compared to what?",
+  "body": "A single group that improves shows what happened to that group. A claim that one plan beat another needs a comparison in which the other plan was given to similar people.",
+  "ask": "Was the thing the headline says it beat actually in the study?"
+ },
+ {
+  "name": "Who was counted?",
+  "body": "Results from people who finished describe a selected group. A claim about everyone who starts needs the outcomes of everyone who started, including the people who left.",
+  "ask": "Out of how many who began, and what happened to the rest?"
+ },
+ {
+  "name": "What the design can show",
+  "body": "A pilot can show whether a plan is feasible and acceptable. A link between two measures in people who chose their own habits is an association, and it cannot show which came first.",
+  "ask": "Could this design support the verb in the claim, such as works, beats, or makes?"
+ },
+ {
+  "name": "Average or individual?",
+  "body": "An average describes a group and can hide the people at both ends. Whether one person changed more than measurement noise is a separate question, answered one person at a time.",
+  "ask": "How many people changed reliably, and how many got worse?"
+ },
+ {
+  "name": "Who ran it and who paid",
+  "body": "Developers and funders who run a study have a stake in how it turns out. That calls for a higher standard and for independent checking. It does not show that the result is false.",
+  "ask": "Who had a stake, and has anyone independent repeated it?"
+ },
+ {
+  "name": "Size and who was in it",
+  "body": "A small group gives imprecise estimates, and a result describes the people enrolled. A bigger sample would sharpen the estimate and would leave the design's limits where they were.",
+  "ask": "Would a larger sample fix the problem, or is the problem the design?"
+ },
+ {
+  "name": "Match the check to the claim",
+  "body": "Many checks could improve a study. The one that matters most is the one that bears on the exact sentence being claimed.",
+  "ask": "Which single check could change what this sentence is allowed to say?"
+ }
+];
+
+var ITEMS = [
+ {
+  "diff": "mod",
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO4",
+   "PLO2",
+   "N-CT"
+  ],
+  "modules": [
+   9,
+   11,
+   14
+  ],
+  "topic": "Conference poster that formulation-matched care outperformed standard care, from a case series compared with another study's average",
+  "study": {
+   "label": "Claim A (constructed), question 1 of 2",
+   "body": "A poster abstract at a regional conference concludes, \"Formulation-matched care outperformed standard care.\" It describes a constructed case series at one training clinic. A supervisor chose each adult's plan by matching it to the process she judged was keeping the problem going, such as avoidance or withdrawal. Every client received a matched plan for ten weeks. The poster sets the clinic's average change beside the average change printed in a published trial of a standard protocol. All numbers are invented.",
+   "data": [
+    "28 adults began the series and 19 had scores at week 10 (invented)",
+    "Average symptom score of the 19 fell 9 points on a 0 to 40 scale (invented)",
+    "The published standard-protocol trial reported a 6-point fall, and its participants had milder symptoms at intake (invented)",
+    "No client at the clinic received a standard protocol, and there was no follow-up after week 10"
+   ]
+  },
+  "prompt": "Which appraisal of the poster's conclusion is most defensible?",
+  "answer": "d",
+  "tool": "Compared to what?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The conclusion is supported, because a 9-point fall is larger than the 6-point fall in the standard-protocol trial, which shows that matching did better",
+    "fb": "A larger fall in one group than in another study's group does not show a better method. The two groups differed in starting severity, setting, and who was counted, and the 9-point fall was never set against what similar people would have shown under the standard protocol."
+   },
+   {
+    "id": "b",
+    "text": "The series shows little, because a study of 28 people at one clinic says nothing about feasibility or change, so it should be set aside",
+    "fb": "A case series can still say something about feasibility and about change among those who finished, which is what a first look at a method is for. The conclusion overreaches, and the data are not useless. Setting everything aside replaces appraisal with suspicion."
+   },
+   {
+    "id": "c",
+    "text": "The conclusion is contradicted, because 9 of the 28 clients left before week 10, which shows that matched care is harder to finish than standard care",
+    "fb": "Nine departures describe completion at this clinic. The poster gives no completion figure for standard care, so no comparison exists in either direction. The missing nine also leave the 9-point fall uncertain, since people who leave may differ from those who stay."
+   },
+   {
+    "id": "d",
+    "text": "The series describes change among the 19 who finished, and a comparison with another study's average cannot show that matching beat standard care",
+    "fb": "The poster sets one clinic's finishers beside a figure from a different study. The people differed, since the published participants began with milder symptoms, nine clients are uncounted, and no one at the clinic received the standard protocol. The gap could come from who was enrolled, who stayed, and how scores were collected. The series can still describe change among those who finished. Matching remains a reasoned method, and the course sources do not report a trial in which it beat a standard protocol."
+   }
+  ],
+  "rvtxt": "Module 11, What a Pilot Can and Cannot Show | Module 11, The Fair Test: Why We Need Comparison and Control"
+ },
+ {
+  "diff": "hard",
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO4",
+   "PLO2",
+   "N-CT"
+  ],
+  "modules": [
+   11,
+   14
+  ],
+  "topic": "The check that would most change a beats-claim from a case series (a concurrent comparison arm counted for everyone)",
+  "study": {
+   "label": "Claim A (constructed), question 2 of 2",
+   "body": "The same constructed case series of formulation-matched care. The poster's conclusion says the matched plan \"outperformed standard care.\" All numbers are invented.",
+   "data": [
+    "28 adults began and 19 had week-10 scores (invented)",
+    "Average drop among the 19: 9 points on a 0 to 40 scale (invented)",
+    "The comparison figure, a 6-point fall, came from a published trial of a standard protocol with milder intake symptoms (invented)",
+    "No client at the clinic received a standard protocol, the series ran at one clinic, and there was no follow-up"
+   ]
+  },
+  "prompt": "Which single check would most change what the conclusion is allowed to say?",
+  "answer": "d",
+  "tool": "Match the check to the claim",
+  "options": [
+   {
+    "id": "a",
+    "text": "Whether the nine who left were younger than the nineteen who finished, because age might explain who stayed in the series",
+    "fb": "Whether the leavers were younger bears on who stayed in this series, and age is a smaller issue than the missing comparison. A full account of who left would still leave the claim about standard care untested."
+   },
+   {
+    "id": "b",
+    "text": "Whether the 9-point fall was still present six months later, because a lasting fall would show that matching beat standard care",
+    "fb": "A fall that lasts six months would be better evidence of durability. A lasting change in one group still cannot show that the plan did better than the alternative, because no alternative was in the series."
+   },
+   {
+    "id": "c",
+    "text": "Whether the supervisor's fit ratings were high for the clients who finished, because good fit would show that the matching was done correctly",
+    "fb": "A good-fit rating describes the supervisor's judgment of the plan and says nothing about how standard care would have gone. It could be high in a method that does no better than the alternative."
+   },
+   {
+    "id": "d",
+    "text": "Whether similar adults at the same clinic were given a standard protocol, with outcomes counted for everyone who started in both groups",
+    "fb": "The conclusion compares two plans, so the check that matters most is one in which the second plan was given to similar people at the same time and everyone who started is counted. Only then can a gap between the plans be separated from differences in who was enrolled and who stayed."
+   }
+  ],
+  "rvtxt": "Module 11, The Fair Test: Why We Need Comparison and Control | Module 11, Levels of Evidence"
+ },
+ {
+  "diff": "mod",
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO4",
+   "PLO2",
+   "N-CT"
+  ],
+  "modules": [
+   1,
+   11,
+   15
+  ],
+  "topic": "Developer page that a digital program is clinically proven for anyone who starts it (completers, waitlist, developer-run)",
+  "study": {
+   "label": "Claim B (constructed), question 1 of 2",
+   "body": "A page from the maker of ClearPath, an invented program, says, \"ClearPath is clinically proven to reduce anxiety for anyone who starts it.\" It cites one randomized trial written up by the company's own research staff. All numbers are invented.",
+   "data": [
+    "200 adults randomized, 100 to ClearPath and 100 to a waitlist (invented)",
+    "ClearPath arm: 62 of 100 completed the program and 38 stopped early (invented)",
+    "Waitlist arm: 91 of 100 gave final scores (invented)",
+    "Analysis compared the 62 ClearPath completers with the waitlist group, g = 0.50 (invented)",
+    "Authors are company employees and no independent replication is cited"
+   ]
+  },
+  "prompt": "Which appraisal of the page is most defensible?",
+  "answer": "b",
+  "tool": "Who was counted?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The claim is contradicted, because 38 of 100 stopped early, which shows that ClearPath fails the people who start it and should be withdrawn",
+    "fb": "Thirty-eight early stops raise a question about acceptability. They say nothing yet about whether the program fails those people, because their outcomes are not shown. A missing result cannot be read as a poor one."
+   },
+   {
+    "id": "b",
+    "text": "The trial points to benefit among completers compared with waiting, and \"anyone who starts it\" goes beyond a completers-only developer-run result",
+    "fb": "The comparison group is a waitlist, so the result shows benefit over waiting among the 62 who completed. Dropping the 38 who stopped breaks the balance that random assignment created, and \"anyone who starts it\" describes all 100. A developer-run trial also calls for independent replication, as the allegiance effect in Module 1 describes."
+   },
+   {
+    "id": "c",
+    "text": "The claim is supported, because random assignment to ClearPath or the waitlist guarantees that the result holds for everyone who starts the program",
+    "fb": "Random assignment protects a comparison only when everyone assigned is counted. The analysis left out 38 of the 100 assigned to ClearPath, so the groups compared are no longer the groups that were randomized."
+   },
+   {
+    "id": "d",
+    "text": "The trial can be set aside, because the company's own staff wrote it and a developer-run trial has little value as evidence of benefit",
+    "fb": "A developer-run trial calls for a higher standard of evidence and for independent replication. It does not make the trial uninformative. The more specific problem here is the completers-only analysis."
+   }
+  ],
+  "rvtxt": "Module 11, Reading a Trial Critically | Module 1, A Bias to Watch: The Allegiance Effect"
+ },
+ {
+  "diff": "hard",
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO4",
+   "PLO2",
+   "N-CT"
+  ],
+  "modules": [
+   11,
+   15
+  ],
+  "topic": "The check that would most change a clinically proven claim (outcomes for everyone assigned to the program)",
+  "study": {
+   "label": "Claim B (constructed), question 2 of 2",
+   "body": "The same constructed trial of ClearPath, an invented program. The page's sentence is \"clinically proven to reduce anxiety for anyone who starts it.\" All numbers are invented.",
+   "data": [
+    "100 adults assigned to ClearPath, of whom 62 completed and 38 stopped early (invented)",
+    "100 adults assigned to the waitlist, of whom 91 gave final scores (invented)",
+    "Reported effect compares the 62 completers with the waitlist, g = 0.50 (invented)"
+   ]
+  },
+  "prompt": "Which single check matters most for the sentence \"for anyone who starts it\"?",
+  "answer": "b",
+  "tool": "Match the check to the claim",
+  "options": [
+   {
+    "id": "a",
+    "text": "Whether the waitlist group's scores also fell a little on their own, because that would show the waitlist is a fair comparison",
+    "fb": "A waitlist group that improves a little would change the size of the effect. It leaves the missing 38 where they were, and the sentence is about everyone who starts."
+   },
+   {
+    "id": "b",
+    "text": "How the 100 people assigned to ClearPath did when all of them are counted, including the 38 who stopped early",
+    "fb": "The sentence concerns everyone who starts, so the outcomes of all 100 people assigned to the program, with those who stopped early included, decide whether it holds."
+   },
+   {
+    "id": "c",
+    "text": "Whether the company's research staff hold shares in the company, because ownership would show that the result is false",
+    "fb": "Ownership of shares gives a reason to want independent replication. It does not establish that the result is false, and it does not bear on who was counted."
+   },
+   {
+    "id": "d",
+    "text": "Whether an effect of 0.50 is called medium in the field, because the label decides whether the program works",
+    "fb": "Calling an effect medium describes its size. It does not address who was counted, and a label cannot decide whether a program works."
+   }
+  ],
+  "rvtxt": "Module 11, Reading a Trial Critically | Module 11, Putting It Together: Evaluating a Treatment Claim"
+ },
+ {
+  "diff": "mod",
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO3",
+   "CSLO4",
+   "PLO2",
+   "N-CT"
+  ],
+  "modules": [
+   11,
+   12,
+   13
+  ],
+  "topic": "University counseling center report that average distress fell 2.4 points, with individual change and missing end-of-term scores hidden",
+  "study": {
+   "label": "Claim C (constructed), question 1 of 2",
+   "body": "A university counseling center's annual report says, \"Our program works. Student distress scores fell by 2.4 points on average.\" The center uses an invented 0 to 30 distress scale where lower is better, the standard deviation is 4, and the reliability is .90, so by the Module 11 method the smallest reliable change is about 3.5 points. Everything below is invented for this activity.",
+   "data": [
+    "210 students filled out the scale at their first visit, and 150 filled it out again at the end of term, so 60 have no end-of-term score (invented)",
+    "Of the 150: 61 dropped by 4 or more points, 74 changed by 3 points or less in either direction, and 15 rose by 4 or more points (invented)",
+    "Average change among the 150 was a drop of 2.4 points (invented)",
+    "The report does not describe the 60 students without an end-of-term score"
+   ]
+  },
+  "prompt": "Which appraisal of the report is most defensible?",
+  "answer": "c",
+  "tool": "Average or individual?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The report is supported, because an average drop of 2.4 points shows that most students improved by an amount they would notice in daily life on campus and in class",
+    "fb": "An average of 2.4 does not say how change was spread. Many students changed little, and some got worse. Whether a change would be noticed in daily life is a question about clinical significance, and the average does not answer it."
+   },
+   {
+    "id": "b",
+    "text": "The report is contradicted, because the average drop is below 3.5 points, which shows that no student changed reliably on this scale during the term",
+    "fb": "The 3.5-point line applies to each student's own change, so an average below it does not show that no student crossed it. Here 61 did. The average also does not show that most students improved."
+   },
+   {
+    "id": "c",
+    "text": "The average hides spread, since about four in ten of the 150 changed reliably for the better, one in ten for the worse, and 60 have no end-of-term score",
+    "fb": "An average describes the group and the counts describe the students. Sixty-one of 150 (about four in ten) passed the reliable change line for improvement, 74 stayed within noise, and 15 (one in ten) got reliably worse. The report is silent about the 60 without an end-of-term score. The 15 who got worse are also the students whose plans deserved review at the time, as measurement-based care describes."
+   },
+   {
+    "id": "d",
+    "text": "The report is acceptable if a p-value is added, because statistical significance would show that the program worked for each student who took part",
+    "fb": "A p-value describes chance in the group result under an assumption of no effect. It leaves each student's own change unanswered, and it cannot say whether the program worked for any one of them."
+   }
+  ],
+  "rvtxt": "Module 11, Reliable Change, Step by Step | Module 12, Measurement-Based Care: The Loop"
+ },
+ {
+  "diff": "hard",
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO3",
+   "CSLO4",
+   "PLO2",
+   "N-CT"
+  ],
+  "modules": [
+   11,
+   12,
+   13
+  ],
+  "topic": "The check that would most change a center's works-claim (accounting for students with no end-of-term score)",
+  "study": {
+   "label": "Claim C (constructed), question 2 of 2",
+   "body": "The same constructed center report, \"Our program works. Student distress scores fell by 2.4 points on average,\" on the invented 0 to 30 scale where the smallest reliable change is about 3.5 points. All numbers are invented.",
+   "data": [
+    "210 students had a first score, 150 had an end-of-term score, and 60 had none (invented)",
+    "Among the 150: 61 reliably better, 74 unchanged within noise, 15 reliably worse (invented)",
+    "The report gives no information about the 60 students without an end-of-term score"
+   ]
+  },
+  "prompt": "Which single check would most change what the report can say?",
+  "answer": "a",
+  "tool": "Who was counted?",
+  "options": [
+   {
+    "id": "a",
+    "text": "How the 60 students without an end-of-term score were doing, and whether the share who changed reliably still holds when they are counted",
+    "fb": "Sixty of 210 students are missing from the result, and students who stop coming are often the ones who did not benefit, so the picture could change a good deal once they are counted. The report's claim concerns the whole program, so the check has to reach everyone who started."
+   },
+   {
+    "id": "b",
+    "text": "Whether the center's starting average is higher than the starting averages at other campus centers, because a higher start would explain why the average dropped",
+    "fb": "A different starting average at other centers would bear on comparisons between centers, which the report does not make. The claim concerns what happened to this center's students."
+   },
+   {
+    "id": "c",
+    "text": "Whether the 2.4-point average drop is statistically significant, because significance shows whether the drop matters to the students",
+    "fb": "Statistical significance concerns chance in the group result. It does not tell you whether the change matters to a student, which reliable change and clinical significance address, and it does not account for the missing 60."
+   },
+   {
+    "id": "d",
+    "text": "Whether the students rated their satisfaction highly, because satisfied students are the ones whose scores fell the most during the term",
+    "fb": "Satisfaction and outcome are separate measures, and satisfied students can still have unchanged scores. A satisfaction rating does not show who was counted."
+   }
+  ],
+  "rvtxt": "Module 11, Reading a Trial Critically | Module 11, Reliable Change, Step by Step"
+ },
+ {
+  "diff": "mod",
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO1",
+   "CSLO4",
+   "PLO2",
+   "N-CT"
+  ],
+  "modules": [
+   12,
+   11,
+   1
+  ],
+  "topic": "Workshop flyer that deliberate practice makes therapists more effective, from one small self-selected sample",
+  "study": {
+   "label": "Claim D, question 1 of 2",
+   "body": "A workshop flyer, constructed for this activity and not a quotation from any paper, reads, \"Research shows that deliberate practice makes therapists more effective. In one study, the therapists who spent the most time on skill practice had the best client outcomes. Register today.\" The study details below are invented to match the flyer. The last item is a real source, summarized from its published abstract for comparison.",
+   "data": [
+    "In the invented study, 17 therapists reported their weekly hours of skill practice, and each therapist's clients were followed for symptom change",
+    "In the invented study, the therapists chose how much to practice, and no one was assigned an amount",
+    "Real source for comparison, Chow et al., 2015, Psychotherapy, 52(3), 337-345. Its abstract reports 69 therapists and 4,580 clients. In a subsample of 17 therapists, years of experience did not predict outcome and time spent on skill-targeted work did"
+   ]
+  },
+  "prompt": "Which appraisal of the flyer is most defensible?",
+  "answer": "c",
+  "tool": "What the design can show",
+  "options": [
+   {
+    "id": "a",
+    "text": "The flyer overreaches mainly because of the small sample, and the same finding in 70 therapists would show that practice causes better outcomes",
+    "fb": "A larger sample with the same choices would sharpen the estimate and leave the same limit in place. Therapists would still have chosen their own practice hours, so the order of cause would stay unknown."
+   },
+   {
+    "id": "b",
+    "text": "The flyer is false, because a claim that rests on a sample as small as 17 therapists is wrong by definition and should be dropped",
+    "fb": "A small sample gives imprecise estimates and does not make a claim false. The flyer's problem is the verb, which asks more of the design than an association can give."
+   },
+   {
+    "id": "c",
+    "text": "An association among 17 self-selected therapists cannot show that practice makes them more effective, because the design does not show cause",
+    "fb": "Therapists chose how much to practice, so the design shows that practice time and outcomes went together. It cannot show that practice produced the better outcomes, because therapists who already had good results may have been the ones who practiced more, and the data do not show which came first. The word makes needs a design that can separate those stories. The real abstract reports an association in a subsample of 17 therapists, and the flyer's verb outruns evidence of this type."
+   },
+   {
+    "id": "d",
+    "text": "The flyer is supported, because the therapists who practiced most had the best outcomes, and that ordering shows practice came first and caused the difference",
+    "fb": "The ordering by practice hours shows an association. It does not show which came first, and therapists who already had good outcomes may have chosen to practice more. A cause needs a design that separates those stories."
+   }
+  ],
+  "rvtxt": "Module 11, Putting It Together: Evaluating a Treatment Claim | Module 1, Becoming a Careful Reader of Claims"
+ },
+ {
+  "diff": "hard",
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO1",
+   "CSLO4",
+   "PLO2",
+   "N-CT"
+  ],
+  "modules": [
+   12,
+   11
+  ],
+  "topic": "The check that would most change a causal claim about practice (assigned or chosen, and which came first)",
+  "study": {
+   "label": "Claim D, question 2 of 2",
+   "body": "The same constructed flyer, \"Research shows that deliberate practice makes therapists more effective,\" which is not a quotation from any paper. The study details are invented.",
+   "data": [
+    "In the invented study, 17 therapists reported their weekly hours of skill practice",
+    "The therapists chose their own hours and no one was assigned an amount (invented)",
+    "The therapists with the best outcomes also had the highest practice hours (invented)"
+   ]
+  },
+  "prompt": "Which single check would most change what the flyer is allowed to say?",
+  "answer": "a",
+  "tool": "Match the check to the claim",
+  "options": [
+   {
+    "id": "a",
+    "text": "Whether practice time was assigned or chosen, and whether therapists who already had good outcomes were the ones who chose to practice more",
+    "fb": "The sentence uses the verb makes, so the check that matters is whether the design can separate practice causing outcomes from good outcomes leading to more practice. Knowing whether practice was assigned or chosen, and which came first, bears directly on that."
+   },
+   {
+    "id": "b",
+    "text": "Whether most of the 17 therapists said they would recommend the workshop to colleagues, because their recommendations show that practice works",
+    "fb": "A therapist's recommendation of a workshop reports satisfaction. It does not show that practice improves client outcomes."
+   },
+   {
+    "id": "c",
+    "text": "Whether the flyer's author is a licensed clinician with years of experience, because credentials decide whether a study's design is sound",
+    "fb": "An author's license says little about the design of the study. A sound design can come from someone without a license, and a weak one from someone with many credentials."
+   },
+   {
+    "id": "d",
+    "text": "Whether client improvement was reported in points or in percentages, because the unit decides whether practice matters for the clients' scores",
+    "fb": "Points and percentages are two ways to report one result, and neither bears on cause. The unit does not decide whether practice matters."
+   }
+  ],
+  "rvtxt": "Module 11, Putting It Together: Evaluating a Treatment Claim | Module 11, The Fair Test: Why We Need Comparison and Control"
+ }
+];
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var stage="toolkit", idx=0, answers=[];
+
+function init(){ answers=ITEMS.map(function(){return null;}); stage="toolkit"; idx=0; render(); }
+
+function renderTabs(){
+  var host=document.getElementById("tabs"); host.innerHTML="";
+  [["toolkit","Stage 1","The appraisal toolkit"],["appraise","Stage 2","Appraise the studies"]].forEach(function(t){
+    var b=el("button"); b.setAttribute("role","tab"); b.setAttribute("aria-selected",String(stage===t[0]));
+    var locked = t[0]==="appraise" && !toolkitSeen;
+    b.disabled=locked;
+    b.innerHTML='<span class="sn">'+esc(t[1])+'</span><span class="stt">'+esc(t[2])+'</span>';
+    if(!locked) b.addEventListener("click", function(){ stage=t[0]; render(); });
+    host.appendChild(b);
+  });
+}
+var toolkitSeen=false, focusNext=false;
+
+function renderProgress(){
+  if(stage==="toolkit"){ document.getElementById("pbarfill").style.width="0%"; document.getElementById("pcount").textContent="Toolkit"; }
+  else { var d=answers.filter(function(x){return x!==null;}).length; document.getElementById("pbarfill").style.width=(d/ITEMS.length*100)+"%"; document.getElementById("pcount").textContent="Question "+Math.min(idx+1,ITEMS.length)+" of "+ITEMS.length; }
+}
+
+function render(){ renderTabs(); renderProgress(); if(stage==="toolkit") renderToolkit(); else renderAppraise(); }
+
+function renderToolkit(){
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("div","intro","<b>Seven tools for judging a claim.</b> Each names a question a careful reader asks of any study. You will use these by name in the next stage, so read the question each one poses."));
+  var grid=el("div","toolgrid");
+  TOOLS.forEach(function(t){
+    var c=el("div","tool");
+    c.appendChild(el("h3",null,esc(t.name)));
+    c.appendChild(el("p",null,esc(t.body)));
+    c.appendChild(el("div","ask","Ask: "+esc(t.ask)));
+    grid.appendChild(c);
+  });
+  p.appendChild(grid);
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var b=el("button","btn","Start appraising \u2192");
+  b.addEventListener("click", function(){ toolkitSeen=true; stage="appraise"; idx=0; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  foot.appendChild(b); p.appendChild(foot);
+}
+
+function renderAppraise(){
+  var it=ITEMS[idx], chosen=answers[idx];
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("span","difficulty "+(it.diff==="hard"?"hard":"mod"), it.diff==="hard"?"Harder":"Moderate"));
+  var st=el("div","study");
+  st.appendChild(el("span","slabel", it.study.label));
+  st.appendChild(el("div","sbody", it.study.body));
+  var dr=el("div","datarow"); it.study.data.forEach(function(d){ dr.appendChild(el("span","chip", esc(d))); }); st.appendChild(dr);
+  p.appendChild(st);
+  p.appendChild(el("div","qprompt", esc(it.prompt)));
+  var opts=el("div","opts");
+  it.options.forEach(function(o){
+    var b=el("button","opt"); b.type="button";
+    var tg=""; if(chosen!==null){ if(o.id===it.answer) tg=' <b>(best reading'+(o.id===chosen?', your choice':'')+')</b>'; else if(o.id===chosen) tg=' <b>(your choice)</b>'; }
+    b.innerHTML='<span class="ol">'+esc(o.id.toUpperCase())+'</span>'+esc(o.text)+tg;
+    if(chosen!==null){
+      b.disabled=true;
+      if(o.id===chosen) b.classList.add(o.id===it.answer?"correct-pick":"wrong-pick");
+      else if(o.id===it.answer) b.classList.add("show-correct");
+      else b.classList.add("dim");
+    } else { b.addEventListener("click", function(){ answers[idx]=o.id; focusNext=true; render(); }); }
+    opts.appendChild(b);
+  });
+  p.appendChild(opts);
+  if(chosen!==null){
+    var right=chosen===it.answer;
+    var note=el("div","fnote "+(right?"ok":"no"));
+    var po=null, ko=null; it.options.forEach(function(o){ if(o.id===chosen) po=o; if(o.id===it.answer) ko=o; });
+    note.innerHTML='<span class="tool-tag">'+esc(it.tool)+'</span><br>'+(right?"<b>Sound appraisal.</b> ":"<b>Not the strongest reading.</b> ")+"<b>Your reasoning.</b> "+esc(po.fb)+(right?"":"<br><br><b>The best reading.</b> "+esc(ko.fb)+"<br><br>Revisit: "+esc(it.rvtxt));
+    p.appendChild(note);
+  }
+  var foot=el("div","foot");
+  var back=el("button","btn secondary","\u2190 Back"); back.disabled=idx===0;
+  back.addEventListener("click", function(){ if(idx>0){idx--;render();} }); foot.appendChild(back);
+  var next=el("button","btn"); var last=idx===ITEMS.length-1; next.disabled=chosen===null;
+  next.innerHTML=last?"See results":"Next question \u2192";
+  next.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+  foot.appendChild(next); p.appendChild(foot);
+  if(focusNext){ focusNext=false; try{ next.focus(); }catch(e){} }
+}
+
+function finish(){
+  var correct=0; ITEMS.forEach(function(it,i){ if(answers[i]===it.answer) correct++; });
+  var p=document.getElementById("cardPanel"); p.innerHTML=""; p.className="card results";
+  p.appendChild(el("h2",null,"Appraisal complete"));
+  p.appendChild(el("p","score","You chose the best-supported reading on <b>"+correct+" of "+ITEMS.length+"</b> questions."));
+  p.appendChild(el("p",null,"In each hard case the conclusion claimed more than the design could support, because the studies lacked a comparison, a mechanism measure, or a way to establish order in time."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Review the toolkit"); again.addEventListener("click", function(){ stage="toolkit"; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  var retry=el("button","btn","Try the questions again"); retry.addEventListener("click", function(){ init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); act.appendChild(retry); p.appendChild(act);
+  p.appendChild(el("div","selfnote","This activity runs entirely on your own screen. Nothing you select is saved, sent, or seen by anyone. The studies here are constructed for practice."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>

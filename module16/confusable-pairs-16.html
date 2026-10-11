@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confusable Pairs Sort</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Confusable Pairs Sort</h1>
+    <p class="sub">Twelve pairs of neighboring ideas, three new cards each. Sort each card into the idea it describes and read why the neighbor does not fit.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "classify",
+  "title": "Pair 1",
+  "short": "Pair 1",
+  "tag": "Pair 1 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "a",
+    "label": "Cognitive reappraisal"
+   },
+   {
+    "id": "b",
+    "label": "Expressive suppression"
+   }
+  ],
+  "items": [
+   {
+    "text": "At a chaotic accident scene a paramedic keeps her face and voice level while her heart pounds, and she shakes in the ambulance bay afterward.",
+    "answer": "b",
+    "why": "She held back the outward signs of a feeling after it had started, which is suppression. The restraint helped at the scene, and the shaking afterward shows the inner state was unchanged. Reappraisal would have changed her reading of the scene."
+   },
+   {
+    "text": "A waiter smiles through a customer's insult and says nothing, though he feels furious and replays the exchange all evening.",
+    "answer": "b",
+    "why": "The outward smile covers a feeling that continues inside, which is suppression, and the evening of replaying shows the cost. Reappraisal would have altered how he read the insult before the anger built."
+   },
+   {
+    "text": "Before a performance review, an employee tells herself that her manager's terse tone probably reflects a rushed morning, and she walks in feeling steadier.",
+    "answer": "a",
+    "why": "She changed the meaning she gave the situation before the feeling built, which is reappraisal. Nothing in the card involves hiding a feeling that was already running, so suppression does not fit."
+   }
+  ],
+  "src": "Module 7, Two Strategies Worth Knowing Well: Reappraisal and Suppression",
+  "revisit": "Revisit Module 7, Two Strategies Worth Knowing Well: Reappraisal and Suppression.",
+  "bloom": "analyze",
+  "intro": "<b>Twelve pairs of ideas that are easy to confuse.<\/b> Each pair has three new cards. Sort each card into the idea it describes. Every scene is invented and no card repeats a sentence from the readings. A card you miss comes back at the end of its pair for half credit. If anything in these cards affects you personally, you can call or text 988 at any hour, or call 911 in an emergency."
+ },
+ {
+  "type": "classify",
+  "title": "Pair 2",
+  "short": "Pair 2",
+  "tag": "Pair 2 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "b",
+    "label": "Punishment"
+   },
+   {
+    "id": "a",
+    "label": "Negative reinforcement"
+   }
+  ],
+  "items": [
+   {
+    "text": "A student leaves the study room the moment a loud group arrives, feels relief, and soon leaves earlier and earlier.",
+    "answer": "a",
+    "why": "Leaving is growing because it ends an unpleasant situation and brings relief, which is negative reinforcement. The direction of the behavior is the quickest check. Strengthened means reinforcement, and weakened means punishment."
+   },
+   {
+    "text": "A cashier is snapped at in front of customers each time she miscounts change, and she begins to miscount less often.",
+    "answer": "b",
+    "why": "Miscounting is shrinking because an unpleasant consequence follows it. That is punishment. The word negative in negative reinforcement refers to something being removed, and nothing is removed here."
+   },
+   {
+    "text": "A teenager turns down his stereo whenever his father starts to shout, finds the shouting stops, and now turns it down sooner each time.",
+    "answer": "a",
+    "why": "Turning down the stereo is growing, and it grows because it removes something unpleasant, the shouting. That is negative reinforcement. Punishment would show the behavior shrinking."
+   }
+  ],
+  "src": "Module 2, Audio Overview: Negative Reinforcement Versus Punishment | Module 5, How Behavior Gets Trained: Reinforcement Up Close",
+  "revisit": "Revisit Module 2, Audio Overview: Negative Reinforcement Versus Punishment | Module 5, How Behavior Gets Trained: Reinforcement Up Close.",
+  "bloom": "analyze"
+ },
+ {
+  "type": "classify",
+  "title": "Pair 3",
+  "short": "Pair 3",
+  "tag": "Pair 3 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "a",
+    "label": "Empathy"
+   },
+   {
+    "id": "b",
+    "label": "Unconditional positive regard"
+   }
+  ],
+  "items": [
+   {
+    "text": "A counselor says, \"It sounds as if you felt invisible while everyone talked over you,\" and the client nods and says, \"Yes, exactly that.\"",
+    "answer": "a",
+    "why": "The counselor accurately sensed the client's experience and conveyed it back, which is empathy. The card describes understanding the experience and does not describe accepting the person while disagreeing with an act."
+   },
+   {
+    "text": "A therapist notices a client's voice flatten when she mentions her mother, names the change gently, and asks whether she has understood it correctly.",
+    "answer": "a",
+    "why": "Sensing the client's inner state, saying it, and checking the accuracy is empathy. It is a perceptual skill, and it is separate from the steady acceptance that unconditional positive regard describes."
+   },
+   {
+    "text": "A client arrives forty minutes late for the fourth time and snaps that therapy is a waste of money. The counselor greets him with the same warm interest as at the first visit, asks about his week, and keeps the session to its scheduled end.",
+    "answer": "b",
+    "why": "Her warmth does not change with his lateness or his sharp remark, which is unconditional positive regard. She still holds the session boundary, so acceptance of the person is separate from approval of every action. Empathy would be an accurate reflection of his experience, and the card centers on steady acceptance."
+   }
+  ],
+  "src": "Module 3, Empathy | Module 2, Micro-Explainer: Unconditional Positive Regard",
+  "revisit": "Revisit Module 3, Empathy | Module 2, Micro-Explainer: Unconditional Positive Regard.",
+  "bloom": "analyze"
+ },
+ {
+  "type": "classify",
+  "title": "Pair 4",
+  "short": "Pair 4",
+  "tag": "Pair 4 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "a",
+    "label": "Equifinality"
+   },
+   {
+    "id": "b",
+    "label": "Multifinality"
+   }
+  ],
+  "items": [
+   {
+    "text": "Two siblings lose their home in the same flood. One develops lasting anxiety, and the other recovers quickly and shows little distress.",
+    "answer": "b",
+    "why": "One shared starting point leads to different outcomes, which is multifinality. Protective factors and resilience are part of the explanation. Equifinality would describe different routes arriving at one outcome."
+   },
+   {
+    "text": "Three coworkers meet criteria for the same sleep problem. One reached it after a divorce, one after a change to night shifts, and one after a long illness.",
+    "answer": "a",
+    "why": "Different starting points lead to the same endpoint, which is equifinality. Multifinality would start from one shared starting point and end in different places."
+   },
+   {
+    "text": "Four children are bullied in the same first-grade class. Years later one has depression, one has a substance problem, one is doing well, and one has an anxiety disorder.",
+    "answer": "b",
+    "why": "The same early experience is followed by several different outcomes, which is multifinality. A single risk factor does not fix one outcome."
+   }
+  ],
+  "src": "Module 7, Why the Same Start Leads to Different Ends | Module 14, Same Outcome, Different Paths",
+  "revisit": "Revisit Module 7, Why the Same Start Leads to Different Ends | Module 14, Same Outcome, Different Paths.",
+  "bloom": "analyze"
+ },
+ {
+  "type": "classify",
+  "title": "Pair 5",
+  "short": "Pair 5",
+  "tag": "Pair 5 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "a",
+    "label": "Habituation account of exposure"
+   },
+   {
+    "id": "b",
+    "label": "Inhibitory learning account of exposure"
+   }
+  ],
+  "items": [
+   {
+    "text": "A clinician has the client state a feared prediction, run the exposure without props, and compare what happened with the prediction, and the clinician does not require the distress rating to fall.",
+    "answer": "b",
+    "why": "Testing a specific prediction, removing safety behaviors, and letting reality contradict the fear describes the inhibitory learning account. The habituation account would wait for anxiety to wear down in the room."
+   },
+   {
+    "text": "A clinician has a client practice holding a small rubber snake in the office, in a garden, and at a friend's house, at different times of day, reasoning that a new safe memory has to compete with the old fear memory under many conditions.",
+    "answer": "b",
+    "why": "Spreading practice across conditions so that a safe memory can compete with the old fear memory is the inhibitory learning account. The habituation account has no competing memory, because it holds that the fear itself wears away with repeated exposure in one place."
+   },
+   {
+    "text": "A clinician judges whether an exposure worked by checking whether the client's distress rating has fallen by the end of the hour.",
+    "answer": "a",
+    "why": "Counting a drop in anxiety within the session as the sign of success is the habituation account. The inhibitory learning account treats that drop as optional and looks at whether a feared prediction was contradicted."
+   }
+  ],
+  "src": "Module 9, Inhibitory Learning in Exposure | Module 5, Extinction: How Old Fears Get Rewritten",
+  "revisit": "Revisit Module 9, Inhibitory Learning in Exposure | Module 5, Extinction: How Old Fears Get Rewritten.",
+  "bloom": "analyze"
+ },
+ {
+  "type": "classify",
+  "title": "Pair 6",
+  "short": "Pair 6",
+  "tag": "Pair 6 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "a",
+    "label": "Rumination"
+   },
+   {
+    "id": "b",
+    "label": "Worry"
+   }
+  ],
+  "items": [
+   {
+    "text": "He keeps asking what the dentist's remark about his gums means for his health in five years, then what if it means surgery, then what if he cannot pay.",
+    "answer": "b",
+    "why": "Each question points forward and opens another what-if, which is worry. Both worry and rumination are repetitive and passive, and the time focus is what separates them."
+   },
+   {
+    "text": "She lies awake running through what happens if the shipment arrives late, if the client cancels, and if the contract falls through.",
+    "answer": "b",
+    "why": "A chain of what-if questions aimed at the future is worry. Rumination would revisit what already happened and ask why."
+   },
+   {
+    "text": "At 2 a.m. he asks himself why he always ruins things, and he goes over a conversation from last month.",
+    "answer": "a",
+    "why": "Passive dwelling on the past, driven by unanswerable why-questions, is rumination. Worry looks ahead and runs on what-if chains."
+   }
+  ],
+  "src": "Module 7, Rumination: When Thinking Feels Like Coping but Isn't | Module 9, Where Anxiety and Depression Overlap",
+  "revisit": "Revisit Module 7, Rumination: When Thinking Feels Like Coping but Isn't | Module 9, Where Anxiety and Depression Overlap.",
+  "bloom": "analyze"
+ },
+ {
+  "type": "classify",
+  "title": "Pair 7",
+  "short": "Pair 7",
+  "tag": "Pair 7 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "b",
+    "label": "Process measure"
+   },
+   {
+    "id": "a",
+    "label": "Outcome measure"
+   }
+  ],
+  "items": [
+   {
+    "text": "A clinic gives every client a depression questionnaire every two weeks and plots the totals.",
+    "answer": "a",
+    "why": "A symptom total shows whether the person is improving on what brought them in, which is an outcome measure. It does not show whether a specific mechanism is the part that is changing."
+   },
+   {
+    "text": "A counselor asks a client who ruminates to log the minutes each evening that he spends replaying the day.",
+    "answer": "b",
+    "why": "Minutes of replaying track the targeted process directly, which is a process measure. It tells the counselor whether the process is moving, and an outcome measure would tell how he is doing overall."
+   },
+   {
+    "text": "A counselor asks a client who is working on avoidance to count how many times each week she approached a place she used to skip.",
+    "answer": "b",
+    "why": "The count tracks the mechanism the treatment targets, which is a process measure. An outcome measure would track her symptoms or functioning."
+   }
+  ],
+  "src": "Module 14, Checking the Gauges | Module 10, Measuring Whether the Process Is Moving",
+  "revisit": "Revisit Module 14, Checking the Gauges | Module 10, Measuring Whether the Process Is Moving.",
+  "bloom": "analyze"
+ },
+ {
+  "type": "classify",
+  "title": "Pair 8",
+  "short": "Pair 8",
+  "tag": "Pair 8 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "a",
+    "label": "Statistical significance"
+   },
+   {
+    "id": "b",
+    "label": "Clinical significance"
+   }
+  ],
+  "items": [
+   {
+    "text": "A trial of 4,000 people finds a drop of half a point on a 60-point scale, and a difference that large would almost never arise if the program did nothing.",
+    "answer": "a",
+    "why": "The card reports how surprising the difference would be under no effect, which is statistical significance. With a large sample a tiny difference can pass that test, so it says nothing about whether anyone's life changed."
+   },
+   {
+    "text": "A client's score leaves the band where most people in treatment score and lands in the band where most people living ordinary lives score, and she returns to work.",
+    "answer": "b",
+    "why": "A change large enough to matter in her daily life, shown by crossing into the range of people functioning well, is clinical significance. A p-value would not tell you that."
+   },
+   {
+    "text": "A report states that a difference this large would arise by chance fewer than five times in a hundred if the program had no effect.",
+    "answer": "a",
+    "why": "That is the usual convention for statistical significance, a statement about chance. It leaves effect size and real-life importance untouched, which clinical significance addresses."
+   }
+  ],
+  "src": "Module 11, Real vs. Meaningful: Statistical and Clinical Significance | Module 11, Reliable Change, Step by Step",
+  "revisit": "Revisit Module 11, Real vs. Meaningful: Statistical and Clinical Significance | Module 11, Reliable Change, Step by Step.",
+  "bloom": "analyze"
+ },
+ {
+  "type": "classify",
+  "title": "Pair 9",
+  "short": "Pair 9",
+  "tag": "Pair 9 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "b",
+    "label": "Effectiveness"
+   },
+   {
+    "id": "a",
+    "label": "Efficacy"
+   }
+  ],
+  "items": [
+   {
+    "text": "A study tests the same treatment in ordinary clinics, with regular staff, regular caseloads, and clients who have several problems at once.",
+    "answer": "b",
+    "why": "Testing under ordinary conditions is an effectiveness question. The trade-off is less control and more resemblance to everyday practice."
+   },
+   {
+    "text": "A health system reviews results from twelve community clinics to see whether a treatment's benefit holds with clients who would have been excluded from the original trial.",
+    "answer": "b",
+    "why": "The question is whether the treatment holds up where most therapy happens, which is effectiveness. A well-controlled efficacy result does not by itself predict that."
+   },
+   {
+    "text": "A trial screens out clients with other diagnoses, uses closely supervised therapists, and follows a manual strictly to find out whether the treatment is able to produce an effect when everything is arranged in its favor.",
+    "answer": "a",
+    "why": "Asking whether a treatment can produce an effect when conditions are tightly controlled is an efficacy question. Effectiveness asks whether it does work in ordinary settings."
+   }
+  ],
+  "src": "Module 11, Three Kinds of Trustworthy: The Validities | Module 12, Digging Deeper into the Evidence Ladder",
+  "revisit": "Revisit Module 11, Three Kinds of Trustworthy: The Validities | Module 12, Digging Deeper into the Evidence Ladder.",
+  "bloom": "analyze"
+ },
+ {
+  "type": "classify",
+  "title": "Pair 10",
+  "short": "Pair 10",
+  "tag": "Pair 10 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "a",
+    "label": "Fidelity"
+   },
+   {
+    "id": "b",
+    "label": "Adaptation"
+   }
+  ],
+  "items": [
+   {
+    "text": "A clinic rewrites its exercises with examples from farm life and large print, and records what it changed and why.",
+    "answer": "b",
+    "why": "A deliberate, documented change to fit a population is adaptation. Fidelity would measure whether the treatment was delivered as designed."
+   },
+   {
+    "text": "An evaluator reports that 90 percent of the required modules were delivered as designed (invented number).",
+    "answer": "a",
+    "why": "A count of required content delivered as designed is a fidelity measure. It says nothing about whether any change was made or whether the mechanism is still running."
+   },
+   {
+    "text": "A supervisor listens to session recordings and checks whether the planned steps of the protocol were delivered in the planned order.",
+    "answer": "a",
+    "why": "Checking delivery against the design is fidelity. Adaptation would be a deliberate change to the treatment, and nothing in the card changes it."
+   }
+  ],
+  "src": "Module 12, Adapting Without Losing the Mechanism | Module 15, Fidelity and Adaptation",
+  "revisit": "Revisit Module 12, Adapting Without Losing the Mechanism | Module 15, Fidelity and Adaptation.",
+  "bloom": "analyze"
+ },
+ {
+  "type": "classify",
+  "title": "Pair 11",
+  "short": "Pair 11",
+  "tag": "Pair 11 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "b",
+    "label": "Privilege"
+   },
+   {
+    "id": "a",
+    "label": "Confidentiality"
+   }
+  ],
+  "items": [
+   {
+    "text": "At the first visit, a counselor tells a new client which situations would lead the counselor to share information with other people.",
+    "answer": "a",
+    "why": "Telling a client the limits of the professional duty to protect information is part of confidentiality. Naming the limits early is a duty, and it differs from the court question that privilege concerns."
+   },
+   {
+    "text": "A trainee is told that she may not discuss a client's case with anyone outside the clinic except as the client agrees or the law requires.",
+    "answer": "a",
+    "why": "A professional's obligation to protect what clients share is confidentiality, with limits set by consent and law. Privilege would concern whether a court can compel the information."
+   },
+   {
+    "text": "A lawyer asks whether a client's conversations with her counselor can be kept out of a court hearing, and the answer depends on the state's law.",
+    "answer": "b",
+    "why": "A legal rule about whether protected communications can be kept out of court proceedings is privilege. It is defined by law that varies by place, and in many places the client holds it."
+   }
+  ],
+  "src": "Module 13, Confidentiality and Where It Gives Way",
+  "revisit": "Revisit Module 13, Confidentiality and Where It Gives Way.",
+  "bloom": "analyze"
+ },
+ {
+  "type": "classify",
+  "title": "Pair 12",
+  "short": "Pair 12",
+  "tag": "Pair 12 of 12",
+  "doThis": "Decide which of the two neighboring ideas the card describes. Look for the detail that separates them.",
+  "cats": [
+   {
+    "id": "b",
+    "label": "Specific technique"
+   },
+   {
+    "id": "a",
+    "label": "Common factor"
+   }
+  ],
+  "items": [
+   {
+    "text": "A client who fears elevators rides one repeatedly while testing the prediction that it will stall.",
+    "answer": "b",
+    "why": "A planned approach to the feared situation with a prediction test is exposure, a technique specific to certain protocols. A common factor would be an ingredient shared across approaches."
+   },
+   {
+    "text": "Across several different therapies, clients who feel understood by the clinician and hold a hopeful, believable explanation of their problem tend to engage more.",
+    "answer": "a",
+    "why": "Understanding and a credible rationale are shared ingredients that appear across therapies, which makes them common factors. A specific technique belongs to a particular protocol."
+   },
+   {
+    "text": "A person with depression schedules and completes small rewarding activities each day to reverse withdrawal.",
+    "answer": "b",
+    "why": "Scheduling rewarding activity is the technique of behavioral activation, which belongs to specific protocols. Common factors are shared across approaches, and the card describes a particular procedure."
+   }
+  ],
+  "src": "Module 12, Treatment Effects, Therapist Effects, and the Common-Factors Debate | Module 12, Deepening the Common-Factors Picture",
+  "revisit": "Revisit Module 12, Treatment Effects, Therapist Effects, and the Common-Factors Debate | Module 12, Deepening the Common-Factors Picture.",
+  "bloom": "analyze"
+ }
+];
+var SUMMARY = {
+ "title": "Confusable Pairs results",
+ "takeaway": "Each pair separates on one detail, such as the direction of a behavior, the time focus of a thought, or the question a study asks. Look for that detail first when two terms seem to fit.",
+ "note": "All scenes and numbers are invented. Nothing is saved or sent. If anything in these cards affects you personally, you can call or text 988 at any hour, or call 911 in an emergency."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  (S.retry?S.order[S.i]:it.options).forEach(function(o,oi){
+    var cls="opt"; if(ans){ if(o.id===it.correct) cls+=" correct"; else if(o.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.correct;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(it.src||st.src?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

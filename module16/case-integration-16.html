@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Integration Challenge</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+
+  .note{font-size:13.5px;line-height:1.55;margin:0 0 12px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;}
+  .note.safe{background:var(--wrong-bg);border-color:var(--wrong-line);color:#5b2320;}
+  .note.illus{background:var(--amber-bg);border-color:var(--amber-line);color:#5d4a1f;}
+  h2.hd{margin:0 0 8px;font-size:19px;}
+  h3.ch{margin:16px 0 4px;font-size:14.5px;font-weight:700;}
+  p.explain{font-size:14.5px;line-height:1.6;margin:6px 0 10px;}
+  fieldset.grp{border:none;margin:14px 0 0;padding:0;}
+  fieldset.grp legend{font-size:15px;font-weight:600;margin:0 0 8px;padding:0;}
+  .opt.sel{border:2px solid var(--ink);background:#f7f6f4;padding:12px 14px;}
+  .opt .gl{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .opt .mark{flex:0 0 auto;min-width:20px;font-weight:700;}
+  ol.chain{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:#44413b;line-height:1.5;}
+  ol.chain li{margin:2px 0;}
+  .fact{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff;}
+  .fact .ft{font-size:14.5px;line-height:1.55;margin:0 0 6px;}
+  .fact .fh{font-size:12.5px;font-weight:700;color:var(--muted);margin:6px 0 2px;}
+  .cbrow{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 4px;}
+  .cb{font:inherit;font-size:13.5px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ink);}
+  .cb:hover{border-color:#cfc9bf;}
+  .cb:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .cb.sel{border:2px solid var(--ink);background:#f7f6f4;padding:5px 11px;font-weight:600;}
+  .tx{background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;padding:10px 14px;margin:6px 0 12px;font-size:14px;line-height:1.55;}
+  .tx p{margin:4px 0;}
+  table.data{border-collapse:collapse;width:100%;font-size:13px;}
+  table.data caption{text-align:left;font-size:12.5px;color:var(--muted);padding:4px 0;}
+  table.data th,table.data td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top;}
+  table.data th{background:#f3f1ec;}
+  .tblwrap{overflow-x:auto;}
+  .fbbox{margin-top:8px;} .fbbox p{margin:6px 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .badge{display:inline-block;font-size:12.5px;font-weight:700;border-radius:7px;padding:3px 9px;border:1px solid var(--line);background:#f3f1ec;}
+  .badge.ok{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .badge.alt{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .badge.no{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .cmp{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff;}
+  .cmp .ct{font-size:14px;margin:0 0 6px;font-weight:600;}
+  .cmp p{margin:5px 0;font-size:13.5px;line-height:1.55;color:#44413b;}
+  textarea.weak{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:14.5px;resize:vertical;}
+  textarea.weak:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  label.lb{display:block;font-size:14px;font-weight:600;margin:12px 0 6px;}
+  label.tick{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5;margin:6px 0;cursor:pointer;}
+  label.tick input{margin-top:3px;}
+  ul.plain{margin:6px 0 10px;padding-left:20px;font-size:14px;line-height:1.55;}
+  ul.plain li{margin:3px 0;}
+  [tabindex="-1"]:focus{outline:none;}
+
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.alt{background:var(--amber-bg);border-color:var(--amber-line);}
+  .opt:disabled{cursor:default;}
+  .rv{font-size:13px;color:var(--muted);}
+  .tagline{margin:0 0 8px;color:var(--muted);font-size:13px;}
+  details.casebox{margin:6px 0 10px;font-size:13.5px;}
+  details.casebox summary{cursor:pointer;color:var(--accent-ink);}
+  details.casebox summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Case Integration Challenge</h1>
+    <p class="sub">One invented case, five decisions drawn from across the course, and a short written defense compared with a model paragraph.</p>
+  </div>
+  <div id="root"></div>
+  <p class="selfnote">The client, the clinic, and all numbers are invented and illustrative. Nothing is saved or sent. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.</p>
+</div>
+<script>
+var STEPS = [
+ {
+  "id": "s1",
+  "bloom": "analyze",
+  "title": "Step 1. The loop that keeps it going",
+  "mods": [
+   "M5",
+   "M7",
+   "M9",
+   "M14"
+  ],
+  "outcomes": [
+   "CSLO1",
+   "CSLO2",
+   "PLO1"
+  ],
+  "parts": [
+   {
+    "id": "loop",
+    "kind": "single",
+    "rv": "Module 14, Maintaining Mechanisms: What Keeps a Problem Going",
+    "prompt": "Each candidate below is built from the case. Choose the one you would treat as the primary loop, the circle that keeps Sabine's problem going now. A loop closes when its last step feeds its first step.",
+    "options": [
+     {
+      "id": "l2",
+      "label": "The night loop",
+      "chain": [
+       "She lies awake replaying the day's counter exchanges.",
+       "Two sleep-aid tablets quiet the replaying and let her fall asleep.",
+       "The sleep is lighter, she wakes tired, and she leans on energy drinks to get through the next shift.",
+       "The jittery, worn-out shift gives her more to replay the next night, and the tablets again."
+      ],
+      "pts": 4,
+      "cls": "ok",
+      "closed": true,
+      "tgt": "b",
+      "fb": "A real loop, and it is in the case. The tablets work as an escape from replaying and as a sleep aid, and poor sleep may make every other loop harder to change. As the primary loop it leaves out why she avoids the front counter and what the avoidance teaches her, so it receives partial credit. A clinician would also ask how many tablets and energy drinks she has in a typical week and whether she should see a physician or pharmacist about them."
+     },
+     {
+      "id": "l4",
+      "label": "The cause story",
+      "chain": [
+       "Something earlier in her life may have made confrontation frightening for her.",
+       "The shouting at the counter woke it up.",
+       "She now avoids the front counter."
+      ],
+      "pts": 0,
+      "cls": "weak",
+      "closed": false,
+      "tgt": null,
+      "fb": "This chain is a history, and the case contains nothing about her earlier life, so it rests on a guess. No link carries back to the first step, so nothing in it is running now. A cause starts a problem and a maintaining loop keeps it going, and a clinician can only change the loop. Her family and past are things to ask her about, and they are not facts to assume."
+     },
+     {
+      "id": "l1",
+      "label": "The counter avoidance loop",
+      "chain": [
+       "The shouting leaves her predicting that a hard exchange at the counter will turn into another public scene.",
+       "She swaps counter shifts when she can, and when she cannot, she stands beside a coworker with a script and texts her sister first, and the dread eases for a while.",
+       "The relief teaches her that the swaps, the coworker, the script, and the texts are what kept her safe, so the prediction is never tested.",
+       "The next counter shift she must work brings the prediction back, and it feels stronger."
+      ],
+      "pts": 6,
+      "cls": "best",
+      "closed": true,
+      "tgt": "a",
+      "fb": "This is the loop to start with. It runs through prediction, behavior, and relief, and its last step feeds its first, so it closes. Swapping shifts, the coworker, the script, and the texts are avoidance and safety behaviors that bring relief now, which is why they repeat, and they keep her from finding out what a counter shift would be like without them. The night loop is also real, and later steps return to it."
+     },
+     {
+      "id": "l3",
+      "label": "The reassurance loop with her sister",
+      "chain": [
+       "Before a counter shift she feels unsure and texts her sister.",
+       "Her sister says it will go all right, and the doubt eases.",
+       "The doubt returns sooner, because she has not learned that she can ride it out alone.",
+       "She texts again before the next shift."
+      ],
+      "pts": 3,
+      "cls": "ok",
+      "closed": true,
+      "tgt": "c",
+      "fb": "A real loop, and the texts are in the case. It runs inside the larger avoidance loop and does not drive it, so as the primary loop it leaves out the avoidance and the sleep, and it receives partial credit. Her sister's part is understandable and carries no blame."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "s2",
+  "bloom": "evaluate",
+  "title": "Step 2. The first point to interrupt",
+  "mods": [
+   "M4",
+   "M5",
+   "M9",
+   "M10",
+   "M14"
+  ],
+  "outcomes": [
+   "CSLO2",
+   "CSLO4",
+   "PLO2"
+  ],
+  "parts": [
+   {
+    "id": "pt",
+    "kind": "single",
+    "rv": "Module 14, Where to Start: Choosing an Interruption Point",
+    "prompt": "Choose one point to interrupt first. A plan is a hypothesis, and the order is provisional.",
+    "options": [
+     {
+      "id": "b",
+      "label": "The sleep-aid tablets and the sleep window, through a wind-down plan and a plan for falling asleep without tablets",
+      "pts": 3,
+      "cls": "ok",
+      "tgt": "b",
+      "fb": "Defensible as a gateway, since poor sleep may make every other loop harder to change. The cost is that the avoidance keeps running unless a later step returns her to the counter. Her tablet and energy-drink use needs direct questions about the amounts and a conversation about seeing a physician or pharmacist before any plan to cut back."
+     },
+     {
+      "id": "d",
+      "label": "The counter avoidance, the texts, the tablets, and the running group together, with a small step at each from the first week",
+      "pts": 0,
+      "cls": "weak",
+      "tgt": null,
+      "fb": "This is the kitchen-sink pattern. Spreading effort over every loop gives none of them enough focus to take hold, and a flat result could not say which part to change. Skilled matching usually picks one or two priorities and names the next ones."
+     },
+     {
+      "id": "c",
+      "label": "The texts to her sister, through an agreement to send one planning text a day",
+      "pts": 3,
+      "cls": "ok",
+      "tgt": "c",
+      "fb": "Defensible, since a loop that includes another person can be interrupted from any point on the circle. It needs Sabine's agreement and her sister's, and it leaves the counter avoidance and the night loop running."
+     },
+     {
+      "id": "a",
+      "label": "Her counter avoidance, through short planned stints at the front counter that begin in the quietest hour",
+      "pts": 4,
+      "cls": "best",
+      "tgt": "a",
+      "fb": "The first point I would choose. It delivers the correction the loop has been blocking, which is the discovery that a counter shift can be survived and that the prediction can be wrong. It can begin in small doses she can reach this week, and an early success builds momentum. The plan leaves the night loop running, and later steps need to address it."
+     }
+    ]
+   },
+   {
+    "id": "why",
+    "kind": "reasons",
+    "rv": "Module 14, Where to Start: Choosing an Interruption Point",
+    "prompt": "Choose the two reasons that best support the point you chose. Each reason that fits your point scores a point.",
+    "options": [
+     {
+      "id": "r1",
+      "label": "She can start it in small steps this week.",
+      "valid": [
+       "a",
+       "b",
+       "c"
+      ],
+      "ok": "Reachability is one of the three principles for choosing a first point, because a reachable loop builds momentum.",
+      "no": "Reachability matters, and it does not fit a plan that starts four things at once."
+     },
+     {
+      "id": "r4",
+      "label": "It is where her problem began.",
+      "valid": [],
+      "ok": "",
+      "no": "Where a problem began is a cause, and a cause cannot be un-started. The first point should be a link that is running now."
+     },
+     {
+      "id": "r2",
+      "label": "It delivers a correction that the loop has been blocking.",
+      "valid": [
+       "a",
+       "c"
+      ],
+      "ok": "A loop held in place by a prediction needs a new experience that tests the prediction, and this point supplies it.",
+      "no": "This reason fits a loop that rests on a prediction she has never tested. It fits the point you chose less well."
+     },
+     {
+      "id": "r5",
+      "label": "Her employer is waiting for a note, so the work that shows quick change should come first.",
+      "valid": [],
+      "ok": "",
+      "no": "The employer's request is a separate question, which step 4 takes up. The order of work follows what keeps the problem going and what she wants, and a third party's deadline is not a clinical reason."
+     },
+     {
+      "id": "r3",
+      "label": "If it shifts, the other loops may get easier to change.",
+      "valid": [
+       "a",
+       "b"
+      ],
+      "ok": "A gateway loop is the second principle for choosing a first point. Treat it as a hypothesis to check.",
+      "no": "A gateway reason fits a loop whose change would ease the others. For the point you chose, the case does not show that."
+     },
+     {
+      "id": "r6",
+      "label": "An early success shows her that the problem can loosen.",
+      "valid": [
+       "a",
+       "b",
+       "c"
+      ],
+      "ok": "Momentum from an early success is part of the reason to start where change is most possible.",
+      "no": "Momentum matters, and a plan that starts four things at once makes an early success less likely."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "s3",
+  "bloom": "evaluate",
+  "title": "Step 3. The gauges and the revision rule",
+  "mods": [
+   "M9",
+   "M11",
+   "M12",
+   "M14"
+  ],
+  "outcomes": [
+   "CSLO2",
+   "CSLO4",
+   "PLO2"
+  ],
+  "parts": [
+   {
+    "id": "pm",
+    "kind": "measure",
+    "rv": "Module 14, Checking the Gauges",
+    "prompt": "Choose one process measure to track. A process measure follows the mechanism the plan targets, so a good one lines up with the point you chose in step 2.",
+    "options": [
+     {
+      "id": "pm2",
+      "label": "Nights each week on which she takes sleep-aid tablets to fall asleep",
+      "cls": "ok",
+      "tgt": [
+       "b"
+      ],
+      "fb": "A process measure for the tablet and sleep link. A week of counting would give a baseline, because the case gives the amount only as two tablets on most nights."
+     },
+     {
+      "id": "pm4",
+      "label": "Her own sense of how things are going, asked once at the end of treatment",
+      "cls": "none",
+      "tgt": [],
+      "fb": "A single impression at the end names no expected change and no date, and a stalled plan could run for months before anyone noticed. Deciding in advance what change to expect, and by when, is the habit this step practices."
+     },
+     {
+      "id": "pm1",
+      "label": "Planned counter stints completed each week, set against the stints planned",
+      "cls": "ok",
+      "tgt": [
+       "a"
+      ],
+      "fb": "A process measure for the avoidance link. The case gives a baseline of no planned stints since the shouting, so any change can be read against a real number."
+     },
+     {
+      "id": "pm3",
+      "label": "Days each week with a text to her sister asking whether a shift will go all right",
+      "cls": "ok",
+      "tgt": [
+       "c"
+      ],
+      "fb": "A process measure for the reassurance link. A week of counting would set the baseline, and the count shows whether the habit is changing without showing what the texts feel like to her."
+     }
+    ]
+   },
+   {
+    "id": "om",
+    "kind": "single",
+    "rv": "Module 14, Checking the Gauges",
+    "prompt": "Choose the outcome measure that will show whether Sabine is improving.",
+    "options": [
+     {
+      "id": "om3",
+      "label": "Whether she attends each scheduled session and completes the weekly homework",
+      "pts": 0,
+      "cls": "weak",
+      "fb": "Attendance describes the care she receives and says nothing about whether she is getting better. A client can attend every session and stay as distressed as at intake."
+     },
+     {
+      "id": "om1",
+      "label": "The PHQ-9 and GAD-7 every two weeks, with a reliable-change rule",
+      "pts": 2,
+      "cls": "best",
+      "fb": "An outcome measure shows whether she is improving, and a reliable-change rule says whether a change is larger than measurement noise. The numbers in this case are invented, and the course gives no validated cutoff for them."
+     },
+     {
+      "id": "om4",
+      "label": "Her sister's impression of how she seems, collected every two weeks",
+      "pts": 0,
+      "cls": "weak",
+      "fb": "Another person's impression can add information, and it needs Sabine's consent first. As the outcome measure it offers a second-hand and unstructured view in place of a score that could be compared across weeks."
+     },
+     {
+      "id": "om2",
+      "label": "The PHQ-9 and GAD-7 taken once, at the end of the full course of treatment",
+      "pts": 1,
+      "cls": "ok",
+      "fb": "The right instruments, taken too late to help. With no review point during the course, a plan that has stalled stays hidden until it ends."
+     }
+    ]
+   },
+   {
+    "id": "rev",
+    "kind": "single",
+    "rv": "Module 14, Checking the Gauges",
+    "prompt": "Six weeks later the data look like the table below (invented, and built from the point you chose in step 2). Decide what the review should conclude.",
+    "options": [
+     {
+      "id": "rv1",
+      "label": "Keep the plan, set a week-10 review with a stated expected change, and re-read the case if the process stalls.",
+      "pts": 3,
+      "cls": "best",
+      "fb": {
+       "moved": "Your own process measure moved partway while the outcome lags, so continuing is reasonable, as long as the expected change and the date are set in advance. The rows for the links you did not choose have not moved, so the next target is among those, and the plan should say so.",
+       "flat": "The measure you chose follows a different link than your first point, so it shows no change, while the row for the link you actually worked on moved partway. Continuing is reasonable with a stated expected change and a date, and the lesson is to read the series that matches your plan.",
+       "none": "You named no process measure to read, so flat scores cannot be judged yet. A week-10 review with a stated expected change is still the right repair, and its first task is to choose one process to count, so that the next review has a gauge to read."
+      }
+     },
+     {
+      "id": "rv3",
+      "label": "Stop the plan, since her scores have not changed in six weeks of work on it, and try a different approach instead.",
+      "pts": 0,
+      "cls": "weak",
+      "fb": {
+       "moved": "The scores are flat, and your own process measure has moved partway. Dropping a plan whose targeted process is changing treats one gauge as the whole picture. The outcome may need more time.",
+       "flat": "The scores are flat and the measure you chose shows no change, which looks like a stalled plan. The row for the link you worked on did move partway, so dropping the plan reads the wrong gauge. The outcome may need more time.",
+       "none": "You named no process measure to read, so flat scores cannot be judged yet. Stopping the plan on flat scores alone treats the outcome as the whole picture, and a plan with no gauge on its process cannot yet be called failed or working."
+      }
+     },
+     {
+      "id": "rv2",
+      "label": "Record the plan as working, because she attends every session and something in the table has begun to change.",
+      "pts": 1,
+      "cls": "ok",
+      "fb": {
+       "moved": "Real movement in the process deserves a note. Calling the plan a success skips the outcome check, and the scores have not moved. The two series need to be read together.",
+       "flat": "Something in the table has moved, and the measure you chose did not show it. Calling the plan a success skips the outcome check, and the scores have not moved. Match the measure to the link you worked on before you read the plan as working.",
+       "none": "You named no process measure to read, so flat scores cannot be judged yet. Recording the plan as working rests on attendance, which describes the care she receives and not whether she is improving."
+      }
+     },
+     {
+      "id": "rv4",
+      "label": "Switch to a different treatment now, because the outcome scores are the real test of the plan.",
+      "pts": 1,
+      "cls": "ok",
+      "fb": {
+       "moved": "The scores are flat, and a clinician takes that seriously. A switch at week 6 ignores that your process measure moved, which is evidence the plan is doing something. Flat scores with a moving process more often call for more time and a new look at the next target.",
+       "flat": "A switch at week 6 reads flat scores and a mismatched measure as failure. The row for your own first point moved partway, which is evidence the plan is doing something, and the measure you chose was the one that missed it.",
+       "none": "You named no process measure to read, so flat scores cannot be judged yet. A switch at week 6 treats the outcome as the only test, and with no gauge on the process, the plan has not yet had a fair read."
+      }
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "s4",
+  "bloom": "evaluate",
+  "title": "Step 4. The employer's request",
+  "mods": [
+   "M13"
+  ],
+  "outcomes": [
+   "CSLO3",
+   "PLO4",
+   "PLO5"
+  ],
+  "parts": [
+   {
+    "id": "hr",
+    "kind": "single",
+    "rv": "Module 13, The Two-Part Question",
+    "prompt": "Her employer's human resources office has asked the clinic for a note about her fitness for duty. Choose the response best supported by Module 13's reasoning. The course gives no legal answer here. What the law and the clinic's policy require depends on where you practice.",
+    "options": [
+     {
+      "id": "h4",
+      "label": "Write the fitness opinion yourself, as her treating clinician, because the employer asked for it and she is already your client in treatment.",
+      "pts": 1,
+      "cls": "ok",
+      "fb": "Whether a treating clinician may take this role is not settled by the course reading. It does say that when a third party requests services, the clinician clarifies the role, who the client is, the probable uses of the information, and the limits of confidentiality (Standard 3.07). The supervisor, the clinic's policy, and the rules where you practice decide, and Sabine needs to hear about the request first."
+     },
+     {
+      "id": "h3",
+      "label": "Send the whole record to the county, since the county is her employer and the request came from the county's own office.",
+      "pts": 0,
+      "cls": "weak",
+      "fb": "A request from an employer is not consent from Sabine. The reading's two-part question asks first whether law mandates or permits the disclosure, and then whether the purpose is valid, and nothing here shows either. Reports are limited to information germane to the purpose (Standard 4.04(a)), so the whole record would be too much even with consent."
+     },
+     {
+      "id": "h1",
+      "label": "Tell Sabine about the request, check clinic policy and local rules with your supervisor, and share only what she agrees to in writing.",
+      "pts": 6,
+      "cls": "best",
+      "fb": "This follows the course's reasoning. The sources of authority for the question are the law where you practice, the code, the clinic's policy, and your supervisor, and the course does not supply the legal answer. Consent is one route to disclosure, the limits of confidentiality are discussed with the client at the outset and as circumstances change, and what is shared is limited to what is germane. Sabine makes the decision with full information about what the note would say."
+     },
+     {
+      "id": "h2",
+      "label": "Decline the request and say nothing to Sabine about it, to protect her privacy from her employer and from the clinic.",
+      "pts": 2,
+      "cls": "ok",
+      "fb": "This protects her information, and it skips two things the reading treats as part of good practice. Sabine learns about a request concerning her only when something happens at work, and she loses the chance to decide what she wants shared. A clinician can decline to release anything without her consent and still tell her about the request."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "s5",
+  "bloom": "evaluate",
+  "title": "Step 5. How the care reaches her",
+  "mods": [
+   "M10",
+   "M13",
+   "M15"
+  ],
+  "outcomes": [
+   "CSLO3",
+   "CSLO4",
+   "PLO2",
+   "PLO5"
+  ],
+  "parts": [
+   {
+    "id": "dl",
+    "kind": "single",
+    "rv": "Module 15, Stepped Care With Measurement",
+    "prompt": "Sabine lives forty miles from the clinic and has limited home internet. Choose the delivery plan best supported by Module 15's reasoning.",
+    "options": [
+     {
+      "id": "d3",
+      "label": "Weekly video sessions as the only format, starting this week, because video therapy has produced similar outcomes to in-person care.",
+      "pts": 3,
+      "cls": "ok",
+      "fb": "The reading's trials found no difference detected on symptoms for common conditions, which supports the format. It does not address her connection. Video needs a stable link and a private room, and a plan with no fallback leaves her without care whenever the connection fails. Plans for the first location and safety questions also have to be in place before the first session."
+     },
+     {
+      "id": "d4",
+      "label": "Phone or video sessions with a clinician-guided program, a phone path for her connection, a week-4 review, and safety routing.",
+      "pts": 6,
+      "cls": "best",
+      "fb": "This matches the reading's reasoning. A guided program with clinician contact supports the same mechanisms as in-person work. Guided programs have performed similarly to face-to-face CBT in the trials the reading cites, though the course sources do not test guided against unguided delivery. The phone path answers the connection problem, the week-4 review needs a measure and a criterion, such as a reliable-change rule, and a positive answer on a safety item goes to a person under the program's routing."
+     },
+     {
+      "id": "d1",
+      "label": "Weekly in-person sessions only, a round trip of about eighty miles, because digital care has weaker evidence than in-person care.",
+      "pts": 2,
+      "cls": "ok",
+      "fb": "In-person care is a legitimate option. The premise is weaker than it sounds, since the reading's meta-analyses found no difference detected on symptoms for common conditions by video, and the travel is a real barrier that may end her attendance. The reading's rural clinic added phone options, audio versions, and a non-digital path so that no one needed a device to get help."
+     },
+     {
+      "id": "d2",
+      "label": "An unguided self-help app on her phone, because it works at any hour and costs the least for her and for the clinic.",
+      "pts": 1,
+      "cls": "weak",
+      "fb": "The reading's evidence on apps is thin. Most store descriptions claim effectiveness without published support, and most downloaders stop within weeks. An unguided app also has no person to review her answers, which matters for a client who drinks to sleep, and the course sources do not carry findings from guided programs to unguided ones."
+     }
+    ]
+   }
+  ]
+ }
+];
+var MEASURES = STEPS[2].parts[0].options;
+var OUTCOMES = STEPS[2].parts[1].options;
+var REVISIONS = STEPS[2].parts[2].options;
+var STEP1 = STEPS[0], STEP2 = STEPS[1], STEP4 = STEPS[3], STEP5 = STEPS[4];
+var MODEL = "Sabine's problem is kept going by an avoidance loop, in which swapping counter shifts, the coworker beside her, the script, and the texts to her sister bring relief now and keep her prediction that a hard exchange will become a public scene from ever being tested (Modules 5, 9, and 14). I would interrupt there first with short planned counter stints that begin in the quietest hour, because that delivers the correction the loop has been blocking and she can begin this week, and I would take up the sleep aid and the nightly replaying next, since the tablets and the energy drinks work as an escape and a clinician would ask about the amounts and about seeing a physician or pharmacist (Modules 7 and 10). I would count planned and completed counter stints as the process measure and track the PHQ-9 and GAD-7 every two weeks, and if the stints rise while the scores lag I would keep the plan and set a review date, while if neither moves I would re-read the case (Modules 11, 12, and 14). Before anything goes to her employer I would tell Sabine about the request, check clinic policy and the rules where we practice with my supervisor, and share only what she agrees to in writing (Module 13), and I would offer phone sessions and a guided program with clinician check-ins and a week-4 review because she lives forty miles away with limited internet (Module 15). In the two trials the course describes that compared one transdiagnostic protocol with diagnosis-specific treatment, outcomes were similar, so the evidence supports aiming at a shared process and does not show that matching beats a standard protocol, and Sabine's own goals decide the order.";
+var RUBRIC = [
+ {
+  "id": "loop",
+  "label": "The loop",
+  "rv": "Module 14, Maintaining Mechanisms: What Keeps a Problem Going",
+  "d": [
+   "No loop is named.",
+   "A problem or a history is named, and no link returns the cost to the trigger.",
+   "A loop is named with its relief and the prediction it protects.",
+   "A loop is named with its return link, and a second process such as the night loop is also named."
+  ]
+ },
+ {
+  "id": "point",
+  "label": "The interruption point",
+  "rv": "Module 14, Where to Start: Choosing an Interruption Point",
+  "d": [
+   "No first point is named.",
+   "A point is named with no reason.",
+   "A point is named with a reason.",
+   "A point is named with a reason and with what the plan leaves running."
+  ]
+ },
+ {
+  "id": "meas",
+  "label": "Measures and revision",
+  "rv": "Module 14, Checking the Gauges",
+  "d": [
+   "No measure is named.",
+   "One measure is named.",
+   "A process measure and an outcome measure are named.",
+   "Both are named, with a rule for what to do when they disagree."
+  ]
+ },
+ {
+  "id": "consent",
+  "label": "The consent step",
+  "rv": "Module 13, The Two-Part Question",
+  "d": [
+   "The employer's request is not mentioned.",
+   "The request is handled by sharing or refusing, with no word to Sabine.",
+   "Sabine is told, and only what she agrees to is shared.",
+   "Sabine is told, policy and local rules are checked with a supervisor, and sharing is limited to what is needed."
+  ]
+ },
+ {
+  "id": "deliv",
+  "label": "Delivery",
+  "rv": "Module 15, Stepped Care With Measurement",
+  "d": [
+   "No format is named.",
+   "A format is named.",
+   "A format is fitted to the distance and the internet.",
+   "A format is fitted to her situation and includes a human check-in, a review point, and safety routing."
+  ]
+ },
+ {
+  "id": "evid",
+  "label": "The evidence statement",
+  "rv": "Module 14, What the Evidence Supports",
+  "d": [
+   "No evidence statement appears.",
+   "It says the evidence supports the plan.",
+   "It says what the evidence supports.",
+   "It says what the evidence supports and what it does not."
+  ]
+ }
+];
+var MECH = [
+ {
+  "id": "avoid",
+  "label": "avoidance and safety behaviors",
+  "mod": 5,
+  "mods": "Modules 5, 9, and 14",
+  "re": "avoid|safety behavio|escape|relief|script|front counter"
+ },
+ {
+  "id": "reass",
+  "label": "reassurance seeking",
+  "mod": 9,
+  "mods": "Modules 5, 9, and 14",
+  "re": "reassur|\\btext(?:s|ing)?\\b"
+ },
+ {
+  "id": "rum",
+  "label": "rumination",
+  "mod": 7,
+  "mods": "Modules 7, 9, and 14",
+  "re": "ruminat|replay|overthink"
+ },
+ {
+  "id": "with",
+  "label": "behavioral withdrawal",
+  "mod": 4,
+  "mods": "Modules 4 and 9",
+  "re": "withdraw|running group|activation|stopped running|dropped"
+ },
+ {
+  "id": "alc",
+  "label": "sleep aids and caffeine as escape",
+  "mod": 10,
+  "mods": "Modules 5 and 10",
+  "re": "sleep aid|tablet|caffeine|energy drink|substance|alcohol|drink"
+ },
+ {
+  "id": "reinf",
+  "label": "negative reinforcement",
+  "mod": 2,
+  "mods": "Modules 2 and 5",
+  "re": "negative reinforce|reinforc"
+ }
+];
+var GAPS = [
+ "What her culture, language, family, and work mean to her. These are questions to ask. Nothing in the case describes them.",
+ "How many sleep-aid tablets and energy drinks she has in a typical week and whether she should see a physician or pharmacist about them. The case gives only the nightly range.",
+ "What happened at the counter from her side, and whether anything earlier is feeding the fear.",
+ "What the employer means by a note about fitness for duty, and what the clinic's policy and the local rules allow.",
+ "Whether her home internet can carry a video session and whether she has a private room for one.",
+ "Whether the avoidance would loosen the nights as well, or whether the night loop needs its own step."
+];
+var SCORE_NOTE = "Steps 1 to 5 are scored by rules and give up to 32 points. Step 6 is scored by you against a rubric and gives up to 18.";
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {phase:"case", k:0, ans:{}, multi:{}, text:"", rub:{}, missed:null}; }
+function reset(){ S=newState(); render("top"); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function byId(list,id){ var r=null; list.forEach(function(x){ if(x.id===id) r=x; }); return r; }
+function wordCount(s){ var m=String(s||"").trim().match(/\S+/g); return m?m.length:0; }
+function sentCount(s){ var m=String(s||"").trim().match(/[^.!?]+[.!?]+/g); return m?m.length:0; }
+function isLocked(p){ return !!S.ans[p.id]; }
+function stepDone(st){ var ok=true; st.parts.forEach(function(p){ if(!isLocked(p)) ok=false; }); return ok; }
+function curPartIx(st){ for(var i=0;i<st.parts.length;i++){ if(!isLocked(st.parts[i])) return i; } return st.parts.length; }
+function ptsFor(p){
+  var a=S.ans[p.id]; if(!a) return 0;
+  if(p.kind==="single") return byId(p.options,a).pts;
+  if(p.kind==="measure"){ var m=byId(p.options,a); if(m.cls==="none") return 0; return (m.tgt.indexOf(S.ans.pt)>=0)?3:2; }
+  if(p.kind==="reasons"){ var n=0; S.ans[p.id].forEach(function(r){ if(byId(p.options,r).valid.indexOf(S.ans.pt)>=0) n++; }); return n; }
+  return 0;
+}
+function maxFor(p){ if(p.kind==="reasons") return 2; if(p.kind==="measure") return 3; var m=0; p.options.forEach(function(o){ if(o.pts>m) m=o.pts; }); return m; }
+function stepPts(st){ var t=0; st.parts.forEach(function(p){ t+=ptsFor(p); }); return t; }
+function stepMax(st){ var t=0; st.parts.forEach(function(p){ t+=maxFor(p); }); return t; }
+function choicePts(){ var t=0; STEPS.forEach(function(st){ t+=stepPts(st); }); return t; }
+function choiceMax(){ var t=0; STEPS.forEach(function(st){ t+=stepMax(st); }); return t; }
+function rubPts(){ var t=0; RUBRIC.forEach(function(r){ if(S.rub[r.id]!==undefined) t+=S.rub[r.id]; }); return t; }
+function rubDone(){ var ok=true; RUBRIC.forEach(function(r){ if(S.rub[r.id]===undefined) ok=false; }); return ok; }
+function totalPts(){ return choicePts()+rubPts(); }
+function totalMax(){ return choiceMax()+RUBRIC.length*3; }
+// ---- cross-step rules (rule based, tied to the learner's own choices)
+function loopTgt(){ var l=S.ans.loop?byId(STEP1.parts[0].options,S.ans.loop):null; return l?l.tgt:null; }
+function revCtx(){ var pt=S.ans.pt, m=S.ans.pm?byId(MEASURES,S.ans.pm):null; if(pt==="d"||!m||m.cls==="none") return "none"; return (m.tgt.indexOf(pt)>=0)?"moved":"flat"; }
+function fbText(o){ return (o.fb&&typeof o.fb==="object")?o.fb[revCtx()]:o.fb; }
+function revTable(){
+  var pt=S.ans.pt, m=S.ans.pm?byId(MEASURES,S.ans.pm):null, showProc=!(m&&m.cls==="none");
+  var plan={a:"The plan called for three counter stints a week by week 6.", b:"The plan called for falling asleep without tablets on at least four nights a week by week 6.", c:"The plan called for no more than three days a week with a pre-shift text by week 6.", d:"The plan started every link at once, with a small step at each."}[pt]||"";
+  var rows='<tr><th scope="row">Sessions attended</th><td>not applicable</td><td>6 of 6</td></tr>';
+  if(showProc){
+    rows+='<tr><th scope="row">Planned counter stints completed in the past week</th><td>0</td><td>'+(pt==="a"?2:0)+'</td></tr>';
+    rows+='<tr><th scope="row">Nights in the past week with sleep-aid tablets</th><td>6</td><td>'+(pt==="b"?3:6)+'</td></tr>';
+    rows+='<tr><th scope="row">Days in the past week with a text to her sister before a shift</th><td>6</td><td>'+(pt==="c"?4:6)+'</td></tr>';
+  }
+  rows+='<tr><th scope="row">Nights in the past week with an hour or more of replaying</th><td>6</td><td>6</td></tr><tr><th scope="row">PHQ-9</th><td>14</td><td>14</td></tr><tr><th scope="row">GAD-7</th><td>12</td><td>12</td></tr>';
+  return '<div class="tblwrap"><table class="data"><caption>Invented follow-up values. '+plan+(showProc?'':' You named no process measure, so no process counts were collected.')+'</caption><thead><tr><th scope="col">Measure</th><th scope="col">Intake</th><th scope="col">Week 6</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function afterAnswer(){ var st=STEPS[S.k], ci=curPartIx(st); if(ci<st.parts.length){ var np=st.parts[ci]; return np.kind==="reasons"?'[data-act="mrs"]':'[data-act="'+np.id+'"]'; } return '[data-act="next"]'; }
+function crossFor(pid){
+  var h="";
+  if(pid==="pt"){
+    var lt=loopTgt(), pt=S.ans.pt;
+    if(lt&&pt&&pt!=="d"&&lt!==pt) h+='<p><b>Fit with step 1.</b> You named a different loop in step 1 than the one this point aims at. That can be defensible if you changed your mind about the order. A plan reads best when the loop, the point, and the measure all aim at the same link.</p>';
+    if(!lt&&pt&&pt!=="d") h+='<p><b>Fit with step 1.</b> Your step 1 choice was the cause story, which was a history and no running loop. Your first point here is a running loop, which repairs the earlier choice.</p>';
+  }
+  if(pid==="pm"){
+    var m=byId(MEASURES,S.ans.pm);
+    if(S.ans.pt==="d"&&m.cls!=="none") h+='<p><b>Fit with step 2.</b> Your step 2 plan started everything at once, so no single process measure could follow it.</p>';
+    else if(m.cls!=="none"&&m.tgt.indexOf(S.ans.pt)<0) h+='<p><b>Fit with step 2.</b> This measure tracks a link other than the one you chose to interrupt, so it cannot tell you whether your own plan is working. A process measure and a first point should aim at the same link.</p>';
+  }
+  if(pid==="dl"){
+    if(S.ans.hr==="h3"||S.ans.hr==="h4") h+='<p><b>Link to step 4.</b> Whatever the format, the consent conversation about the employer comes before the first session. Delivery by phone or video adds its own consent points, such as where she is during the call.</p>';
+    if(S.ans.pt==="b"&&S.ans.dl==="d2") h+='<p><b>Link to step 2.</b> You chose to start with her drinking. A plan that touches alcohol needs a person who can ask about the amount and respond to the answers, and an unguided app cannot do that.</p>';
+  }
+  return h;
+}
+// ---- chrome
+function stepsRow(){
+  var names=["Case","Loop","First point","Gauges","Employer","Delivery","Defense","Review"], order=["case","s0","s1","s2","s3","s4","write","final"], cur=(S.phase==="step")?"s"+S.k:S.phase, ix=order.indexOf(cur), h='<div class="steps" aria-label="Progress">';
+  names.forEach(function(n,i){ h+='<span class="stp'+(i===ix?' on':(i<ix?' done':''))+'">'+n+(i===ix?' (current)':(i<ix?' (done)':''))+'</span>'; });
+  return h+'</div>';
+}
+function safetyNote(){ return '<p class="note safe"><b>Safety.</b> A case plan never replaces asking a person directly how they are. If anything in this activity affects you, call or text 988 at any hour, or call 911 in an emergency.</p>'; }
+function optBtn(act,val,label,gloss,selected,disabled,cls){
+  return '<button class="opt'+(selected?' sel':'')+(cls?' '+cls:'')+'" type="button" aria-pressed="'+(selected?'true':'false')+'" data-act="'+act+'" data-val="'+val+'"'+(disabled?' disabled':'')+'><span class="mark" aria-hidden="true">'+(selected?'✓':'○')+'</span><span>'+label+(gloss?gloss:'')+'</span></button>';
+}
+function cb(act,val,label,selected){ return '<button class="cb'+(selected?' sel':'')+'" type="button" aria-pressed="'+(selected?'true':'false')+'" data-act="'+act+'" data-val="'+val+'">'+(selected?'✓ ':'')+esc(label)+'</button>'; }
+function render(focus){
+  var h=stepsRow();
+  if(S.phase==="case") h+=renderCase(); else if(S.phase==="step") h+=renderStep(); else if(S.phase==="write") h+=renderWrite(); else h+=renderFinal();
+  root.innerHTML=h; post();
+  try{ var el=null; if(focus==="top"||focus==="panel") el=root.querySelector("#panelhead"); else if(focus) el=root.querySelector(focus); if(el&&el.focus) el.focus(); }catch(e){}
+}
+function renderCase(){
+  return '<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">The case</h2>'+
+   '<div class="note illus"><b>Everything here is invented.</b> Sabine, her clinic, the numbers, and the model answer are invented for practice. The course sources give no validated cutoff for the scores shown, and the model answer is a teaching design and not clinical guidance.</div>'+
+   '<p class="explain">This is the integration task for the whole course. You will read one case, make five decisions that each draw on a different part of the course, and then write a short defense of your plan and compare it with a model paragraph. Steps 1 to 5 give feedback on each choice. Step 6 is a typed paragraph that you score yourself against a rubric. Nothing is saved or sent.</p>'+
+   '<h3 class="ch">History and presentation</h3>'+
+   '<p class="explain">Sabine is 38 and works as a records clerk for a county office, on a rotating shift schedule. Her primary care clinician referred her after about three months of poor sleep. Four months ago a man shouted at her across the public counter about a missing permit, and a second man joined in. Nobody was hurt. Since then she swaps counter shifts whenever she can, and when she must work the counter she asks a coworker to stand beside her and keeps a printed script of replies by her keyboard. Before each counter shift she texts her sister to ask whether it will go all right. At night she lies awake replaying the day\'s exchanges and takes two sleep-aid tablets to fall asleep, and she drinks three or four energy drinks during the next shift to stay alert. She has dropped her Saturday running group. Her intake PHQ-9 was 14 and her GAD-7 was 12 (invented values that this activity does not interpret). She has asked twice to be moved to the back office, and her workplace human resources office has contacted the clinic and asked for a note about her fitness for duty. She lives forty miles from the clinic and has limited home internet.</p>'+
+   '<h3 class="ch">Excerpt from the first session</h3><div class="tx" role="group" aria-label="Session excerpt, invented">'+
+   '<p><b>Clinician:</b> Tell me what has changed since the day at the counter.</p>'+
+   '<p><b>Sabine:</b> I stay away from the front now. When I have to work it, I ask someone to stand next to me and I keep my script handy. Before a counter shift I text my sister to ask if it will go okay.</p>'+
+   '<p><b>Clinician:</b> And at night?</p>'+
+   '<p><b>Sabine:</b> I go over every exchange from the day. Then I take two sleep tablets, or I do not sleep at all.</p>'+
+   '<p><b>Clinician:</b> Have you had any thoughts of ending your life?</p>'+
+   '<p><b>Sabine:</b> No. I am worn out. And now work wants a note. I do not know what they are going to read about me.</p></div>'+
+   '<p class="explain">This activity assumes the clinician went on to a full safety and alcohol assessment and found no immediate risk. A clinician would keep asking about both. Sabine\'s culture, language, and family are not described, and a clinician would ask her about them before building anything.</p>'+
+   safetyNote()+'<div class="foot"><span></span><button class="btn" type="button" data-act="start">Begin step 1</button></div></section>';
+}
+function partHtml(st,p){
+  var h='', a=S.ans[p.id];
+  h+='<fieldset class="grp"><legend>'+esc(p.prompt)+'</legend>'+(p.id==='rev'?revTable():(p.tableHtml?p.tableHtml:''))+'<div class="options" role="group" aria-label="'+esc(p.id)+'">';
+  if(p.kind==="reasons"){
+    var cur=S.multi[p.id]||[], chosen=a||cur;
+    p.options.forEach(function(o){
+      var sel=chosen.indexOf(o.id)>=0, cls="", ok=o.valid.indexOf(S.ans.pt)>=0;
+      if(a) cls=sel?(ok?"correct":"wrong"):"dim";
+      h+=optBtn("mrs",o.id,esc(o.label),(a&&sel)?'<span class="gl">'+(ok?'Fits your point.':'Does not fit your point.')+'</span>':'',sel,!!a,cls);
+    });
+  } else {
+    p.options.forEach(function(o){
+      var sel=(a===o.id), cls="";
+      if(a){
+        var good=(o.cls==="best")||(p.kind==="measure"&&o.cls==="ok"&&o.tgt.indexOf(S.ans.pt)>=0);
+        cls=good?"correct":(sel?"wrong":"dim"); if(sel&&!good&&o.cls==="ok") cls="alt";
+      }
+      var chain=""; if(o.chain){ chain='<ol class="chain">'; o.chain.forEach(function(x){ chain+='<li>'+esc(x)+'</li>'; }); chain+='</ol>'; }
+      var lab=o.chain?'<b>'+esc(o.label)+'</b>'+chain:esc(o.label);
+      var gl2=''; if(a){ if(cls==='correct') gl2='<span class="gl">'+(sel?'Your choice, best supported':'Best supported')+'</span>'; else if(sel) gl2='<span class="gl">Your choice</span>'; }
+      h+=optBtn(p.id,o.id,lab,gl2,sel,!!a,cls);
+    });
+  }
+  h+='</div></fieldset>';
+  if(p.kind==="reasons"&&!a){ var n=(S.multi[p.id]||[]).length; h+='<div class="foot"><span class="qn">'+n+' of 2 reasons chosen.</span><button class="btn" type="button" data-act="chkreasons"'+(n===2?'':' disabled')+'>Check my reasons</button></div>'; }
+  if(a) h+=feedback(st,p);
+  return h;
+}
+function feedback(st,p){
+  var a=S.ans[p.id], h='<div class="fbbox" role="region" aria-label="Feedback">';
+  if(p.kind==="reasons"){
+    var n=ptsFor(p);
+    h+='<p><b>'+n+' of 2 reasons fit your first point.</b></p>';
+    a.forEach(function(r){ var o=byId(p.options,r), ok=o.valid.indexOf(S.ans.pt)>=0; h+='<p><span class="badge '+(ok?'ok':'no')+'">'+(ok?'Fits':'Does not fit')+'</span> <b>'+esc(o.label)+'</b> '+esc(ok?o.ok:o.no)+'</p>'; });
+    if(n<2) h+='<p class="rv">Revisit: '+esc(p.rv)+'.</p>';
+    return h+'</div>';
+  }
+  var o=byId(p.options,a), pts=ptsFor(p), mx=maxFor(p), kind=(pts===mx)?'ok':(pts>0?'alt':'no');
+  h+='<p><span class="badge '+kind+'">'+(kind==="ok"?'Best supported':(kind==="alt"?'Defensible, with a cost':'Weak choice'))+'</span> <b>'+pts+' of '+mx+' points.</b></p><p>'+esc(fbText(o))+'</p>';
+  if(p.id==="loop"&&a!=="l1"){ var ex=byId(p.options,"l1"); h+='<p><b>The loop the course would treat first, in order.</b></p><ol class="chain">'; ex.chain.forEach(function(x){ h+='<li>'+esc(x)+'</li>'; }); h+='</ol>'; }
+  if(p.id==="loop"&&!o.closed) h+='<p><b>Check for closure.</b> The last link in this chain does not feed the first. Without that arrow it describes a sequence in place of a loop.</p>';
+  if(p.id==="pt"&&a!=="a") h+='<p><b>What the course would start with.</b> The avoidance link, as short planned counter stints. The other points are defensible except the all-at-once plan, because loops can break from any point and the order is provisional.</p>';
+  h+=crossFor(p.id);
+  if(pts<mx) h+='<p class="rv">Revisit: '+esc(o.rv||p.rv)+'.</p>';
+  return h+'</div>';
+}
+function renderStep(){
+  var st=STEPS[S.k], ci=curPartIx(st), h='<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">'+esc(st.title)+'</h2><p class="tagline">Task level: '+esc(st.bloom)+'.</p>';
+  h+='<details class="casebox"><summary>Show the case again</summary><p class="explain">Sabine, 38, records clerk on rotating shifts. A man shouted at her across the public counter four months ago, and now she swaps counter shifts, works the counter only with a coworker and a script, texts her sister before each counter shift, replays the day each night, takes two sleep-aid tablets and drinks energy drinks on shift days, and has dropped her running group. PHQ-9 14 and GAD-7 12 (invented). Her employer has asked the clinic for a fitness-for-duty note. She lives forty miles away with limited home internet. Everything is invented.</p></details>';
+  st.parts.forEach(function(p,i){ if(i<=ci) h+=partHtml(st,p); });
+  var done=stepDone(st);
+  h+='<div class="foot"><span class="qn">'+(done?'Step complete.':'Choose to see feedback.')+'</span><button class="btn" type="button" data-act="next"'+(done?'':' disabled')+'>'+(S.k===STEPS.length-1?'Continue to step 6':'Continue to step '+(S.k+2))+'</button></div></section>';
+  return h;
+}
+function recap(){
+  var h='<ul class="plain">';
+  h+='<li><b>Loop.</b> '+esc(byId(STEP1.parts[0].options,S.ans.loop).label)+'.</li>';
+  h+='<li><b>First point.</b> '+esc(byId(STEP2.parts[0].options,S.ans.pt).label)+'.</li>';
+  h+='<li><b>Process measure.</b> '+esc(byId(MEASURES,S.ans.pm).label)+'.</li>';
+  h+='<li><b>Outcome measure.</b> '+esc(byId(OUTCOMES,S.ans.om).label)+'.</li>';
+  h+='<li><b>Week-6 decision.</b> '+esc(byId(REVISIONS,S.ans.rev).label)+'</li>';
+  h+='<li><b>Employer request.</b> '+esc(byId(STEP4.parts[0].options,S.ans.hr).label)+'</li>';
+  h+='<li><b>Delivery.</b> '+esc(byId(STEP5.parts[0].options,S.ans.dl).label)+'</li></ul>';
+  return h;
+}
+function renderWrite(){
+  var h='<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">Step 6. Write your defense</h2><p class="tagline">Task level: create. You have scored '+choicePts()+' of '+choiceMax()+' points on steps 1 to 5.</p>'+
+   '<p class="explain">Here are your choices so far. They are yours to keep, change, or defend.</p>'+recap()+
+   '<p class="explain">Write three to five sentences that defend your plan to a supervisor. Use at least two mechanisms from different modules, and include one evidence statement that says what the evidence supports and what it does not. The table lists the mechanisms in this case and where they live.</p>'+
+   '<div class="tblwrap"><table class="data"><caption>Mechanisms in this case and the modules where they live.</caption><thead><tr><th scope="col">Mechanism in the case</th><th scope="col">Where to look</th></tr></thead><tbody>';
+  MECH.forEach(function(m){ h+='<tr><th scope="row">'+esc(m.label)+'</th><td>'+esc(m.mods)+'</td></tr>'; });
+  h+='</tbody></table></div>'+
+   '<label class="lb" for="defense">Your defense (3 to 5 sentences)</label><textarea class="weak" id="defense" rows="9">'+esc(S.text)+'</textarea><p class="explain" id="wc" aria-live="polite">Write at least three sentences and 30 words. Nothing you type is saved or sent.</p>'+
+   '<div class="foot"><span></span><button class="btn" type="button" data-act="submit">Show the model paragraph</button></div></section>';
+  return h;
+}
+function scan(text){
+  var found=[], mods={};
+  MECH.forEach(function(m){ if(new RegExp(m.re,"i").test(text)){ found.push(m); mods[m.mod]=true; } });
+  var evid=/support|show|suggest|similar|equivalen/i.test(text), lim=/not |no trial|cannot|unknown|does not|did not|unclear|leave|limit/i.test(text);
+  return {found:found, distinct:Object.keys(mods).length, evid:evid, lim:lim};
+}
+function summaryFor(st){
+  var out=[];
+  st.parts.forEach(function(p){
+    var a=S.ans[p.id]; if(!a) return;
+    if(p.kind==="reasons"){ out.push("Reasons: "+ptsFor(p)+" of 2 fit your point."); return; }
+    var o=byId(p.options,a); out.push(o.label+" ("+ptsFor(p)+" of "+maxFor(p)+" points).");
+  });
+  return out.join(" ");
+}
+function weakest(){
+  var best=null, bv=2;
+  STEPS.forEach(function(st){ var f=stepPts(st)/stepMax(st); if(f<bv){ bv=f; best=st; } });
+  var rl=null, rv=2; RUBRIC.forEach(function(r){ var f=S.rub[r.id]/3; if(f<rv){ rv=f; rl=r; } });
+  if(best&&bv<=rv&&bv<1) return best.title+", "+stepPts(best)+" of "+stepMax(best)+". Revisit: "+best.parts[0].rv;
+  return rl.label+" in your paragraph, "+S.rub[rl.id]+" of 3. Revisit: "+rl.rv;
+}
+function fitNotes(){
+  var n=[], pt=S.ans.pt, lt=loopTgt(), m=byId(MEASURES,S.ans.pm);
+  if(lt&&pt!=="d"&&lt!==pt) n.push("The loop you named in step 1 and the first point in step 2 aim at different links.");
+  if(m.cls!=="none"&&pt!=="d"&&m.tgt.indexOf(pt)<0) n.push("Your process measure follows a different link than your first point, so it cannot test your own plan.");
+  if(pt==="d") n.push("Your step 2 plan started every loop at once. The course advises one or two priorities with the next ones named.");
+  if(S.ans.hr==="h3"||S.ans.hr==="h4") n.push("Your step 4 choice shared information or took a role before Sabine was asked. Module 13 puts her consent and the limits first.");
+  if(S.ans.dl==="d2") n.push("Your delivery plan had no human reviewing her answers. Module 15 treats the human in the loop as a safety matter.");
+  if(S.ans.rev==="rv3"||S.ans.rev==="rv4") n.push("Your week-6 decision acted on the flat scores alone. Module 14 reads the process series and the outcome series together.");
+  if(S.ans.loop==="l4") n.push("Your step 1 choice was a cause story. Module 14 separates what started a problem from what keeps it going.");
+  if(m.cls==="none") n.push("Your process measure was an impression at the end of treatment, so nothing could show before the end whether the targeted process was changing. Module 14 puts a process measure beside the outcome measure.");
+  if(S.ans.om!=="om1") n.push("Your outcome measure in step 3 was not the repeated, scored one with a reliable-change rule. Modules 11 and 12 ask for the same instrument at regular points and a rule for what counts as change.");
+  if(S.ans.hr==="h2") n.push("Your step 4 choice kept the employer's request from Sabine. Module 13 has the clinician tell the client about a request that concerns her.");
+  if(S.ans.dl==="d1"||S.ans.dl==="d3") n.push("Your delivery plan fitted one channel to a client with a long distance and limited internet. Module 15 adds a phone path, a week-4 review, and safety routing.");
+  if(S.ans.rev==="rv2") n.push("Your week-6 decision recorded the plan as working from attendance and a moving row in the table. Module 14 reads the process series and the outcome series together.");
+  if(!n.length) n.push("Your choices line up. The loop, the first point, and the measure aim at the same link.");
+  var h='<ul class="plain">'; n.forEach(function(x){ h+='<li>'+esc(x)+'</li>'; }); return h+'</ul>';
+}
+function renderFinal(){
+  var sc=scan(S.text), h='<section class="panel results"><h2 id="panelhead" tabindex="-1">Your defense beside the model paragraph</h2>';
+  h+='<p class="score">Score: <b>'+totalPts()+' of '+totalMax()+'</b> points.</p>';
+  h+='<p class="explain">Steps 1 to 5: '+choicePts()+' of '+choiceMax()+'. Step 6, self-scored below: '+rubPts()+' of '+(RUBRIC.length*3)+'. '+esc(SCORE_NOTE)+'</p>';
+  h+='<h3 class="ch">Where your choices fit together</h3><div class="cmp">'+fitNotes()+'</div>';
+  h+='<h3 class="ch">Step by step</h3>';
+  STEPS.forEach(function(st){ h+='<div class="cmp"><p class="ct">'+esc(st.title)+' ('+stepPts(st)+' of '+stepMax(st)+')</p><p>'+esc(summaryFor(st))+'</p></div>'; });
+  h+='<h3 class="ch">Your paragraph</h3><div class="cmp"><p class="ct">Yours</p><p>'+esc(S.text)+'</p></div>';
+  if(sentCount(S.text)>5) h+='<p class="explain">Your paragraph runs '+sentCount(S.text)+' sentences. The task asked for three to five, and the score does not change. A tighter version is a useful exercise.</p>';
+  h+='<div class="cmp"><p class="ct">The model paragraph (invented, a teaching design)</p><p>'+esc(MODEL)+'</p></div>';
+  h+='<div class="note illus"><b>A keyword scan of your paragraph.</b> '+(sc.found.length?'It found words that point to '+esc(sc.found.map(function(m){return m.label+' ('+m.mods+')';}).join(", "))+'. ':'It found no mechanism words. ')+
+     (sc.distinct>=2?'That covers at least two mechanisms from different modules. ':'That is fewer than two mechanisms from different modules. ')+
+     (sc.evid&&sc.lim?'It also found words that suggest an evidence statement with a limit. ':'It did not find words that suggest an evidence statement with a limit. ')+
+     'The scan matches words and cannot read meaning, so it is a prompt for your own check and is not scored.</div>';
+  h+='<h3 class="ch">Score your paragraph</h3><p class="explain">For each element, choose the description that matches what you wrote. Each is worth 0 to 3 points. Your wording does not need to match the model, and the element does.</p>';
+  RUBRIC.forEach(function(r){
+    h+='<fieldset class="grp"><legend>'+esc(r.label)+'</legend><div class="options" role="group" aria-label="'+esc(r.label)+' score">';
+    r.d.forEach(function(d,i){ var sel=S.rub[r.id]===i; h+=optBtn("rub",r.id+"|"+i,'<b>'+i+'</b> '+esc(d),'',sel,false); });
+    h+='</div></fieldset>';
+  });
+  if(!rubDone()) h+='<p class="explain">Score all six elements to see the summary.</p>';
+  else {
+    h+='<h3 class="ch">One thing you missed</h3><p class="explain">Choose the element where your paragraph came up shortest.</p><div class="cbrow" role="group" aria-label="One thing missed">';
+    RUBRIC.forEach(function(r){ h+=cb("miss",r.id,r.label,S.missed===r.id); });
+    h+=cb("miss","none","Nothing, all six were complete",S.missed==="none")+'</div>';
+    if(S.missed&&S.missed!=="none"){ var rr=byId(RUBRIC,S.missed); h+='<div class="fbbox"><p><b>Next step.</b> '+esc(rr.label)+' scored '+S.rub[rr.id]+' of 3. Rewrite that sentence so it reaches the next description in the rubric. Revisit: '+esc(rr.rv)+'.</p></div>'; }
+    else if(S.missed==="none") h+='<div class="fbbox"><p>Full coverage of the six elements is the target. A supervisor would still ask what the plan leaves untouched, and the list below names six things this case cannot yet answer.</p></div>';
+    h+='<h3 class="ch">Summary</h3><div class="take">'+(totalPts()===totalMax()?'<b>Full match.</b> Every choice matched the course reasoning and every rubric element reached 3. The next test is a real case, where the facts do not arrive sorted.':'<b>Section to revisit.</b> '+esc(weakest())+'.')+'</div>';
+  }
+  h+='<h3 class="ch">Things this case cannot yet answer</h3><ul class="plain">';
+  GAPS.forEach(function(g){ h+='<li>'+esc(g)+'</li>'; });
+  h+='</ul><div class="foot"><button class="btn secondary" type="button" data-act="again">Start over</button></div>'+
+   '<p class="selfnote">Sabine, the scores, and the model answer are invented, and your answers are not saved or sent. In the United States, call or text 988 at any hour, or call 911 in an emergency.</p></section>';
+  return h;
+}
+function act(v,val){
+  var a, st;
+  if(v==="start"){ S.phase="step"; S.k=0; render("panel"); return; }
+  if(S.phase==="step"){
+    st=STEPS[S.k]; var p=st.parts[curPartIx(st)];
+    if(p&&p.id===v&&p.kind!=="reasons"){ if(S.ans[p.id]) return; S.ans[p.id]=val; render(afterAnswer()); return; }
+    if(v==="mrs"&&p&&p.kind==="reasons"){ var cur=S.multi[p.id]||[], i=cur.indexOf(val); if(i>=0) cur.splice(i,1); else if(cur.length<2) cur.push(val); S.multi[p.id]=cur; render('[data-act="mrs"][data-val="'+val+'"]'); return; }
+    if(v==="chkreasons"&&p&&p.kind==="reasons"){ var c=S.multi[p.id]||[]; if(c.length!==2) return; S.ans[p.id]=c.slice(); render(afterAnswer()); return; }
+    if(v==="next"){ if(!stepDone(st)) return; if(S.k<STEPS.length-1){ S.k++; render("panel"); } else { S.phase="write"; render("panel"); } return; }
+  }
+  if(v==="submit"&&S.phase==="write"){
+    var ta=root.querySelector("#defense"); var t=ta?ta.value:S.text; S.text=t;
+    if(wordCount(t)<30||sentCount(t)<3){ var wc=root.querySelector("#wc"); if(wc) wc.innerHTML="Write at least three sentences and 30 words. You have "+sentCount(t)+" sentences and "+wordCount(t)+" words."; return; }
+    S.phase="final"; render("panel"); return;
+  }
+  if(S.phase==="final"){
+    if(v==="rub"){ a=String(val).split("|"); S.rub[a[0]]=parseInt(a[1],10); render('[data-act="rub"][data-val="'+val+'"]'); return; }
+    if(v==="miss"){ S.missed=val; render('[data-act="miss"][data-val="'+val+'"]'); return; }
+  }
+  if(v==="again"){ reset(); try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

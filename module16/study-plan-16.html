@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Plan Builder</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+
+  .note{font-size:13.5px;line-height:1.55;margin:0 0 12px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;}
+  .note.safe{background:var(--wrong-bg);border-color:var(--wrong-line);color:#5b2320;}
+  .note.illus{background:var(--amber-bg);border-color:var(--amber-line);color:#5d4a1f;}
+  h2.hd{margin:0 0 8px;font-size:19px;}
+  h3.ch{margin:16px 0 4px;font-size:14.5px;font-weight:700;}
+  p.explain{font-size:14.5px;line-height:1.6;margin:6px 0 10px;}
+  fieldset.grp{border:none;margin:14px 0 0;padding:0;}
+  fieldset.grp legend{font-size:15px;font-weight:600;margin:0 0 8px;padding:0;}
+  .opt.sel{border:2px solid var(--ink);background:#f7f6f4;padding:12px 14px;}
+  .opt .gl{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .opt .mark{flex:0 0 auto;min-width:20px;font-weight:700;}
+  ol.chain{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:#44413b;line-height:1.5;}
+  ol.chain li{margin:2px 0;}
+  .fact{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff;}
+  .fact .ft{font-size:14.5px;line-height:1.55;margin:0 0 6px;}
+  .fact .fh{font-size:12.5px;font-weight:700;color:var(--muted);margin:6px 0 2px;}
+  .cbrow{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 4px;}
+  .cb{font:inherit;font-size:13.5px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ink);}
+  .cb:hover{border-color:#cfc9bf;}
+  .cb:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .cb.sel{border:2px solid var(--ink);background:#f7f6f4;padding:5px 11px;font-weight:600;}
+  .tx{background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;padding:10px 14px;margin:6px 0 12px;font-size:14px;line-height:1.55;}
+  .tx p{margin:4px 0;}
+  table.data{border-collapse:collapse;width:100%;font-size:13px;}
+  table.data caption{text-align:left;font-size:12.5px;color:var(--muted);padding:4px 0;}
+  table.data th,table.data td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top;}
+  table.data th{background:#f3f1ec;}
+  .tblwrap{overflow-x:auto;}
+  .fbbox{margin-top:8px;} .fbbox p{margin:6px 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .badge{display:inline-block;font-size:12.5px;font-weight:700;border-radius:7px;padding:3px 9px;border:1px solid var(--line);background:#f3f1ec;}
+  .badge.ok{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .badge.alt{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .badge.no{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .cmp{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff;}
+  .cmp .ct{font-size:14px;margin:0 0 6px;font-weight:600;}
+  .cmp p{margin:5px 0;font-size:13.5px;line-height:1.55;color:#44413b;}
+  textarea.weak{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:14.5px;resize:vertical;}
+  textarea.weak:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  label.lb{display:block;font-size:14px;font-weight:600;margin:12px 0 6px;}
+  label.tick{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5;margin:6px 0;cursor:pointer;}
+  label.tick input{margin-top:3px;}
+  ul.plain{margin:6px 0 10px;padding-left:20px;font-size:14px;line-height:1.55;}
+  ul.plain li{margin:3px 0;}
+  [tabindex="-1"]:focus{outline:none;}
+
+  .row2{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin:8px 0;}
+  label.fld{display:block;font-size:14px;font-weight:600;margin:0 0 4px;}
+  select.sel{font:inherit;font-size:14.5px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;color:var(--ink);}
+  select.sel:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .days{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0;}
+  .days label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13.5px;background:#fff;cursor:pointer;}
+  .days label.on{border:2px solid var(--ink);padding:6px 9px;background:#f7f6f4;}
+  .days input{margin:0;}
+  .days input:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .mrow{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:#fff;}
+  .mrow .mt{font-size:14px;margin:0 0 6px;}
+  .mrow .mt b{font-weight:700;}
+  pre.plan{white-space:pre-wrap;word-wrap:break-word;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:8px 0;}
+  pre.plan:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .warn{font-size:13.5px;margin:8px 0;padding:10px 12px;border-radius:10px;border:1px solid var(--amber-line);background:var(--amber-bg);color:#5d4a1f;}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;}
+  @media print{ .noprint{display:none !important;} body{background:#fff;} .panel{border:none;box-shadow:none;padding:0;} pre.plan{border:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead noprint">
+    <h1>Study Plan Builder</h1>
+    <p class="sub">Enter your exam date, the days you can study, and how well you know each module. The page writes a retrieval schedule you can copy or print.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STORE_KEY = "psy4387-m16-calibration-v1";
+var MODS = [
+ {
+  "n": 1,
+  "topic": "why therapy needs a new organizing idea, the Dodo verdict, allegiance, three legs, measurement",
+  "cl": "A",
+  "p": [
+   {
+    "t": "From memory, separate mechanism, technique, and outcome, using an example of your own.",
+    "c": [
+     "From Orientation to Mechanism: A New Way to Organize Everything"
+    ]
+   },
+   {
+    "t": "Say what the Dodo Bird Verdict shows and what it does not show, then explain why the allegiance effect calls for caution when you read a trial.",
+    "c": [
+     "What the Dodo Bird Verdict Does Not Mean",
+     "A Bias to Watch: The Allegiance Effect"
+    ]
+   },
+   {
+    "t": "Name the three legs of evidence-based practice and explain how measurement tells you whether a plan is working.",
+    "c": [
+     "Evidence-Based Practice: Three Legs of a Stool",
+     "Getting Better on Purpose: Feedback and the Improvement Loop"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 2,
+  "topic": "the traditions, reinforcement and punishment, circular causality",
+  "cl": "A",
+  "p": [
+   {
+    "t": "Give an everyday example of each of the four reinforcement and punishment cases and say what changes in each.",
+    "c": [
+     "A Closer Look at Reinforcement: Four Everyday Mechanisms"
+    ]
+   },
+   {
+    "t": "Name the real mechanism that each of the five traditions found and one thing each tends to get wrong.",
+    "c": [
+     "Five Traditions, One Question",
+     "What Each Tradition Tends to Get Wrong"
+    ]
+   },
+   {
+    "t": "Explain circular causality with a case of your own and say where in the circle you could step in.",
+    "c": [
+     "The Systemic Tradition: The Person in the Web"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 3,
+  "topic": "common factors, the alliance, empathy, ruptures, therapist effects",
+  "cl": "A",
+  "p": [
+   {
+    "t": "Name Bordin's three parts of a working bond and say why the alliance is a mechanism and not a mood.",
+    "c": [
+     "Bordin's Model: Three Parts of a Working Bond",
+     "The Alliance as a Mechanism, Not a Mood"
+    ]
+   },
+   {
+    "t": "Separate empathy, congruence, and unconditional positive regard, with one sentence a therapist might say for each.",
+    "c": [
+     "Empathy",
+     "Congruence",
+     "Micro-Explainer: Unconditional Positive Regard"
+    ]
+   },
+   {
+    "t": "Describe a rupture and a repair, and say what therapist effects add to the picture of who delivers treatment.",
+    "c": [
+     "Ruptures and Repairs: When the Relationship Strains",
+     "Therapist Effects: Who Delivers It Matters"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 4,
+  "topic": "cognitive processes and the techniques matched to them",
+  "cl": "B",
+  "p": [
+   {
+    "t": "Name the three levels of thought, with a belief of your own at each level.",
+    "c": [
+     "Three Levels of Thought: Surface, Rules, and Bedrock"
+    ]
+   },
+   {
+    "t": "Match four techniques to four targets. Use cognitive restructuring, a behavioral experiment, behavioral activation, and exposure.",
+    "c": [
+     "Cognitive Restructuring: Working Directly With Thoughts",
+     "Behavioral Experiments: Testing Beliefs in the Real World",
+     "Behavioral Activation: Acting Your Way Into Feeling",
+     "Exposure: New Learning Through Approach"
+    ]
+   },
+   {
+    "t": "State what cognitive work is and what it is not, and name two limits of the cognitive level.",
+    "c": [
+     "The Strengths and Limits of the Cognitive Level"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 5,
+  "topic": "interpersonal loops, avoidance, extinction, motivational interviewing",
+  "cl": "B",
+  "p": [
+   {
+    "t": "Draw an interpersonal feedback loop from a case of your own and mark where each person's reply feeds the next.",
+    "c": [
+     "The Interpersonal Feedback Loop",
+     "A Field Guide to Common Loops"
+    ]
+   },
+   {
+    "t": "Explain avoidance, negative reinforcement, and extinction in one connected account.",
+    "c": [
+     "The Many Faces of Avoidance",
+     "Extinction: How Old Fears Get Rewritten"
+    ]
+   },
+   {
+    "t": "Describe what reflective listening and motivational interviewing do differently from giving advice.",
+    "c": [
+     "Motivational Interviewing: Helping People Talk Themselves Into Change"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 6,
+  "topic": "the brain's alarm and manager, plasticity, reading brain claims",
+  "cl": "B",
+  "p": [
+   {
+    "t": "Say what the amygdala and the prefrontal cortex each do and why arguing with an alarm fails.",
+    "c": [
+     "The Brain's Alarm System: The Amygdala",
+     "Why You Cannot Simply Argue an Alarm Away"
+    ]
+   },
+   {
+    "t": "Contrast top-down and bottom-up influence with one example of each.",
+    "c": [
+     "Two Directions of Influence: Top-Down and Bottom-Up"
+    ]
+   },
+   {
+    "t": "Give three questions you would ask about a headline that claims a brain scan explains a disorder.",
+    "c": [
+     "Becoming a Careful Reader of Brain Claims"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 7,
+  "topic": "emotion regulation, rumination, attachment, equifinality, resilience",
+  "cl": "B",
+  "p": [
+   {
+    "t": "Name the five places where a person can step in during Gross's process model and match reappraisal and suppression to them.",
+    "c": [
+     "Gross's Process Model: Five Places to Step In",
+     "Two Strategies Worth Knowing Well: Reappraisal and Suppression"
+    ]
+   },
+   {
+    "t": "Separate rumination from problem solving and say what feeds each.",
+    "c": [
+     "Rumination: When Thinking Feels Like Coping but Isn't"
+    ]
+   },
+   {
+    "t": "Explain equifinality and multifinality with one example each, and say what resilience does and does not mean.",
+    "c": [
+     "Why the Same Start Leads to Different Ends",
+     "Resilience: Adversity Is Not Destiny"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 9,
+  "topic": "anxiety and depression, maintenance loops, matching a plan to a process",
+  "cl": "C",
+  "p": [
+   {
+    "t": "Draw the anxiety maintenance loop with avoidance, checking, and reassurance, and mark one place to interrupt it.",
+    "c": [
+     "The Anxiety Maintenance Loop",
+     "Checking and Reassurance"
+    ]
+   },
+   {
+    "t": "Explain inhibitory learning in exposure and why a fear can return.",
+    "c": [
+     "Inhibitory Learning in Exposure",
+     "When Old Fears Come Back"
+    ]
+   },
+   {
+    "t": "Draw the depression maintenance loop and match one plan to the process that is active.",
+    "c": [
+     "The Depression Maintenance Loop",
+     "Mechanism-Treatment Matching"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 10,
+  "topic": "trauma, substance use, motivational interviewing, consent, safety planning",
+  "cl": "C",
+  "p": [
+   {
+    "t": "Explain how trauma memory and avoidance keep the PTSD loop going.",
+    "c": [
+     "What Trauma Does to Memory",
+     "What PTSD Looks Like Day to Day"
+    ]
+   },
+   {
+    "t": "Compare Prolonged Exposure and Cognitive Processing Therapy and say what a flat process measure would tell you.",
+    "c": [
+     "Two Roads, One Destination",
+     "Measuring Whether the Process Is Moving"
+    ]
+   },
+   {
+    "t": "Say what a skilled reply to ambivalence sounds like, and where consent and safety planning come in.",
+    "c": [
+     "Motivational Interviewing, Revisited",
+     "Consent in Trauma-Focused Care",
+     "Risk, Protection, and Safety Planning"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 11,
+  "topic": "research methods, effect size, reliable change, reading a trial",
+  "cl": "D",
+  "p": [
+   {
+    "t": "Explain why a fair test needs comparison and random assignment, and rank three designs by level of evidence.",
+    "c": [
+     "The Fair Test: Why We Need Comparison and Control",
+     "Levels of Evidence"
+    ]
+   },
+   {
+    "t": "Say what an effect size and Cohen's d tell you and what statistical significance leaves out.",
+    "c": [
+     "How Much Does It Help? Effect Size and Cohen's d",
+     "Real vs. Meaningful: Statistical and Clinical Significance"
+    ]
+   },
+   {
+    "t": "Walk through reliable change in four steps and list four checks for reading a trial critically.",
+    "c": [
+     "Reliable Change, Step by Step",
+     "Reading a Trial Critically"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 12,
+  "topic": "evidence-based practice, adaptation, the measurement-based care loop",
+  "cl": "D",
+  "p": [
+   {
+    "t": "Name the three legs and say what each adds, then say what the label empirically supported treatment does not guarantee.",
+    "c": [
+     "Leg One: The Best Available Research Evidence",
+     "Empirically Supported Treatments: The Label and Its Limits"
+    ]
+   },
+   {
+    "t": "Separate surface from deep structure in an adaptation and state the preservation rule.",
+    "c": [
+     "Adapting Without Losing the Mechanism",
+     "The Preservation Rule"
+    ]
+   },
+   {
+    "t": "Describe the measurement-based care loop and what to do when the three legs disagree.",
+    "c": [
+     "Measurement-Based Care: The Loop",
+     "When the Three Legs Disagree"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 13,
+  "topic": "ethics, consent, confidentiality, boundaries, continuing or ending treatment",
+  "cl": "D",
+  "p": [
+   {
+    "t": "List the five sources of authority and say which governs a question when they differ.",
+    "c": [
+     "Sources of Authority",
+     "The Course's Decision Path"
+    ]
+   },
+   {
+    "t": "Say what informed consent must contain and how confidentiality gives way, using the two-part question.",
+    "c": [
+     "Informed Consent in Therapy",
+     "The Two-Part Question"
+    ]
+   },
+   {
+    "t": "Describe how you would decide to continue, adjust, or end treatment using data and judgment.",
+    "c": [
+     "Continuing, Adjusting, or Ending Treatment"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 14,
+  "topic": "maintaining mechanisms, loops across levels, shared processes, the evidence",
+  "cl": "E",
+  "p": [
+   {
+    "t": "Say why a maintaining mechanism is not a cause and draw one loop across two levels.",
+    "c": [
+     "Maintaining Mechanisms: What Keeps a Problem Going",
+     "Avoidance and the Reinforcement Cycle"
+    ]
+   },
+   {
+    "t": "State what a shared process predicts and what the two head-to-head trials found.",
+    "c": [
+     "What a Shared Process Predicts and What It Does Not",
+     "What the Evidence Supports"
+    ]
+   },
+   {
+    "t": "Pick an interruption point, a process measure, and an outcome measure for a case of your own.",
+    "c": [
+     "Where to Start: Choosing an Interruption Point",
+     "Checking the Gauges"
+    ]
+   }
+  ]
+ },
+ {
+  "n": 15,
+  "topic": "digital care, guided programs, implementation, fidelity, stepped care",
+  "cl": "E",
+  "p": [
+   {
+    "t": "Compare guided and unguided programs and say what the course sources do and do not test.",
+    "c": [
+     "Internet-Based CBT and the Role of Guidance",
+     "Appraising a Digital Tool"
+    ]
+   },
+   {
+    "t": "Explain the digital divide and the research-to-practice gap with one example each.",
+    "c": [
+     "The Digital Divide and Who Gets Reached",
+     "The Research-to-Practice Gap"
+    ]
+   },
+   {
+    "t": "Explain fidelity and adaptation, stepped care with a step-up rule, and where a human stays in the loop.",
+    "c": [
+     "Fidelity and Adaptation",
+     "Stepped Care With Measurement",
+     "Blended Care and the Human in the Loop"
+    ]
+   }
+  ]
+ }
+];
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var WEEK=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var RATE=[{id:1,label:"1. I could not retrieve it",short:"1"},{id:2,label:"2. I got part of it",short:"2"},{id:3,label:"3. I can use it in a new case",short:"3"}];
+var BLOCK=10;
+// day numbers count from Monday, November 30, 2026 (day 0), so December 11 is day 11 and December 16 is day 16
+function dObj(d){ return new Date(Date.UTC(2026,10,30+d)); }
+function dLabel(d){ var o=dObj(d); return WEEK[o.getUTCDay()]+", "+MONTHS[o.getUTCMonth()]+" "+o.getUTCDate(); }
+function dShort(d){ var o=dObj(d); return WEEK[o.getUTCDay()].slice(0,3)+" "+MONTHS[o.getUTCMonth()].slice(0,3)+" "+o.getUTCDate(); }
+function dDate(d){ var o=dObj(d); return MONTHS[o.getUTCMonth()]+" "+o.getUTCDate(); }
+function defaultDays(exam){ var a=[]; for(var d=Math.max(0,exam-7); d<exam; d++) a.push(d); return a; }
+function newState(){ var ex=14; return {exam:ex, days:defaultDays(ex), mins:60, rate:{}, plan:null, msg:"", copied:""}; }
+function reset(){ S=newState(); render("top"); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function modById(n){ var r=null; MODS.forEach(function(m){ if(m.n===n) r=m; }); return r; }
+function readStore(){ try{ var ls=window.localStorage; if(!ls) return null; var raw=ls.getItem(STORE_KEY); if(!raw) return null; var o=JSON.parse(raw); if(!o||!o.items) return null; return o; }catch(e){ return null; } }
+function rated(){ var n=0; MODS.forEach(function(m){ if(S.rate[m.n]) n++; }); return n; }
+// ------------------------------------------------------------------ the scheduler (pure, no DOM)
+function slotsPer(mins){ return Math.max(2,Math.floor((mins-5)/BLOCK)); }
+function neededSlots(rate){ var t=0; MODS.forEach(function(m){ t+=({1:3,2:2,3:1})[rate[m.n]]||0; }); return t; }
+// Keep as many of the marked days as the ratings need. Drop an interior day only when the rest still hold enough blocks and no gap passes 3 days.
+function thinPre(pre,needed,mins,postCap){
+  var keep=pre.slice(), spp=slotsPer(mins);
+  function cap(list){ var c=list.length*spp+postCap; if(mins>=45) c-=2*Math.min(3,list.length+(postCap?1:0)); return c; }
+  while(keep.length>2){
+    var best=-1, bestGap=99;
+    for(var i=1;i<keep.length-1;i++){
+      var g=keep[i+1]-keep[i-1]; if(g>3) continue;
+      var rest=keep.slice(0,i).concat(keep.slice(i+1)); if(cap(rest)<needed) continue;
+      var score=Math.abs(g-2); if(best<0||score<bestGap){ best=i; bestGap=score; }
+    }
+    if(best<0) break;
+    keep.splice(best,1);
+  }
+  return keep;
+}
+function chooseSessions(days,exam,mins,rate){
+  var qd=null; days.forEach(function(d){ if(d<=exam-2) qd=d; });
+  var pre=[], post=[];
+  if(qd===null) pre=days.slice(); else days.forEach(function(d){ if(d<qd) pre.push(d); else if(d>qd) post.push(d); });
+  var postCap=post.length?Math.min(slotsPer(mins),3):0;
+  var th=thinPre(pre,neededSlots(rate),mins,postCap), sessions=[];
+  th.forEach(function(d){ sessions.push({kind:"R",d:d,slots:[],round:0}); });
+  if(qd!==null) sessions.push({kind:"Q",d:qd,slots:[],round:0});
+  post.forEach(function(d){ sessions.push({kind:"L",d:d,slots:[],round:0}); });
+  return {sessions:sessions,quizDay:qd,spare:days.filter(function(d){ var used=false; sessions.forEach(function(s){ if(s.d===d) used=true; }); return !used; })};
+}
+function assignRounds(sessions,mins){
+  var T=sessions.filter(function(s){return s.kind==="R";}), n=T.length;
+  if(mins<45||!n) return;
+  var idx=[]; if(n===1) idx=[0]; else if(n===2) idx=[0,1]; else idx=[0,Math.floor((n-1)/2),n-1];
+  idx.forEach(function(ix,k){ T[ix].round=k+1; });
+}
+function capacity(s,mins){
+  if(s.kind==="Q") return 0;
+  var c=slotsPer(mins); if(s.kind==="L") c=Math.min(c,3);
+  if(s.round) c=Math.max(1,c-2);
+  return c;
+}
+function frequencies(rate,cap,ns){
+  var f={}, mods=MODS.map(function(m){return m.n;});
+  mods.forEach(function(n){ f[n]=({1:3,2:2,3:1})[rate[n]]; if(f[n]>ns) f[n]=ns; });
+  function sum(){ var t=0; mods.forEach(function(n){ t+=f[n]; }); return t; }
+  var guard=0;
+  // too many: reduce the strongest first, then drop the strongest
+  while(sum()>cap&&guard++<500){
+    var pool=mods.filter(function(n){return f[n]>1;});
+    if(pool.length){ pool.sort(function(a,b){ return rate[b]-rate[a]||f[b]-f[a]||b-a; }); f[pool[0]]--; continue; }
+    var live=mods.filter(function(n){return f[n]>0;}); live.sort(function(a,b){ return rate[b]-rate[a]||b-a; }); if(!live.length) break; f[live[0]]=0;
+  }
+  // spare capacity: add to the weakest first, round robin
+  guard=0;
+  while(sum()<cap&&guard++<500){
+    var grow=mods.filter(function(n){return f[n]>0&&f[n]<ns;}); if(!grow.length) break;
+    grow.sort(function(a,b){ return rate[a]-rate[b]||f[a]-f[b]||a-b; }); f[grow[0]]++;
+  }
+  return f;
+}
+function placeModules(sessions,rate,mins){
+  var work=sessions.filter(function(s){return s.kind!=="Q";}), ns=work.length, cap=0;
+  work.forEach(function(s){ s.cap=capacity(s,mins); cap+=s.cap; });
+  var f=frequencies(rate,cap,ns), order=MODS.map(function(m){return m.n;});
+  order.sort(function(a,b){ return rate[a]-rate[b]||a-b; });
+  var dropped=[], placed={}, occ={};
+  order.forEach(function(n){
+    placed[n]=0; var want=f[n]; if(rate[n]&&want===0){ dropped.push(n); return; }
+    var off=(rate[n]-1)*0.3;
+    for(var k=0;k<want;k++){
+      var tgt=Math.min(ns-1,Math.floor((k+off)*ns/want)), done=false;
+      for(var dist=0;dist<ns&&!done;dist++){
+        var tries=dist===0?[tgt]:[tgt+dist,tgt-dist];
+        for(var q=0;q<tries.length&&!done;q++){
+          var ix=tries[q]; if(ix<0||ix>=ns) continue; var s=work[ix];
+          if(s.slots.length<s.cap&&s.slots.indexOf(n)<0){ s.slots.push(n); placed[n]++; done=true; }
+        }
+      }
+    }
+    if(placed[n]===0) dropped.push(n);
+  });
+  // mix: order each session so that neighbours come from different clusters, weakest first
+  work.forEach(function(s){
+    var left=s.slots.slice().sort(function(a,b){ return rate[a]-rate[b]||a-b; }), out=[];
+    while(left.length){
+      var prev=out.length?modById(out[out.length-1]).cl:null, ix=0;
+      for(var i=0;i<left.length;i++){ if(modById(left[i]).cl!==prev){ ix=i; break; } }
+      out.push(left.splice(ix,1)[0]);
+    }
+    s.slots=out;
+  });
+  return {freq:f,placed:placed,dropped:dropped};
+}
+function buildPlan(exam,days,mins,rate){
+  days=days.slice().sort(function(a,b){return a-b;}).filter(function(d){return d<exam&&d>=0;});
+  var out={ok:false,exam:exam,mins:mins,warn:[]};
+  if(!days.length){ out.msg="Choose at least one study day before the exam."; return out; }
+  var done=true; MODS.forEach(function(m){ if(!rate[m.n]) done=false; }); if(!done){ out.msg="Rate every module before building the plan."; return out; }
+  var cs=chooseSessions(days,exam,mins,rate), sessions=cs.sessions;
+  assignRounds(sessions,mins);
+  var pl=placeModules(sessions,rate,mins);
+  out.ok=true; out.sessions=sessions; out.quizDay=cs.quizDay; out.spare=cs.spare; out.dropped=pl.dropped; out.freq=pl.freq; out.placed=pl.placed;
+  if(cs.quizDay===null) out.warn.push("No study day falls two or more days before the exam, so the plan has no practice-quiz slot. Add a study day on or before "+dLabel(exam-2)+" and build the plan again.");
+  var prev=null; sessions.forEach(function(s){ s.gap=(prev===null)?null:s.d-prev.d; if(prev!==null&&s.gap>3) out.warn.push("The gap between "+dShort(prev.d)+" and "+dShort(s.d)+" is "+s.gap+" days, longer than the 1 to 3 day proposal. Add a study day between them if you can."); prev=s; });
+  out.text=planText(out,rate);
+  return out;
+}
+function plural(n,w){ return n+" "+w+(n===1?"":"s"); }
+function planText(p,rate){
+  var L=[], exam=p.exam;
+  L.push("PSY 4387 FINAL EXAM STUDY PLAN (a proposal)");
+  L.push("");
+  L.push("Exam: "+dLabel(exam)+", 2026, at the UTD Testing Center. The final has 75 multiple-choice items in 120 minutes, about 1.6 minutes per item.");
+  L.push("Study days used: "+p.sessions.map(function(s){return dShort(s.d);}).join(", ")+". Session length: "+p.mins+" minutes.");
+  var rs=[]; MODS.forEach(function(m){ rs.push("Module "+m.n+" rated "+rate[m.n]); });
+  L.push("Your ratings (1 could not retrieve it, 3 can use it in a new case). "+rs.join(", ")+".");
+  L.push("");
+  L.push("HOW TO USE THIS PLAN");
+  L.push("1. Every block is retrieval. Close the reading and close this page. Write or say everything you can about the prompt. Then open the named heading for no more than 3 minutes to check and correct yourself in a different color. Do not reread the section.");
+  L.push("2. Modules are mixed inside each session. Work through the blocks in the order listed and do not finish one module before touching the next.");
+  L.push("3. End each session with 5 minutes of writing down what you missed. Open the next session with those items.");
+  L.push("");
+  L.push("SESSIONS");
+  var occ={}, n=0;
+  p.sessions.forEach(function(s){
+    n++;
+    var gapTxt=(s.gap===null)?"first session":plural(s.gap,"day")+" after the previous session";
+    if(s.kind==="Q"){
+      L.push("");
+      L.push("Session "+n+". "+dLabel(s.d)+" ("+gapTxt+", "+plural(exam-s.d,"day")+" before the exam). PRACTICE QUIZ");
+      L.push("  Take the Module 16 Practice Final Quiz as a timed attempt, with no notes, at about 1.6 minutes per item. The quiz is on Canvas, so it runs on a device. Closed book and no electronic devices apply to the final exam at the Testing Center.");
+      L.push("  Afterward, for every item you missed or guessed, write why the best option is best and name its module. Those modules go first in your next session.");
+      if(p.mins>=90) L.push("  Use the remaining time for retrieval on the modules of the items you missed, with no rereading.");
+      return;
+    }
+    L.push("");
+    L.push("Session "+n+". "+dLabel(s.d)+" ("+gapTxt+(s.kind==="L"?", the last session before the exam, kept light":"")+")");
+    var b=0;
+    if(s.round) L.push("  Mixed Retrieval Round "+s.round+" (about 17 minutes). Do it closed book, then read the feedback on the items you missed.");
+    s.slots.forEach(function(mn){
+      b++; var m=modById(mn), j=(occ[mn]||0); occ[mn]=j+1; var pr=m.p[j%m.p.length];
+      L.push("  Block "+b+", "+BLOCK+" minutes. Module "+mn+" ("+m.topic+"), rated "+rate[mn]+".");
+      L.push("    Prompt. "+pr.t);
+      L.push("    Check against "+pr.c.map(function(h){return "“"+h+"”";}).join(" and ")+".");
+    });
+    L.push("  Last 5 minutes. List what you missed.");
+  });
+  if(p.dropped.length){ L.push(""); L.push("NOT SCHEDULED. "+p.dropped.map(function(n){return "Module "+n+" (rated "+rate[n]+")";}).join(", ")+". There was not enough time for every module at your session length and number of days. Add a study day or lengthen a session to include them."); }
+  if(p.spare.length){ L.push(""); L.push("SPARE DAYS. You marked "+p.spare.map(dShort).join(", ")+" and the plan did not use them. Treat them as rest days, or use one to repeat a session you missed."); }
+  if(p.warn.length){ L.push(""); L.push("CHECK THESE"); p.warn.forEach(function(w){ L.push("  "+w); }); }
+  L.push("");
+  L.push("THE SPACING IS A PROPOSAL, AND HERE IS THE UNCERTAINTY");
+  L.push("Sessions are placed about one to three days apart. This window is a proposal. Cepeda et al. (2008), in a study of more than 1,350 people, found that for a test one week away the best gap between study sessions was about 20 to 40 percent of that week, which is roughly 1.4 to 2.8 days, and that the best share was smaller for longer delays. Those studies used facts, so how well the window fits psychotherapy concepts is unknown. Your own quiz scores are the better check, and the plan gives you the practice quiz for that purpose.");
+  L.push("Retrieval and spacing are used because practice testing and distributed practice were rated high utility and rereading low in a major review (Dunlosky et al., 2013). The same review said evidence on mixing topics within a session had only begun to be explored, and a later meta-analysis found that interleaving helped most when categories were similar to one another (Brunmair & Richter, 2019). Mixing modules is therefore a reasonable bet and not a settled method. Compare your scores on mixed and blocked practice if you can.");
+  L.push("");
+  L.push("EXAM REMINDERS (from the syllabus)");
+  L.push("  Activity credit for this module closes Sunday, December 6, 2026, at 11:59 PM this term. Work done after that date does not count toward participation credit, and it still works as practice for the exam.");
+  L.push("  Register for your exam time at the UTD Testing Center at least 48 hours in advance. For a "+dLabel(exam)+" exam, register no later than "+dLabel(exam-2)+" at the same hour, and register earlier if you can. A student who did not register in time is not allowed to take the exam late.");
+  L.push("  The final window runs December 11 to December 16, 2026, and the exam is taken in person at the Testing Center only.");
+  L.push("  Bring a valid photo ID.");
+  L.push("  The exam is closed book with no notes, and no electronic devices are allowed in the room.");
+  L.push("  Check the Testing Center's webpage for its hours and policies, since the syllabus asks you to review them.");
+  return L.join("\n");
+}
+// ------------------------------------------------------------------ interface
+function stepsRow(){
+  var ix=S.plan&&S.plan.ok?1:0, names=["Your inputs","Your plan"], h='<div class="steps noprint" aria-label="Progress">';
+  names.forEach(function(n,i){ h+='<span class="stp'+(i===ix?' on':(i<ix?' done':''))+'">'+n+(i===ix?' (current)':(i<ix?' (done)':''))+'</span>'; });
+  return h+'</div>';
+}
+function cbn(act,val,label,selected,aria){ return '<button class="cb'+(selected?' sel':'')+'" type="button" aria-pressed="'+(selected?'true':'false')+'" data-act="'+act+'" data-val="'+val+'"'+(aria?' aria-label="'+esc(aria)+'"':'')+'>'+(selected?'✓ ':'')+esc(label)+'</button>'; }
+function render(focus){
+  var h=stepsRow()+renderInputs()+(S.plan&&S.plan.ok?renderPlan():(S.plan?'<div class="warn" role="status">'+esc(S.plan.msg)+'</div>':''));
+  root.innerHTML=h; post();
+  try{ var el=null; if(focus==="top") el=root.querySelector("#panelhead"); else if(focus) el=root.querySelector(focus); if(el&&el.focus) el.focus(); }catch(e){}
+}
+function renderInputs(){
+  var h='<section class="panel noprint"><h2 class="hd" id="panelhead" tabindex="-1">Build your study schedule</h2>'+
+   '<div class="note illus"><b>This builds a proposal.</b> The schedule uses retrieval and no rereading, and it places sessions about one to three days apart. That spacing is a proposal drawn from one study of memory for facts, and how well it fits course concepts is unknown. Nothing you enter is sent anywhere.</div>'+
+   '<p class="explain">Activity credit for this module closes Sunday, December 6, at 11:59 PM this term (syllabus). Sessions on later days still work as exam practice and do not count toward participation credit.</p>'+
+   '<div class="row2"><div><label class="fld" for="exam">Your exam date (December 2026)</label><select class="sel" id="exam" data-act="exam">';
+  for(var d=11;d<=16;d++) h+='<option value="'+d+'"'+(S.exam===d?' selected':'')+'>'+esc(dLabel(d))+'</option>';
+  h+='</select></div><div><label class="fld" for="mins">Length of each study session</label><select class="sel" id="mins" data-act="mins">';
+  [30,45,60,90].forEach(function(m){ h+='<option value="'+m+'"'+(S.mins===m?' selected':'')+'>'+m+' minutes</option>'; });
+  h+='</select></div></div>'+
+   '<fieldset class="grp"><legend>Which days can you study? Each day before your exam is listed. The days before the exam are marked for you, and you can change them.</legend><div class="days" role="group" aria-label="Study days available">';
+  for(var k=0;k<S.exam;k++){ var on=S.days.indexOf(k)>=0; h+='<label class="'+(on?'on':'')+'"><input type="checkbox" data-act="day" data-val="'+k+'"'+(on?' checked':'')+'> '+esc(dShort(k))+'</label>'; }
+  h+='</div><p class="explain">'+S.days.length+' study '+(S.days.length===1?'day':'days')+' marked.</p></fieldset>'+
+   '<fieldset class="grp"><legend>Rate each module. Be honest, because the plan puts your weakest modules earlier and more often. A rating of 1 means you could not retrieve it, and 3 means you can use it in a new case.</legend>';
+  var sv=readStore();
+  if(sv) h+='<div class="bar"><button class="btn secondary" type="button" data-act="import">Fill ratings from my saved Confidence and Strategy Lab table</button></div>';
+  if(S.msg) h+='<p class="explain" role="status">'+esc(S.msg)+'</p>';
+  MODS.forEach(function(m){
+    h+='<div class="mrow"><p class="mt"><b>Module '+m.n+'.</b> '+esc(m.topic)+'.</p><div class="cbrow" role="group" aria-label="Rating for module '+m.n+'">';
+    RATE.forEach(function(r){ h+=cbn("rate",m.n+"|"+r.id,r.label,S.rate[m.n]===r.id,"Module "+m.n+", "+r.label); });
+    h+='</div></div>';
+  });
+  h+='</fieldset><div class="foot"><span class="qn">'+rated()+' of '+MODS.length+' modules rated.</span><button class="btn" type="button" data-act="build"'+(rated()===MODS.length&&S.days.length?'':' disabled')+'>Build my plan</button></div></section>';
+  return h;
+}
+function renderPlan(){
+  var p=S.plan, h='<section class="panel results"><h2 class="hd" id="planhead" tabindex="-1">Your schedule</h2>';
+  p.warn.forEach(function(w){ h+='<div class="warn" role="status">'+esc(w)+'</div>'; });
+  h+='<p class="explain noprint">Copy the text below into your notes, or print this page. The text is yours, and nothing is saved or sent.</p>'+
+   '<div class="bar noprint"><button class="btn" type="button" data-act="copy">Copy the plan</button><button class="btn secondary" type="button" data-act="print">Print</button></div>';
+  if(S.copied) h+='<p class="explain noprint" role="status">'+esc(S.copied)+'</p>';
+  h+='<pre class="plan" id="plantext" tabindex="0" aria-label="Study plan text">'+esc(p.text)+'</pre>'+
+   '<div class="foot noprint"><button class="btn secondary" type="button" data-act="again">Start over</button></div>'+
+   '<p class="selfnote">The schedule is a proposal. Retrieval practice and spacing have support in the research the course cites, and the exact spacing for this course is unknown. If anything about the exam feels overwhelming, you can call or text 988 at any hour, or call 911 in an emergency.</p></section>';
+  return h;
+}
+function toggleDay(d){ var i=S.days.indexOf(d); if(i>=0) S.days.splice(i,1); else S.days.push(d); S.days.sort(function(a,b){return a-b;}); S.plan=null; }
+function doImport(){
+  var sv=readStore(); if(!sv){ S.msg="No saved table was found in this browser."; return; }
+  var byMod={};
+  sv.items.forEach(function(it){ var r=!it.ok?1:(it.conf==="sure"?3:2); if(byMod[it.mod]===undefined||r<byMod[it.mod]) byMod[it.mod]=r; });
+  var n=0; Object.keys(byMod).forEach(function(k){ if(modById(Number(k))){ S.rate[k]=byMod[k]; n++; } });
+  S.msg="Set ratings for "+n+" modules from your saved table. A missed item gives 1, a right answer rated guess or probably gives 2, and a right answer rated sure gives 3. Rate the other modules yourself and change any rating you disagree with.";
+  S.plan=null;
+}
+function act(v,val){
+  var a;
+  if(v==="exam"){ S.exam=parseInt(val,10); S.days=defaultDays(S.exam); S.plan=null; S.msg="Study days were reset to the seven days before your exam. Change them if you need to."; render("#exam"); return; }
+  if(v==="mins"){ S.mins=parseInt(val,10); S.plan=null; render("#mins"); return; }
+  if(v==="day"){ toggleDay(parseInt(val,10)); S.msg=""; render('[data-act="day"][data-val="'+val+'"]'); return; }
+  if(v==="rate"){ a=String(val).split("|"); S.rate[a[0]]=parseInt(a[1],10); S.plan=null; render('[data-act="rate"][data-val="'+val+'"]'); return; }
+  if(v==="import"){ doImport(); render("#panelhead"); return; }
+  if(v==="build"){ S.plan=buildPlan(S.exam,S.days,S.mins,S.rate); S.copied=""; render(S.plan.ok?"#planhead":"#panelhead"); return; }
+  if(v==="copy"){ if(!S.plan||!S.plan.ok) return; var done=false;
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(S.plan.text); done=true; } }catch(e){}
+    S.copied=done?"The plan was copied. Paste it into your notes.":"Copying was blocked here. Click in the text, select all, and copy it yourself."; render('[data-act="copy"]'); return; }
+  if(v==="print"){ try{ window.print(); }catch(e){} return; }
+  if(v==="again"){ reset(); try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; var v=t.getAttribute("data-act"); if(v==="exam"||v==="mins") return; act(v,t.getAttribute("data-val")); });
+root.addEventListener("change",function(e){ var t=e.target; if(!t||!t.getAttribute) return; var v=t.getAttribute("data-act"); if(v==="exam"||v==="mins") act(v,t.value); });
+reset();
+
+</script>
+</body>
+</html>

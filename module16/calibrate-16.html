@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confidence and Strategy Lab</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+
+  .note{font-size:13.5px;line-height:1.55;margin:0 0 12px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;}
+  .note.safe{background:var(--wrong-bg);border-color:var(--wrong-line);color:#5b2320;}
+  .note.illus{background:var(--amber-bg);border-color:var(--amber-line);color:#5d4a1f;}
+  h2.hd{margin:0 0 8px;font-size:19px;}
+  h3.ch{margin:16px 0 4px;font-size:14.5px;font-weight:700;}
+  p.explain{font-size:14.5px;line-height:1.6;margin:6px 0 10px;}
+  fieldset.grp{border:none;margin:14px 0 0;padding:0;}
+  fieldset.grp legend{font-size:15px;font-weight:600;margin:0 0 8px;padding:0;}
+  .opt.sel{border:2px solid var(--ink);background:#f7f6f4;padding:12px 14px;}
+  .opt .gl{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .opt .mark{flex:0 0 auto;min-width:20px;font-weight:700;}
+  ol.chain{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:#44413b;line-height:1.5;}
+  ol.chain li{margin:2px 0;}
+  .fact{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff;}
+  .fact .ft{font-size:14.5px;line-height:1.55;margin:0 0 6px;}
+  .fact .fh{font-size:12.5px;font-weight:700;color:var(--muted);margin:6px 0 2px;}
+  .cbrow{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 4px;}
+  .cb{font:inherit;font-size:13.5px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ink);}
+  .cb:hover{border-color:#cfc9bf;}
+  .cb:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .cb.sel{border:2px solid var(--ink);background:#f7f6f4;padding:5px 11px;font-weight:600;}
+  .tx{background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;padding:10px 14px;margin:6px 0 12px;font-size:14px;line-height:1.55;}
+  .tx p{margin:4px 0;}
+  table.data{border-collapse:collapse;width:100%;font-size:13px;}
+  table.data caption{text-align:left;font-size:12.5px;color:var(--muted);padding:4px 0;}
+  table.data th,table.data td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top;}
+  table.data th{background:#f3f1ec;}
+  .tblwrap{overflow-x:auto;}
+  .fbbox{margin-top:8px;} .fbbox p{margin:6px 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .badge{display:inline-block;font-size:12.5px;font-weight:700;border-radius:7px;padding:3px 9px;border:1px solid var(--line);background:#f3f1ec;}
+  .badge.ok{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .badge.alt{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .badge.no{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .cmp{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff;}
+  .cmp .ct{font-size:14px;margin:0 0 6px;font-weight:600;}
+  .cmp p{margin:5px 0;font-size:13.5px;line-height:1.55;color:#44413b;}
+  textarea.weak{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:14.5px;resize:vertical;}
+  textarea.weak:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  label.lb{display:block;font-size:14px;font-weight:600;margin:12px 0 6px;}
+  label.tick{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5;margin:6px 0;cursor:pointer;}
+  label.tick input{margin-top:3px;}
+  ul.plain{margin:6px 0 10px;padding-left:20px;font-size:14px;line-height:1.55;}
+  ul.plain li{margin:3px 0;}
+  [tabindex="-1"]:focus{outline:none;}
+
+  .confrow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px;}
+  .opt.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.7;}
+  .opt:disabled{cursor:default;}
+  ul.why{list-style:none;margin:6px 0 0;padding:0;}
+  ul.why li{margin:7px 0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;line-height:1.55;background:#fff;}
+  ul.why li.key{border:2px solid var(--correct-line);background:var(--correct-bg);}
+  .lvl{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .rv{font-size:13px;color:var(--muted);}
+  .gl2{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
+  table.data td.num{text-align:right;}
+  .reset{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);}
+  .reset .btn{padding:7px 13px;font-size:13px;margin-right:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Confidence and Strategy Lab</h1>
+    <p class="sub">Rate your confidence before each answer, see how confidence and accuracy line up, and practice five exam-strategy decisions.</p>
+  </div>
+  <div id="root"></div>
+  <p class="selfnote">All cases and numbers are invented. Nothing is sent anywhere. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.</p>
+</div>
+<script>
+var STORE_KEY = "psy4387-m16-calibration-v1";
+var P1 = [
+ {
+  "id": "c01",
+  "mod": 2,
+  "mods": [
+   5
+  ],
+  "bloom": "apply",
+  "outcomes": [
+   "CSLO1",
+   "PLO1"
+  ],
+  "src": "Module 2, A Closer Look at Reinforcement: Four Everyday Mechanisms",
+  "topic": "Fear of flying and booking trains, negative reinforcement of avoidance",
+  "text": "A man who fears flying books a train instead of a flight. The dread he felt while looking at flights fades the moment the ticket is confirmed. From then on he books trains for every trip. Which learning process best explains why the train booking continues?",
+  "correct": "b",
+  "options": [
+   {
+    "id": "a",
+    "text": "Positive reinforcement, because each train trip gives him a pleasant reward that he then wants to repeat again.",
+    "fb": "Positive reinforcement strengthens behavior by adding something wanted. Nothing in the case adds a reward. The strengthening comes from the end of dread, which is removal and not addition."
+   },
+   {
+    "id": "b",
+    "text": "Negative reinforcement, because booking the train ends the dread and so makes booking trains more likely.",
+    "fb": "Correct. Behavior followed by the removal of something unpleasant becomes more likely. The dread ends when he books the train, so booking trains is strengthened."
+   },
+   {
+    "id": "c",
+    "text": "Punishment, because the dread about flying punishes him and so makes him stop thinking about planes.",
+    "fb": "Punishment weakens the behavior it follows, and it could at most explain why flight booking drops. The question asks why train booking continues, and that is explained by relief."
+   },
+   {
+    "id": "d",
+    "text": "Extinction, because he no longer takes flights and so the fear should gradually fade with the passing of time.",
+    "fb": "Extinction needs the feared situation to occur without the feared outcome. He never approaches flying, so the fear has no chance to be corrected, and avoidance usually keeps it in place."
+   }
+  ]
+ },
+ {
+  "id": "c02",
+  "mod": 4,
+  "mods": [
+   9
+  ],
+  "bloom": "apply",
+  "outcomes": [
+   "CSLO2",
+   "PLO1"
+  ],
+  "src": "Module 4, Behavioral Experiments: Testing Beliefs in the Real World",
+  "topic": "Belief about asking questions in meetings, choosing the technique that tests it directly",
+  "text": "A client believes that if she asks a question in a meeting, everyone will conclude she is unprepared. She has not asked one in two years. Which technique tests this belief most directly?",
+  "correct": "b",
+  "options": [
+   {
+    "id": "a",
+    "text": "Tracing the belief back to an early experience of being criticized for a mistake in front of others.",
+    "fb": "History may explain where the belief came from. A cause gives her nothing to do this week, and it does not test whether the belief holds now."
+   },
+   {
+    "id": "b",
+    "text": "A behavioral experiment in which she asks one planned question and records how people respond.",
+    "fb": "Correct. A behavioral experiment turns the belief into a prediction and collects new evidence in the real situation, which a written exercise cannot supply."
+   },
+   {
+    "id": "c",
+    "text": "Relaxation training so that she feels calmer in her body before each of the meetings she attends.",
+    "fb": "Calmer arousal may help her feel better, and it leaves the prediction untested. If she stays silent while relaxed, the belief stays as it was."
+   },
+   {
+    "id": "d",
+    "text": "A thought record in which she lists the evidence for and against the belief at home, in writing.",
+    "fb": "A reasonable technique that works on the thought directly. She can only weigh evidence she already has, and she has had no recent experience of asking. The experiment adds new evidence."
+   }
+  ]
+ },
+ {
+  "id": "c03",
+  "mod": 9,
+  "mods": [
+   4
+  ],
+  "bloom": "apply",
+  "outcomes": [
+   "CSLO2",
+   "PLO1"
+  ],
+  "src": "Module 9, The Depression Maintenance Loop",
+  "topic": "Low mood with withdrawal, choosing the first step that targets the maintaining process",
+  "text": "A college student's mood has been low for weeks. He has stopped going to the gym, skipped two study groups, and sleeps late. He says there is no point in going because nothing feels good anymore. Which first step most directly targets the process keeping this going?",
+  "correct": "a",
+  "options": [
+   {
+    "id": "a",
+    "text": "Schedule one small valued activity each day, and record his mood before and after he does it.",
+    "fb": "Correct. Withdrawal removes the chances for pleasure and mastery that would lift mood. A small scheduled step reverses the loop, and the record tests his prediction that nothing will feel good."
+   },
+   {
+    "id": "b",
+    "text": "Draw up a full week of gym, study group, and social plans, and commit to all of them starting tomorrow morning.",
+    "fb": "Reversing withdrawal is the right direction, and a plan this large invites a missed day. A missed day would seem to confirm his prediction that nothing helps. One small scheduled step keeps the first test within reach."
+   },
+   {
+    "id": "c",
+    "text": "Challenge the thought that nothing feels good with a thought record before changing any of his behavior.",
+    "fb": "A defensible technique that works on the belief. As the first step it leaves the withdrawal running, and his belief is more likely to change after an activity shows him something different."
+   },
+   {
+    "id": "d",
+    "text": "Spend the first sessions mapping his childhood to explain why he feels the way he does now.",
+    "fb": "History may matter for understanding him. It is a cause, and it does not interrupt the withdrawal that is running now."
+   }
+  ]
+ },
+ {
+  "id": "c04",
+  "mod": 11,
+  "mods": [
+   14
+  ],
+  "bloom": "apply",
+  "outcomes": [
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 11, Reliable Change, Step by Step",
+  "topic": "Reliable change on an invented 0 to 100 well-being scale, a gain of 11 points against a threshold of about 8.15",
+  "text": "On an invented 0 to 100 well-being scale (higher is better, standard deviation 12.0, reliability .94), a gain of about 8.15 points is needed to count as reliable. Sorrel's client scores 41 at intake and 52 at week 6. What does the change support?",
+  "correct": "c",
+  "options": [
+   {
+    "id": "a",
+    "text": "The change cannot be judged without knowing whether the week-6 score of 52 falls above a clinical cutpoint for well-being.",
+    "fb": "A cutpoint addresses clinical significance, which is a second question. Reliable change can be judged without one, and here the threshold is already given."
+   },
+   {
+    "id": "b",
+    "text": "The change is reliable and shows that the therapy caused her to improve, since she scored higher at week 6 than at intake.",
+    "fb": "A reliable change says the movement exceeded measurement noise. Cause needs a comparison, since time, support, and expectation can move scores too."
+   },
+   {
+    "id": "c",
+    "text": "A gain of 11 passes the 8.15 needed, so noise alone is unlikely to produce it and the change counts as reliable improvement.",
+    "fb": "Correct. The index compares the change with the noise expected in a difference between two scores. A gain of 11 exceeds the 8.15 threshold, so it is unlikely to be noise. Reliable change says the score moved by more than error would explain, and it leaves open why it moved."
+   },
+   {
+    "id": "d",
+    "text": "A gain of 11 is not reliable, because it is smaller than the scale's standard deviation of 12, the size of a typical difference between people.",
+    "fb": "The standard deviation describes spread across people, and it is the wrong yardstick for one person's change. The threshold already combines that spread with the scale's reliability to describe the noise in a difference between two scores."
+   }
+  ]
+ },
+ {
+  "id": "c05",
+  "mod": 13,
+  "mods": [
+   10
+  ],
+  "bloom": "apply",
+  "outcomes": [
+   "CSLO3",
+   "PLO4",
+   "PLO5"
+  ],
+  "src": "Module 13, Documentation That a Client Could Read",
+  "topic": "A client asks that a clinically relevant fact not be written down, explain the record and keep the fact",
+  "text": "Emeka, an invented trainee, is writing a session note. His client says, “Please do not write down that I drank before the session.” What is Emeka's best first move?",
+  "correct": "c",
+  "options": [
+   {
+    "id": "a",
+    "text": "Leave the fact out of the note, because the client asked him to and trust matters most in the early weeks of therapy.",
+    "fb": "Trust matters, and an incomplete record can mislead the next clinician. The reading's advice is to tell the client what the record is for and not to remove relevant information."
+   },
+   {
+    "id": "b",
+    "text": "Keep a separate informal page for the fact so that the official session note stays clean, short, and comfortable for the client.",
+    "fb": "A second set of notes hides the fact from the people who need it and leaves the client's question unanswered. The reading points to an open conversation about what the record contains."
+   },
+   {
+    "id": "c",
+    "text": "Explain what the record is for and what he will include, and keep the clinically relevant fact about the drinking in the note.",
+    "fb": "Correct. The reading treats the record as serving later care and compliance, and leaving out relevant facts to please a client undercuts both. Explaining the purpose respects the client and keeps the record usable."
+   },
+   {
+    "id": "d",
+    "text": "Tell the client the request is not open to discussion and then write the note without comment, since the record belongs to the clinic.",
+    "fb": "The note may still include the fact, and refusing to talk about it skips the respect the conversation owes the client. The reading recommends explaining what the record is for."
+   }
+  ]
+ },
+ {
+  "id": "c06",
+  "mod": 3,
+  "mods": [
+   5
+  ],
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO1",
+   "CSLO2",
+   "PLO1"
+  ],
+  "src": "Module 3, Ruptures and Repairs: When the Relationship Strains",
+  "topic": "Confrontation and withdrawal ruptures in two clients",
+  "text": "A trainee describes two moments. A client says sharply, “You are not listening to me.” A different client, asked how the homework went, says “Fine” and changes the subject, as in each of the last three weeks. Which statement best analyzes the two moments?",
+  "correct": "d",
+  "options": [
+   {
+    "id": "a",
+    "text": "The first is a rupture and the second is not, because the second client is being polite and may prefer not to discuss homework.",
+    "fb": "Politeness can be a form of withdrawal. Three weeks of deflection on the same topic is a pattern that tells the clinician something about the relationship."
+   },
+   {
+    "id": "b",
+    "text": "Neither is a rupture, because a rupture requires that the client end the session or announce a decision to leave treatment.",
+    "fb": "The reading describes ruptures as strains in the working bond, and a client does not have to leave for one to be present. Catching one early is the better time to repair it."
+   },
+   {
+    "id": "c",
+    "text": "The second is a rupture and the first is not, because open anger at a therapist is a normal part of therapy.",
+    "fb": "Open anger can be useful to work with, and it is also a sign of strain. A rupture does not require silence."
+   },
+   {
+    "id": "d",
+    "text": "Both signal strain in the working bond, one by open confrontation and one by quiet withdrawal, and each can be repaired.",
+    "fb": "Correct. Ruptures include open confrontation and quiet withdrawal. The second client's repeated deflection is easy to miss, and either kind can be addressed."
+   }
+  ]
+ },
+ {
+  "id": "c07",
+  "mod": 5,
+  "mods": [
+   9
+  ],
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO1",
+   "CSLO2",
+   "PLO1"
+  ],
+  "src": "Module 9, Checking and Reassurance",
+  "topic": "Supportive reassurance versus a reassurance loop, which detail separates them",
+  "text": "A teenager asks her mother, “Will my presentation go okay?” before every class presentation, and her mother says it will. Which detail would best separate a reassurance loop from ordinary support?",
+  "correct": "b",
+  "options": [
+   {
+    "id": "a",
+    "text": "The mother's answers are accurate, because she has watched her daughter rehearse the presentation several times.",
+    "fb": "Accuracy is not the issue. An accurate answer can still feed the loop if it teaches the teenager that she cannot tolerate doubt alone."
+   },
+   {
+    "id": "b",
+    "text": "The questions come more often over time and spread to new events, and the relief from each answer wears off sooner.",
+    "fb": "Correct. A loop shows escalation. Relief reinforces the asking, so the need returns faster and the asking spreads, which is what separates it from support."
+   },
+   {
+    "id": "c",
+    "text": "The teenager feels noticeably better right after her mother answers each time she asks, which shows the support is working.",
+    "fb": "Relief appears in both support and a loop, and in a loop it is the reinforcement that keeps the asking going. It does not separate the two."
+   },
+   {
+    "id": "d",
+    "text": "The teenager asks before class presentations but not before other events, such as exams or group projects.",
+    "fb": "A narrow pattern is a fact about where the doubt lives. A loop is shown by how the asking and relief change over time, and a single trigger can be part of one or not."
+   }
+  ]
+ },
+ {
+  "id": "c08",
+  "mod": 7,
+  "mods": [
+   14
+  ],
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO1",
+   "CSLO2",
+   "PLO1"
+  ],
+  "src": "Module 7, Rumination: When Thinking Feels Like Coping but Isn't",
+  "topic": "Rumination versus problem solving after a poor work review",
+  "text": "After a poor work review, two coworkers think about it all evening. One lists three comments the manager made, picks one to practice, and goes to bed. The other replays the meeting for hours, asking herself why she is like this, and ends with no plan. Which detail best separates rumination from problem solving?",
+  "correct": "b",
+  "options": [
+   {
+    "id": "a",
+    "text": "She remembers the manager's exact words, which shows that she is overthinking the whole review.",
+    "fb": "Good recall of the comments is a normal part of working through feedback. It would also help the first coworker's list."
+   },
+   {
+    "id": "b",
+    "text": "The replaying keeps returning to the same questions about herself and ends with no next step.",
+    "fb": "Correct. Rumination is repetitive thinking about causes and feelings that yields no plan. Problem solving moves toward an action, as the first coworker's list does."
+   },
+   {
+    "id": "c",
+    "text": "She felt upset during the evening, and the other coworker presumably did not feel upset.",
+    "fb": "Both people may be upset. Feeling bad accompanies both, and the difference lies in whether the thinking produces a step."
+   },
+   {
+    "id": "d",
+    "text": "She spent hours on it, which problem solving would not require, so the length shows the difference.",
+    "fb": "Duration alone does not separate them. A person can spend hours on a real problem and end with a plan, and a short loop of rumination can still feed distress."
+   }
+  ]
+ },
+ {
+  "id": "c09",
+  "mod": 10,
+  "mods": [
+   5
+  ],
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO2",
+   "PLO1"
+  ],
+  "src": "Module 10, Readiness",
+  "topic": "A premature goal after an ambivalent statement about drinking",
+  "text": "A client says, “I know I should cut back on drinking, but it is the only thing that helps me unwind.” The clinician replies, “You are right, so let us set a goal of two drinks a week starting tonight.” Which analysis of this reply is best supported by Module 10?",
+  "correct": "c",
+  "options": [
+   {
+    "id": "a",
+    "text": "The reply is correct, because a specific goal is the strongest available sign of commitment to change in a client like her.",
+    "fb": "A specific goal helps once a person is ready. Before that, a goal set by the clinician can come ahead of the client's own reasons."
+   },
+   {
+    "id": "b",
+    "text": "The reply uses reflective listening well, because it repeats her words about cutting back and builds directly on them.",
+    "fb": "A reflection would capture both sides of what she said, the reason to cut back and the value of drinking to unwind. This reply repeats only the side for change and then sets a target, so it is advice that opens with a reflection."
+   },
+   {
+    "id": "c",
+    "text": "The reply treats one side of her ambivalence as settled and sets a target before she has given her own reasons for change.",
+    "fb": "Correct. The client named both sides. The reply takes up only the side for change and sets a target, which moves faster than her readiness and may leave the other side unspoken."
+   },
+   {
+    "id": "d",
+    "text": "The reply is well matched to the client, because agreeing with her wish to cut back builds the alliance.",
+    "fb": "Agreement can build rapport. Here it settles the question for her, and a target she has not chosen can be one she then defends against."
+   }
+  ]
+ },
+ {
+  "id": "c10",
+  "mod": 12,
+  "mods": [
+   15
+  ],
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO3",
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 12, The Preservation Rule",
+  "topic": "Adapting an exposure program for a farming community, which change removes the mechanism",
+  "text": "A clinic serving a farming community plans to adapt an exposure-based anxiety program. Which proposed change would alter the mechanism and so fail to preserve it?",
+  "correct": "a",
+  "options": [
+   {
+    "id": "a",
+    "text": "Dropping the planned practice of approaching feared situations because the community finds it too hard.",
+    "fb": "Correct. Approaching feared situations is the process that carries the change. Removing it changes the deep structure, and the program no longer does what it was built to do."
+   },
+   {
+    "id": "b",
+    "text": "Replacing classroom practice settings with practice at a feed store and in a tractor shed on the farm.",
+    "fb": "This changes the surface. The practice still involves approaching feared situations, and familiar settings may make it more relevant."
+   },
+   {
+    "id": "c",
+    "text": "Holding the sessions in the evening at a community hall instead of during the working day at the clinic.",
+    "fb": "This changes access and delivery. The mechanism is untouched, and the change may help people attend."
+   },
+   {
+    "id": "d",
+    "text": "Rewriting the handouts at a lower reading level and adding photographs of local farms and equipment.",
+    "fb": "This changes how the material is presented. The practices and their purpose stay the same."
+   }
+  ]
+ },
+ {
+  "id": "c11",
+  "mod": 1,
+  "mods": [
+   11
+  ],
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 1, A Bias to Watch: The Allegiance Effect",
+  "topic": "Two reviews of one therapy, the founder's and an independent group's, and what allegiance does and does not license",
+  "text": "Two reviews of the same therapy reach different conclusions. The review written by the therapy's founder finds it clearly better than other treatments. A review by an independent group, which searched the same journals, finds it about equal to other treatments. Which evaluation is best supported by Module 1's reasoning about allegiance?",
+  "correct": "a",
+  "options": [
+   {
+    "id": "a",
+    "text": "The founder's review may be accurate, and the gap between the two is a reason to check how studies were chosen and whether others agree.",
+    "fb": "Correct. Allegiance is a bias to watch and does not make a conclusion false. It lowers confidence until others confirm it, which here means comparing how each review chose and weighed its studies and whether independent teams find the same thing."
+   },
+   {
+    "id": "b",
+    "text": "Little can be concluded from either review, because reviews usually reflect some allegiance on the part of the people who wrote them.",
+    "fb": "This treats a matter of degree as all or nothing. Independent teams, stated methods, and agreement among separate reviews reduce the concern, and reviews differ in how much of it they carry."
+   },
+   {
+    "id": "c",
+    "text": "The founder's review is the more reliable, because the founder knows the therapy best and understands which of the studies deserve weight.",
+    "fb": "Knowing a therapy well is the reason allegiance is hard to separate from expertise. It is also the reason the conclusion needs a check by people with no stake in it."
+   },
+   {
+    "id": "d",
+    "text": "The founder's review is false, because a person who created a therapy does not judge its evidence fairly when summarizing it for others.",
+    "fb": "This overreaches. Allegiance is associated with larger results in reviews of trials, and a particular review can still be accurate. The right response is caution and a check against independent work."
+   }
+  ]
+ },
+ {
+  "id": "c12",
+  "mod": 14,
+  "mods": [
+   11,
+   15
+  ],
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 14, What a Shared Process Predicts and What It Does Not",
+  "topic": "Blog claim that one transdiagnostic protocol beats diagnosis-specific treatment",
+  "text": "A blog post says, “Research proves a single transdiagnostic protocol beats treatment built for each diagnosis.” The course describes two head-to-head trials of the two approaches. Which evaluation is best supported?",
+  "correct": "d",
+  "options": [
+   {
+    "id": "a",
+    "text": "The claim is supported, because one of the trials found that more patients finished the transdiagnostic protocol.",
+    "fb": "Completion is a different outcome from symptom change. Higher completion in one trial does not show better symptom results, and the trial's authors did not claim it."
+   },
+   {
+    "id": "b",
+    "text": "Neither trial says anything useful, because trials that compare two active treatments cannot be run in practice.",
+    "fb": "They have been run, and the course describes two. They tell a reader what was found for the groups and designs studied, with the limits the reading names."
+   },
+   {
+    "id": "c",
+    "text": "The claim is reversed, because the diagnosis-specific treatments produced clearly better symptom results in both of the two trials described.",
+    "fb": "The trials did not find that either. The course reports similar outcomes, with an equivalence design in one and non-inferiority in the other."
+   },
+   {
+    "id": "d",
+    "text": "Both trials found similar outcomes, so a claim of better results goes beyond them, and a shared protocol may be favored on other grounds.",
+    "fb": "Correct. In the trials described, outcomes were similar. A shared protocol can still be considered for other reasons, and the claim of superiority needs a different result."
+   }
+  ]
+ },
+ {
+  "id": "c13",
+  "mod": 15,
+  "mods": [
+   11
+  ],
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 15, Internet-Based CBT and the Role of Guidance",
+  "topic": "Self-paced exam-anxiety program marketed from a trial in which students also met a coach by video each week",
+  "text": "A university sells a self-paced online program for exam anxiety and says it “works as well as therapy.” It cites a trial in which students used the same program and also met with a coach by video each week. Which evaluation is best supported?",
+  "correct": "a",
+  "options": [
+   {
+    "id": "a",
+    "text": "The trial tested a coached program, so it supports claims about coached delivery, and the self-paced version needs its own test.",
+    "fb": "Correct. A study of a guided program supports claims about guided programs. The course sources do not test guided against unguided delivery, so the claim for the self-paced version is open."
+   },
+   {
+    "id": "b",
+    "text": "The trial supports the claim, because the lessons and exercises in the program were the same in both versions of it, and students improved.",
+    "fb": "Content is one part of a program. The weekly coach meetings are the other, and the trial does not show what the program does without them."
+   },
+   {
+    "id": "c",
+    "text": "The claim is false, because online programs seldom produce benefit for exam anxiety and few trials have shown that they can help students with test anxiety.",
+    "fb": "Trials show that online programs can produce benefit. The problem here is that the cited trial and the product differ in the feature in question."
+   },
+   {
+    "id": "d",
+    "text": "The weekly video meetings were too brief to count as real guidance, so the trial counts as a test of an unguided program.",
+    "fb": "The reading describes guidance as a human who reviews progress and responds, even if only briefly. A weekly meeting with a coach counts."
+   }
+  ]
+ },
+ {
+  "id": "c14",
+  "mod": 12,
+  "mods": [
+   13
+  ],
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO3",
+   "CSLO4",
+   "PLO4"
+  ],
+  "src": "Module 12, When the Three Legs Disagree",
+  "topic": "A client requests a weakly supported treatment while the evidence favors an alternative",
+  "text": "A client asks for a treatment with weak research support. The clinician knows a different treatment has stronger evidence for the client's problem, and the client's values favor the first one. Which response is best supported by Module 12?",
+  "correct": "d",
+  "options": [
+   {
+    "id": "a",
+    "text": "Provide the requested treatment, because the client's preference outranks the research evidence when the two disagree about the plan.",
+    "fb": "Preference is one of three legs, and it does not cancel the others. The client needs to know what the evidence says before the preference can guide the choice."
+   },
+   {
+    "id": "b",
+    "text": "Insist on the better-supported treatment, because the research evidence outranks any preference the client states.",
+    "fb": "Evidence is one leg, and treatment that a client does not accept is unlikely to be completed. Insisting skips the conversation that may reveal what the client needs."
+   },
+   {
+    "id": "c",
+    "text": "Refer the client to another clinician, because a disagreement among the legs means that this clinician cannot help.",
+    "fb": "Disagreement is the situation the three-legs model is built to handle. A referral may become appropriate later, and it is not the first response."
+   },
+   {
+    "id": "d",
+    "text": "Share what the evidence shows for each option, explore what draws the client to the first, and decide the plan together.",
+    "fb": "Correct. The legs of evidence-based practice are weighed together. Sharing the evidence respects the research leg, exploring the client's reasons respects values, and a measure lets the plan be checked."
+   }
+  ]
+ },
+ {
+  "id": "c15",
+  "mod": 6,
+  "mods": [
+   11
+  ],
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 6, Becoming a Careful Reader of Brain Claims",
+  "topic": "Headline that a scan of the anxious brain proves anxiety is just biology",
+  "text": "A headline reads, “Scan shows the anxious brain, and the overactive alarm center proves anxiety is just biology.” The study compared amygdala activity in people with anxiety and people without it, at one point in time. Which evaluation is best supported?",
+  "correct": "c",
+  "options": [
+   {
+    "id": "a",
+    "text": "The scan shows that the overactive amygdala causes anxiety, because the alarm center was more active in the anxious group.",
+    "fb": "The design cannot separate cause from effect. Anxious experience may change the amygdala as well."
+   },
+   {
+    "id": "b",
+    "text": "The scan is uninformative, because brain activity measured in a lab says little about anxiety as a person experiences it outside the scanner.",
+    "fb": "The finding is informative as an association. The error in the headline lies in what it concludes from it."
+   },
+   {
+    "id": "c",
+    "text": "The scan shows an association at one time and cannot show cause, and experience also shapes the brain, so “just biology” overreaches.",
+    "fb": "Correct. A single comparison at one point in time cannot say which came first. Experience changes the brain, so a brain difference does not make anxiety only biological."
+   },
+   {
+    "id": "d",
+    "text": "The scan shows that medication is the appropriate treatment, since the difference is located in the brain itself and not in experience.",
+    "fb": "A difference in activity says nothing about which treatments work. Treatment questions need trials that compare treatments."
+   }
+  ]
+ }
+];
+var P2 = [
+ {
+  "id": "s01",
+  "mod": 16,
+  "mods": [],
+  "bloom": "apply",
+  "outcomes": [
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 16, How to Take the Exam",
+  "topic": "Pace on a 75-item, 120-minute exam with 25 items done at minute 52",
+  "text": "Winifred is on item 25 of the 75-item, 120-minute final, and the clock shows 52 minutes gone. At 1.6 minutes per item she would be 40 minutes in. What is her best response?",
+  "correct": "d",
+  "options": [
+   {
+    "id": "a",
+    "text": "About 12 minutes behind, so she should stop looking for the criterion in each stem and answer from the options.",
+    "fb": "Reading the stem is the quickest way to find what an item asks for. Skipping it risks answering a different question and costs more than it saves."
+   },
+   {
+    "id": "b",
+    "text": "On pace, because she still has 68 minutes left on the clock and the exam as a whole allows 120 minutes.",
+    "fb": "Pace compares items finished with time used. She has 50 items left for 68 minutes, which is less than 1.6 minutes each."
+   },
+   {
+    "id": "c",
+    "text": "About 12 minutes behind, so she should skip every item that asks her to compare options and return to them last.",
+    "fb": "Comparison items are a large share of the final. Skipping them all moves the time problem to the end of the exam and leaves a block of items with no time left."
+   },
+   {
+    "id": "d",
+    "text": "About 12 minutes behind, so she should make a tight first pass, answer long items provisionally, and flag them.",
+    "fb": "Correct. Twenty-five items at 1.6 minutes is 40 minutes, so she is 12 behind. Her remaining 50 items have 68 minutes, which is about 1.36 each, so the first pass has to be tighter. A provisional answer keeps the item from being left blank."
+   }
+  ]
+ },
+ {
+  "id": "s02",
+  "mod": 16,
+  "mods": [],
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 16, How to Take the Exam",
+  "topic": "Flagging, provisional answers versus blank flagged items with 14 minutes left",
+  "text": "Sorrel flags every item she is unsure of without choosing an answer. With 14 minutes left she has 11 flagged items and no time to think about all of them. Which flagging habit would have left her in a better position?",
+  "correct": "a",
+  "options": [
+   {
+    "id": "a",
+    "text": "Choosing the best current answer before flagging, so a flag marks an item to revisit and never a blank.",
+    "fb": "Correct. A provisional answer protects the item if time runs out, and the flag marks it for a second look. The two together turn flagging into a plan."
+   },
+   {
+    "id": "b",
+    "text": "Flagging nothing and spending as long as each item needs the first time she goes through the exam, however long it takes.",
+    "fb": "This protects each answer and spends the time unevenly. A hard item early can use minutes that later items needed, and the exam has no way to buy them back."
+   },
+   {
+    "id": "c",
+    "text": "Flagging every item at the start so that she can review the entire exam if time should happen to allow.",
+    "fb": "Flagging everything removes the information a flag carries. The list of flagged items is only useful when it is short enough to review."
+   },
+   {
+    "id": "d",
+    "text": "Flagging only the items that she thinks she got wrong, and doing so after she has answered all of them.",
+    "fb": "A review pass is useful. Flagging only at the end takes time she may not have, and it misses the point of marking uncertainty while the item is fresh."
+   }
+  ]
+ },
+ {
+  "id": "s03",
+  "mod": 16,
+  "mods": [],
+  "bloom": "analyze",
+  "outcomes": [
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 16, How to Take the Exam",
+  "topic": "Changing an answer only when a reason appears, which change is supported",
+  "text": "During review, four students consider changing an answer. Which change does the reasoning in Module 16 support?",
+  "correct": "b",
+  "options": [
+   {
+    "id": "a",
+    "text": "“I am nervous about this one and keep doubting it, and the doubt feels strong, so I want to switch.”",
+    "fb": "Nerves add no information about the item. The course's advice is to change an answer when a reason appears and to leave it when only the feeling is present."
+   },
+   {
+    "id": "b",
+    "text": "“I reread the stem and it asks which option is least supported. My answer was the most supported one.”",
+    "fb": "Correct. A change backed by something specific in the stem or the course material gives new information. Research on answer changing suggests such changes tend to help (Kruger, Wirtz, & Miller, 2005, which this course has read at abstract level only)."
+   },
+   {
+    "id": "c",
+    "text": "“I have changed my last three answers already, so I assume this one probably needs to be changed as well.”",
+    "fb": "A run of changes says nothing about this item. Each change needs its own reason."
+   },
+   {
+    "id": "d",
+    "text": "“I do not remember why I chose this one, so I will choose again from the four options and go with my gut.”",
+    "fb": "Forgetting your reasoning is a cue to reason again. It is a reason to reexamine the item, and a new choice is justified only if the second look finds something."
+   }
+  ]
+ },
+ {
+  "id": "s04",
+  "mod": 16,
+  "mods": [],
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 16, How to Take the Exam",
+  "topic": "Reading the criterion first in an evaluate stem",
+  "text": "A stem reads, “A clinic reports that its program lowered average scores. Which evaluation is best supported by the clinic's data?” Which approach to an item like this is best?",
+  "correct": "a",
+  "options": [
+   {
+    "id": "a",
+    "text": "Mark the criterion, best supported by the clinic's data, and test each option against only the data given.",
+    "fb": "Correct. An evaluate item names the standard for judging, and each option is tested against it. Here the standard is the clinic's own data, and background knowledge can come in only where the data allow."
+   },
+   {
+    "id": "b",
+    "text": "Choose the option that says the program works, because the clinic reports that its average scores went down.",
+    "fb": "A reported drop does not show that the program caused it, and the criterion asks what the data support. A claim of cause may go further than the data."
+   },
+   {
+    "id": "c",
+    "text": "Choose the option that matches the module you studied most recently, because it is freshest in memory.",
+    "fb": "Recency says nothing about the criterion. An evaluate item is built so that the stem, and not your last study session, decides the answer."
+   },
+   {
+    "id": "d",
+    "text": "Read the four options first to see the whole range of claims, and then read the stem to find which one fits.",
+    "fb": "Seeing the options first can anchor you on whichever sounds familiar before you know the standard. Reading the criterion first lets you judge each option by it."
+   }
+  ]
+ },
+ {
+  "id": "s05",
+  "mod": 16,
+  "mods": [],
+  "bloom": "evaluate",
+  "outcomes": [
+   "CSLO4",
+   "PLO2"
+  ],
+  "src": "Module 16, How to Take the Exam",
+  "topic": "Two options both sound right on an evaluate item",
+  "text": "On an evaluate item that asks which interpretation is best supported by a study's design, you have narrowed the choice to two options that both sound right. What is the best next step?",
+  "correct": "c",
+  "options": [
+   {
+    "id": "a",
+    "text": "Choose the option that uses more technical terms, since it sounds more expert and more precise to the reader.",
+    "fb": "The wording style of an option carries no information about whether it is correct. Judge each option against the criterion in the stem."
+   },
+   {
+    "id": "b",
+    "text": "Leave it blank and flag it for the end, because two options that both sound right usually mean the item is flawed.",
+    "fb": "Two close options usually mean the criterion decides between them, and a short second look often settles it. A blank flag also gives up a provisional answer that would protect the item if time runs out."
+   },
+   {
+    "id": "c",
+    "text": "Return to the criterion in the stem, ask which option the described design allows, and check the case details.",
+    "fb": "Correct. Two plausible options usually differ in how well they meet the stated standard. The design in the stem sets a limit on what can be claimed, and one option usually goes past it."
+   },
+   {
+    "id": "d",
+    "text": "Choose the option with the stronger conclusion, since a confident claim shows confident knowledge of the topic.",
+    "fb": "A strong conclusion is more likely to go beyond what a design supports. The criterion decides, and the strength of the wording does not."
+   }
+  ]
+ }
+];
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+var CONF=[{id:"guess",label:"Guess",gl:"I am choosing with little basis."},{id:"probably",label:"Probably",gl:"I lean one way and could be wrong."},{id:"sure",label:"Sure",gl:"I could explain why the others fail."}];
+var CLUSTER_NAME={A:"Foundations (Modules 1 to 3)",B:"Mechanism levels (Modules 4 to 7)",C:"Disorders (Modules 9 and 10)",D:"Research, evidence-based practice, and ethics (Modules 11 to 13)",E:"Synthesis and future (Modules 14 and 15)"};
+function newState(){ return {phase:"intro", i:0, conf:{}, pick:{}, confirm:false, msg:"", cmp:false}; }
+function reset(){ S=newState(); render("top"); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function byId(list,id){ var r=null; list.forEach(function(x){ if(x.id===id) r=x; }); return r; }
+function ok(it){ return S.pick[it.id]===it.correct; }
+function p1Score(){ var n=0; P1.forEach(function(it){ if(S.pick[it.id]&&ok(it)) n++; }); return n; }
+function p2Score(){ var n=0; P2.forEach(function(it){ if(S.pick[it.id]&&ok(it)) n++; }); return n; }
+// ---- storage (optional; every access in try and catch)
+function readStore(){ try{ var ls=window.localStorage; if(!ls) return null; var raw=ls.getItem(STORE_KEY); if(!raw) return null; var o=JSON.parse(raw); if(!o||!o.items||!o.t) return null; return o; }catch(e){ return null; } }
+function writeStore(o){ try{ window.localStorage.setItem(STORE_KEY,JSON.stringify(o)); return true; }catch(e){ return false; } }
+function clearStore(){ try{ window.localStorage.removeItem(STORE_KEY); return true; }catch(e){ return false; } }
+function nowItems(){ return P1.map(function(it){ return {id:it.id,mod:it.mod,lvl:it.bloom,conf:S.conf[it.id],ok:ok(it)}; }); }
+// ---- statistics on a list of {conf, ok, lvl, mod}
+function tally(list){
+  var t={guess:{n:0,k:0},probably:{n:0,k:0},sure:{n:0,k:0},all:{n:0,k:0}};
+  list.forEach(function(x){ var c=t[x.conf]; c.n++; if(x.ok) c.k++; t.all.n++; if(x.ok) t.all.k++; });
+  return t;
+}
+function pct(a,b){ return b?Math.round(100*a/b)+"%":"none rated"; }
+function patterns(list){
+  var out=[], t=tally(list), sureWrong=t.sure.n-t.sure.k, low=t.guess.n+t.probably.n, lowOk=t.guess.k+t.probably.k;
+  var flagged=false;
+  if(t.sure.n>=2&&sureWrong/t.sure.n>=0.4){ out.push({kind:"over",text:"Overconfident pattern on this set. You rated "+t.sure.n+" answers sure, and "+sureWrong+" of them were wrong. Sure answers that miss are the best ones to revisit, because nothing signaled a need to check them."}); flagged=true; }
+  else if(sureWrong>=2){ out.push({kind:"over",text:"Overconfident pattern on this set. "+sureWrong+" of your sure answers were wrong."}); flagged=true; }
+  ["apply","analyze","evaluate"].forEach(function(lv){
+    var sub=list.filter(function(x){return x.lvl===lv;}), tt=tally(sub);
+    if(tt.sure.n>=2&&(tt.sure.n-tt.sure.k)/tt.sure.n>=0.5){ out.push({kind:"over",text:"Within "+lv+" items, "+(tt.sure.n-tt.sure.k)+" of "+tt.sure.n+" sure answers were wrong."}); flagged=true; }
+  });
+  if(t.guess.n>=2&&t.guess.k/t.guess.n>=0.6){ out.push({kind:"under",text:"Underconfident pattern on this set. "+t.guess.k+" of "+t.guess.n+" answers rated guess were right. With four options a pure guess would be right about one time in four, so you knew more than you credited."}); flagged=true; }
+  if(low>=4&&lowOk/low>=0.8&&t.sure.n<=1){ out.push({kind:"under",text:"Underconfident pattern on this set. You rated "+low+" answers guess or probably, and "+lowOk+" were right. A higher rating on answers you can defend would match your results."}); flagged=true; }
+  if(!flagged){
+    var seq=[t.guess,t.probably,t.sure].filter(function(c){return c.n>0;}).map(function(c){return c.k/c.n;}), mono=true;
+    for(var i=1;i<seq.length;i++){ if(seq[i]<seq[i-1]-0.0001) mono=false; }
+    if((mono&&seq.length>=2)||(seq.length===1&&t.sure.n>0&&t.sure.k/t.sure.n>=0.6)) out.push({kind:"match",text:"On this set, accuracy rose or held as confidence rose, so your ratings tracked your results."});
+    else out.push({kind:"mixed",text:"On this set no clear overconfident or underconfident pattern appears. Ratings and results moved together unevenly."});
+  }
+  return out;
+}
+// ---- chrome
+function stepsRow(){
+  var names=["Introduction","Part 1: fifteen items","Your table","Part 2: strategy","Summary"], order=["intro","p1","tbl","p2","end"], ix=order.indexOf(S.phase), h='<div class="steps" aria-label="Progress">';
+  names.forEach(function(n,i){ h+='<span class="stp'+(i===ix?' on':(i<ix?' done':''))+'">'+n+(i===ix?' (current)':(i<ix?' (done)':''))+'</span>'; });
+  return h+'</div>';
+}
+function safetyNote(){ return '<p class="note safe"><b>Safety.</b> If anything in this activity affects you, call or text 988 at any hour, or call 911 in an emergency.</p>'; }
+function render(focus){
+  var h=stepsRow();
+  if(S.phase==="intro") h+=renderIntro(); else if(S.phase==="p1"||S.phase==="p2") h+=renderItem(); else if(S.phase==="tbl") h+=renderTable(); else h+=renderEnd();
+  root.innerHTML=h; post();
+  try{ var el=null; if(focus==="top"||focus==="panel") el=root.querySelector("#panelhead"); else if(focus) el=root.querySelector(focus); if(el&&el.focus) el.focus(); }catch(e){}
+}
+function renderIntro(){
+  var sv=readStore(), h='<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">Before you start</h2>'+
+   '<div class="note illus"><b>Practice only.</b> All cases and numbers are invented. Your answers and ratings are not sent anywhere. You can choose to keep a copy of your results in this browser, and the page works without it.</div>'+
+   '<p class="explain">Part 1 has fifteen items at the apply, analyze, and evaluate levels, drawn from across the course. Before you answer each one, you rate how sure you are, by choosing guess, probably, or sure. You then choose an answer and read feedback on every option. When all fifteen are done, a table sets your confidence against your accuracy by module and by level. Part 2 has five items on how to use the exam itself well.</p>'+
+   '<p class="explain">The reason for the ratings is that how well you feel you know something is an imperfect guide to how well you do. Research on study habits suggests that judgments of learning follow how fluent material feels and can mislead (Bjork, Dunlosky, &amp; Kornell, 2013), and that judgments made after a delay tend to be more accurate than judgments made right after studying (Rhodes &amp; Tauber, 2011). Those studies used laboratory materials, so how closely the findings fit psychotherapy concepts is unknown. The table is a way to check your own results. It does not label you, and a set of fifteen items is small.</p>';
+  if(sv){ h+='<div class="note">A saved result from '+esc(dateText(sv.t))+' is stored in this browser. After the table you can compare it with today if at least two days have passed.</div>'; }
+  h+=safetyNote()+'<div class="foot"><span></span><button class="btn" type="button" data-act="start">Begin Part 1</button></div></section>';
+  return h;
+}
+function dateText(t){ try{ return new Date(t).toDateString(); }catch(e){ return "an earlier date"; } }
+function curList(){ return S.phase==="p1"?P1:P2; }
+function renderItem(){
+  var list=curList(), it=list[S.i], part=(S.phase==="p1"), answered=!!S.pick[it.id], rated=!!S.conf[it.id]||!part;
+  var h='<section class="panel"><div class="qtop"><span class="qn">Part '+(part?1:2)+', item '+(S.i+1)+' of '+list.length+'</span><span class="lvl">Task level: '+esc(it.bloom)+'</span></div>'+
+   '<h2 class="hd" id="panelhead" tabindex="-1" style="font-size:16px;font-weight:600;line-height:1.5">'+esc(it.text)+'</h2>';
+  if(part){
+    h+='<fieldset class="grp"><legend>First, how sure are you of the answer you are about to choose?</legend><div class="confrow" role="group" aria-label="Confidence rating">';
+    CONF.forEach(function(c){ var sel=S.conf[it.id]===c.id; h+='<button class="cb'+(sel?' sel':'')+'" type="button" aria-pressed="'+(sel?'true':'false')+'" data-act="conf" data-val="'+c.id+'"'+(answered?' disabled':'')+'>'+(sel?'✓ ':'')+c.label+'<span class="gl2">'+c.gl+'</span></button>'; });
+    h+='</div></fieldset>';
+  }
+  h+='<fieldset class="grp"><legend>'+(part?'Then choose an answer.':'Choose the best answer.')+'</legend><div class="options" role="group" aria-label="Answer options">';
+  it.options.forEach(function(o){
+    var cls="opt", mark="○", gl="";
+    if(answered){ if(o.id===it.correct){ cls+=" correct"; mark="✓"; gl='<span class="gl2">Best-supported answer</span>'; } else if(S.pick[it.id]===o.id){ cls+=" wrong"; mark="✗"; gl='<span class="gl2">Your choice, not the best-supported answer</span>'; } else cls+=" dim"; if(S.pick[it.id]===o.id&&o.id===it.correct) gl='<span class="gl2">Your choice, the best-supported answer</span>'; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+((answered||!rated)?' disabled':'')+'><span class="k">'+o.id+'.</span><span>'+esc(o.text)+gl+'</span></button>';
+  });
+  h+='</div></fieldset>';
+  if(part&&!rated&&!answered) h+='<p class="explain">Choose a confidence rating to unlock the answer options.</p>';
+  if(answered){
+    var right=ok(it);
+    h+='<div class="fbbox" role="region" aria-label="Feedback"><p><b>'+(right?'Correct.':'Not the best-supported answer.')+'</b>'+(part?' You rated this '+esc(S.conf[it.id])+(right?(S.conf[it.id]==="guess"?'. Your guess landed.':'.'):(S.conf[it.id]==="sure"?'. A sure answer that misses is the most useful kind to look at.':'.')):'')+' Module: '+esc(modLabel(it.mod))+'.</p><ul class="why">';
+    it.options.forEach(function(o){ h+='<li'+(o.id===it.correct?' class="key"':'')+'><b>'+o.id+'.</b> '+esc(o.fb)+'</li>'; });
+    h+='</ul>'+(right?'':'<p class="rv">Revisit: '+esc(it.src)+'.</p>')+'</div>';
+    h+='<div class="foot"><span class="qn">'+(S.i===list.length-1?(part?'Part 1 complete.':'Part 2 complete.'):'')+'</span><button class="btn" type="button" data-act="next">'+(S.i===list.length-1?(part?'See my table':'See my summary'):'Next item')+'</button></div>';
+  }
+  return h+'</section>';
+}
+function modLabel(m){ return m===16?"16 (exam strategy)":String(m); }
+function lvlRow(lv){
+  var sub=P1.filter(function(it){return it.bloom===lv;}).map(function(it){ return {conf:S.conf[it.id],ok:ok(it)}; }), t=tally(sub);
+  return '<tr><th scope="row">'+lv.charAt(0).toUpperCase()+lv.slice(1)+'</th>'+['guess','probably','sure'].map(function(c){ return '<td class="num">'+t[c].k+' of '+t[c].n+'</td>'; }).join("")+'<td class="num">'+t.all.k+' of '+t.all.n+'</td></tr>';
+}
+function renderTable(){
+  var list=nowItems(), t=tally(list);
+  var h='<section class="panel results"><h2 class="hd" id="panelhead" tabindex="-1">Your confidence against your accuracy</h2><p class="score">Part 1 score: <b>'+p1Score()+' of '+P1.length+'</b>.</p>'+
+   '<p class="explain">Each cell shows the number of answers that were right out of the number you rated at that level of confidence. A column with no entries means you did not use that rating.</p>'+
+   '<div class="tblwrap"><table class="data"><caption>All fifteen items by confidence rating.</caption><thead><tr><th scope="col">Rating</th><th scope="col">Right out of rated</th><th scope="col">Share right</th></tr></thead><tbody>'+
+   ['guess','probably','sure'].map(function(c){ return '<tr><th scope="row">'+c.charAt(0).toUpperCase()+c.slice(1)+'</th><td class="num">'+t[c].k+' of '+t[c].n+'</td><td class="num">'+pct(t[c].k,t[c].n)+'</td></tr>'; }).join("")+'</tbody></table></div>'+
+   '<h3 class="ch">By level</h3><div class="tblwrap"><table class="data"><caption>Right out of rated, by task level and confidence rating.</caption><thead><tr><th scope="col">Level</th><th scope="col">Guess</th><th scope="col">Probably</th><th scope="col">Sure</th><th scope="col">All</th></tr></thead><tbody>'+lvlRow('apply')+lvlRow('analyze')+lvlRow('evaluate')+'</tbody></table></div>'+
+   '<h3 class="ch">By module</h3><div class="tblwrap"><table class="data"><caption>Each module with the confidence you gave and the result. The last column states the match in words.</caption><thead><tr><th scope="col">Module</th><th scope="col">Confidence and result</th><th scope="col">Match</th></tr></thead><tbody>';
+  var mods={}; P1.forEach(function(it){ (mods[it.mod]=mods[it.mod]||[]).push(it); });
+  Object.keys(mods).map(Number).sort(function(a,b){return a-b;}).forEach(function(m){
+    var its=mods[m], desc=its.map(function(it){ return S.conf[it.id]+", "+(ok(it)?"right":"wrong"); }).join("; "), tag;
+    var sw=its.filter(function(it){return S.conf[it.id]==="sure"&&!ok(it);}).length, lr=its.filter(function(it){return S.conf[it.id]!=="sure"&&ok(it);}).length, mm=its.filter(function(it){return (S.conf[it.id]==="sure"&&ok(it))||(S.conf[it.id]==="guess"&&!ok(it));}).length;
+    if(sw) tag="Sure and wrong, a rating above the result"; else if(lr&&!mm&&its.every(function(it){return S.conf[it.id]!=="sure"&&ok(it);})) tag="Right at a lower rating, a result above the rating"; else if(its.every(function(it){return ok(it);})) tag="Right"; else tag="Rating and result agree";
+    h+='<tr><th scope="row">Module '+m+'</th><td>'+esc(desc)+'</td><td>'+esc(tag)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<h3 class="ch">What the table shows on this set</h3><ul class="plain">';
+  patterns(list).forEach(function(p){ h+='<li>'+esc(p.text)+'</li>'; });
+  h+='</ul><p class="explain">Fifteen items is a small set, so a pattern is a prompt to check against more items, such as the three Mixed Retrieval Rounds. These descriptions apply to this set of answers and are not a statement about you.</p>';
+  var weak=[]; P1.forEach(function(it){ if(!ok(it)||(S.conf[it.id]==="sure"&&!ok(it))) weak.push(it); });
+  if(weak.length){ h+='<h3 class="ch">Headings to revisit</h3><ul class="plain">'; weak.forEach(function(it){ h+='<li>'+esc(it.src)+(S.conf[it.id]==="sure"?' (rated sure)':'')+'</li>'; }); h+='</ul><p class="explain">The Study Plan Builder can start from this table if you save it below.</p>'; }
+  h+=saveBox();
+  h+='<div class="foot"><span></span><button class="btn" type="button" data-act="topart2">Continue to Part 2</button></div></section>';
+  return h;
+}
+function saveBox(){
+  var sv=readStore(), h='<h3 class="ch">Optional: keep this table in this browser</h3><p class="explain">If you save the table, you can come back after at least two days, take Part 1 again, and compare. The same fifteen items return, so part of any change may reflect memory of the answers and not learning. Saving works only if this page is allowed to use browser storage, and nothing is sent anywhere.</p>';
+  h+='<div class="reset"><button class="btn secondary" type="button" data-act="save">Save this table</button>';
+  if(sv){ h+='<button class="btn secondary" type="button" data-act="compare">Compare with my saved table</button>'; }
+  h+='</div>';
+  if(S.msg) h+='<p class="explain" role="status">'+esc(S.msg)+'</p>';
+  if(S.cmp&&sv) h+=compareBox(sv);
+  if(sv){ h+='<div class="reset">'; if(S.confirm){ h+='<p style="margin:0 0 8px">This removes the saved table from this browser. Remove it?</p><button type="button" class="btn secondary" data-act="clear-yes">Yes, remove</button><button type="button" class="btn secondary" data-act="clear-no">Cancel</button>'; } else h+='<button type="button" class="btn secondary" data-act="clear">Remove my saved table</button>'; h+='</div>'; }
+  return h;
+}
+function compareBox(sv){
+  var days=Math.floor((Date.now()-sv.t)/86400000), h='';
+  if(days<2){ return '<div class="note">Your saved table is from '+esc(dateText(sv.t))+', which is '+(days<1?'less than one day':'one day')+' ago. A comparison is most useful after at least two days, so come back then and take Part 1 again.</div>'; }
+  var a=tally(sv.items), b=tally(nowItems());
+  h+='<div class="tblwrap"><table class="data"><caption>Saved table from '+esc(dateText(sv.t))+' ('+days+' days ago) beside today.</caption><thead><tr><th scope="col">Measure</th><th scope="col">Saved</th><th scope="col">Today</th></tr></thead><tbody>'+
+   '<tr><th scope="row">Items right</th><td class="num">'+a.all.k+' of '+a.all.n+'</td><td class="num">'+b.all.k+' of '+b.all.n+'</td></tr>'+
+   ['guess','probably','sure'].map(function(c){ return '<tr><th scope="row">Rated '+c+', right</th><td class="num">'+a[c].k+' of '+a[c].n+'</td><td class="num">'+b[c].k+' of '+b[c].n+'</td></tr>'; }).join("")+
+   '<tr><th scope="row">Sure and wrong</th><td class="num">'+(a.sure.n-a.sure.k)+'</td><td class="num">'+(b.sure.n-b.sure.k)+'</td></tr></tbody></table></div>';
+  var sw=a.sure.n-a.sure.k, nw=b.sure.n-b.sure.k;
+  h+='<p class="explain">'+(nw<sw?'Fewer sure answers were wrong today than before. ':(nw>sw?'More sure answers were wrong today than before. ':'The count of sure answers that were wrong stayed the same. '))+'Delayed self-judgments tend to be more accurate than immediate ones (Rhodes &amp; Tauber, 2011), so the gap between your rating and your result is a useful quantity to read across sessions. Because the items repeat, remembered answers can raise a score without new learning.</p>';
+  return h;
+}
+function renderEnd(){
+  var h='<section class="panel results"><h2 class="hd" id="panelhead" tabindex="-1">Summary</h2><p class="score">Part 1: <b>'+p1Score()+' of '+P1.length+'</b>. Part 2: <b>'+p2Score()+' of '+P2.length+'</b>. Total: <b>'+(p1Score()+p2Score())+' of '+(P1.length+P2.length)+'</b>.</p>'+
+   '<p class="explain">These scores are for practice. Nothing here carries into the final exam or the course grade beyond completing the activity.</p>';
+  var miss=[]; P2.forEach(function(it){ if(!ok(it)) miss.push(it); });
+  h+='<h3 class="ch">Part 2, the five strategy items</h3><ul class="plain">';
+  P2.forEach(function(it){ h+='<li><b>'+(ok(it)?'Right':'Missed')+'.</b> '+esc(it.topic)+'.'+(ok(it)?'':' Revisit: '+esc(it.src)+'.')+'</li>'; });
+  h+='</ul><h3 class="ch">Four habits to carry into the exam</h3><ul class="plain">'+
+   '<li>The final has 75 items in 120 minutes, which is 1.6 minutes per item. Check your pace at items 25 and 50, and give long items a first pass with a provisional answer.</li>'+
+   '<li>Flag an item after choosing a best current answer, so a flag never leaves a blank.</li>'+
+   '<li>Change an answer when you find a reason in the stem or in the course. Leave it when the only reason is nerves.</li>'+
+   '<li>On an evaluate item, read the criterion in the stem before the options and judge each option against it.</li></ul>';
+  h+='<p class="explain">If you saved your Part 1 table, the Study Plan Builder can use it to set starting ratings for the modules the fifteen items covered.</p>';
+  h+='<div class="foot"><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">All cases and numbers are invented. Your answers are not sent anywhere. If anything here affects you, call or text 988 at any hour, or call 911 in an emergency.</p></section>';
+  return h;
+}
+function act(v,val){
+  var list, it;
+  if(v==="start"){ S.phase="p1"; S.i=0; render("panel"); return; }
+  if(S.phase==="p1"||S.phase==="p2"){
+    list=curList(); it=list[S.i];
+    if(v==="conf"){ if(S.pick[it.id]||S.phase!=="p1") return; S.conf[it.id]=val; render('[data-act="conf"][data-val="'+val+'"]'); return; }
+    if(v==="pick"){ if(S.pick[it.id]) return; if(S.phase==="p1"&&!S.conf[it.id]) return; S.pick[it.id]=val; render('[data-act="next"]'); return; }
+    if(v==="next"){ if(!S.pick[it.id]) return; if(S.i<list.length-1){ S.i++; render("panel"); } else { S.phase=(S.phase==="p1")?"tbl":"end"; S.i=0; render("panel"); } return; }
+  }
+  if(S.phase==="tbl"){
+    if(v==="topart2"){ S.phase="p2"; S.i=0; S.msg=""; S.cmp=false; render("panel"); return; }
+    if(v==="save"){ var o={v:1,t:Date.now(),items:nowItems()}; S.msg=writeStore(o)?"Saved in this browser on "+dateText(o.t)+". Come back after at least two days to compare.":"This page could not save to browser storage here. Nothing is lost, and the page works without it."; render("panel"); return; }
+    if(v==="compare"){ S.cmp=!S.cmp; S.msg=""; render('[data-act="compare"]'); return; }
+    if(v==="clear"){ S.confirm=true; render('[data-act="clear-no"]'); return; }
+    if(v==="clear-no"){ S.confirm=false; render('[data-act="clear"]'); return; }
+    if(v==="clear-yes"){ clearStore(); S.confirm=false; S.cmp=false; S.msg="The saved table was removed from this browser."; render("panel"); return; }
+  }
+  if(v==="again"){ reset(); try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

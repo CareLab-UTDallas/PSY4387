@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mixed Retrieval Round 2</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Mixed Retrieval Round 2</h1>
+    <p class="sub">Ten more scenarios in new settings with a few more evaluation items. Use a different day from Round 1.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "mcq",
+  "title": "Round 2",
+  "short": "Round 2",
+  "tag": "Mixed retrieval, round 2",
+  "doThis": "Say or write your answer before you press Show the options. Then choose the best-supported option.",
+  "intro": "<b>Ten new scenarios from across Modules 1 to 15.<\/b> Every person and number is invented. Each item names two modules after you answer. Before the options appear, say your answer aloud or write it down. Only that typed or spoken first answer is unscored, and the option you choose afterward is scored. Nothing is saved or sent. Items you miss come back at the end for half credit. Use a different day for each round. If anything in these scenarios affects you personally, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "revisit": "Return to the headings named in the feedback for the items you missed.",
+  "items": [
+   {
+    "id": "R2-01",
+    "prompt": "Marguerite, a delivery driver, was lunged at by a dog on one stretch of her route. Since then she skips that street and loops three blocks around it, which adds about eleven minutes that she notices only when she totals her mileage at the end of each week. Each time she takes the loop, her chest unclenches, and last week she began looping around a second street with a fenced yard. Which term best explains why the detouring grows?",
+    "bloom": "apply",
+    "primary": 2,
+    "secondary": 10,
+    "anchors": [
+     "avoidance and negative reinforcement"
+    ],
+    "outcomes": [
+     "CSLO2",
+     "PLO1",
+     "N-CT"
+    ],
+    "topic": "Delivery driver detours around a street after a dog lunged (negative reinforcement versus punishment)",
+    "src": "Module 2, A Closer Look at Reinforcement: Four Everyday Mechanisms | Module 5, How Behavior Gets Trained: Reinforcement Up Close",
+    "correct": "b",
+    "options": [
+     {
+      "id": "a",
+      "text": "Punishment, because the extra eleven minutes is an unpleasant result that should make detouring less likely",
+      "fb": "Punishment weakens behavior when an unpleasant consequence follows it closely. The extra time shows up only when she totals her mileage, long after the relief has done its work. Detouring is spreading, which is the opposite of weakening.",
+      "rv": "Module 2, Audio Overview: Negative Reinforcement Versus Punishment"
+     },
+     {
+      "id": "b",
+      "text": "Negative reinforcement, because the detour removes dread and so makes detouring more likely next time",
+      "fb": "A behavior grows when it removes something unpleasant, and negative refers to the removal. The relief arrives within seconds, and the cost of the extra mileage arrives later and in small amounts. The relief has more pull on the next choice.",
+      "rv": "Module 2, A Closer Look at Reinforcement: Four Everyday Mechanisms | Module 5, How Behavior Gets Trained: Reinforcement Up Close"
+     },
+     {
+      "id": "c",
+      "text": "Extinction, because the fear fades each week that she does not meet the dog on her route",
+      "fb": "Extinction needs the feared cue to be met repeatedly without the bad outcome. She never meets the cue, so nothing is updated, and the fear spread to a second street.",
+      "rv": "Module 5, Extinction: How Old Fears Get Rewritten"
+     },
+     {
+      "id": "d",
+      "text": "Classical conditioning alone, because the street has become a cue that triggers her dread",
+      "fb": "Classical conditioning explains how the street came to set off dread. It does not explain why a behavior (detouring) is growing, which comes from the consequences that follow it.",
+      "rv": "Module 2, The Behavioral Tradition, Revisited: How Fears Grow and Shrink"
+     }
+    ]
+   },
+   {
+    "id": "R2-02",
+    "prompt": "Isolde, an intake coordinator, reviews a clinic's consent handout. It states in bold, \"Everything you tell your therapist is confidential,\" and it asks clients to sign at the bottom. Staff report that clients are often surprised when a therapist later mentions a required report, and some stop attending afterward. Which analysis best fits the course's account of consent and the working alliance?",
+    "bloom": "analyze",
+    "primary": 13,
+    "secondary": 3,
+    "anchors": [
+     "consent and confidentiality limits",
+     "alliance as a mechanism"
+    ],
+    "outcomes": [
+     "CSLO3",
+     "PLO5",
+     "N-PRO"
+    ],
+    "topic": "Consent handout that says everything is confidential and clients who are surprised by a required report",
+    "src": "Module 13, Informed Consent in Therapy | Module 3, The Alliance as a Mechanism, Not a Mood",
+    "correct": "a",
+    "options": [
+     {
+      "id": "a",
+      "text": "The handout overpromises and treats consent as a signature, so a required disclosure later feels like a broken promise",
+      "fb": "Consent is a continuing conversation that tells clients the limits at the outset and again as circumstances change. A signature records one moment. A client who feels misled has reason to doubt the bond and the shared understanding of how the work runs, and dropping out follows.",
+      "rv": "Module 13, Informed Consent in Therapy | Module 3, The Alliance as a Mechanism, Not a Mood"
+     },
+     {
+      "id": "b",
+      "text": "The handout should list the possible exceptions in small print, so that no client can say they were not told",
+      "fb": "The aim is a client who understands the limits, in language that is reasonably understandable. Small print protects the clinic and leaves the client no better informed.",
+      "rv": "Module 13, Informed Consent in Therapy"
+     },
+     {
+      "id": "c",
+      "text": "The handout is fine, because the signature shows that clients consented and the surprise comes from individual sensitivity",
+      "fb": "A signed form that was never explained leaves the client uninformed. Consent has a content requirement (in language the person understands) and a timing requirement, and neither is met by a signature alone.",
+      "rv": "Module 13, Informed Consent in Therapy"
+     },
+     {
+      "id": "d",
+      "text": "The handout should be shortened to a single sentence, because describing limits at the start makes clients less honest",
+      "fb": "Telling clients early and calmly makes any later report less of a surprise. Presented as part of the professional's obligations, the limits do not need to chill honesty.",
+      "rv": "Module 10, Consent in Trauma-Focused Care"
+     }
+    ]
+   },
+   {
+    "id": "R2-03",
+    "prompt": "Calla found a lump in her neck, and her doctor examined it and found nothing concerning. Since then she asks her husband several times a day whether it is serious. He answers warmly each time. The calm lasts about an hour and the questions return. A counselor proposes a plan for the household. Judged by how the course describes reassurance loops, which plan is best supported?",
+    "bloom": "evaluate",
+    "primary": 9,
+    "secondary": 5,
+    "anchors": [
+     "reassurance loop"
+    ],
+    "outcomes": [
+     "CSLO2",
+     "CSLO3",
+     "PLO1",
+     "N-CT"
+    ],
+    "topic": "Family reassurance about a lump a doctor already examined (warmth with gradually less reassurance)",
+    "src": "Module 9, Checking and Reassurance | Module 5, A Third Illustration: Priya and the Reassurance Trap",
+    "correct": "a",
+    "options": [
+     {
+      "id": "a",
+      "text": "He stays warm but gives fewer reassuring answers over time, Calla practices tolerating doubt, and they track her asking",
+      "fb": "Reassurance works as a check supplied by another person, and each answer teaches her that she needed it. Clinicians sometimes coach families to respond with warmth while gradually providing less reassurance, so the person can learn to tolerate the doubt. Tracking the asking provides a gauge for the process.",
+      "rv": "Module 9, Checking and Reassurance | Module 5, A Third Illustration: Priya and the Reassurance Trap"
+     },
+     {
+      "id": "b",
+      "text": "Calla books a second medical opinion to settle the question, since an expert's answer should carry more weight than her husband's",
+      "fb": "A second examination after a thorough first one is another check. It brings relief that fades, and each check teaches her that she needed one to manage the doubt. Whether any further medical review is warranted is her physician's call, and the household plan concerns how the daily questions are answered.",
+      "rv": "Module 9, Shared Processes Across Anxiety Presentations"
+     },
+     {
+      "id": "c",
+      "text": "He answers faster and more fully each time, so that the doubt is finally settled and the questions stop",
+      "fb": "A check can only report on this moment, and the doubt returns. More complete answers feed the loop, because each answer is another instance of relief following the question.",
+      "rv": "Module 9, Checking and Reassurance"
+     },
+     {
+      "id": "d",
+      "text": "He refuses to discuss the lump and turns away from her when she asks, so that the habit fades through lack of attention",
+      "fb": "The course aims at warmth with gradually fewer reassuring answers. Coldness risks the supportive relationship, and the loop can be named without blaming the person who loves her.",
+      "rv": "Module 5, A Third Illustration: Priya and the Reassurance Trap"
+     }
+    ]
+   },
+   {
+    "id": "R2-04",
+    "prompt": "Yosef, a clinic director, writes in the annual report, \"Every client whose questionnaire score dropped by 4 points or more improved.\" The clinic uses an invented 0 to 50 anxiety scale where lower scores are better, with a standard deviation of 6 and a reliability of .80. By the Module 11 method, the smallest reliable drop is about 7.4 points. A counselor objects. Judged against the reliable change criterion, which evaluation is best supported?",
+    "bloom": "evaluate",
+    "primary": 11,
+    "secondary": 12,
+    "anchors": [
+     "reliable change"
+    ],
+    "outcomes": [
+     "CSLO3",
+     "CSLO4",
+     "PLO2",
+     "N-CT"
+    ],
+    "topic": "Annual report claim that every client who dropped 4 points improved (measurement noise on an invented 0 to 50 anxiety scale)",
+    "src": "Module 11, Reliable Change, Step by Step | Module 12, Measurement-Based Care: The Loop",
+    "correct": "d",
+    "options": [
+     {
+      "id": "a",
+      "text": "The sentence is acceptable if the report adds a p-value, because statistical significance would show the drops were real",
+      "fb": "A p-value describes group data under an assumption of no effect, and it does not tell you whether one person's change exceeded the noise in the instrument. Reliable change is the individual-level question.",
+      "rv": "Module 11, Real vs. Meaningful: Statistical and Clinical Significance"
+     },
+     {
+      "id": "b",
+      "text": "The sentence is wrong, because only clients who finish below a clinical cutpoint can be counted as improved",
+      "fb": "Improved means a reliable change without crossing the cutpoint. Crossing the cutpoint is part of the definition of recovered. The sentence's problem is the noise, and the cutpoint is a separate criterion.",
+      "rv": "Module 11, Reliable Change, Step by Step"
+     },
+     {
+      "id": "c",
+      "text": "The sentence is supported, because a drop in a questionnaire score is evidence that the person improved, and 4 points is a visible change",
+      "fb": "Scores wobble from day to day and from the way a question is read. A small drop can arise from noise alone, and clients also tend to enter treatment at an extreme point, which adds regression to the mean.",
+      "rv": "Module 11, Reliable Change, Step by Step"
+     },
+     {
+      "id": "d",
+      "text": "The sentence overreaches, because drops of 4 to 7 points fall inside measurement noise and only drops of 8 or more clear it",
+      "fb": "A change counts as reliable when it exceeds what measurement noise would produce for one person. Drops of 4 through 7 points fall under about 7.4. The report can say how many clients changed reliably and how many did not.",
+      "rv": "Module 11, Reliable Change, Step by Step | Module 12, Measurement-Based Care: The Loop"
+     }
+    ]
+   },
+   {
+    "id": "R2-05",
+    "prompt": "Evander has two kinds of bad nights. On some he lies awake running through \"what if the roof leaks again, what if the repair bill is too high, what if I cannot pay it.\" On others he goes over his decision to leave a team two years ago and asks why he made it. A counselor says both nights involve one shared process. Which analysis is most accurate?",
+    "bloom": "analyze",
+    "primary": 4,
+    "secondary": 7,
+    "anchors": [
+     "rumination"
+    ],
+    "outcomes": [
+     "CSLO2",
+     "PLO1",
+     "N-CT"
+    ],
+    "topic": "Two kinds of sleepless nights, roof-repair what-if chains and a replayed decision to leave a team (worry and rumination as repetitive negative thinking)",
+    "src": "Module 4, When the Problem Is the Overthinking Itself | Module 7, Rumination: When Thinking Feels Like Coping but Isn't | Module 9, Where Anxiety and Depression Overlap",
+    "correct": "c",
+    "options": [
+     {
+      "id": "a",
+      "text": "The nights spent replaying the old decision are the real problem, because the what-if nights about the roof are responsible preparation for real risks",
+      "fb": "Worry feels like preparation and resembles problem solving, which makes it hard to drop. It moves from one what-if to the next and rarely reaches a solution.",
+      "rv": "Module 9, Shared Processes Across Anxiety Presentations"
+     },
+     {
+      "id": "b",
+      "text": "Both are forms of problem solving, because each night touches a real concern that Evander has, such as the repair bill or the team he left",
+      "fb": "The topics are real, and the thinking does not produce a next step on either night. A process that circles without a destination is the mark of overthinking.",
+      "rv": "Module 7, Spotting the Difference in Real Life"
+     },
+     {
+      "id": "c",
+      "text": "Both are repetitive, passive thinking, with worry aimed ahead and rumination behind, so interrupting the circling could help both",
+      "fb": "Worry and rumination share repetitive, passive features and differ in their time focus. The core difficulty is the process of circling without reaching a conclusion, which is why working on the process (noticing the chain and stepping out of it) can be more efficient than debating each thought.",
+      "rv": "Module 4, When the Problem Is the Overthinking Itself | Module 7, Rumination: When Thinking Feels Like Coping but Isn't | Module 9, Where Anxiety and Depression Overlap"
+     },
+     {
+      "id": "d",
+      "text": "Worry and rumination differ in kind, so each needs its own treatment with techniques that do not overlap",
+      "fb": "The two are close relatives. Both are repetitive negative thinking and both appear across diagnoses, which is one reason the same process-level methods can help with either.",
+      "rv": "Module 9, Where Anxiety and Depression Overlap"
+     }
+    ]
+   },
+   {
+    "id": "R2-06",
+    "prompt": "Yosef dreads the Thursday review meeting because his manager tends to criticize people in front of the group. This week he keeps attending and asks a trusted colleague to stay next to him. In Gross's process model, which point in the chain has he stepped in at?",
+    "bloom": "apply",
+    "primary": 7,
+    "secondary": 14,
+    "anchors": [
+     "reappraisal versus suppression"
+    ],
+    "outcomes": [
+     "CSLO1",
+     "CSLO2",
+     "PLO1",
+     "N-CT"
+    ],
+    "topic": "Dreaded review meeting and four coping moves located on Gross's chain (modification, reappraisal, suppression, breathing)",
+    "src": "Module 7, Gross's Process Model: Five Places to Step In | Module 7, Two Strategies Worth Knowing Well: Reappraisal and Suppression",
+    "correct": "b",
+    "options": [
+     {
+      "id": "a",
+      "text": "Expressive suppression, because the colleague's presence helps him keep his face calm in front of the group",
+      "fb": "Suppression holds back the outward signs of an emotion after it has started. Sitting beside a supportive colleague changes the situation. It does nothing about hiding a feeling that is already running.",
+      "rv": "Module 7, Two Strategies Worth Knowing Well: Reappraisal and Suppression"
+     },
+     {
+      "id": "b",
+      "text": "Situation modification, because he enters the situation and changes something about it to make it more manageable",
+      "fb": "Situation modification keeps the person in the situation and alters it, as bringing a trusted friend does. It can help, and it can turn into a prop if it becomes a condition for attending, so it works best as a step toward needing it less.",
+      "rv": "Module 7, Gross's Process Model: Five Places to Step In | Module 7, Two Strategies Worth Knowing Well: Reappraisal and Suppression"
+     },
+     {
+      "id": "c",
+      "text": "Cognitive reappraisal, because the colleague's presence changes how he reads the manager's comments before the feeling builds",
+      "fb": "Reappraisal changes the meaning of a situation before the emotion builds. Nothing in the scenario says that he has reinterpreted what the manager's comments mean.",
+      "rv": "Module 7, Two Strategies Worth Knowing Well: Reappraisal and Suppression"
+     },
+     {
+      "id": "d",
+      "text": "Situation selection, because he picked the one setting in which the feeling would be least likely to build, a meeting with a colleague beside him",
+      "fb": "Situation selection means choosing which situations to enter or avoid. Yosef still goes to the meeting, so he has not selected out of it. Skipping the meeting would be selection.",
+      "rv": "Module 7, Gross's Process Model: Five Places to Step In"
+     }
+    ]
+   },
+   {
+    "id": "R2-07",
+    "prompt": "Marguerite finished a course of exposure for her fear of heights. She stood calmly at the rail of her clinic's third-floor balcony and later on the walkway of the hospital where she works. Two months later, at a lookout tower in another city, her fear returns at nearly full strength. She tells a friend, \"I guess the treatment never worked.\" Which statement best fits the brain-based account of what happened?",
+    "bloom": "apply",
+    "primary": 6,
+    "secondary": 5,
+    "anchors": [
+     "extinction versus new learning"
+    ],
+    "outcomes": [
+     "CSLO1",
+     "CSLO2",
+     "PLO1",
+     "N-CT"
+    ],
+    "topic": "Fear of heights returns at a lookout tower after exposure treatment (competing safe memory in an unrehearsed place)",
+    "src": "Module 6, Fear Circuitry: How the Pieces Work Together | Module 5, Extinction: How Old Fears Get Rewritten",
+    "correct": "d",
+    "options": [
+     {
+      "id": "a",
+      "text": "She should repeat the original course from the start, because the fear returned since the first course never settled the learning",
+      "fb": "She finished the treatment and the learning formed. A return after a change of setting is a cue to practice again, in more places and at different heights, and it does not need a restart from the beginning.",
+      "rv": "Module 9, When Old Fears Come Back"
+     },
+     {
+      "id": "b",
+      "text": "The treatment erased the old fear memory, so its return at the tower shows that the treatment was faulty from the start",
+      "fb": "Extinction does not erase the old memory. A return of fear in a new place is an expected feature of how the learning works, and it does not show a flaw in the treatment.",
+      "rv": "Module 5, Extinction: How Old Fears Get Rewritten"
+     },
+     {
+      "id": "c",
+      "text": "Her fear is now stronger than before treatment began, so exposure has made her worse and should be stopped right away",
+      "fb": "The scenario says the fear returned at nearly full strength, and it does not say it grew beyond where it started. A return is the old association competing in an unrehearsed setting. It differs from a lasting worsening.",
+      "rv": "Module 9, When Old Fears Come Back"
+     },
+     {
+      "id": "d",
+      "text": "Her calm is a competing safe memory tied to where she practiced, so the old fear can win at the tower and varied practice helps",
+      "fb": "Extinction builds a new memory that competes with the old one, and both persist. The safe memory wins most readily where it was learned. In an unrehearsed place, under stress, or after a gap, the old memory can temporarily win, and practice in varied places makes the new learning more portable.",
+      "rv": "Module 6, Fear Circuitry: How the Pieces Work Together | Module 5, Extinction: How Old Fears Get Rewritten"
+     }
+    ]
+   },
+   {
+    "id": "R2-08",
+    "prompt": "Evander begins prolonged exposure for trauma-related avoidance. His counselor records two numbers each week, a PTSD symptom checklist total and a 0 to 10 rating of how much he avoided reminders that week. After six weeks the symptom total has dropped slightly (from 52 to 49, invented numbers) and the avoidance rating has fallen from 8 to 4. Which analysis fits the course's reading of the two series?",
+    "bloom": "analyze",
+    "primary": 10,
+    "secondary": 14,
+    "anchors": [
+     "outcome and process measures"
+    ],
+    "outcomes": [
+     "CSLO3",
+     "PLO2",
+     "N-CT"
+    ],
+    "topic": "PTSD symptom total barely moves while an avoidance rating falls (reading process and outcome series together)",
+    "src": "Module 10, Measuring Whether the Process Is Moving | Module 14, Checking the Gauges",
+    "correct": "c",
+    "options": [
+     {
+      "id": "a",
+      "text": "Symptoms barely changed, so the treatment is failing and the formulation should be discarded in favor of a different approach right away",
+      "fb": "The outcome measure alone would suggest this. Read beside the process measure, it fits a plan that is reaching its target and needs more time. A fourth pattern (neither moves) would be the case for revisiting delivery and fit.",
+      "rv": "Module 14, Checking the Gauges"
+     },
+     {
+      "id": "b",
+      "text": "A self-rated avoidance score carries no information, so the checklist total should be the one number that counts toward decisions",
+      "fb": "Process measures can be simple ratings or counts, and they are the only way to see whether the targeted process is changing. Both numbers are self-report here, and each answers its own question.",
+      "rv": "Module 10, Measuring Whether the Process Is Moving"
+     },
+     {
+      "id": "c",
+      "text": "The process measure is moving while the outcome lags, so the hypothesis looks supported and the plan probably continues with a review",
+      "fb": "When the targeted process moves and the outcome has not yet, the plan may need more time. The two measures answer different questions, and the avoidance rating shows that the process the treatment targets is changing. The clinician sets a review point and watches what happens next.",
+      "rv": "Module 10, Measuring Whether the Process Is Moving | Module 14, Checking the Gauges"
+     },
+     {
+      "id": "d",
+      "text": "The two series disagree, so one of the measures is probably wrong and the counselor should drop it from the chart",
+      "fb": "Different measures track different things, and a gap between them is information. A process that moves ahead of symptoms is a pattern the course describes and expects in some cases.",
+      "rv": "Module 14, Checking the Gauges"
+     }
+    ]
+   },
+   {
+    "id": "R2-09",
+    "prompt": "Marguerite and Evander are both treated for social anxiety. Marguerite moved to a new country at age ten and was teased about her accent. Evander had a stutter through childhood that faded by adolescence. A student says, \"Different histories mean they need different treatments, and two people with the same history would end up with the same problem.\" Which analysis of the student's statement is best?",
+    "bloom": "analyze",
+    "primary": 14,
+    "secondary": 7,
+    "anchors": [
+     "equifinality"
+    ],
+    "outcomes": [
+     "CSLO1",
+     "CSLO2",
+     "PLO1",
+     "N-CT"
+    ],
+    "topic": "Student claim that different histories mean different treatments and the same history gives the same outcome (social anxiety)",
+    "src": "Module 14, Same Outcome, Different Paths | Module 7, Why the Same Start Leads to Different Ends",
+    "correct": "a",
+    "options": [
+     {
+      "id": "a",
+      "text": "Different routes can share loops, so the first half overreaches, and one history can lead to different ends, so the second fails",
+      "fb": "Equifinality says different routes can lead to one endpoint. A route is separate from the process that keeps a problem going, so different histories do not by themselves call for different treatments. Multifinality says one starting point can lead to different endpoints, so the second half fails too.",
+      "rv": "Module 14, Same Outcome, Different Paths | Module 7, Why the Same Start Leads to Different Ends"
+     },
+     {
+      "id": "b",
+      "text": "The first half is wrong and the second half is right, because a shared history is what fixes an outcome in most people who share it",
+      "fb": "Multifinality says the same start can lead to different ends, as protective factors and resilience show. A shared history is a reason to ask careful questions, and it does not decide the outcome.",
+      "rv": "Module 7, Resilience: Adversity Is Not Destiny"
+     },
+     {
+      "id": "c",
+      "text": "Both halves are correct, because a person's route determines both the label and the best treatment for that person",
+      "fb": "Neither half holds. The route into a problem is a separate matter from the loops that keep it going now, and one history can lead to varied outcomes.",
+      "rv": "Module 14, Same Outcome, Different Paths"
+     },
+     {
+      "id": "d",
+      "text": "The first half is correct because the route shows what to treat, and the second half is the one that is wrong, since multifinality contradicts it",
+      "fb": "The route (a predisposing or precipitating factor) describes where a problem came from. A formulation that stops there leaves little to change in the present, and the maintaining loops guide treatment.",
+      "rv": "Module 14, Maintaining Mechanisms: What Keeps a Problem Going"
+     }
+    ]
+   },
+   {
+    "id": "R2-10",
+    "prompt": "Isolde, a counselor, is working with a client who says that in her family, decisions about care are made with older relatives present. Isolde's usual behavioral activation protocol is delivered one to one, and the research behind it supports the protocol. The client asks that two relatives attend sessions and that the activity plan be framed around obligations to the household. Judged by the three-legged model and the rule about adapting without losing the mechanism, which response is best supported?",
+    "bloom": "evaluate",
+    "primary": 1,
+    "secondary": 12,
+    "anchors": [
+     "three legs of evidence-based practice",
+     "fidelity and adaptation"
+    ],
+    "outcomes": [
+     "CSLO3",
+     "PLO4",
+     "PLO5",
+     "N-CT"
+    ],
+    "topic": "Client asks for relatives in sessions and a household-obligation frame for behavioral activation",
+    "src": "Module 1, Evidence-Based Practice: Three Legs of a Stool | Module 12, Adapting Without Losing the Mechanism",
+    "correct": "b",
+    "options": [
+     {
+      "id": "a",
+      "text": "Follow the client's request exactly and set aside the research, because the client's values outrank the other legs whenever culture is involved",
+      "fb": "The legs are integrated and none outranks the others by rule. Culture comes in as questions to ask this client, and her request still has to be checked against the mechanism the treatment relies on.",
+      "rv": "Module 1, Evidence-Based Practice: Three Legs of a Stool"
+     },
+     {
+      "id": "b",
+      "text": "Include the relatives and frame the plan around the household, keep scheduled valued activity as the core, and track activity and mood",
+      "fb": "The client's values and preferences are one leg, and the research and Isolde's expertise are the others. The adaptation changes delivery and framing while keeping the process that produces change, which is contact with rewarding activity. Tracking the process and the outcome lets Isolde check that the mechanism is still running.",
+      "rv": "Module 1, Evidence-Based Practice: Three Legs of a Stool | Module 12, Adapting Without Losing the Mechanism"
+     },
+     {
+      "id": "c",
+      "text": "Agree and also drop the activity schedule, because the family's involvement already supplies the active ingredient",
+      "fb": "The activity schedule is the delivery of the mechanism in behavioral activation. Dropping it for convenience removes contact with the process, which is a change that fails the preservation test.",
+      "rv": "Module 12, Adapting Without Losing the Mechanism"
+     },
+     {
+      "id": "d",
+      "text": "Decline the request, because the protocol was tested one to one and a change makes the supporting evidence irrelevant",
+      "fb": "Planned, documented adaptations that keep the mechanism are more likely to preserve benefit than rigid delivery, and a poor fit can lose the client. The test is whether the client still meets the process that produces change.",
+      "rv": "Module 12, Adapting Without Losing the Mechanism"
+     }
+    ]
+   }
+  ]
+ }
+];
+var SUMMARY = {
+ "title": "Round 2 results",
+ "takeaway": "In studies with other materials, retrieval tended to help more when producing the answer took effort. Compare your scores across days, and review the headings listed above for items you missed.",
+ "note": "Every person and number is invented for practice. Nothing is saved or sent. If anything in these scenarios affects you personally, you can call or text 988 at any hour, or call 911 in an emergency."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq (per-option feedback, answer-first gate) ---- */
+function revKey(){ return S.k+"-"+(S.retry?"r":"f")+"-"+S.i; }
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  S.rev=S.rev||{};
+  if(!S.retry && !ans && !S.rev[revKey()]){
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">Saying or writing your answer first is not scored. Choosing an option is scored.</span><button class="btn secondary" type="button" data-act="show">Show the options</button></div>';
+    return h;
+  }
+  h+='<div class="options">';
+  var list=(S.retry?S.order[S.i]:it.options);
+  list.forEach(function(o,oi){
+    var cls="opt", tag="";
+    if(ans){ if(o.id===it.correct){ cls+=" correct"; tag=' <b>(best answer)</b>'; } else if(o.id===S.picked){ cls+=" wrong"; tag=' <b>(your choice)</b>'; } else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+tag+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){
+    var ok=S.picked===it.correct, po=null, ko=null;
+    it.options.forEach(function(o){ if(o.id===S.picked) po=o; if(o.id===it.correct) ko=o; });
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Best answer.":"Not the best answer.")+'</p><div class="explain"><p><b>Your reasoning.</b> '+po.fb+'</p>';
+    if(!ok) h+='<div class="src">Revisit for your choice: '+esc(po.rv)+'</div><p><b>The best answer.</b> '+ko.fb+'</p>';
+    h+='<div class="src">Reading: '+esc(it.src)+'</div><div class="src">Modules practiced here: Module '+it.primary+' (primary) and Module '+it.secondary+' (secondary).</div></div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function missedHtml(){
+  var log=S.log||[]; if(!log.length) return "";
+  var by={}, miss=[];
+  log.forEach(function(r){ var k="Module "+r.p; by[k]=by[k]||{n:0,ok:0}; by[k].n++; if(r.ok) by[k].ok++; if(!r.ok) miss.push(r); });
+  var keys=Object.keys(by).sort(function(a,b){return parseInt(a.slice(7))-parseInt(b.slice(7));});
+  var h='<div class="explain"><p><b>First-try results by primary module.</b> '+keys.map(function(k){return esc(k)+': '+by[k].ok+' of '+by[k].n;}).join(', ')+'.</p>';
+  if(miss.length){ h+='<p><b>Where to look again.</b></p><ul>'+miss.map(function(r){return '<li>'+esc(r.id)+': '+esc(r.src)+'</li>';}).join('')+'</ul>'; }
+  else { h+='<p>You answered every item correctly on the first try. Take the next round on a different day.</p>'; }
+  return h+'</div>';
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div>'+missedHtml()+'<div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="show"){ S.rev=S.rev||{}; S.rev[revKey()]=true; render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(!S.retry){ S.log=S.log||[]; S.log.push({id:q.id,ok:v===q.correct,src:q.src,p:q.primary}); } if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>
