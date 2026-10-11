@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Conference Leader: Chairing a Team Meeting about Anika</title>
+<style>
+  :root{ --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --panel:#fff; --accent:#8a5a25; --accent-ink:#6f4a20;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e; --mid-bg:#fffbef; --mid-line:#e7c98a; --mid-ink:#7a5f1f; --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72; --focus:#2f6f4f; }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  h1{margin:0;font-size:23px;letter-spacing:-.01em;} .sub{margin:6px 0 14px;color:var(--muted);font-size:14.5px;}
+  .masthead{padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .pills{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;} .pill{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .pill.on{background:var(--accent);color:#fff;} .pill.done{background:var(--ok-bg);color:var(--ok-ink);}
+  .case{background:var(--mid-bg);border:1px solid var(--mid-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);}
+  .panel:focus{outline:none;}
+  .skill{font-size:13px;color:var(--muted);margin:0 0 6px;}
+  .quote{font-size:17px;line-height:1.5;margin:6px 0 12px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .who{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:2px;}
+  .do{background:#f3f1ec;color:#57544e;border-radius:10px;padding:10px 13px;font-size:13px;margin:6px 0 14px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:disabled{cursor:default;} .opt .k{font-weight:700;color:var(--muted);min-width:15px;}
+  .opt.r2{background:var(--ok-bg);border-color:var(--ok-line);} .opt.r1{background:var(--mid-bg);border-color:var(--mid-line);} .opt.r0{background:var(--no-bg);border-color:var(--no-line);}
+  .opt.pick{box-shadow:0 0 0 2px var(--accent) inset;} .opt.dim{opacity:.6;}
+  .opt:focus-visible,.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .verdict{margin:16px 0 4px;font-size:14.5px;font-weight:600;} .verdict.r2{color:var(--ok-ink);} .verdict.r1{color:var(--mid-ink);} .verdict.r0{color:var(--no-ink);}
+  .explain{font-size:14px;color:#44413b;margin:6px 0;} .better{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:10px;padding:10px 13px;font-size:14px;margin:10px 0;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;flex-wrap:wrap;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;} .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;} .brow:last-child{border-bottom:none;} .brow .bs{flex:0 0 52px;font-weight:700;color:var(--accent-ink);}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .note{font-size:12.5px;color:var(--muted);margin-top:14px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead"><h1>Chairing a Case Conference</h1><p class="sub">Practice leading a thirty-minute team meeting about Anika, an invented patient whose progress has stalled. Your choices change how the team responds.</p></div>
+  <div id="root"></div>
+</div>
+<script>
+var SKILLS = [
+ "Setting a purpose and a time limit",
+ "Sharing the formulation and checking it landed",
+ "Drawing out a quieter member",
+ "Settling a disagreement with shared ground",
+ "Deciding with owners and dates",
+ "Closing the loop with the patient"
+];
+var SCENARIO = [
+ "Anika is an invented patient, 22, a community college student who works part time at a pharmacy counter. She started treatment ten weeks ago at a community clinic for panic attacks and avoidance. You are the clinic psychologist, and you chair this thirty-minute case conference. The team is the clinic's psychiatric nurse practitioner, the clinic social worker, a nurse from Anika's family practice, and a counselor from the college's accessibility office.",
+ "Your working formulation covers five levels. At the cognitive level, she reads a racing heart as a sign that something is wrong with her heart and predicts she will faint in front of people. At the emotional level, fear spikes within seconds and drops when she leaves. At the biological level, she sleeps about five hours a night and drinks several coffees a day. At the interpersonal and social level, her mother drives her to campus and answers her reassurance texts, and her classmates do not know. At the developmental level, childhood asthma brought many urgent visits and taught her that body sensations are emergencies. The loop runs from sensation to prediction to fear to leaving or checking to relief, and the relief confirms the prediction. The first point of interruption you chose is staying in lecture in graded steps, and the process measure is the number of full lectures she attends each week.",
+ "The numbers are invented for this activity. In ten weeks her panic attacks have gone from about six a week to about five, her weekly distress rating has stayed near 6 out of 10, and she has attended the full length of 3 of the last 12 in-person lectures. She started a daily medication at the clinic eight weeks ago. At intake Anika signed releases that let the clinic share information with the family practice and the college counselor for coordinating her care and her accommodations, and she was told she could withdraw them. She has not signed a release for her mother. What may be shared and with whom depends on the law where you work and on policy, so you would check yours. If this scenario affects you, you can call or text 988 at any hour, or call 911 in an emergency."
+];
+var TURNS = [
+ {
+  "bloom": "apply",
+  "skill": 0,
+  "who": "Nurse practitioner",
+  "client": {
+   "start": "Okay, everyone is here, and we have thirty minutes before the next clinic block. It’s your meeting. Where would you like to start?"
+  },
+  "options": [
+   {
+    "r": 2,
+    "who": "Nurse practitioner",
+    "t": "Thanks for making the time. We have thirty minutes, and the decision I need from us is whether to change Anika’s plan now that her panic count has stayed flat. I will share my formulation, hear from each of you, and expect us to leave with owners and dates.",
+    "reply": "Good, that gives us something to aim at. I’ll hold my medication thoughts until you’ve shared the formulation.",
+    "why": "The opening names the decision, the time limit, and the order of business, and it promises owners and dates. What this keeps for the team is a shared target and a clock. What it puts at risk is little, since a member can still raise something new."
+   },
+   {
+    "r": 1,
+    "who": "Social worker",
+    "t": "Thanks for coming. Anika’s progress has stalled, and I would like us to look at all of it today, including her medication, her classes, her sleep, her family, and anything else you think bears on her, and take whatever time we need so that nothing gets missed.",
+    "reply": "That’s a lot to cover in half an hour, but I’m glad we’re looking at the whole picture.",
+    "why": "Looking at the whole picture fits a formulation, and the intent is sound. The meeting has no decision to reach and no time limit, so it can wander through every topic and end without a plan. What this keeps for the team is a wide view. What it puts at risk is the clock and the outcome."
+   },
+   {
+    "r": 1,
+    "who": "Accessibility counselor",
+    "t": "Thanks for making the time. Let’s go around the table and have each of you give a two-minute update on Anika from your own area, and after that we will see what stands out and what we ought to do next.",
+    "reply": "Sure, I can do two minutes. Mine is mostly about her attendance.",
+    "why": "A timed update round respects the clock and gives every member a turn. It names no decision, so the updates can pile up with no question for them to answer. What this keeps for the team is participation. What it puts at risk is the purpose, and the meeting can end with a set of reports and no plan."
+   },
+   {
+    "r": 0,
+    "who": "Social worker",
+    "t": "I have thought about this, and I am fairly sure the main problem is that her mother drives her everywhere and answers every text. I would like us to use our thirty minutes to agree that her mother steps back, and then move on.",
+    "reply": "Her mother has been the one steady support Anika has. I’m not sure I’d start there.",
+    "why": "Setting the conclusion before the team speaks closes the inquiry, and the mother’s role is one hypothesis among several that the team never tested. What this keeps for the team is a short meeting. What it puts at risk is the information members brought and their sense that they will be heard."
+   }
+  ],
+  "order": [
+   2,
+   0,
+   1,
+   3
+  ]
+ },
+ {
+  "bloom": "analyze",
+  "skill": 1,
+  "who": "Nurse practitioner",
+  "client": {
+   "g": "That helps to know what we’re deciding. What is your view of Anika right now?",
+   "m": "Okay. I’m still not sure what we’re meant to decide today. What is your view of Anika right now?",
+   "p": "Wait. Before we agree on anything, what is your view of Anika? I don’t think we all have the same picture."
+  },
+  "options": [
+   {
+    "r": 2,
+    "who": "Nurse practitioner",
+    "t": "Here is my working formulation in brief. When Anika feels her heart race, she predicts that something is wrong with her heart and that she will faint in public. She leaves the lecture or texts her mother, and the relief teaches her that leaving was necessary. That loop probably explains why her attendance and her panic count are flat. Does this match what you see, and what would you change?",
+    "reply": "That matches what I see in clinic. She talks about her heart at nearly every visit.",
+    "why": "Short sentences name the prediction, the escape and reassurance behaviors, and why the loop holds the numbers flat, and the closing question asks each member to test it. What this keeps for the team is a shared picture that anyone can correct. What it puts at risk is a few minutes of discussion, and the picture may change."
+   },
+   {
+    "r": 1,
+    "who": "Social worker",
+    "t": "I will go through all five levels. Cognitively, she predicts that she will faint in public. Emotionally, her fear surges within seconds and then drops when she leaves. Biologically, she sleeps about five hours and drinks several coffees a day. Interpersonally, her mother drives her to campus and answers her reassurance texts, and her classmates do not know. Developmentally, childhood asthma brought many urgent visits and taught her that body sensations are emergencies. Any questions on that?",
+    "reply": "I think I followed it. It’s a long list, though, and I’m not sure which part matters most for what we do.",
+    "why": "Every level is covered, which is a strength. The list never joins the facts into a loop, names no first point of interruption, and checks understanding with a yes or no question. What this keeps for the team is completeness. What it puts at risk is a shared picture of what keeps the problem going."
+   },
+   {
+    "r": 0,
+    "who": "Accessibility counselor",
+    "t": "The perpetuating factors are catastrophic appraisal of bodily cues, negatively reinforced escape, and safety behaviors, so the mechanism target is the link between appraisal and escape, and the first intervention is interoceptive exposure paired with response prevention for the checking texts. The predisposing and precipitating factors are in the chart and do not change the plan. I think the rest is clear.",
+    "reply": "I’m sorry, I didn’t follow most of that. Could you say it in plain words?",
+    "why": "The wording is accurate and it is aimed at colleagues who share your training. A social worker, a nurse, and an accessibility counselor may not, and nobody was asked whether it made sense. What this keeps for the team is time. What it puts at risk is a shared picture, and members may nod without understanding."
+   },
+   {
+    "r": 0,
+    "who": "Social worker",
+    "t": "You have all read my notes, so I won’t repeat the formulation, and I would rather not take up your time with something you already have. I would rather use our time on what to do, because the loop is clear to me and her scores have not moved in ten weeks.",
+    "reply": "I skimmed your notes, but I didn’t get the part about her mother.",
+    "why": "The notes were available, and moving to action is tempting when time is short. The option assumes that reading them produced the same understanding in everyone, and it asks no one. What this keeps for the team is time. What it puts at risk is the common picture that the next decisions depend on."
+   }
+  ],
+  "order": [
+   1,
+   3,
+   2,
+   0
+  ]
+ },
+ {
+  "bloom": "analyze",
+  "skill": 2,
+  "who": "Social worker",
+  "client": {
+   "g": "That matches what I see with her mother, who drives her every day. The nurse from the family practice has been quiet, and she has seen Anika more often than any of us.",
+   "m": "I follow some of that, but I’m not sure we’re all picturing the same thing. The nurse from the family practice has been quiet, and she has seen Anika more often than any of us.",
+   "p": "I’m not sure we’re on the same page about Anika, and I don’t think I’m the only one. The nurse from the family practice has been quiet, and she has seen Anika more often than any of us."
+  },
+  "options": [
+   {
+    "r": 2,
+    "who": "Primary care nurse",
+    "t": "Thank you. Nurse, you have seen Anika in the family practice more often than any of us. What have you noticed in those visits, and is there anything the clinic may be missing?",
+    "reply": "She has come in three times in ten weeks for chest tightness, and each exam was normal. Every time she asks me whether her heart is okay. At the last visit she told me she skips her morning dose on days when her stomach is upset, maybe two or three days a week.",
+    "why": "Naming the nurse and asking for what she sees in her own setting makes the question easy to answer, and the open follow-up invites what the formulation does not yet hold. What this keeps for the team is information nobody else has, including the repeated reassurance visits and the missed doses. What it puts at risk is little."
+   },
+   {
+    "r": 1,
+    "who": "Primary care nurse",
+    "t": "Nurse, I know your time here is short, so please add anything from the family practice visits that you think matters. If nothing comes to mind, we can move on to the medication question.",
+    "reply": "Nothing big comes to mind. Her chest exams have all been normal.",
+    "why": "Inviting the nurse by name is right. The offer to skip makes it easy to decline, and it asks for anything that matters without pointing at what only she can see. What this keeps for the team is her place at the table. What it puts at risk is the information she did not volunteer, some of which bears on the plan."
+   },
+   {
+    "r": 1,
+    "who": "Social worker",
+    "t": "Before we move on, I would like to hear from anyone who has seen something in Anika’s week that the formulation does not cover. Please jump in, and nobody has to wait for me to call on them.",
+    "reply": "Nothing new from me. Her mother says the mornings are the hardest, and that she drives Anika every day.",
+    "why": "An open invitation to the whole table is inclusive and costs little. A member who has said nothing so far may not answer a general question, so the person holding the key information can stay quiet. What this keeps for the team is an open floor. What it puts at risk is what the quietest member knows."
+   },
+   {
+    "r": 0,
+    "who": "Primary care nurse",
+    "t": "The nurse’s visits were for chest tightness that was cleared medically, so I will assume there is nothing more to add, and we can go on to the medication question, which seems the more pressing issue.",
+    "reply": "Okay. I can send my notes after the meeting, if they’re useful.",
+    "why": "The assumption treats a clear medical exam as the end of what primary care can tell the team, and nobody asked her. What this keeps for the team is time. What it puts at risk is what she has seen about how Anika uses the visits and takes her medication."
+   }
+  ],
+  "order": [
+   0,
+   2,
+   1,
+   3
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 3,
+  "who": "Nurse practitioner and accessibility counselor",
+  "client": {
+   "g": "The nurse practitioner says, “Skipped doses change how I read the numbers, but ten weeks and a flat panic count still worry me. I’d raise the dose today.” The accessibility counselor says, “I’d move her to remote lectures this term. She keeps walking out of class, and an accommodation would take the pressure off her.”",
+   "m": "The nurse practitioner says, “Ten weeks at this dose and the panic count is flat. I’d raise the dose today.” The accessibility counselor says, “I’d move her to remote lectures this term. She keeps walking out of class, and an accommodation would take the pressure off her.”",
+   "p": "The nurse practitioner says, “Ten weeks at this dose and the panic count is flat. I’d raise the dose today, and we still haven’t heard much from the family practice.” The accessibility counselor says, “I’d move her to remote lectures this term. She keeps walking out of class, and an accommodation would take the pressure off her.”"
+  },
+  "options": [
+   {
+    "r": 2,
+    "who": "Nurse practitioner",
+    "t": "You both have a real point, and you are reading the same flat numbers. Her loop runs on escape and reassurance, and the number that tests it is how many full lectures she attends. She has told me she wants to finish the term in the room. I would first check how many doses she is taking, and then ask whether a back-up seat could run beside a graded plan for staying in lecture.",
+    "reply": "That’s fair. If she is missing doses, a higher dose may be solving the wrong problem, so I’d want to know that first.",
+    "why": "Returning to the formulation, the measures, and Anika’s goal gives both views a test and treats neither as wrong. It also checks delivery before the dose is judged. What this keeps for the team is each member’s expertise and Anika’s stated goal. What it puts at risk is a decision today, because the dose waits for the count."
+   },
+   {
+    "r": 1,
+    "who": "Accessibility counselor",
+    "t": "You both have a point, and I’d rather not pick a side, since each of you is looking at a real part of her week. Could we raise the dose and move her to remote lectures together, and look at how she is doing in four weeks to see whether the combination helped? I think that respects both of your views.",
+    "reply": "That works for me. It’s a lot of change at once for her, though.",
+    "why": "Combining the two responses respects both views. Two changes at once make it hard to say which one worked, and remote lectures cut against the goal she stated. What this keeps for the team is agreement. What it puts at risk is a clear test and Anika’s own goal."
+   },
+   {
+    "r": 1,
+    "who": "Nurse practitioner",
+    "t": "The measures are our neutral ground here, and I would rather decide from numbers than from opinions. Her panic count has not moved in ten weeks, so the medication is the thing to change first, and we can look at her classes once the new dose has had a fair trial. I will put that in the plan.",
+    "reply": "Fine with me. I’ll look at the dose at her next visit.",
+    "why": "The measures are part of the answer, and the panic count is flat. The option leaves out the loop that explains why it is flat and the goal Anika stated, and it settles the question in one member’s favor. What this keeps for the team is a quick decision. What it puts at risk is a dose judged before anyone checks whether it is taken."
+   },
+   {
+    "r": 0,
+    "who": "Accessibility counselor",
+    "t": "I am the psychologist, and this is a psychological problem, so I would like us to keep the dose and the classes as they are and not spend our time on either one. We can use the time we have left on the parts of the plan that are mine to run, which are the lecture practice and the weekly sessions. I think that is the cleanest way to decide.",
+    "reply": "I’m not sure that’s how decisions get made on this team.",
+    "why": "Pulling rank ends the argument without answering it, and it sets aside two members who see parts of Anika’s week that the psychologist does not. What this keeps for the team is the chair’s plan. What it puts at risk is the willingness of members to bring information to a meeting that will not weigh it."
+   }
+  ],
+  "order": [
+   1,
+   2,
+   0,
+   3
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 4,
+  "who": "Social worker",
+  "client": {
+   "g": "Good, that settled it for me. What are we actually deciding, and who is doing what by when?",
+   "m": "Okay, we have a direction, though I’m not sure everyone is comfortable with it. What are we actually deciding, and who is doing what by when?",
+   "p": "We’ve talked it through, and I’m not sure anything is settled. What are we actually deciding, and who is doing what by when?"
+  },
+  "options": [
+   {
+    "r": 2,
+    "who": "Nurse practitioner",
+    "t": "To confirm what I’m hearing, the nurse practitioner checks Anika’s dose count this week and decides on the dose at her visit in two weeks. The counselor arranges a back-up seat if Anika agrees. I start graded lecture practice and track her full lectures, and we meet in four weeks to look at that count.",
+    "reply": "That’s clear. I’ll have the dose count by Friday.",
+    "why": "Each task has an owner and a time, the measure is named, and a review date is set. Reading it back lets anyone correct a mistake. What this keeps for the team is accountability and a way to tell whether the plan worked. What it puts at risk is little."
+   },
+   {
+    "r": 1,
+    "who": "Social worker",
+    "t": "We have a direction, so I’ll write it up after the meeting and send it to everyone. If anything looks wrong, let me know, and we’ll look at Anika’s progress at our next regular meeting. I know everyone is busy, and I would rather not hold anyone to a deadline they did not choose, since the plan will probably shift anyway.",
+    "reply": "Okay. I’ll watch for it.",
+    "why": "A written summary helps, and inviting corrections is fair. The tasks have no owners or dates in the room, and the review has no date. What this keeps for the team is a record. What it puts at risk is follow-through, since each member leaves unsure what is theirs."
+   },
+   {
+    "r": 1,
+    "who": "Accessibility counselor",
+    "t": "Let’s each take one task. The nurse practitioner takes the dose, the counselor takes the seating, the social worker talks with her mother, and I take the lecture practice. We’ll check in as things develop. I think each of us knows our own area best, so I won’t tell anyone how to do their piece or how long it should take.",
+    "reply": "I’ll start on the seating, but I don’t know when you want it done.",
+    "why": "An owner for each piece is the main step, and the tasks match each member’s role. No dates and no measure were set, so nobody knows when to report or what count to watch. What this keeps for the team is clear ownership. What it puts at risk is timing and a shared way to tell whether the plan worked."
+   },
+   {
+    "r": 0,
+    "who": "Nurse practitioner",
+    "t": "I think we all know what needs to happen, so we can leave it there. Everyone will do what makes sense in their own area, and we’ll talk if anything comes up. I don’t want to micromanage a team of experienced people, and I trust you all.",
+    "reply": "Okay. I guess I’ll just do what I normally do.",
+    "why": "Leaving the plan unspoken assumes the team agrees on tasks that were never named. What this keeps for the team is time. What it puts at risk is the purpose of the meeting, since no one owns a step and no one will notice if the plan stalls."
+   }
+  ],
+  "order": [
+   2,
+   3,
+   1,
+   0
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 5,
+  "who": "Social worker",
+  "client": {
+   "g": "That’s clear to me. Anika isn’t in the room, though. What happens with her, and what gets shared outside this room?",
+   "m": "That’s a start, but I’m not sure everyone knows what’s expected of them. Anika isn’t in the room, though. What happens with her, and what gets shared outside this room?",
+   "p": "I’m not sure what I’m supposed to do after this. Anika isn’t in the room, though. What happens with her, and what gets shared outside this room?"
+  },
+  "options": [
+   {
+    "r": 2,
+    "who": "Nurse practitioner",
+    "t": "Anika should hear this from me before anything leaves the clinic. I will go through the plan with her and ask her agreement to the back-up seat and to telling the counselor her attendance count, nothing more. The family practice and the college each get only what their part needs, under the releases she signed, and I will check our clinic’s policy. If she says no to a step, we revise the plan with her.",
+    "reply": "That seems right to me. She should hear it from you first.",
+    "why": "Anika hears the plan first, her agreement is asked for each step that needs it, the outside parties receive only what their part requires, and the clinic’s policy is checked. What this keeps for Anika is a say in her own care and her trust. What it puts at risk is a short delay for the seating while she decides."
+   },
+   {
+    "r": 1,
+    "who": "Social worker",
+    "t": "I’ll tell Anika about the plan at her next visit. Her releases cover the college and the family practice, so I will send each of them the summary of what we decided, which keeps everyone working from the same page, and she can ask me if anything worries her. I think that gives her a fair chance to object, and the college and the family practice will probably want the whole picture to do their parts well.",
+    "reply": "Okay. Will she hear about the seating before the college does?",
+    "why": "Telling her and using the releases she signed fits the consent she gave. A summary of everything the team decided goes beyond what each outside party needs, and the new seating step was not put to her first. What this keeps for the team is coordination. What it puts at risk is her control over what leaves the clinic."
+   },
+   {
+    "r": 1,
+    "who": "Accessibility counselor",
+    "t": "I will ask Anika before anything goes outside the clinic. I will go through the plan with her at her next visit and share nothing with the college or the family practice until she has agreed, even for the parts her releases cover. I think that is the safest way to honor her consent, and I would rather delay a step than share too much, even if the seating waits a week or two.",
+    "reply": "I can wait, but the term keeps moving.",
+    "why": "Asking first respects her control and the withdrawal option she was told about. It also holds back sharing that her releases already cover and the plan needs, so the seating and attendance steps wait. What this keeps for Anika is her say. What it puts at risk is timing, and the releases go unused without a conversation about why."
+   },
+   {
+    "r": 0,
+    "who": "Social worker",
+    "t": "Her mother drives her to every appointment, so I’ll ask her mother to explain the plan to Anika and go over it with her, which saves a visit and keeps the family involved. I think she will take it better from someone she trusts at home, and her mother already knows most of it from the drives, so little here will be news to her.",
+    "reply": "Her mother will want to help. I’m not sure Anika knows we talked about her.",
+    "why": "Her mother is not on the releases, and a third party is not the person to explain a care plan to the patient. What this keeps for the team is a saved visit. What it puts at risk is Anika’s first say in her own plan, her trust, and the confidentiality of her care."
+   }
+  ],
+  "order": [
+   3,
+   0,
+   1,
+   2
+  ]
+ }
+];
+var REVISIT = [
+ "Name the decision the meeting has to reach and a time limit before anything else. Review Leading a Case Conference.",
+ "Share the loop as a short ordered chain with the first point of interruption and the measure, then ask each member what it changes in their part of the care. Review Reading One Person at Five Levels and Leading a Case Conference.",
+ "Ask the quieter member by name for what she sees in her own setting, because her information can change the plan. Review Leading a Case Conference and Checking the Gauges.",
+ "Return to the formulation, the measures, and the patient’s goals, and check delivery before judging a plan that has not moved. Review Checking the Gauges and Where to Start: Choosing an Interruption Point.",
+ "Name an owner and a date for each step, name the measure, and set a review date. Review Leading a Case Conference and Checking the Gauges.",
+ "Tell the patient what was discussed and decided, ask her agreement where the plan needs it, and share only what each person’s part requires. Module 13 sets out the reasoning in Informed Consent in Therapy and Confidentiality and Where It Gives Way, and the rules differ by place and policy."
+];
+var TAKE = "In this module’s model, a case conference turns a formulation into a plan when the chair sets a purpose and a time limit, shares the loop briefly and checks that it is understood, asks the quieter member for what only she has seen, settles disagreement by returning to the formulation, the measures, and the patient’s goals, and ends with owners and dates. The patient hears what was decided and agrees to the steps that need her agreement, and the team shares only what each part of the plan requires, under the rules of the place and the employer. Defensible options can differ, such as raising a dose first or testing a plan first, and the better one depends on what the team learns about delivery.";
+var NOTE = "This practice conversation is invented and scores only the choices shown. It practices one kind of team meeting with scripted team members who hold defensible views, and it is not clinical training or legal advice. Rules about sharing information differ by place, employer, and program, so confirm the ones that apply to you. Anika’s situation is hers alone and does not describe any group of people. It is not a way to assess or treat yourself or anyone you know. If you or someone you know is struggling, call or text 988 at any hour, or call 911 in an emergency.";
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root"), S;
+var LABEL={2:"Skilled response",1:"Acceptable, with a gap",0:"Missed the skill"};
+function fresh(){ S={t:0,branch:"start",pick:null,retried:false,first:null,log:[],done:false}; render(); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function pills(){ return '<div class="pills" aria-hidden="true">'+TURNS.map(function(t,i){ return '<span class="pill'+(i===S.t&&!S.done?" on":(i<S.log.length?" done":""))+'">'+(i+1)+'. '+esc(SKILLS[t.skill])+'</span>'; }).join("")+'</div>'; }
+function clientLine(t){ return t.client[S.branch]||t.client.start||t.client.m; }
+function render(){
+  if(S.done){ return summary(); }
+  var t=TURNS[S.t], h=pills()+'<div class="case"><b class="t">Case: Anika</b>'+SCENARIO.map(function(p){return '<p style="margin:0 0 8px">'+esc(p)+'</p>';}).join("")+'</div><section class="panel" id="panel" tabindex="-1" aria-live="polite">';
+  h+='<p class="skill">Turn '+(S.t+1)+' of '+TURNS.length+'. Skill practiced: '+esc(SKILLS[t.skill])+'</p>';
+  h+='<p class="quote"><span class="who">'+esc(t.who)+'</span>'+esc(clientLine(t))+'</p>';
+  h+='<div class="do"><b>Do this:</b> Choose what you would say next as chair. Each choice changes how the team responds.</div><div class="options">';
+  t.order.forEach(function(ix,pos){
+    var o=t.options[ix], cls="opt";
+    if(S.pick!==null){ cls+=" r"+o.r; if(S.pick===ix) cls+=" pick"; else cls+=" dim"; }
+    h+='<button type="button" class="'+cls+'" data-ix="'+ix+'"'+(S.pick!==null?" disabled":"")+'><span class="k">'+String.fromCharCode(65+pos)+'.</span><span>'+esc(o.t)+'</span></button>';
+  });
+  h+='</div>';
+  if(S.pick!==null){
+    var o=t.options[S.pick], best=t.options.filter(function(x){return x.r===2;})[0], eff=(S.retried?Math.min(o.r,1):o.r);
+    h+='<p class="verdict r'+o.r+'">'+LABEL[o.r]+(S.retried?" (second try, scored at most 1 of 2)":"")+'</p>';
+    h+='<p class="quote"><span class="who">'+esc(o.who||t.who)+'</span>'+esc(o.reply)+'</p><p class="explain">'+esc(o.why)+'</p>';
+    if(o.r<2) h+='<div class="better"><b>A stronger response:</b> '+esc(best.t)+'</div>';
+    h+='<div class="foot">'+((o.r===0&&!S.retried)?'<button class="btn secondary" type="button" data-act="retry">Try this turn again</button>':'<span></span>')+'<button class="btn" type="button" data-act="next">'+(S.t>=TURNS.length-1?"See your results":"Continue the meeting")+'</button></div>';
+  }
+  h+='</section>'; root.innerHTML=h; post();
+  var p=document.getElementById("panel"); if(p&&S.pick!==null){ try{p.focus();}catch(e){} }
+}
+function commit(){
+  var t=TURNS[S.t], o=t.options[S.pick], sc=(S.retried?Math.min(o.r,1):o.r);
+  S.log.push({skill:t.skill,r:o.r,score:sc,retried:S.retried,first:S.first});
+  S.branch=(o.r===2?"g":(o.r===1?"m":"p"));
+}
+function summary(){
+  var tot=0; S.log.forEach(function(l){tot+=l.score;});
+  var worst=S.log.slice().sort(function(a,b){return a.score-b.score;})[0];
+  var h=pills()+'<section class="panel" id="panel" tabindex="-1"><h2 style="margin:0 0 4px;font-size:20px;">Your case conference</h2><p>You scored <b>'+tot+' of '+(TURNS.length*2)+'</b> across the six skills. A retried turn counts for at most 1 point.</p><div>';
+  S.log.forEach(function(l){ h+='<div class="brow"><span class="bs">'+l.score+' / 2</span><span><b>'+esc(SKILLS[l.skill])+'.</b> '+(l.score===2?"Skilled response.":esc(REVISIT[l.skill]))+'</span></div>'; });
+  h+='</div>';
+  if(tot<TURNS.length*2){ h+='<div class="take"><b>Where to look again:</b> '+esc(REVISIT[worst.skill])+'</div>'; }
+  h+='<div class="take"><b>What carries forward:</b> '+esc(TAKE)+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="note">'+esc(NOTE)+'</p></section>';
+  root.innerHTML=h; post();
+}
+root.addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b||b.disabled) return;
+  if(b.hasAttribute("data-ix")){ if(S.pick!==null) return; S.pick=parseInt(b.getAttribute("data-ix"),10); if(!S.retried) S.first=S.pick; render(); return; }
+  var a=b.getAttribute("data-act");
+  if(a==="retry"){ S.retried=true; S.pick=null; render(); return; }
+  if(a==="next"){ commit(); S.pick=null; S.retried=false; S.first=null; if(S.t>=TURNS.length-1){ S.done=true; } else { S.t++; } render(); try{window.scrollTo({top:0,behavior:"smooth"});}catch(x){} return; }
+  if(a==="again"){ fresh(); return; }
+});
+fresh();
+
+</script>
+</body>
+</html>
