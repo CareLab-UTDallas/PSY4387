@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Tool Appraisal</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Digital Tool Appraisal: Four Invented Tools</h1>
+    <p class="sub">Apply five questions to four invented digital tools, judge each claim against its evidence, and choose for three invented users.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script>
+var STEPS = [
+ {
+  "type": "mcq",
+  "title": "Wrenmarrow",
+  "short": "Wrenmarrow",
+  "tag": "Chat companion",
+  "case": {
+   "title": "Invented app sheet: Wrenmarrow (chat companion for stress and low mood)",
+   "text": "<div style=\"margin:3px 0\"><b>Claims.<\/b> “Clinically proven to reduce anxiety.” “Therapist-grade support, any time of day.” “Over 800,000 downloads.”<\/div><div style=\"margin:3px 0\"><b>Study summary.<\/b> A pilot run by the company. 62 people who chose to join used the app for 4 weeks, with no comparison group. Among the 27 who finished all 4 weeks, the average score on the company’s own mood quiz fell from 14 to 10.<\/div><div style=\"margin:3px 0\"><b>Privacy terms.<\/b> Conversations are stored and used to improve the product. Data may be shared with “trusted partners” for marketing and analytics. Deleting an account removes the name and leaves the messages.<\/div><div style=\"margin:3px 0\"><b>Crisis handling.<\/b> If a message contains certain words, the chat shows a hotline link. No person reviews messages. The terms say the app is “not for emergencies.”<\/div><div style=\"margin:3px 0\"><b>Who built it and who pays.<\/b> A startup funded by investors. A free tier, a paid upgrade, and income from data partners.<\/div><div style=\"margin-top:6px;font-size:12.5px\">All four programs, their names, and every number on these sheets are invented for practice. Any resemblance to a real product is unintended.<\/div>"
+  },
+  "intro": "<b>Step 1 of 5.<\/b> You will apply five questions to four invented tools. The five questions are evidence, privacy and data, safety and crisis handling, usability and engagement, and who built it and who pays. They are a teaching synthesis built from the reading and are not a published instrument. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Read the sheet, then choose the best answer. Each option explains its reasoning after you answer.",
+  "revisit": "Reread “Appraising a Digital Tool” and “Generative AI Chatbots and Wellness Apps.”",
+  "items": [
+   {
+    "prompt": "Tavita is an invented adult with low mood for several months. Some nights she has thoughts that life is not worth living. She is thinking of using Wrenmarrow as her only support. Which question most changes whether Wrenmarrow is a reasonable choice for her?",
+    "bloom": "analyze",
+    "src": "Module 15, Appraising a Digital Tool",
+    "correct": "c",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "Who built it and who pays, because the app makes money from partners who receive the data",
+      "fb": "Income from data partners is a reason for caution about her messages, and it belongs in the appraisal. It does not change what the app can do for her on a night of distress, so it ranks behind the crisis question for this user."
+     },
+     {
+      "id": "b",
+      "text": "Evidence, because the company’s pilot had no comparison group and most users did not finish",
+      "fb": "The evidence is thin, and 35 of 62 users did not finish the pilot. For Tavita that argues against relying on the app. It says little about a night when she is in distress, and the response of the app on that night is what could turn a poor choice into an unsafe one."
+     },
+     {
+      "id": "c",
+      "text": "Safety and crisis handling, because she may be at risk and no person reviews messages",
+      "fb": "This matches the sheet. Tavita has some thoughts that life is not worth living, and Wrenmarrow responds only when certain words appear, shows a link, and has no reviewer. For a person who may be at risk, how a tool responds in a crisis decides whether it is safe to rely on. The evidence and privacy answers are also poor, and they limit the tool without deciding whether it is safe as her only support."
+     },
+     {
+      "id": "d",
+      "text": "Usability and engagement, because she needs something she will keep using every single day",
+      "fb": "Easy chat at any hour is a real strength, and it decides whether she keeps using the app. It does not decide whether the app is safe or suitable as her only support when she has some thoughts of not wanting to live."
+     }
+    ]
+   },
+   {
+    "prompt": "The Wrenmarrow page says the app is “clinically proven to reduce anxiety.” Which appraisal of that claim does the sheet support best?",
+    "bloom": "evaluate",
+    "src": "Module 15, Mobile Apps: Wide Reach, Thin Evidence",
+    "correct": "a",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "The pilot has no comparison group, so it cannot support proven, though it shows people will try the app",
+      "fb": "The pilot has no comparison group, uses the company’s own quiz, and only 27 of 62 people finished, so the fall from 14 to 10 could reflect many things besides the app. It still gives a modest early look at whether people will try the app. Proven needs a controlled comparison."
+     },
+     {
+      "id": "b",
+      "text": "The score fell from 14 to 10, so the app is proven to reduce anxiety even though the pilot was brief",
+      "fb": "A fall in a score shows that scores fell. Without a comparison group, nothing separates the effect of the app from time, expectation, or the choice to stop among people who felt worse. The 27 who finished may also differ from the 35 who did not."
+     },
+     {
+      "id": "c",
+      "text": "The pilot says nothing, because a study with 62 people cannot show anything about an app",
+      "fb": "A small uncontrolled pilot cannot show effectiveness, and it can show whether people will try and finish an app. Setting it aside entirely overcorrects. The better step is to match the claim to what the design can show."
+     },
+     {
+      "id": "d",
+      "text": "More than 800,000 downloads show that the claim is true, because people would not keep a tool that failed",
+      "fb": "Downloads count installs. They say nothing about outcomes or about how many people kept using the app. Popularity and effectiveness are separate questions."
+     }
+    ]
+   },
+   {
+    "prompt": "Which privacy term on the Wrenmarrow sheet is most likely to differ from what a user would expect?",
+    "bloom": "analyze",
+    "src": "Module 15, Appraising a Digital Tool",
+    "correct": "d",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "The terms say the app is “not for emergencies” while the marketing offers support any time",
+      "fb": "This sentence is a plain safety disclosure and works in the user’s favor. It belongs to the crisis question and is not a privacy gap. The weakness is that the app’s marketing promises support at any hour."
+     },
+     {
+      "id": "b",
+      "text": "Conversations are stored and used to improve the product",
+      "fb": "Storage for product improvement is a common term and many users expect it. It matters most when combined with the sharing and deletion terms, and on its own it departs less from expectation than the deletion term does."
+     },
+     {
+      "id": "c",
+      "text": "A free tier with a paid upgrade, which sets the price users pay for the app",
+      "fb": "A pricing model belongs to the who-pays question, and it does not describe what happens to a user’s data. The privacy gap lies in the terms about sharing and deletion."
+     },
+     {
+      "id": "d",
+      "text": "Deleting an account keeps the messages, which may already have gone to partners",
+      "fb": "Most users expect deletion to remove what they wrote. Here the messages remain, and the sharing term means they may already be with partners. The gap between the assumed and the actual outcome is the largest on the sheet."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "type": "mcq",
+  "title": "Pennywhorl",
+  "short": "Pennywhorl",
+  "tag": "Guided internet CBT",
+  "case": {
+   "title": "Invented program sheet: Pennywhorl (guided internet CBT for depression)",
+   "text": "<div style=\"margin:3px 0\"><b>Claims.<\/b> “Built on cognitive behavioral therapy, with a coach.” “Shown to reduce depression in a randomized trial.”<\/div><div style=\"margin:3px 0\"><b>Study summary.<\/b> A randomized trial through one university. 140 adults with moderate depressive symptoms were assigned to the program or to a waitlist for 8 weeks. Average checklist score fell 9 points with the program and 3 points on the waitlist. 38 percent of the program group did not finish all modules. Two of the authors developed the program. No follow-up after week 8.<\/div><div style=\"margin:3px 0\"><b>Privacy terms.<\/b> Data are encrypted and shared with the coach and a supervising clinician. The employer that offers the program sees group totals only. Data are deleted within 30 days of a request, and de-identified totals are kept for research.<\/div><div style=\"margin:3px 0\"><b>Crisis handling.<\/b> A weekly check-in asks about thoughts of self-harm. A positive answer shows 988 and 911 on screen and prompts a coach call within one business day. Coaches have a supervising clinician. The terms say the program is not for emergencies.<\/div><div style=\"margin:3px 0\"><b>Who built it and who pays.<\/b> A university team and a company. Employers and insurers pay per member.<\/div><div style=\"margin-top:6px;font-size:12.5px\">All four programs, their names, and every number on these sheets are invented for practice. Any resemblance to a real product is unintended.<\/div>"
+  },
+  "intro": "<b>Step 2 of 5.<\/b> Pennywhorl has the strongest evidence of the four, and the sheet still holds limits. Match each claim to what the design shows.",
+  "doThis": "Read the sheet, then choose the best answer.",
+  "revisit": "Reread “Internet-Based CBT and the Role of Guidance” and “Safety, Consent, and Crisis Routing in Digital Programs.”",
+  "items": [
+   {
+    "prompt": "The Pennywhorl page says the program was “shown to reduce depression in a randomized trial.” Which statement best matches the trial summary?",
+    "bloom": "evaluate",
+    "src": "Module 15, Internet-Based CBT and the Role of Guidance",
+    "correct": "d",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "Developer authorship makes the trial uninformative, so the claim should wait for independent authors",
+      "fb": "Developer authorship is a reason to look harder, and it does not make a randomized trial uninformative. The reader can still use the design, the numbers, and the comparison, while holding the conclusions with more caution."
+     },
+     {
+      "id": "b",
+      "text": "The randomized design settles whether the program works for working adults, so the claim is fully supported",
+      "fb": "Random assignment protects the comparison inside the trial. It does not extend the result to working adults in general, since the sample came through one university, follow-up ended at week 8, and 38 percent did not finish."
+     },
+     {
+      "id": "c",
+      "text": "A waitlist comparison shows nothing, because people on a waitlist often improve by themselves",
+      "fb": "Some people on a waitlist do improve, and that is why the comparison is informative. The 3-point fall in the waitlist group sets the baseline and the program group’s 9-point fall exceeded it. Waiting is a weak comparison, and the result still counts."
+     },
+     {
+      "id": "d",
+      "text": "It supports a benefit over waiting at one site for 8 weeks, and not yet over other treatments",
+      "fb": "This keeps each limit attached to the claim. Random assignment supports a benefit over waiting. One site, 8 weeks, no follow-up, and developer authorship limit how far the result travels, and a waitlist comparison does not say how the program compares with other care."
+     }
+    ]
+   },
+   {
+    "prompt": "Brannigan is an invented adult who works rotating night shifts and has about 20 minutes on a good day. His main barrier is time, so the question is whether he could complete the program. Which fact on the sheet speaks most directly to that?",
+    "bloom": "analyze",
+    "src": "Module 15, Internet-Based CBT and the Role of Guidance",
+    "correct": "d",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "The comparison group was a waitlist and not another treatment",
+      "fb": "The waitlist limits what the trial says about how Pennywhorl compares with other care. Brannigan’s question is different. He needs to know whether someone with little time can finish, and the waitlist says nothing about that."
+     },
+     {
+      "id": "b",
+      "text": "Two of the authors developed the program",
+      "fb": "Developer authorship is an allegiance concern about how results were reported. It does not tell Brannigan whether a person with 20 minutes can finish the modules."
+     },
+     {
+      "id": "c",
+      "text": "The trial took place through one university",
+      "fb": "A single site limits how far the result travels, and a campus sample may have more flexible schedules than a night shift worker. The sheet gives no schedule data, and the completion figure addresses his barrier more directly."
+     },
+     {
+      "id": "d",
+      "text": "38 percent of the program group did not finish all modules",
+      "fb": "Completion is the outcome closest to Brannigan’s barrier. More than a third of people in a trial, a setting that usually supports completion, did not finish. In a busier life the share may be larger, and the benefit seen in the trial came from the people who did the work."
+     }
+    ]
+   },
+   {
+    "prompt": "Last Saturday night a Pennywhorl user gave a high answer to the weekly check-in item about thoughts of self-harm. Which statement about the crisis handling does the sheet support best?",
+    "bloom": "evaluate",
+    "src": "Module 15, Safety, Consent, and Crisis Routing in Digital Programs",
+    "correct": "a",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "It suits a weekly screen but leaves a gap for danger that night, which 988 or 911 must cover",
+      "fb": "A screen with 988 and 911 on screen, a coach call within one business day, and clinical supervision covers the usual case. A call within one business day cannot reach a person in danger on Saturday night, so the on-screen numbers and the statement that the program is not for emergencies carry that gap."
+     },
+     {
+      "id": "b",
+      "text": "It is not relevant, because a weekly check-in item is only a screen and users give complete answers",
+      "fb": "Screens miss danger that arises between check-ins, and answers can be incomplete or change quickly. Crisis handling is appraised because a screen does not replace a response."
+     },
+     {
+      "id": "c",
+      "text": "It is inadequate in full, because coaches are not licensed therapists and cannot assess risk",
+      "fb": "Coaches work under a supervising clinician, and the design routes concerns upward. Criticizing the license of the coach skips over what the design does address, and the timing gap is the real limit."
+     },
+     {
+      "id": "d",
+      "text": "It is adequate in full, because a coach follows up and a clinician supervises the coaches",
+      "fb": "The structure is a strength. The timing is the limit, since the call comes within one business day. A coach call on the next working day does not answer danger the same night."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "type": "mcq",
+  "title": "Tallowbee",
+  "short": "Tallowbee",
+  "tag": "Mood diary",
+  "case": {
+   "title": "Invented app sheet: Tallowbee (mood diary with streak badges)",
+   "text": "<div style=\"margin:3px 0\"><b>Claims.<\/b> “4.8 stars from 61,000 ratings.” “Millions of people keep their streaks going.” “Science-based mood tracking.”<\/div><div style=\"margin:3px 0\"><b>Study summary.<\/b> None published. The website says “research shows that tracking mood helps people feel better” and names no study.<\/div><div style=\"margin:3px 0\"><b>Privacy terms.<\/b> Free to use. The policy says mood entries, device ID, and approximate location may be shared with advertising networks. A settings page lets users limit location.<\/div><div style=\"margin:3px 0\"><b>Crisis handling.<\/b> No crisis feature. A line in the settings page tells users to contact local emergency services in an emergency.<\/div><div style=\"margin:3px 0\"><b>Usability and engagement.<\/b> Takes about 30 seconds a day. Reminders and streak badges. Reviewers call it easy to use.<\/div><div style=\"margin:3px 0\"><b>Who built it and who pays.<\/b> A small company funded by advertising and by selling summaries of user data.<\/div><div style=\"margin-top:6px;font-size:12.5px\">All four programs, their names, and every number on these sheets are invented for practice. Any resemblance to a real product is unintended.<\/div>"
+  },
+  "intro": "<b>Step 3 of 5.<\/b> Tallowbee is popular and easy to use. Keep apart what popularity shows and what it leaves unanswered.",
+  "doThis": "Read the sheet, then choose the best answer.",
+  "revisit": "Reread “Mobile Apps: Wide Reach, Thin Evidence” and “Appraising a Digital Tool.”",
+  "items": [
+   {
+    "prompt": "A friend says, “It has 4.8 stars from 61,000 ratings, so it must work and it must be safe with your data.” Which response is best supported?",
+    "bloom": "evaluate",
+    "src": "Module 15, Mobile Apps: Wide Reach, Thin Evidence",
+    "correct": "c",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "Star ratings are worthless, so popularity should carry no weight when choosing a tool",
+      "fb": "Ratings tell you something real about ease of use and appeal, which matter for whether anyone keeps using a tool. They are weak evidence for effect and for privacy, and the right move is to give them the weight they deserve."
+     },
+     {
+      "id": "b",
+      "text": "That many raters shows the privacy policy must be acceptable, because users would have complained",
+      "fb": "Most users never read a privacy policy, and a rating reflects the experience of using the app. A published review of 578 apps found privacy scores did not correlate with star ratings. Complaints do not check a policy."
+     },
+     {
+      "id": "c",
+      "text": "Ratings show that many people like using it, and they do not show that it improves mood or protects data",
+      "fb": "Ratings measure satisfaction among the people who chose to rate. In a published review of 578 apps, privacy scores did not track star ratings, so a high rating gives no assurance about data. Effect on mood needs a controlled study, and the sheet lists none."
+     },
+     {
+      "id": "d",
+      "text": "A 4.8 average from 61,000 ratings is strong evidence of effectiveness, because that many people would not agree by chance",
+      "fb": "Large numbers make the average stable. They do not change what is being measured, which is satisfaction among raters. People can enjoy a diary app that has no effect on mood."
+     }
+    ]
+   },
+   {
+    "prompt": "Rafferty is an invented adult whose therapist asks him to log his mood each day between sessions as a simple record and nothing more. Which question most changes whether Tallowbee is a reasonable tool for that job?",
+    "bloom": "apply",
+    "src": "Module 15, Appraising a Digital Tool",
+    "correct": "a",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "Privacy and data, because entries, device ID, and location can go to advertisers",
+      "fb": "For a simple record the app does not need to be a treatment, so the lack of outcome evidence matters less. The concern is where the entries go. A daily record of mood tied to a device ID and a location, shared with advertisers, is the main concern for this use."
+     },
+     {
+      "id": "b",
+      "text": "Safety and crisis handling, because the app has no crisis feature beyond a settings line",
+      "fb": "A missing crisis feature matters for tools offered as support. This use is a record between sessions that Rafferty’s therapist reviews, so the therapist and not the app provides the response."
+     },
+     {
+      "id": "c",
+      "text": "Usability and engagement, because streak badges may push him to log when he does not want to",
+      "fb": "Streak badges can pressure some people, and 30 seconds a day is a light load. Usability is a strength of this app for the job, so it is not the question that changes the decision."
+     },
+     {
+      "id": "d",
+      "text": "Evidence, because no study of the app has been published and the website names none",
+      "fb": "For a tool used as a record, the absence of a trial matters less than it would for a tool offered as treatment. Rafferty’s therapist wants a log, and a log needs no proof that it treats anything."
+     }
+    ]
+   },
+   {
+    "prompt": "The Tallowbee page says “millions of people keep their streaks going.” What does high engagement show?",
+    "bloom": "analyze",
+    "src": "Module 15, Mobile Apps: Wide Reach, Thin Evidence",
+    "correct": "b",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "That the app is safe, because a large and lasting user base would report problems",
+      "fb": "Users seldom report privacy or safety problems that they cannot see. Data sharing happens in the background, and safety problems arise for a small share of users."
+     },
+     {
+      "id": "b",
+      "text": "That many people keep opening the app, and it leaves open whether they improve",
+      "fb": "Engagement is a precondition for benefit and is not a measure of it. In a study of 93 Android mental health apps with 10,000 or more installs, median retention at 15 days was 3.9 percent, so sustained use is uncommon. Where it occurs it still says nothing about mood."
+     },
+     {
+      "id": "c",
+      "text": "Nothing, because engagement has no relation to whether a tool can help",
+      "fb": "Engagement is needed for any benefit. A tool that people drop within days cannot help most of them. High engagement is a good sign for usability, and it needs outcome data beside it."
+     },
+     {
+      "id": "d",
+      "text": "That the app works, because people who feel better keep using it",
+      "fb": "People may keep using an app because they feel better, because a streak badge pulls them back, or because it is a habit. Without a comparison, the direction of the link is unknown."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "type": "mcq",
+  "title": "Larkspindle",
+  "short": "Larkspindle",
+  "tag": "Video therapy",
+  "case": {
+   "title": "Invented platform sheet: Larkspindle (video therapy with licensed clinicians)",
+   "text": "<div style=\"margin:3px 0\"><b>Claims.<\/b> “As effective as in-person therapy.” “Licensed clinicians.” “Matched with a clinician within 24 hours.”<\/div><div style=\"margin:3px 0\"><b>Study summary.<\/b> Cites published reviews of video therapy in general. No outcome data from Larkspindle’s own clients.<\/div><div style=\"margin:3px 0\"><b>Privacy terms.<\/b> Video sessions are not recorded. Messages and intake forms are stored. Clinicians follow professional record rules. Some billing data go to a payment partner.<\/div><div style=\"margin:3px 0\"><b>Crisis handling.<\/b> Clinicians ask for the client’s current location at the start of each video session and keep an emergency contact on file. Messages are answered within two business days, and the messaging screen says it is not for urgent needs and shows 988 and 911.<\/div><div style=\"margin:3px 0\"><b>Usability and engagement.<\/b> Video is required. Audio-only sessions are not offered.<\/div><div style=\"margin:3px 0\"><b>Who built it and who pays.<\/b> Venture funded. Clinicians are contractors paid per session, with a bonus for reaching a monthly session count. Clients pay a subscription.<\/div><div style=\"margin-top:6px;font-size:12.5px\">All four programs, their names, and every number on these sheets are invented for practice. Any resemblance to a real product is unintended.<\/div>"
+  },
+  "intro": "<b>Step 4 of 5.<\/b> Larkspindle offers a human clinician. Check each claim against the evidence on video therapy and each feature against the user.",
+  "doThis": "Read the sheet, then choose the best answer.",
+  "revisit": "Reread “Teletherapy: Same Therapy, Different Channel” and “Blended Care and the Human in the Loop.”",
+  "items": [
+   {
+    "prompt": "The Larkspindle page says video therapy is “as effective as in-person therapy.” Which appraisal is best supported?",
+    "bloom": "evaluate",
+    "src": "Module 15, Teletherapy: Same Therapy, Different Channel",
+    "correct": "c",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "Video therapy is better, because a matched cohort study found people attended more sessions by video",
+      "fb": "More sessions attended is an observational finding about attendance. It does not show better symptom outcomes, and it comes from a different design than the trials."
+     },
+     {
+      "id": "b",
+      "text": "The claim is not credible, because the platform has published no outcome data from any of its own clients",
+      "fb": "General research on video therapy applies to the same therapy delivered through video, so the platform can lean on it. The missing piece is data on its own matching, clinicians, and clients, and that lowers confidence without removing the evidence."
+     },
+     {
+      "id": "c",
+      "text": "General reviews found no detected difference in symptoms, with wide intervals, and none cover this platform",
+      "fb": "This matches the reviews. Meta-analyses of video therapy have found no detected difference in symptoms, and the confidence intervals leave room for a gap. One meta-analysis did not establish that alliance was noninferior. Larkspindle’s own clients are not described, so the claim rests on general research."
+     },
+     {
+      "id": "d",
+      "text": "The claim is proven, because reviews show video therapy equals in-person therapy on every outcome",
+      "fb": "No difference detected is a weaker statement than equal. The intervals are wide, alliance noninferiority was not established in one review, and for some conditions there was too little evidence for a conclusion."
+     }
+    ]
+   },
+   {
+    "prompt": "Henrik is an invented adult who lives where home internet drops out several times a week. He wants therapy from a licensed clinician. Which question most changes whether Larkspindle fits him?",
+    "bloom": "apply",
+    "src": "Module 15, Choosing Well",
+    "correct": "a",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "Usability and access, because video is required and there is no audio-only option",
+      "fb": "Henrik’s main barrier is the connection, and the platform has no fallback. A session that drops repeatedly interrupts care. Asking for a phone option, or choosing a service that has one, is the practical response."
+     },
+     {
+      "id": "b",
+      "text": "Privacy and data, because some billing data go to a payment partner outside the platform",
+      "fb": "Sharing billing data with a payment partner is common and deserves a read. It carries less weight for Henrik than a connection that fails during sessions."
+     },
+     {
+      "id": "c",
+      "text": "Safety and crisis handling, because clinicians confirm location at each session",
+      "fb": "Confirming location and keeping an emergency contact is a strength of this platform. It becomes relevant when a call drops, and the connection problem would arise first, so it does not decide the fit."
+     },
+     {
+      "id": "d",
+      "text": "Evidence, because the platform has no outcome data from its own clients",
+      "fb": "The evidence limit is genuine. It does not decide the fit for Henrik, who has a stated need for a licensed clinician and a specific barrier with the channel."
+     }
+    ]
+   },
+   {
+    "prompt": "Clinicians on Larkspindle are paid per session and receive a bonus for reaching a monthly session count. Which concern does that arrangement raise?",
+    "bloom": "analyze",
+    "src": "Module 15, Appraising a Digital Tool",
+    "correct": "b",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "It makes the published reviews of video therapy unreliable, because the platform is venture funded",
+      "fb": "Reviews of video therapy were conducted separately from this platform. Venture funding is relevant to how the platform presents its claims. It does not change the reviews."
+     },
+     {
+      "id": "b",
+      "text": "It may favor longer treatment than needed, so a user should ask how the clinician decides when to end",
+      "fb": "A payment structure that rewards session counts gives a clinician a reason to continue care. The concern is a possible pull, and a client can ask about review points and ending criteria. Measurement-based review is one safeguard."
+     },
+     {
+      "id": "c",
+      "text": "It raises no concern, because per-session pay is standard in private practice and bonuses are common",
+      "fb": "Per-session pay is common, and the bonus for reaching a session count is the added feature. Common arrangements still create incentives, and noting them is part of the who-pays question."
+     },
+     {
+      "id": "d",
+      "text": "It shows the clinicians are poorly trained, because skilled clinicians would refuse a bonus like this",
+      "fb": "Payment structure says nothing about training. Licensed clinicians can work under many pay arrangements, and the question here concerns incentives."
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "type": "mcq",
+  "title": "Choose for a stated user",
+  "short": "Choose for users",
+  "tag": "Applying all five questions",
+  "case": {
+   "title": "The four invented sheets side by side",
+   "text": "<div style='overflow-x:auto'><table style='border-collapse:collapse;width:100%;font-size:13px'><caption style='text-align:left;font-size:12.5px;padding:3px 0'>Summary of each sheet by the five questions. All four programs are invented.<\/caption><thead><tr><th scope='col' style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;background:#f3f1ec'>Question<\/th><th scope='col' style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;background:#f3f1ec'>Wrenmarrow<\/th><th scope='col' style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;background:#f3f1ec'>Pennywhorl<\/th><th scope='col' style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;background:#f3f1ec'>Tallowbee<\/th><th scope='col' style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;background:#f3f1ec'>Larkspindle<\/th><\/tr><\/thead><tbody><tr><th scope='row' style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Evidence<\/th><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Company pilot, no comparison group<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>One randomized trial against a waitlist, developers among the authors<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>None published<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Reviews of video therapy in general, none from its own clients<\/td><\/tr><tr><th scope='row' style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Privacy and data<\/th><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Messages kept after deletion, shared with partners<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Encrypted, employer sees group totals only, deletion on request<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Shared with advertising networks<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Sessions not recorded, billing data to a payment partner<\/td><\/tr><tr><th scope='row' style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Safety and crisis handling<\/th><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Keyword hotline link, no person reviews<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Weekly screen, 988 and 911 on screen, coach call within one business day<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>None<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Location and emergency contact at each video session, 988 and 911 on messaging screen<\/td><\/tr><tr><th scope='row' style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Usability and engagement<\/th><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Chat any time of day<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>8-week program, 38 percent of the trial group did not finish all modules<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>30 seconds a day, streak badges<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Video required, no audio-only option<\/td><\/tr><tr><th scope='row' style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Who built it and who pays<\/th><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Investors and data partners<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>University team and company, employers and insurers pay<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Advertising and sales of data summaries<\/td><td style='border:1px solid #d9d4c8;padding:5px 7px;text-align:left;vertical-align:top;'>Venture funded, clinicians paid per session with a bonus, clients subscribe<\/td><\/tr><\/tbody><\/table><\/div>"
+  },
+  "intro": "<b>Step 5 of 5.<\/b> Use the side-by-side table to choose for three invented people. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.",
+  "doThis": "Read the user’s situation, then choose the best answer.",
+  "revisit": "Reread “Choosing Well” and “Reading Claims About Digital Care.”",
+  "items": [
+   {
+    "prompt": "Zuri is an invented adult with mild low mood along with work stress. Her employer offers the guided program at no charge. She wants a self-paced tool, has no thoughts of self-harm, and says privacy matters most to her. Which tool is the best first choice?",
+    "bloom": "apply",
+    "src": "Module 15, Choosing Well",
+    "correct": "c",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "Tallowbee, because it is easy to use, free, and takes 30 seconds a day",
+      "fb": "It fits her time and budget. Her priority is privacy, and Tallowbee shares entries, device ID, and location with advertising networks."
+     },
+     {
+      "id": "b",
+      "text": "Larkspindle, because a licensed clinician offers the most support",
+      "fb": "A clinician provides more support than mild low mood with work stress may need, and the subscription adds cost when her employer already offers a program at no charge. She asked for a self-paced tool."
+     },
+     {
+      "id": "c",
+      "text": "Pennywhorl, because it has the most evidence and the strongest privacy terms",
+      "fb": "For mild low mood with work stress and privacy as the priority, Pennywhorl pairs a controlled trial with encrypted data, deletion on request, and group-level employer reporting. Its trial enrolled adults with moderate symptoms and 38 percent did not finish all modules, which are limits to discuss with her, and a coach adds structure."
+     },
+     {
+      "id": "d",
+      "text": "Wrenmarrow, because a chat tool is available at any hour and the free tier costs nothing",
+      "fb": "Availability and a free tier fit her wishes. Messages stay after deletion and may reach partners, which conflicts with the priority she named."
+     }
+    ]
+   },
+   {
+    "prompt": "Dashiell is an invented adult with moderate depression for several months and a stable home connection. Last month he had thoughts that life was not worth living, and his sister lives nearby. He wants to talk with a licensed clinician. Which tool is the best first choice?",
+    "bloom": "evaluate",
+    "src": "Module 15, Safety, Consent, and Crisis Routing in Digital Programs",
+    "correct": "b",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "Wrenmarrow, because it is always available and he can reach it at any hour of the night",
+      "fb": "Always available is not the same as able to respond to risk. The app has no reviewer and a keyword link, so it is a poor fit as a main support for someone with recent thoughts of this kind."
+     },
+     {
+      "id": "b",
+      "text": "Larkspindle, because he wants a licensed clinician and it confirms location at each session",
+      "fb": "A live clinician who confirms location at each session and has an emergency contact on file fits both his stated wish and his recent thoughts. Its own evidence is general and not specific to the platform, and the clinician can use measures to check progress."
+     },
+     {
+      "id": "c",
+      "text": "Pennywhorl, because its trial gives the best evidence and a coach calls after a flagged answer",
+      "fb": "Pennywhorl is a reasonable second choice. A weekly screen with a call within one business day offers less than a live clinician to someone who has had recent thoughts of not wanting to live, and he asked for a clinician."
+     },
+     {
+      "id": "d",
+      "text": "Tallowbee, because logging his mood daily would show his sister how he is doing over time",
+      "fb": "A diary shows a pattern and gives no response to risk, and it has no crisis feature. Its data sharing is also a concern for entries about mood and location."
+     }
+    ]
+   },
+   {
+    "prompt": "A clinic manager asks which tool describes the study it does supply in terms that study cannot support. Which answer do the sheets support best?",
+    "bloom": "evaluate",
+    "src": "Module 15, Reading Claims About Digital Care",
+    "correct": "b",
+    "why": "",
+    "options": [
+     {
+      "id": "a",
+      "text": "Tallowbee, because “science-based” is a website line that names no study at all",
+      "fb": "The sheet supplies no study, so there is no study whose description could go beyond it. A vague line with nothing behind it is a different problem from describing a supplied study in terms it cannot support."
+     },
+     {
+      "id": "b",
+      "text": "Wrenmarrow, because “clinically proven” describes an uncontrolled company pilot with many dropouts",
+      "fb": "Wrenmarrow’s claim says proven, and the one study supplied is an uncontrolled company pilot in which more than half the users did not finish. A pilot of that kind cannot support the word proven, so the gap between the description and the design is the largest on the sheets."
+     },
+     {
+      "id": "c",
+      "text": "Larkspindle, because “as effective as in-person” describes reviews that include no data from its own clients",
+      "fb": "The sheet cites reviews of video therapy in general and supplies no study of its own. The wording overstates the reviews, which show no detected difference with wide intervals, and the reviews rest on controlled research, so the gap is smaller than for Wrenmarrow."
+     },
+     {
+      "id": "d",
+      "text": "Pennywhorl, because “shown to reduce depression” describes a single trial at one university",
+      "fb": "A single trial limits generalization, and the claim still matches the design, which compared the program with a waitlist. The description stays within what the trial can show."
+     }
+    ]
+   }
+  ]
+ }
+];
+var SUMMARY = {
+ "title": "What you appraised",
+ "takeaway": "<b>Carry forward.<\/b> The question that decides the choice depends on the user. For a person who may be at risk it was crisis handling, for a simple record it was privacy, and for a person with a barrier it was access. A claim carries only as much weight as its design supports, and popularity, downloads, and ratings measure something other than benefit.",
+ "note": "All four programs and every number are invented, and the five questions are a teaching synthesis and not a published instrument. Nothing is saved or sent. If this activity affects you, call or text 988 at any hour, or call 911 in an emergency."
+};
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root");
+var S;
+function newState(){ return {k:0, i:0, picked:null, seq:[], tries:0, revealed:false, sel:{}, checked:false, miss:[], retry:false, rq:[], order:[], res:STEPS.map(function(){return {score:0,max:0,done:false};})}; }
+function reset(){ S=newState(); STEPS.forEach(function(st,ix){ st.maxScore=maxFor(st); S.res[ix].max=st.maxScore; }); render(); }
+function maxFor(st){ if(st.type==="classify"||st.type==="mcq") return st.items.length; return 1; }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function toTop(){ try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} }
+function bar(){
+  return '<div class="steps" aria-hidden="true">'+STEPS.map(function(st,ix){
+    var cls="stp"+(ix===S.k?" on":(S.res[ix].done?" done":""));
+    return '<span class="'+cls+'">'+(ix+1)+'. '+esc(st.short||st.title)+'</span>'; }).join("")+'</div>';
+}
+function caseCard(st){ return st.case ? '<div class="case"><b class="t">'+esc(st.case.title)+'</b>'+st.case.text+'</div>' : ""; }
+function render(){
+  if(S.k>=STEPS.length){ return renderSummary(); }
+  var st=STEPS[S.k], h=bar()+caseCard(st);
+  if(S.i===0 && !S.started && st.intro){ h+='<div class="intro">'+st.intro+'</div>'; }
+  h+='<section class="panel" aria-live="polite">';
+  h+=({classify:rClassify,order:rOrder,mcq:rMcq,multi:rMulti})[st.type](st);
+  h+='</section>';
+  root.innerHTML=h; post();
+}
+function nextBtn(label){ return '<div class="foot"><span></span><button class="btn" type="button" data-act="next">'+label+'</button></div>'; }
+function advanceLabel(st){
+  var multi=(st.type==="classify"||st.type==="mcq");
+  var last=multi?(S.i>=lastIdx(st) && !(!S.retry && S.miss.length)):true;
+  if(!last) return (multi && S.i>=lastIdx(st))?"Take a second look at the ones you missed":"Next";
+  return (S.k>=STEPS.length-1)?"See your results":"Continue to the next step";
+}
+function curItems(st){ return S.retry ? S.rq.map(function(ix){return st.items[ix];}) : st.items; }
+function itemIx(st){ return S.retry ? S.rq[S.i] : S.i; }
+function shuffled(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function retryBanner(){ return S.retry ? '<div class="intro"><b>Second look.</b> You missed this one the first time. The explanation you read applies here. Answer again without it. A correct answer now counts for half a point.</div>' : ""; }
+function lastIdx(st){ return S.retry ? S.rq.length-1 : st.items.length-1; }
+/* ---- classify ---- */
+function rClassify(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'item ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="quote">'+it.text+'</p>';
+  h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="cats">';
+  st.cats.forEach(function(c){
+    var cls="cat"; if(ans){ if(c.id===it.answer) cls+=" correct"; else if(c.id===S.picked) cls+=" wrong"; else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="cls" data-val="'+c.id+'"'+(ans?" disabled":"")+'>'+esc(c.label)+'</button>';
+  });
+  h+='</div>';
+  if(ans){ var ok=S.picked===it.answer;
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Correct.":"Not quite.")+'</p><div class="explain">'+it.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- order ---- */
+function rOrder(st){
+  var chosen=S.seq, done=S.revealed||S.orderOk, full=chosen.length===st.correct.length;
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<ol class="seq">';
+  for(var p=0;p<st.correct.length;p++){
+    var id=chosen[p], node=id?nodeById(st,id):null, cls="";
+    if(node){ cls="filled"; if(full||done){ cls+= (id===st.correct[p])?" right":" bad"; } }
+    var shown=node?node.text:"";
+    if(S.revealed && !node){ shown=nodeById(st,st.correct[p]).text; }
+    h+='<li class="'+cls+'"><span class="n">'+(p+1)+'</span><span>'+(shown?shown:'<span style="color:var(--muted)">…</span>')+'</span></li>';
+  }
+  h+='</ol>';
+  if(!full && !S.revealed){
+    h+='<div class="pool">';
+    st.nodes.forEach(function(n){ if(chosen.indexOf(n.id)<0) h+='<button class="node" type="button" data-act="ord" data-val="'+n.id+'">'+n.text+'</button>'; });
+    h+='</div><div class="foot"><span></span>'+(chosen.length?'<button class="btn secondary" type="button" data-act="undo">Undo last</button>':'')+'</div>';
+  } else if(full && !S.orderOk && !S.revealed){
+    h+='<p class="verdict no">Not quite. Green rows are in the right place and red rows are not.</p><p class="explain">'+st.hintWrong+'</p>';
+    h+='<div class="foot"><button class="btn secondary" type="button" data-act="reveal">Show me the sequence</button><button class="btn" type="button" data-act="retry">Try again</button></div>';
+  } else {
+    h+='<p class="verdict '+(S.orderOk?"ok":"no")+'">'+(S.orderOk?"Correct.":"The sequence is complete.")+'</p><div class="explain">'+st.why+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+function nodeById(st,id){ for(var i=0;i<st.nodes.length;i++) if(st.nodes[i].id===id) return st.nodes[i]; return null; }
+/* ---- mcq (per-option feedback) ---- */
+function rMcq(st){
+  var it=curItems(st)[S.i], ans=S.picked!==null;
+  var h=retryBanner()+'<div class="qtop"><span class="qn">'+esc(st.title)+', '+(S.retry?'second look ':'question ')+(S.i+1)+' of '+curItems(st).length+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+it.prompt+'</p>';
+  if(st.doThis) h+='<div class="do"><b>Do this:</b> '+st.doThis+'</div>';
+  h+='<div class="options">';
+  var list=(S.retry?S.order[S.i]:it.options);
+  list.forEach(function(o,oi){
+    var cls="opt", tag="";
+    if(ans){ if(o.id===it.correct){ cls+=" correct"; tag=' <b>(best answer)</b>'; } else if(o.id===S.picked){ cls+=" wrong"; tag=' <b>(your choice)</b>'; } else cls+=" dim"; }
+    h+='<button class="'+cls+'" type="button" data-act="pick" data-val="'+o.id+'"'+(ans?" disabled":"")+'><span class="k">'+String.fromCharCode(65+oi)+'.</span><span>'+o.text+tag+'</span></button>';
+  });
+  h+='</div>';
+  if(ans){
+    var ok=S.picked===it.correct, po=null, ko=null;
+    it.options.forEach(function(o){ if(o.id===S.picked) po=o; if(o.id===it.correct) ko=o; });
+    h+='<p class="verdict '+(ok?"ok":"no")+'">'+(ok?"Best answer.":"Not the best answer.")+'</p><div class="explain"><p><b>Your reasoning.</b> '+po.fb+'</p>';
+    if(!ok) h+='<p><b>The best answer.</b> '+ko.fb+'</p>';
+    if(it.why) h+='<p>'+it.why+'</p>';
+    h+=((it.src||st.src)?'<div class="src">Reading: '+esc(it.src||st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- multi ---- */
+function rMulti(st){
+  var h='<div class="qtop"><span class="qn">'+esc(st.title)+'</span><span class="tag">'+esc(st.tag||"")+'</span></div>';
+  h+='<p class="qprompt">'+st.prompt+'</p><div class="do"><b>Do this:</b> '+st.doThis+'</div><div class="chips">';
+  st.options.forEach(function(o){
+    var on=!!S.sel[o.id], truth=st.truth.indexOf(o.id)>=0, cls="chip";
+    if(S.checked){ if(on&&truth) cls+=" right"; else if(!on&&truth) cls+=" miss"; else if(on&&!truth) cls+=" extra"; }
+    h+='<button class="'+cls+'" type="button" aria-pressed="'+(on?"true":"false")+'" data-act="tog" data-val="'+o.id+'"'+(S.checked?" disabled":"")+'>'+esc(o.label)+'</button>';
+  });
+  h+='</div>';
+  if(!S.checked){
+    var n=Object.keys(S.sel).filter(function(k){return S.sel[k];}).length;
+    h+='<div class="foot"><span class="qn" style="font-size:13px;color:var(--muted)">'+n+' selected</span><button class="btn" type="button" data-act="chk"'+(n?"":" disabled")+'>Check my answer</button></div>';
+  } else {
+    var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; });
+    var sc=Math.max(0,(tp-fp))/st.truth.length;
+    h+='<p class="verdict '+(sc>=1?"ok":"no")+'">'+(sc>=1?"You found every process, with nothing extra.":"Green marks a correct selection, amber a missed process, and red a process that is not present in this case.")+'</p>';
+    h+='<div class="explain ex"><ul>'+st.options.filter(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; return t||on; }).map(function(o){ var t=st.truth.indexOf(o.id)>=0; return '<li><b>'+esc(o.label)+'.</b> '+(st.reasons[o.id]||(t?"Present.":"Not present in this case."))+'</li>'; }).join("")+'</ul>'+(st.src?'<div class="src">Reading: '+esc(st.src)+'</div>':'')+'</div>'+nextBtn(advanceLabel(st));
+  }
+  return h;
+}
+/* ---- summary ---- */
+function renderSummary(){
+  var tot=0,max=0; S.res.forEach(function(r){ tot+=r.score; max+=r.max; });
+  var h=bar()+'<section class="panel results"><h2>'+esc(SUMMARY.title)+'</h2><p class="score">You earned <b>'+(Math.round(tot*10)/10)+' of '+max+'</b> points on the scored items. Items answered correctly on the second look count for half a point.</p><div>';
+  STEPS.forEach(function(st,ix){ var r=S.res[ix]; h+='<div class="brow"><span class="bs">'+(Math.round(r.score*10)/10)+' / '+r.max+'</span><span><b>'+esc(st.title)+'.</b> '+(r.score>=r.max?"Full marks.":esc(st.revisit||"Revisit this step."))+'</span></div>'; });
+  h+='</div><div class="take">'+SUMMARY.takeaway+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">'+SUMMARY.note+'</p></section>';
+  root.innerHTML=h; post();
+}
+/* ---- actions ---- */
+function act(a,v){
+  var st=STEPS[S.k];
+  if(a==="cls"){ if(S.picked!==null) return; S.picked=v; var it=curItems(st)[S.i]; if(v===it.answer) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="pick"){ if(S.picked!==null) return; S.picked=v; var q=curItems(st)[S.i]; if(v===q.correct) S.res[S.k].score+=(S.retry?0.5:1); else if(!S.retry) S.miss.push(S.i); render(); return; }
+  if(a==="ord"){ if(S.seq.length>=st.correct.length||S.revealed) return; S.seq.push(v); if(S.seq.length===st.correct.length){ S.tries++; var ok=S.seq.every(function(x,i){return x===st.correct[i];}); if(ok){ S.orderOk=true; S.res[S.k].score=(S.tries===1)?1:0.5; S.res[S.k].done=true; } } render(); return; }
+  if(a==="undo"){ S.seq.pop(); render(); return; }
+  if(a==="retry"){ S.seq=[]; render(); return; }
+  if(a==="reveal"){ S.revealed=true; S.res[S.k].done=true; render(); return; }
+  if(a==="tog"){ if(S.checked) return; S.sel[v]=!S.sel[v]; render(); return; }
+  if(a==="chk"){ var tp=0,fp=0; st.options.forEach(function(o){ var on=!!S.sel[o.id], t=st.truth.indexOf(o.id)>=0; if(on&&t) tp++; if(on&&!t) fp++; }); S.res[S.k].score=Math.max(0,(tp-fp))/st.truth.length; S.checked=true; S.res[S.k].done=true; render(); return; }
+  if(a==="next"){
+    var multiItem=(st.type==="classify"||st.type==="mcq");
+    if(multiItem && S.i<lastIdx(st)){ S.i++; S.picked=null; render(); toTop(); return; }
+    if(multiItem && !S.retry && S.miss.length){ S.retry=true; S.rq=S.miss.slice(); S.miss=[]; S.i=0; S.picked=null; if(st.type==="mcq"){ S.order=S.rq.map(function(ix){ return shuffled(st.items[ix].options); }); } render(); toTop(); return; }
+    S.res[S.k].done=true; S.k++; S.i=0; S.retry=false; S.rq=[]; S.miss=[]; S.order=[]; S.picked=null; S.seq=[]; S.tries=0; S.revealed=false; S.orderOk=false; S.sel={}; S.checked=false; render(); toTop(); return;
+  }
+  if(a==="again"){ reset(); toTop(); return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

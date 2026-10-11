@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Safety and Consent Conversation with Halvard</title>
+<style>
+  :root{ --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de; --panel:#fff; --accent:#8a5a25; --accent-ink:#6f4a20;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e; --mid-bg:#fffbef; --mid-line:#e7c98a; --mid-ink:#7a5f1f; --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72; --focus:#2f6f4f; }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  h1{margin:0;font-size:23px;letter-spacing:-.01em;} .sub{margin:6px 0 14px;color:var(--muted);font-size:14.5px;}
+  .masthead{padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .pills{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;} .pill{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .pill.on{background:var(--accent);color:#fff;} .pill.done{background:var(--ok-bg);color:var(--ok-ink);}
+  .case{background:var(--mid-bg);border:1px solid var(--mid-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);}
+  .panel:focus{outline:none;}
+  .skill{font-size:13px;color:var(--muted);margin:0 0 6px;}
+  .quote{font-size:17px;line-height:1.5;margin:6px 0 12px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .who{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:2px;}
+  .do{background:#f3f1ec;color:#57544e;border-radius:10px;padding:10px 13px;font-size:13px;margin:6px 0 14px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;} .opt:disabled{cursor:default;} .opt .k{font-weight:700;color:var(--muted);min-width:15px;}
+  .opt.r2{background:var(--ok-bg);border-color:var(--ok-line);} .opt.r1{background:var(--mid-bg);border-color:var(--mid-line);} .opt.r0{background:var(--no-bg);border-color:var(--no-line);}
+  .opt.pick{box-shadow:0 0 0 2px var(--accent) inset;} .opt.dim{opacity:.6;}
+  .opt:focus-visible,.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .verdict{margin:16px 0 4px;font-size:14.5px;font-weight:600;} .verdict.r2{color:var(--ok-ink);} .verdict.r1{color:var(--mid-ink);} .verdict.r0{color:var(--no-ink);}
+  .explain{font-size:14px;color:#44413b;margin:6px 0;} .better{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:10px;padding:10px 13px;font-size:14px;margin:10px 0;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;flex-wrap:wrap;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;} .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;} .brow:last-child{border-bottom:none;} .brow .bs{flex:0 0 52px;font-weight:700;color:var(--accent-ink);}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .note{font-size:12.5px;color:var(--muted);margin-top:14px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead"><h1>A Reviewer Calls After a Flagged Answer</h1><p class="sub">Practice six moments with Halvard in an invented guided online program, from consent to follow-up. Your choices change how he responds.</p></div>
+  <div id="root"></div>
+</div>
+<script>
+var SKILLS = [
+ "Explaining consent and its limits",
+ "Confirming location and contact",
+ "Responding to a flagged answer",
+ "Choosing a proportionate route",
+ "Telling him what happens with his information",
+ "Handing off and following up"
+];
+var SCENARIO = "Halvard is an invented client, 41, who works in a shipyard office and joined Tidewren, an invented guided online program for low mood, through his employer’s benefits. You are Ottoline, a trained reviewer on the Tidewren team. You are not a licensed clinician, and a supervising clinician is on call. Tidewren asks for a short weekly check-in. This week Halvard answered the last item, which asks about thoughts of being better off dead or of hurting himself, with “several days.” Last week he answered “not at all.” Tidewren uses tiered routing. This is an example design for teaching and is not a validated protocol, and its numbers are placeholders. An answer of “not at all” continues the program as usual. An answer of “several days” sends a message that lists 988 and other supports and flags the answer for a reviewer to call within one business day. The reviewer holds a short structured conversation and sends the result to the supervising clinician the same day. An answer of “more than half the days” or “nearly every day,” or any statement of immediate danger, calls for same-day human contact. A reviewer can escalate to a same-day clinician call or to emergency services if the conversation shows immediate danger. The program’s written terms say that reviewers and the supervising clinician can see check-in answers and call notes, that employers receive group totals only, and that the program may contact emergency services if someone appears to be in serious and immediate danger. You are making the first call. If this scenario affects you, you can call or text 988 at any hour, or call 911 in an emergency.";
+var TURNS = [
+ {
+  "bloom": "apply",
+  "skill": 0,
+  "client": {
+   "start": "Hello? I didn’t expect a call from a person. I only ever use the app. Who is this, and who gets to hear what I say on this call?"
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Hi Halvard, I’m Ottoline, a reviewer on the Tidewren team, calling about your check-in. What you say goes in the program record, which reviewers and the supervising clinician can see. Your employer sees group totals only. If I thought you were in serious danger I might have to contact emergency services. Is it okay to go ahead?",
+    "reply": "Okay. I wasn’t sure what to expect. Thanks for saying all that up front. Yes, go ahead.",
+    "why": "The response says who you are and why you called, what is recorded and who sees it, and one limit of confidentiality, and it asks for agreement. Standard 4.02(c) of the APA Ethics Code says psychologists who offer services via electronic transmission inform clients of the risks to privacy and limits of confidentiality, and Standard 3.10(a) covers informed consent for services provided in person or via electronic transmission. A program reviewer may not be a psychologist, and the same content is good practice for anyone who contacts a client in a program like this."
+   },
+   {
+    "r": 1,
+    "t": "Hi Halvard, this is Ottoline from Tidewren. Before we begin I need to go over the privacy terms. The program stores check-in answers and call notes, shares group counts with employers, and can contact others where the terms allow, and the full text is on the program website if you want to read it. Please say yes if you agree, and then we can start the call.",
+    "reply": "Okay, yes. I guess. That was a lot to take in. What is this call about?",
+    "why": "Going over the terms is accurate and gives him the limits. The response leaves out why you called and who will read his answers, and it asks for a yes before he has any context, so his consent is thin. The terms are honest, and he is left unsure what he is agreeing to."
+   },
+   {
+    "r": 0,
+    "t": "Hi Halvard, it’s Ottoline from Tidewren. I know a call like this can feel strange, so you should know that anything you tell me stays between the two of us. You can be completely open with me, and nothing you say will go anywhere beyond this call, whatever it turns out to be about.",
+    "reply": "Good. That’s what I hoped. I don’t want anyone at work hearing about this.",
+    "why": "A promise of secrecy conflicts with the program’s own terms, which let reviewers and a supervising clinician read his answers and allow contact with emergency services in serious and immediate danger. A limit he was never told about erodes trust if it later applies. He gets brief comfort, and the cost is his trust and an honest account of how he is doing."
+   },
+   {
+    "r": 0,
+    "t": "Hi Halvard, I’m calling about your answer to the last question on the check-in. I have a few questions about it and I’d like to get started so we don’t take up too much of your evening, since I know you’ve had a long day. Can you tell me what was going on when you filled it in?",
+    "reply": "Which answer? Wait, am I in trouble for something? Who is this again?",
+    "why": "Going straight to the flagged answer skips the introduction and the consent conversation. He does not know who you are, what is recorded, or what could happen with what he says, and the call feels like an accusation. The call is quick, and he is less likely to understand it or to talk."
+   }
+  ],
+  "order": [
+   1,
+   0,
+   3,
+   2
+  ]
+ },
+ {
+  "bloom": "apply",
+  "skill": 1,
+  "client": {
+   "g": "Go ahead. I’m just trying to understand what this call is.",
+   "m": "I’m still not sure what this call is. Go on.",
+   "p": "I’m not sure what to say. Go ahead."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Before we talk about the answer, I’d like to be able to reach you if the call drops. Where are you right now, is anyone with you, and what number is best if we get cut off?",
+    "reply": "I’m at home, in my kitchen. My sister lives about ten minutes away. The number you called is fine, and I can give you my cell too.",
+    "why": "The response gives the reason, asks where he is now and who is with him, and gets a backup number. If help were ever needed, you would know where to send it and how to reconnect. An address stored in an account can be out of date, so asking in the moment is part of the routine."
+   },
+   {
+    "r": 1,
+    "t": "Can you give me your address and a phone number, please? I need to confirm them for the record before we go any further, and it only takes a moment to read them back to me.",
+    "reply": "It’s the address on my account. I think it’s still right. Why does it matter?",
+    "why": "Asking for contact details is right. No reason is given, the stored address may be out of date, and the question does not ask where he is now or who is with him. The record is filled in, but the location may not be usable and he may be uneasy about the question."
+   },
+   {
+    "r": 1,
+    "t": "Are you somewhere private where you can talk? I’ll take your word that it’s a safe spot, and then we can go ahead with the call. Take a moment to get comfortable first if you need one.",
+    "reply": "Yes, I’m in the spare room with the door shut. Why are you asking?",
+    "why": "Asking about privacy shows care for his comfort. It does not ask where he is, so if help were ever needed you would not know where to send it. He has privacy, and there is still no way to reach him in an emergency."
+   },
+   {
+    "r": 0,
+    "t": "I need your full address right now, and I can’t continue the call unless you give it to me. It’s program policy, there are no exceptions, and it only takes a few seconds.",
+    "reply": "That’s a lot to ask. Why do you need it? I’m not giving you that.",
+    "why": "A demand with no reason feels coercive, and it makes the call conditional before a conversation has started. He gains nothing from it, and the call may end with no location."
+   }
+  ],
+  "order": [
+   3,
+   2,
+   1,
+   0
+  ]
+ },
+ {
+  "bloom": "analyze",
+  "skill": 2,
+  "client": {
+   "g": "Okay. I’m here. What did you want to ask?",
+   "m": "All right. I’m listening. What did you want to ask?",
+   "p": "Okay. Go ahead."
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Thank you for telling me where you are. On the check-in you marked thoughts of being better off dead or of hurting yourself as happening on several days. I’d like to hear more. What have those thoughts been like, how often do they come, and have you thought about acting on them? What has helped you get through?",
+    "reply": "It’s mostly late at night, a few times a week, since my team was cut back last month. I think about not being around. I haven’t planned anything and I don’t want to act on it. My sister keeps me going. I get embarrassed writing it down.",
+    "why": "The response thanks him, names the answer without blame, says why you called, and asks open and direct questions about frequency, acting, and what helps. The answers give a reader something to audit and give him a say in what happens next. What this keeps for Halvard is a response sized to what is true for him. What it puts at risk is a few uncomfortable minutes."
+   },
+   {
+    "r": 1,
+    "t": "I see you marked the last item as several days. I know this is a hard question, and I need to ask it directly. Are you thinking about ending your life, yes or no? Then we can decide together what to do with the rest of the call, and I won’t rush you, so please take whatever time you need to answer me.",
+    "reply": "No. I mean, I don’t know. Not right now. It’s a thought that shows up. I don’t like being asked like that.",
+    "why": "Asking directly is right and the question is necessary. A single yes or no gives no information about how often, whether he has thought of acting, or what helps, and it sounds like a form. The safety check is clear, and the fuller picture and some of his ease are lost."
+   },
+   {
+    "r": 0,
+    "t": "The system flagged your answer, and I wonder whether it was a slip of the finger. Would you like to change it so that we can close this out? It happens a lot with the app, and I can fix it for you in a minute while we are on the phone together, so there is no need to feel awkward about it or to explain anything.",
+    "reply": "Maybe. I guess I could have been tired. I’d rather not get into it.",
+    "why": "Offering to change the answer treats a possible risk answer as an error and invites him to retract it. He has just handed you the information the program is built to catch. He feels relief, and the honest account of his thoughts is lost."
+   },
+   {
+    "r": 0,
+    "t": "That answer means I have to send emergency services to your home, so please stay on the line while I arrange it. Don’t go anywhere, keep your phone with you, and I’ll let you know when they are on the way. It is the safest thing I can do for you right now.",
+    "reply": "What? No, please don’t send anyone. I’m fine. Forget I answered that.",
+    "why": "Dispatching help before any assessment treats the answer as the whole picture and takes the choice away from him. Emergency services are right when immediate danger is evident, and nothing yet shows that here. He did not ask for this, and his trust and willingness to answer fully again are at risk."
+   }
+  ],
+  "order": [
+   0,
+   2,
+   3,
+   1
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 3,
+  "client": {
+   "g": "I don’t want this to turn into a big thing. What are you going to do with what I said?",
+   "m": "I’ve told you what I told you. What are you going to do with it?",
+   "p": "Okay. What happens with what I said?"
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "I’ll keep this on the flagged-answer route for now. I’ll talk with the supervising clinician today about what you’ve told me, including what I still don’t know, and tell you what we decide.",
+    "reply": "Okay. I’d rather you tell me than do it behind my back. Today is fine.",
+    "why": "The response matches the route to what he has said and what is still unknown, involves the supervising clinician, and tells him what you are doing. In this example design the flagged-answer route calls for a same-day report to the clinician, and escalation stays available if more is learned. He keeps a say in what happens, and the route can change as the picture does."
+   },
+   {
+    "r": 1,
+    "t": "I’m going to move this to the same-day route. Please go to the nearest emergency department today, and I’ll stay on the line while you arrange a ride there so that you don’t have to do it alone.",
+    "reply": "The emergency room? Tonight? I just told you I’m not going to do anything.",
+    "why": "Same-day emergency care is a defensible, cautious route when the picture is unclear or the risk is high. It moves faster than what he has told you supports, and you chose it without asking him. Short-term safety is protected, and he may conclude that speaking up leads to being sent away."
+   },
+   {
+    "r": 0,
+    "t": "I’ll close the flag as low risk. The program’s route only requires one call, and you’ve told me you have no plan, so there’s nothing more for either of us to do on this one.",
+    "reply": "Fine. Thanks. Can we leave it there?",
+    "why": "Closing the flag after one call skips the clinician review that the route requires and treats a single answer as a full assessment. A new answer on a program check-in, after a not-at-all the week before, calls for more than a closed file. The call stays short, and his safety and a record of the decision are left unprotected."
+   },
+   {
+    "r": 0,
+    "t": "I’ll wait for your next weekly check-in and see whether the answer repeats. If it does, then we’ll involve the supervising clinician and take it from there, week by week.",
+    "reply": "Okay. That works for me. Next week, then.",
+    "why": "Waiting a week for a repeat leaves a new risk answer unreviewed. The route calls for a same-day report to the supervising clinician, and a week is long for a first flag. He gets a quieter week, and a worsening could go unseen until the next check-in."
+   }
+  ],
+  "order": [
+   3,
+   2,
+   0,
+   1
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 4,
+  "client": {
+   "g": "Okay. One more thing. Who sees all this? Is my employer going to hear about it? I got into the program through work.",
+   "m": "Wait. Who sees all this? Is my employer going to hear about it? I got into the program through work.",
+   "p": "Who sees all this? Is my employer going to hear about it?"
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "Here is what the terms say. Your answers and my notes go in the program record, and I, the reviewers, and the supervising clinician can see them. Your employer receives group totals only, with no names. If I believed you were in serious and immediate danger, I might have to contact emergency services, and I’d tell you first if I could.",
+    "reply": "Okay. Group totals only, that I can live with. I’m glad you told me about the rest.",
+    "why": "The response says what is recorded, who sees it, what the employer receives, and when others could be contacted, and it invites a question. It states the limits of confidentiality without legal detail. The rules differ by place and by program, so the written terms and the law where he lives decide the specifics."
+   },
+   {
+    "r": 1,
+    "t": "Your record is private and your employer gets group totals only, so you don’t need to worry about work. Most people stop thinking about it after the first week, and you can put it out of your mind. If there’s anything else you’d like to know, I can email you the privacy terms, or you can find them in the program settings whenever you like.",
+    "reply": "Okay. That helps with work. Is that everything?",
+    "why": "The statement about his employer is accurate and answers his main worry. It leaves out who in the program can see his answers and when others could be contacted, so he has only part of the limits. He gets calm about work and only part of the picture of the limits."
+   },
+   {
+    "r": 1,
+    "t": "I’ll read you what the terms say about who sees check-in answers and when the program may contact emergency services. It’s the same text everyone agrees to when they join, I can read it slowly, and I can send it to you in writing afterward if you’d like to keep it, so you have the exact words in front of you.",
+    "reply": "Sure, I guess. That’s a lot of legal wording. I just want to know if work finds out.",
+    "why": "Reading the terms is accurate and shows respect for the written agreement. It does not apply them to his question about his employer, so he gets text without an answer. What this keeps for Halvard is accuracy. What it puts at risk is his understanding of what the terms mean for him."
+   },
+   {
+    "r": 0,
+    "t": "Nothing from this call leaves this conversation. Not your employer, not anyone else. Please don’t give it another thought. You can talk to me about anything you like, and I’ll make sure it stays exactly where it is, now and in the future.",
+    "reply": "Thank you. That’s a relief. I’ll hold you to that.",
+    "why": "The promise is wider than the terms allow. Reviewers and a supervising clinician can see his answers, and the program may contact emergency services in serious and immediate danger. The relief is momentary, and his trust is at risk if the promise has to be broken."
+   }
+  ],
+  "order": [
+   2,
+   0,
+   3,
+   1
+  ]
+ },
+ {
+  "bloom": "evaluate",
+  "skill": 5,
+  "client": {
+   "g": "That helps. What happens next?",
+   "m": "I think I follow. What happens next?",
+   "p": "Okay. What happens next?"
+  },
+  "options": [
+   {
+    "r": 2,
+    "t": "I’ll send my notes to the supervising clinician today, and she will call you tomorrow afternoon. I’ll call again in two days. I’ll start a short safety plan with you now, with your sister’s number and things that steady you at night, like a walk or music, and the clinician will finish it tomorrow. If the thoughts get stronger, call or text 988, or call 911 in an emergency.",
+    "reply": "Okay. The plan I can do. My sister would pick up if I called. Tomorrow afternoon works.",
+    "why": "The response names who will follow up and when, starts a short safety plan with him that includes a person he trusts and steadying activities that carry no risk, has the clinician finish it, gives 988 and 911, and invites changes. He has a plan he helped start and a close review, and the follow-up can change if what he says changes."
+   },
+   {
+    "r": 1,
+    "t": "I’ll note this for the supervising clinician and send you a list of local clinics and the 988 number by message tonight. We’ll look at your next weekly check-in and go from there, and you can message the program team any day if you want to talk, and a member of the team will reply as soon as they can.",
+    "reply": "Okay. A list of clinics. I guess I’ll look at it. The check-in is next week, right?",
+    "why": "Resources and 988 are useful, and the clinician hears about the call. No one is named to follow up and no time is set, and the next contact is a week away. He took no part in a plan. He gets information and loses a close review and a plan of his own."
+   },
+   {
+    "r": 0,
+    "t": "Thank you for talking with me. If you promise to keep using the program every day and to tell me if anything changes, we can leave it there for now, and I’ll see how your next weekly check-in looks when it comes in, then decide whether we need to talk again after that, if it seems necessary.",
+    "reply": "Sure, I promise. Can we be done now?",
+    "why": "A promise stands in for a plan and tells you what he will say and leaves what is true unknown. It also puts the burden of reporting a worsening on him. The call ends quickly, with no safety plan, no handoff, and no follow-up that stands without his reporting."
+   },
+   {
+    "r": 0,
+    "t": "That’s everything I need from you. The program will carry on as usual, and there’s nothing further for either of us to do right now. Thanks for your time tonight, and have a good evening.",
+    "reply": "Okay. Thanks. I guess that’s it, then.",
+    "why": "Ending without a handoff or a follow-up leaves a new risk answer with no next contact, and the supervising clinician has not been told. His evening is easy, and his safety and the continuity of care are left to chance."
+   }
+  ],
+  "order": [
+   3,
+   1,
+   2,
+   0
+  ]
+ }
+];
+var REVISIT = [
+ "Say who you are and why you called, what is recorded and who sees it, and one limit of confidentiality, and ask for agreement. Review Module 15, Safety, Consent, and Crisis Routing in Digital Programs, and Module 13, Informed Consent in Therapy and Telehealth and Digital Tools.",
+ "Give the reason you need his location, ask where he is now and who is with him, and get a backup number. Review Module 15, Safety, Consent, and Crisis Routing in Digital Programs, and Module 13, Telehealth and Digital Tools.",
+ "Thank him, name the flagged answer without blame, and ask open and direct questions about how often, whether he has thought of acting, and what helps. Review Module 13, When the Risk Is to the Client, and Module 10, Risk, Protection, and Safety Planning.",
+ "Match the route to what you know and what you do not, bring in the supervising clinician, and tell him what you are doing. Review Module 15, Safety, Consent, and Crisis Routing in Digital Programs, and Module 13, When the Risk Is to the Client.",
+ "Say what is recorded, who sees it, and when others could be contacted, apply it to his question about his employer, and invite questions. Review Module 13, Informed Consent in Therapy, and Module 15, Safety, Consent, and Crisis Routing in Digital Programs.",
+ "Name who will follow up and when, start a short safety plan with him that includes 988 and 911, and invite his changes. Review Module 10, Risk, Protection, and Safety Planning, and Module 15, Safety, Consent, and Crisis Routing in Digital Programs."
+];
+var TAKE = "In this module’s model, a program that flags a risk answer needs a human response that explains consent and its limits at the start, confirms where the client is and how to reach him, asks open and direct questions about the answer, chooses a route that fits what is known, tells him what happens with his information, and hands off with a named follow-up and a short safety plan. The tiers in this activity are an example design. Real programs set their own rules, and defensible options can differ, such as a same-day clinician call or a close review by the reviewer and clinician together.";
+var NOTE = "This practice conversation is invented and scores only the choices shown. The tiered routing in it is an example design for teaching and is not a validated protocol. Limits of confidentiality differ by place and by program. Many programs and clinicians may contact others when a person appears to be in serious and immediate danger, and some situations carry reporting duties. The details depend on the law where the person lives and on the program’s written terms, so those have to be checked, and nothing here is legal advice. Standards 3.10(a) and 4.02(c) of the APA Ethics Code apply to psychologists. Halvard’s situation is his alone and does not describe any group of people. It is not a way to assess or treat yourself or anyone you know. If you or someone you know is thinking about suicide, call or text 988 at any hour, or call 911 in an emergency.";
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root"), S;
+var LABEL={2:"Skilled response",1:"Acceptable, with a gap",0:"Missed the skill"};
+function fresh(){ S={t:0,branch:"start",pick:null,retried:false,first:null,log:[],done:false}; render(); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function pills(){ return '<div class="pills" aria-hidden="true">'+TURNS.map(function(t,i){ return '<span class="pill'+(i===S.t&&!S.done?" on":(i<S.log.length?" done":""))+'">'+(i+1)+'. '+esc(SKILLS[t.skill])+'</span>'; }).join("")+'</div>'; }
+function clientLine(t){ return t.client[S.branch]||t.client.start||t.client.m; }
+function render(){
+  if(S.done){ return summary(); }
+  var t=TURNS[S.t], h=pills()+'<div class="case"><b class="t">Case: Halvard</b>'+esc(SCENARIO)+'</div><section class="panel" id="panel" tabindex="-1" aria-live="polite">';
+  h+='<p class="skill">Turn '+(S.t+1)+' of '+TURNS.length+'. Skill practiced: '+esc(SKILLS[t.skill])+'</p>';
+  h+='<p class="quote"><span class="who">Halvard</span>'+esc(clientLine(t))+'</p>';
+  h+='<div class="do"><b>Do this:</b> Choose the response you would say next. Each choice changes how Halvard answers.</div><div class="options">';
+  t.order.forEach(function(ix,pos){
+    var o=t.options[ix], cls="opt";
+    if(S.pick!==null){ cls+=" r"+o.r; if(S.pick===ix) cls+=" pick"; else cls+=" dim"; }
+    h+='<button type="button" class="'+cls+'" data-ix="'+ix+'"'+(S.pick!==null?" disabled":"")+'><span class="k">'+String.fromCharCode(65+pos)+'.</span><span>'+esc(o.t)+'</span></button>';
+  });
+  h+='</div>';
+  if(S.pick!==null){
+    var o=t.options[S.pick], best=t.options.filter(function(x){return x.r===2;})[0], eff=(S.retried?Math.min(o.r,1):o.r);
+    h+='<p class="verdict r'+o.r+'">'+LABEL[o.r]+(S.retried?" (second try, scored at most 1 of 2)":"")+'</p>';
+    h+='<p class="quote"><span class="who">Halvard</span>'+esc(o.reply)+'</p><p class="explain">'+esc(o.why)+'</p>';
+    if(o.r<2) h+='<div class="better"><b>A stronger response:</b> '+esc(best.t)+'</div>';
+    h+='<div class="foot">'+((o.r===0&&!S.retried)?'<button class="btn secondary" type="button" data-act="retry">Try this turn again</button>':'<span></span>')+'<button class="btn" type="button" data-act="next">'+(S.t>=TURNS.length-1?"See your results":"Continue the conversation")+'</button></div>';
+  }
+  h+='</section>'; root.innerHTML=h; post();
+  var p=document.getElementById("panel"); if(p&&S.pick!==null){ try{p.focus();}catch(e){} }
+}
+function commit(){
+  var t=TURNS[S.t], o=t.options[S.pick], sc=(S.retried?Math.min(o.r,1):o.r);
+  S.log.push({skill:t.skill,r:o.r,score:sc,retried:S.retried,first:S.first});
+  S.branch=(o.r===2?"g":(o.r===1?"m":"p"));
+}
+function summary(){
+  var tot=0; S.log.forEach(function(l){tot+=l.score;});
+  var worst=S.log.slice().sort(function(a,b){return a.score-b.score;})[0];
+  var h=pills()+'<section class="panel" id="panel" tabindex="-1"><h2 style="margin:0 0 4px;font-size:20px;">Your conversation with Halvard</h2><p>You scored <b>'+tot+' of '+(TURNS.length*2)+'</b> across the five skills. A retried turn counts for at most 1 point.</p><div>';
+  S.log.forEach(function(l){ h+='<div class="brow"><span class="bs">'+l.score+' / 2</span><span><b>'+esc(SKILLS[l.skill])+'.</b> '+(l.score===2?"Skilled response.":esc(REVISIT[l.skill]))+'</span></div>'; });
+  h+='</div>';
+  if(tot<TURNS.length*2){ h+='<div class="take"><b>Where to look again:</b> '+esc(REVISIT[worst.skill])+'</div>'; }
+  h+='<div class="take"><b>What carries forward:</b> '+esc(TAKE)+'</div><div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="note">'+esc(NOTE)+'</p></section>';
+  root.innerHTML=h; post();
+}
+root.addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b||b.disabled) return;
+  if(b.hasAttribute("data-ix")){ if(S.pick!==null) return; S.pick=parseInt(b.getAttribute("data-ix"),10); if(!S.retried) S.first=S.pick; render(); return; }
+  var a=b.getAttribute("data-act");
+  if(a==="retry"){ S.retried=true; S.pick=null; render(); return; }
+  if(a==="next"){ commit(); S.pick=null; S.retried=false; S.first=null; if(S.t>=TURNS.length-1){ S.done=true; } else { S.t++; } render(); try{window.scrollTo({top:0,behavior:"smooth"});}catch(x){} return; }
+  if(a==="again"){ fresh(); return; }
+});
+fresh();
+
+</script>
+</body>
+</html>

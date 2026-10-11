@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stepped-Care Decision Tracker</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --do-bg:#f3f1ec; --do-ink:#57544e;
+    --correct-bg:#eef5ee; --correct-line:#bcd6bd; --correct-ink:#3c6b3e;
+    --wrong-bg:#fbecec; --wrong-line:#e3b9b9; --wrong-ink:#a23b34;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --instr-bg:#eef3fb; --instr-line:#c9d9f0; --instr-ink:#2f4a72;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:70ch;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .stp{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .stp.on{background:var(--accent);color:#fff;}
+  .stp.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .case{background:var(--amber-bg);border:1px solid var(--amber-line);color:#5d4a1f;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.6;}
+  .case b.t{display:block;margin-bottom:3px;color:var(--amber-ink);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:22px 24px;}
+  .intro{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.55;}
+  .intro b{font-weight:700;}
+  .qtop{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .qtop .qn{font-size:13px;color:var(--muted);}
+  .qtop .tag{font-size:12px;color:var(--muted);background:#eceae4;border-radius:7px;padding:4px 10px;}
+  .qprompt{font-size:17px;font-weight:600;margin:6px 0 6px;line-height:1.45;}
+  .quote{font-size:17px;line-height:1.5;margin:8px 0 10px;padding:10px 14px;background:#f7f6f4;border-left:3px solid var(--accent);border-radius:6px;}
+  .do{background:var(--do-bg);color:var(--do-ink);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:10px 0 16px;}
+  .do b{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font:inherit;font-size:14.5px;line-height:1.5;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible,.btn:focus-visible,.cat:focus-visible,.node:focus-visible,.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt .k{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:15px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct,.cat.correct{background:var(--correct-bg);border-color:var(--correct-line);}
+  .opt.wrong,.cat.wrong{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .opt.dim{opacity:.6;}
+  .cats{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cat{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);text-align:center;}
+  .cat:hover:not(:disabled){border-color:#cfc9bf;}
+  .cat:disabled{cursor:default;}
+  .cat.dim{opacity:.6;}
+  .verdict{margin:16px 0 0;font-size:14.5px;font-weight:600;}
+  .verdict.ok{color:var(--correct-ink);} .verdict.no{color:var(--wrong-ink);}
+  .explain{margin:8px 0 0;font-size:14px;color:#44413b;line-height:1.6;}
+  .explain .src{color:var(--muted);font-size:12.5px;margin-top:6px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+  .seq{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .seq li{display:flex;gap:10px;align-items:flex-start;background:#f7f6f4;border:1px dashed #d8d3c8;border-radius:10px;padding:10px 13px;font-size:14.5px;min-height:44px;}
+  .seq li .n{flex:0 0 auto;font-weight:700;color:var(--muted);min-width:18px;}
+  .seq li.filled{background:#fff;border:1px solid var(--line);}
+  .seq li.right{background:var(--correct-bg);border-color:var(--correct-line);}
+  .seq li.bad{background:var(--wrong-bg);border-color:var(--wrong-line);}
+  .pool{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .node{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+  .node:hover:not(:disabled){border-color:#cfc9bf;}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 4px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip.right{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .chip.miss{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink);}
+  .chip.extra{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .chip:disabled{cursor:default;}
+  .ex ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:#44413b;}
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 4px;} .results .score b{color:var(--accent-ink);}
+  .results .brow{display:flex;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid #f0eee9;}
+  .results .brow:last-child{border-bottom:none;}
+  .results .brow .bs{flex:0 0 64px;font-weight:700;color:var(--accent-ink);}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .take{background:var(--instr-bg);border:1px solid var(--instr-line);color:var(--instr-ink);border-radius:12px;padding:13px 16px;margin-top:14px;font-size:14px;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+
+  .tiles{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;}
+  .tile{font-size:12.5px;color:var(--muted);background:#eceae4;border-radius:999px;padding:4px 11px;}
+  .tile.on{background:var(--accent);color:#fff;}
+  .tile.done{background:var(--correct-bg);color:var(--correct-ink);}
+  .note{font-size:13.5px;line-height:1.55;margin:0 0 12px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;}
+  .note.safe{background:var(--wrong-bg);border-color:var(--wrong-line);color:#5b2320;}
+  .note.illus{background:var(--amber-bg);border-color:var(--amber-line);color:#5d4a1f;}
+  .note ol{margin:6px 0 6px 20px;padding:0;} .note li{margin:3px 0;}
+  .cardrow{margin:4px 0;font-size:14px;} .cardrow b{color:var(--amber-ink);}
+  h2.hd{margin:0 0 8px;font-size:19px;} h3.ch{margin:14px 0 4px;font-size:14.5px;font-weight:700;}
+  svg.chart{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:10px;}
+  svg.chart text{font-family:inherit;font-size:11.5px;fill:#44413b;}
+  svg.chart .grid{stroke:#e7e4de;stroke-width:1;} svg.chart .axis{stroke:#8b877f;stroke-width:1;}
+  svg.chart .ln{stroke:#8a5a25;stroke-width:2.4;fill:none;}
+  svg.chart .mk{fill:#8a5a25;stroke:#fff;stroke-width:1;}
+  svg.chart .ref1{stroke:#2f4a72;stroke-width:1.6;stroke-dasharray:7 4;}
+  svg.chart .ref2{stroke:#6b6862;stroke-width:1.6;stroke-dasharray:2 4;}
+  svg.chart .vl{font-weight:700;}
+  .key{font-size:12.5px;color:var(--muted);margin:2px 0 8px;}
+  details.tbl{margin:10px 0 12px;} details.tbl summary{cursor:pointer;font-size:13.5px;font-weight:600;padding:4px 0;}
+  .tblwrap{overflow-x:auto;}
+  table.data{border-collapse:collapse;width:100%;font-size:13px;}
+  table.data caption{text-align:left;font-size:12.5px;color:var(--muted);padding:4px 0;}
+  table.data th,table.data td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;}
+  table.data th{background:#f3f1ec;} table.data tr.latest td,table.data tr.latest th{font-weight:700;}
+  .opt .gl{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .fbbox{margin-top:14px;} .fbbox p{margin:6px 0;font-size:14px;color:#44413b;line-height:1.6;} .fbbox .lab{font-weight:700;color:var(--ink);}
+  .fbbox ul{margin:4px 0 6px 20px;padding:0;font-size:13.5px;}
+  .badge{display:inline-block;font-size:12.5px;font-weight:700;border-radius:7px;padding:3px 9px;border:1px solid var(--line);background:#f3f1ec;}
+  .badge.ok{background:var(--correct-bg);border-color:var(--correct-line);color:var(--correct-ink);}
+  .badge.no{background:var(--wrong-bg);border-color:var(--wrong-line);color:var(--wrong-ink);}
+  .startfoot{margin-top:30px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);}
+  summary:focus-visible,.opt:focus-visible,.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  [tabindex="-1"]:focus{outline:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Stepped-Care Decision Tracker</h1>
+    <p class="sub">Follow four invented clients for eight weeks. At each review, apply an example step-up rule and the reliable-change line from Module 11, then decide whether to stay, step up, step down, or add a safety review.</p>
+  </div>
+  <div id="root"></div>
+  <p class="startfoot">All clients, scores, and the rule are invented and illustrative. Nothing is saved or sent. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.</p>
+</div>
+<script>
+var SD = 8.0, REL = 0.91, CUTPOINT = 18;
+var DECS = [
+ {
+  "id": "stay",
+  "label": "Stay at the current step",
+  "gloss": "Keep the plan and measure again."
+ },
+ {
+  "id": "up",
+  "label": "Step up one level",
+  "gloss": "Move to more intensive care."
+ },
+ {
+  "id": "down",
+  "label": "Step down one level",
+  "gloss": "Move to less intensive care."
+ },
+ {
+  "id": "safety",
+  "label": "Add a safety review before any other change",
+  "gloss": "A direct conversation about safety comes first."
+ }
+];
+var LEVELS = [
+ "Step 1, a guided self-help program with a weekly coach message",
+ "Step 2, weekly sessions with a clinician",
+ "Step 3, more intensive care such as twice weekly sessions or a team"
+];
+var CASES = [
+ {
+  "name": "Ilsa",
+  "label": "Case 1: Ilsa",
+  "level": 1,
+  "story": "Ilsa is an invented adult in weekly sessions with a clinician for low mood and worry. She works part time and has attended every session.",
+  "weeks": [
+   {
+    "n": 1,
+    "score": 34,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 2,
+    "score": 33,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 3,
+    "score": 36,
+    "safety": 0,
+    "note": "A flood forced her to stay with a relative for the week."
+   },
+   {
+    "n": 4,
+    "score": 41,
+    "safety": 0,
+    "note": "Still staying with the relative. Sleep has been poor since the flood."
+   },
+   {
+    "n": 5,
+    "score": 38,
+    "safety": 0,
+    "note": "Back in her own home."
+   },
+   {
+    "n": 6,
+    "score": 35,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 7,
+    "score": 33,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 8,
+    "score": 32,
+    "safety": 0,
+    "note": "Says she feels about the same as when she began."
+   }
+  ],
+  "items": [
+   {
+    "week": 4,
+    "bloom": "analyze",
+    "event": true,
+    "src": "Module 15, Stepped Care With Measurement",
+    "best": "stay",
+    "dec": {
+     "stay": "This matches the rule. Her score is 7 points above baseline, which passes the 6.65 line, so rule 2 would call for a step up. The rule allows a re-measure when a one-off event explains the rise and the safety item has not risen. The flood fits that, and the safety item is 0, so staying and measuring again next week is the rule’s answer.",
+     "up": "This follows rule 2 and leaves out its exception. The rise of 7 points passes the 6.65 line. The rule holds a step up when a one-off event explains the rise and safety is steady, and the flood week with a safety item of 0 meets both conditions. Stepping up now responds to a spike that the flood may account for.",
+     "down": "Nothing in the data supports less care. Her score is above baseline. A step down needs a drop of 7 points or more and a score below 18, and she meets neither.",
+     "safety": "The safety item is 0, the same as at week 1, so rule 1 is not triggered. A direct question about how she is coping belongs in every session, and the separate safety review in the rule is reserved for a rise on the item."
+    },
+    "lesson": "A rule needs a place for context. A reliable rise that a documented one-off event explains is a reason to measure again, and the safety item still gets checked.",
+    "order": [
+     "up",
+     "safety",
+     "stay",
+     "down"
+    ]
+   },
+   {
+    "week": 8,
+    "bloom": "apply",
+    "event": false,
+    "src": "Module 15, Stepped Care With Measurement",
+    "best": "up",
+    "dec": {
+     "up": "This matches rule 3. At week 8 her score is 2 points below baseline, well short of the 6.65 line, and 32 is above 18. The flood explains the spike at weeks 3 and 4, and four more weeks have passed without reliable progress, so the explanation no longer covers the flat result.",
+     "stay": "Staying leans on the flood as the explanation. It accounts for weeks 3 and 4, and four weeks have passed since. Her score has come down from the peak of 41 and has returned only to about where she began, so the week 8 result shows no progress.",
+     "down": "A step down needs a drop of 7 points or more and a score below 18. She has dropped 2 points and her score is 32, so neither condition is met.",
+     "safety": "The safety item has stayed at 0, so rule 1 is not triggered. A direct question about safety belongs in the review. The result calls for a step up because progress is missing."
+    },
+    "lesson": "A flat result at the week 8 review is a reason to step up. A fall from a spike can look like progress when the score has only returned to baseline.",
+    "order": [
+     "up",
+     "stay",
+     "safety",
+     "down"
+    ]
+   }
+  ]
+ },
+ {
+  "name": "Nkechi",
+  "label": "Case 2: Nkechi",
+  "level": 0,
+  "story": "Nkechi is an invented adult in a guided self-help program for low mood. She has logged in every week, finished each module, and replied to every coach message. No new events have happened. She says she is “just not getting anywhere.”",
+  "weeks": [
+   {
+    "n": 1,
+    "score": 30,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 2,
+    "score": 32,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 3,
+    "score": 35,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 4,
+    "score": 38,
+    "safety": 0,
+    "note": "Her score has risen three weeks in a row."
+   },
+   {
+    "n": 5,
+    "score": 35,
+    "safety": 0,
+    "note": "Moved to weekly sessions with a clinician after the week 4 review."
+   },
+   {
+    "n": 6,
+    "score": 31,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 7,
+    "score": 27,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 8,
+    "score": 22,
+    "safety": 0,
+    "note": "Says she is sleeping better and sees friends again."
+   }
+  ],
+  "items": [
+   {
+    "week": 4,
+    "bloom": "apply",
+    "event": false,
+    "src": "Module 15, Stepped Care With Measurement",
+    "best": "up",
+    "dec": {
+     "up": "This matches rule 2. Her score is 8 points above baseline, past the 6.65 line, and no event explains the rise. Step 2 adds weekly sessions with a clinician.",
+     "stay": "Staying waits for more data. A rise of 8 points is beyond the noise on this questionnaire, no event explains it, and she has completed every module, so rule 2 applies. Waiting would let a worsening run another month.",
+     "down": "Her score has risen, and a step down needs a reliable drop and a score below 18. The data point the other way.",
+     "safety": "The safety item is 0, the same as at week 1, so rule 1 is not triggered. Ask her directly at the review as usual. The rise in her score calls for a step up under rule 2."
+    },
+    "lesson": "A rise that passes the reliable-change line, with full engagement and no event to explain it, is a reason to step up at an early review.",
+    "order": [
+     "down",
+     "stay",
+     "safety",
+     "up"
+    ]
+   },
+   {
+    "week": 8,
+    "bloom": "analyze",
+    "event": false,
+    "src": "Module 15, Stepped Care With Measurement",
+    "best": "stay",
+    "dec": {
+     "stay": "This matches rule 5. Her score is 8 points below baseline, past the 6.65 line, and 22 is above 18. She has improved and has further to go, so she stays at step 2, where the plan is working.",
+     "down": "The drop is reliable, which meets one condition for a step down. The score of 22 is above the cutpoint of 18, so the second condition is unmet. Stepping down now risks losing gains while she is still in the clinical range.",
+     "up": "Stepping up responds to the slow start. The recent data point the other way, since her score has fallen 16 points from its peak at week 4 and 9 points since week 6. More intensity is not called for.",
+     "safety": "The safety item is 0, so rule 1 is not triggered. The safety question belongs in every review, and nothing in the data signals a reason for a separate review."
+    },
+    "lesson": "Reliable improvement above the cutpoint calls for staying. Both conditions, a reliable drop and a score below 18, are needed to step down.",
+    "order": [
+     "safety",
+     "stay",
+     "up",
+     "down"
+    ]
+   }
+  ]
+ },
+ {
+  "name": "Lorcan",
+  "label": "Case 3: Lorcan",
+  "level": 1,
+  "dash": true,
+  "story": "Lorcan is an invented adult in weekly sessions for low mood after a job change. He has attended each week. The clinic dashboard shows each client’s average score since baseline, and a client whose average is 7 or more points below baseline is marked as improving.",
+  "weeks": [
+   {
+    "n": 1,
+    "score": 36,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 2,
+    "score": 26,
+    "safety": 0,
+    "note": "Relieved to have started."
+   },
+   {
+    "n": 3,
+    "score": 20,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 4,
+    "score": 22,
+    "safety": 0,
+    "note": "Says the early weeks were a relief."
+   },
+   {
+    "n": 5,
+    "score": 28,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 6,
+    "score": 31,
+    "safety": 0,
+    "note": "Says work is heavy again."
+   },
+   {
+    "n": 7,
+    "score": 35,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 8,
+    "score": 40,
+    "safety": 0,
+    "note": "No new events. Says he has been feeling worse for a month."
+   }
+  ],
+  "items": [
+   {
+    "week": 4,
+    "bloom": "analyze",
+    "event": false,
+    "src": "Module 15, Stepped Care With Measurement",
+    "best": "stay",
+    "dec": {
+     "stay": "This matches rule 5. His score is 14 points below baseline, well past the 6.65 line, and 22 is above 18, so he has improved and has further to go, and nothing in the data calls for a change.",
+     "down": "The drop is reliable. A step down also needs a score below 18, and he is at 22. Stepping down now would remove support while he is still in the clinical range.",
+     "up": "Nothing calls for more intensity. His score fell 14 points from baseline, and the uptick from 20 to 22 is 2 points, inside the noise.",
+     "safety": "The safety item is 0, the same as at week 1, so rule 1 is not triggered. A direct question about how he is doing belongs in the review as it does in every one."
+    },
+    "lesson": "At an early review, a reliable improvement above the cutpoint means staying. A small uptick of a few points is inside the noise.",
+    "order": [
+     "down",
+     "stay",
+     "up",
+     "safety"
+    ]
+   },
+   {
+    "week": 8,
+    "bloom": "evaluate",
+    "event": false,
+    "src": "Module 15, Stepped Care With Measurement",
+    "best": "up",
+    "dec": {
+     "up": "This matches rule 2. His score rose 9 points over the last two weeks (31 to 40), past the 6.65 line, and no event explains it. The dashboard average since baseline is about 28.9, which is 7.1 points below baseline and would mark him as improving. An average blends the early gains with the recent losses, and it hides the direction of the last four weeks.",
+     "stay": "Staying follows the dashboard, which shows an average about 7.1 points below baseline. That average includes the early drop and flatters the present. His current score of 40 is 4 points above baseline and 9 above week 6.",
+     "down": "A step down relies on the average improvement. His current score of 40 is above baseline and far above the cutpoint of 18, so neither condition holds.",
+     "safety": "The safety item is still 0, so rule 1 is not triggered, and a direct question about how he is doing belongs in this review. The rising trend calls for a step up under rule 2."
+    },
+    "lesson": "A rule that measures only the average can mark a worsening client as improving. The step-up rule needs the latest score and its direction over recent weeks.",
+    "order": [
+     "safety",
+     "stay",
+     "down",
+     "up"
+    ]
+   }
+  ]
+ },
+ {
+  "name": "Yaretzi",
+  "label": "Case 4: Yaretzi",
+  "level": 1,
+  "story": "Yaretzi is an invented adult in weekly sessions for low mood. Her checklist includes one safety item that asks how often she has had thoughts that life is not worth living, rated 0 (not at all) to 3 (nearly every day).",
+  "weeks": [
+   {
+    "n": 1,
+    "score": 28,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 2,
+    "score": 26,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 3,
+    "score": 23,
+    "safety": 1,
+    "note": ""
+   },
+   {
+    "n": 4,
+    "score": 21,
+    "safety": 2,
+    "note": "Says nights have been hard this month."
+   },
+   {
+    "n": 5,
+    "score": 19,
+    "safety": 1,
+    "note": "A safety plan was written with her at week 4 and her sister has the plan."
+   },
+   {
+    "n": 6,
+    "score": 17,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 7,
+    "score": 15,
+    "safety": 0,
+    "note": ""
+   },
+   {
+    "n": 8,
+    "score": 14,
+    "safety": 0,
+    "note": "Says she feels much more like herself."
+   }
+  ],
+  "items": [
+   {
+    "week": 4,
+    "bloom": "evaluate",
+    "event": false,
+    "src": "Module 15, Safety, Consent, and Crisis Routing in Digital Programs",
+    "best": "safety",
+    "dec": {
+     "safety": "This matches rule 1. Her total fell 7 points, which passes the 6.65 line, and it still looks like progress. The safety item rose from 0 to 2, and rule 1 puts a safety review ahead of any other change. A total can improve while one item worsens.",
+     "stay": "Her total improved reliably and is still above 18, so rule 5 would say stay. Rule 1 comes first. The safety item rose from 0 to 2, so a safety review has to come before any decision about the step.",
+     "up": "A step up responds to a worsening or to no progress, and neither describes her total, which is improving. The concern is the safety item. The rule responds with a safety review (a direct conversation about her thoughts, a safety plan, and follow-up), which may or may not lead to more intensive care.",
+     "down": "A step down needs a reliable drop and a score below 18. Her total is 21, so the second condition is unmet. The safety item has also risen to 2, and rule 1 overrides any change of step."
+    },
+    "lesson": "A total score can improve while a single item worsens. The safety item is read on its own, and a rise sends the case to a direct conversation before any other change.",
+    "order": [
+     "safety",
+     "up",
+     "down",
+     "stay"
+    ]
+   },
+   {
+    "week": 8,
+    "bloom": "analyze",
+    "event": false,
+    "src": "Module 15, Stepped Care With Measurement",
+    "best": "down",
+    "dec": {
+     "down": "Under this rule she steps down, which matches rule 4. Her total fell 14 points, past the 6.65 line, and 14 is below 18. The safety item rose at week 4 and has been 0 since week 6, after the safety review and plan, so rule 1 is not triggered. Many clinicians would step down more slowly after a safety event, and an example rule does not capture that judgment.",
+     "stay": "Staying is a reasonable clinical judgment after a safety event. The example rule says to step down when a reliable drop and a score below 18 are both present, and both are. The safety item has been 0 for three weeks.",
+     "up": "The data show eight weeks of improvement, and the safety item is 0. Nothing in rule 2 or rule 3 applies.",
+     "safety": "Rule 1 applies when the safety item is higher than at the previous review. At week 4 it was 2, and now it is 0, so there is no rise. The safety plan stays in place and the clinician keeps asking directly at each session."
+    },
+    "lesson": "After a safety review has done its work and the item returns to 0, the rule goes back to the total and the cutpoint.",
+    "order": [
+     "stay",
+     "safety",
+     "down",
+     "up"
+    ]
+   }
+  ]
+ }
+];
+
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var root=document.getElementById("root"), S;
+var DECLAB={}; DECS.forEach(function(d){DECLAB[d.id]=d.label;});
+var THR=1.96*Math.sqrt(2)*SD*Math.sqrt(1-REL), EPS=1e-9;
+function f2(x){return (Math.round(x*100)/100).toFixed(2);}
+function maxScore(){ var m=0; CASES.forEach(function(c){m+=c.items.length;}); return m; }
+function newState(){ return {phase:"intro",ci:0,ii:0,ans:CASES.map(function(c){return c.items.map(function(){return {done:false,first:null,ok:false,score:0,sl:false,slPick:null,slOk:null};});}),sl:[],sli:0}; }
+function reset(){ S=newState(); render("top"); }
+function post(){ try{ parent.postMessage(JSON.stringify({subject:"lti.frameResize",height:document.documentElement.scrollHeight}),"*"); }catch(e){} }
+function curCase(){ return CASES[S.ci]; }
+function curItem(){ return curCase().items[S.ii]; }
+function curAns(){ return S.ans[S.ci][S.ii]; }
+function ruleCheck(c,wk,event){
+  var W=c.weeks, lat=W[wk-1], base=W[0], prior=W[wk-3], prevSafety=(wk===4?W[0].safety:W[3].safety), L=[], v=null;
+  var riseB=lat.score-base.score, rise2=lat.score-prior.score, drop=base.score-lat.score;
+  L.push("Latest score (week "+wk+"): "+lat.score+". Baseline (week 1): "+base.score+". Change from baseline: "+(drop>0?"down ":(drop<0?"up ":""))+Math.abs(drop)+" points. Line for reliable change: "+f2(THR)+" points.");
+  L.push("Score two weeks earlier (week "+(wk-2)+"): "+prior.score+". Change over the last two weeks: "+(rise2>0?"up ":(rise2<0?"down ":""))+Math.abs(rise2)+" points.");
+  L.push("Safety item at week "+wk+": "+lat.safety+". At the previous review: "+prevSafety+".");
+  if(lat.safety>prevSafety){ v="safety"; L.push("Rule 1 applies, because the safety item is higher than at the previous review."); }
+  else if(riseB>THR+EPS||rise2>THR+EPS){ if(event){ v="stay"; L.push("Rule 2 would call for a step up. A one-off event explains the rise and rule 1 is not triggered, so the rule says stay and measure again next week."); } else { v="up"; L.push("Rule 2 applies, because the latest score is at least 7 points above baseline or above the score two weeks earlier."); } }
+  else if(drop<THR-EPS&&lat.score>=CUTPOINT){ v="up"; L.push("Rule 3 applies, because the drop is under 7 points and the score is "+CUTPOINT+" or higher."); }
+  else if(drop>THR+EPS&&lat.score<CUTPOINT){ v="down"; L.push("Rule 4 applies, because the drop is 7 points or more and the score is below "+CUTPOINT+"."); }
+  else { v="stay"; L.push("Rule 5 applies, because no earlier rule was triggered."); }
+  return {verdict:v,lines:L};
+}
+function chart(c,upto){
+  var N=c.weeks.length, W=640,H=230,Lm=46,Rm=16,Tm=26,Bm=36, mn=0, mx=50;
+  function X(i){ return Lm+(W-Lm-Rm)*i/(N-1); }
+  function Y(v){ return Tm+(H-Tm-Bm)*(1-(v-mn)/(mx-mn)); }
+  var vals=[], i; for(i=0;i<upto;i++) vals.push(c.weeks[i].score);
+  var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(c.name)+', checklist score by week, lower is better. Weeks 1 to '+upto+': '+vals.join(", ")+'. The dashed line marks the reliable improvement line at '+f2(c.weeks[0].score-THR)+'. The dotted line marks the cutpoint of '+CUTPOINT+'.">';
+  [0,10,20,30,40,50].forEach(function(t){ s+='<line class="grid" x1="'+Lm+'" x2="'+(W-Rm)+'" y1="'+Y(t)+'" y2="'+Y(t)+'"/><text x="'+(Lm-6)+'" y="'+(Y(t)+4)+'" text-anchor="end">'+t+'</text>'; });
+  s+='<line class="axis" x1="'+Lm+'" x2="'+Lm+'" y1="'+Tm+'" y2="'+(H-Bm)+'"/><line class="axis" x1="'+Lm+'" x2="'+(W-Rm)+'" y1="'+(H-Bm)+'" y2="'+(H-Bm)+'"/>';
+  for(i=0;i<N;i++){ s+='<text x="'+X(i)+'" y="'+(H-Bm+16)+'" text-anchor="middle">'+(i+1)+'</text>'; }
+  s+='<text x="'+((Lm+W-Rm)/2)+'" y="'+(H-6)+'" text-anchor="middle">Week</text><text x="'+(W-Rm)+'" y="14" text-anchor="end" style="fill:#6b6862">Lower is better</text>';
+  var ry=Y(c.weeks[0].score-THR);
+  s+='<line class="ref1" x1="'+Lm+'" x2="'+(W-Rm)+'" y1="'+ry+'" y2="'+ry+'"/><text x="'+(Lm+4)+'" y="'+(ry-4)+'" style="fill:#2f4a72">Reliable improvement line (baseline minus '+f2(THR)+')</text>';
+  var cy=Y(CUTPOINT);
+  s+='<line class="ref2" x1="'+Lm+'" x2="'+(W-Rm)+'" y1="'+cy+'" y2="'+cy+'"/><text x="'+(W-Rm-4)+'" y="'+(cy-4)+'" text-anchor="end">Cutpoint '+CUTPOINT+'</text>';
+  var pts=[]; for(i=0;i<upto;i++) pts.push(X(i)+","+Y(vals[i]));
+  if(upto>1) s+='<polyline class="ln" points="'+pts.join(" ")+'"/>';
+  for(i=0;i<upto;i++){ s+='<circle class="mk" cx="'+X(i)+'" cy="'+Y(vals[i])+'" r="5"/><text class="vl" x="'+X(i)+'" y="'+(Y(vals[i])+17)+'" text-anchor="middle">'+vals[i]+'</text>'; }
+  return s+'</svg>';
+}
+function table(c,upto){
+  var h='<details class="tbl" open><summary>Text table of the same data</summary><div class="tblwrap"><table class="data"><caption>Invented practice values for '+esc(c.name)+', weeks 1 to '+upto+'.</caption><thead><tr><th scope="col">Week</th><th scope="col">Checklist score (lower is better)</th><th scope="col">Safety item (0 to 3)</th><th scope="col">Note</th></tr></thead><tbody>';
+  for(var i=0;i<upto;i++){ var r=c.weeks[i]; h+='<tr'+(i===upto-1?' class="latest"':'')+'><th scope="row">'+r.n+(i===upto-1?' (latest)':'')+'</th><td>'+r.score+'</td><td>'+r.safety+'</td><td>'+esc(r.note)+'</td></tr>'; }
+  return h+'</tbody></table></div></details>';
+}
+function dashLine(c,upto){
+  if(!c.dash) return "";
+  var t=0,n=0,i; for(i=1;i<upto;i++){ t+=c.weeks[i].score; n++; }
+  var avg=t/n, below=c.weeks[0].score-avg;
+  return '<div class="note illus"><b>Clinic dashboard (average only).</b> Average score for weeks 2 to '+upto+': '+f2(avg)+', which is '+f2(Math.abs(below))+' points '+(below>=0?'below':'above')+' baseline. Status shown: '+(below>=7?'improving':'not marked as improving')+'.</div>';
+}
+function dataView(c,upto){
+  return '<h3 class="ch">Weekly checklist score and safety item</h3><p class="key">Invented 0 to 60 checklist, the questionnaire from Module 11 (SD 8, reliability .91). Lower is better. The solid line with round markers is the score, the dashed line is the reliable improvement line, and the dotted line is the cutpoint.</p>'+chart(c,upto)+dashLine(c,upto)+table(c,upto);
+}
+function ruleBox(){
+  return '<div class="note illus"><b>Example step-up rule, for practice and not a validated rule.</b> Published stepped-care trials set their step-up criteria very differently, so a clinic chooses its own. Reviews happen at week 4 and week 8. Scores are whole numbers, so 7 points is the reliable-change line.'+
+  '<ol><li><b>Safety first.</b> If the safety item is higher than at the previous review (week 1 for the week 4 review), add a safety review before any other change.</li>'+
+  '<li><b>Worsening.</b> If the latest score is 7 or more points above baseline, or 7 or more points above the score two weeks earlier, step up. If a one-off event named in the case explains the rise and rule 1 is not triggered, stay and measure again next week.</li>'+
+  '<li><b>No reliable progress.</b> If the drop from baseline is under 7 points and the score is '+CUTPOINT+' or higher, step up.</li>'+
+  '<li><b>Reliable progress and in the everyday range.</b> If the drop is 7 points or more and the score is below '+CUTPOINT+', step down.</li>'+
+  '<li><b>Otherwise stay.</b></li></ol>'+
+  '<span class="key">Reliable-change line, Module 11 method. SEM = 8 × √(1 − .91) = 2.40. Standard error of the difference = 1.414 × 2.40 = 3.39. Line = 1.96 × 3.39 = 6.65 points. The cutpoint of '+CUTPOINT+' is the invented value from Module 11.</span></div>';
+}
+function levelNow(c){
+  var lv=c.level;
+  if(c.name==="Nkechi"&&(S.ii>=1||S.phase==="caseend")) lv=1;
+  return lv;
+}
+function caseCard(c){
+  return '<div class="case"><b class="t">'+esc(c.label)+' (invented client, invented scores)</b><div class="cardrow">'+esc(c.story)+'</div><div class="cardrow"><b>Current level.</b> '+esc(LEVELS[levelNow(c)])+'.</div><div class="cardrow"><b>Safety.</b> If anything in this activity affects you, call or text 988 at any hour, or call 911 in an emergency.</div></div>';
+}
+function tiles(){
+  var h='<div class="tiles" aria-label="Progress">';
+  CASES.forEach(function(c,ix){ var on=(S.phase!=="intro"&&S.phase!=="results"&&ix===S.ci&&S.phase!=="caseend"), done=(S.phase==="results"||ix<S.ci||(ix===S.ci&&S.phase==="caseend")); h+='<span class="tile'+(on?' on':(done?' done':''))+'">'+esc(c.label)+(on?' (current)':(done?' (done)':''))+'</span>'; });
+  return h+'<span class="tile'+(S.phase==="results"?' on':'')+'">Results'+(S.phase==="results"?' (current)':'')+'</span></div>';
+}
+function safetyNote(){ return '<p class="note safe"><b>Safety.</b> A score never replaces asking a person directly how they are. If anything in this activity affects you, call or text 988 at any hour, or call 911 in an emergency.</p>'; }
+function render(focus){
+  var h=tiles();
+  if(S.phase==="intro") h+=renderIntro(); else if(S.phase==="case") h+=renderCase(); else if(S.phase==="second") h+=renderSecond(); else if(S.phase==="caseend") h+=renderCaseEnd(); else h+=renderResults();
+  root.innerHTML=h; post();
+  try{ var el=null; if(focus==="top"||focus==="panel"){ el=root.querySelector("#panelhead"); } else if(focus){ el=root.querySelector(focus); } if(el&&el.focus) el.focus(); }catch(e){}
+}
+function renderIntro(){
+  return '<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">Decide at each review</h2>'+
+   '<p class="explain">You will follow four invented clients through eight weeks. At the week 4 review and the week 8 review, read the score trajectory, work out the change against the reliable-change line, and decide what to do. Each decision gets feedback tied to the rule and to the client. The case continues from the rule\'s answer whatever you chose. Decisions you miss come back for a second look at half credit.</p>'+
+   ruleBox()+
+   '<div class="note illus"><b>Everything here is invented.</b> The clients, scores, checklist, rule, and clinic dashboard are invented for practice. A real clinic would set its own rule and would use a real instrument with its own published values. Nothing here is saved or sent.</div>'+safetyNote()+
+   '<div class="foot"><span></span><button class="btn" type="button" data-act="start">Begin Case 1</button></div></section>';
+}
+function renderCase(){
+  var c=curCase(), it=curItem(), a=curAns(), h=caseCard(c);
+  h+='<section class="panel" aria-live="polite"><h2 class="hd" id="panelhead" tabindex="-1">'+esc(c.label)+', week '+it.week+' review</h2>'+dataView(c,it.week)+ruleBox();
+  h+=a.done?renderFeedback(c,it,a):renderDecision(c,it);
+  return h+'</section>';
+}
+function optBtn(act,val,label,gloss,extra,disabled){
+  return '<button class="opt'+(extra||'')+'" type="button" data-act="'+act+'" data-val="'+val+'"'+(disabled?' disabled':'')+'><span>'+label+(gloss?'<span class="gl">'+esc(gloss)+'</span>':'')+'</span></button>';
+}
+function ordDecs(it){ var m={}; DECS.forEach(function(d){m[d.id]=d;}); return (it.order||DECS.map(function(d){return d.id;})).map(function(i){return m[i];}); }
+function renderDecision(c,it){
+  var h='<hr style="border:none;border-top:1px solid var(--line);margin:16px 0"><div class="qtop"><span class="qn">Review '+(S.ii+1)+' of '+c.items.length+'</span></div><p class="qprompt">Week '+it.week+' review. Work out the change from baseline and over the last two weeks, then decide.</p><div class="options" role="group" aria-label="Decision">';
+  ordDecs(it).forEach(function(d){ h+=optBtn("dec",d.id,esc(d.label),d.gloss,"",false); });
+  return h+'</div>';
+}
+function renderFeedback(c,it,a){
+  var ok=a.ok, rc=ruleCheck(c,it.week,it.event);
+  var h='<hr style="border:none;border-top:1px solid var(--line);margin:16px 0"><p class="qprompt">Week '+it.week+' review</p><div class="options" role="group" aria-label="Decision, answered">';
+  ordDecs(it).forEach(function(d){ var cls=(d.id===it.best)?" correct":((d.id===a.first)?" wrong":" dim"); var tag=(d.id===it.best)?" (rule's answer)":((d.id===a.first)?" (your choice)":""); h+=optBtn("noop",d.id,esc(d.label)+(tag?' <b>'+esc(tag)+'</b>':''),"",cls,true); });
+  h+='</div><div class="fbbox" id="fbbox" tabindex="-1"><p><span class="badge '+(ok?'ok':'no')+'">'+(ok?'Matches the rule':'Does not match the rule')+'</span> You chose: '+esc(DECLAB[a.first])+'. The rule gives: '+esc(DECLAB[it.best])+'.</p>';
+  h+='<p><span class="lab">Your decision.</span> '+esc(it.dec[a.first])+'</p>';
+  if(!ok) h+='<p><span class="lab">The rule\'s answer.</span> '+esc(it.dec[it.best])+'</p>';
+  h+='<p><span class="lab">The rule applied to the data.</span></p><ul>'+rc.lines.map(function(l){return '<li>'+esc(l)+'</li>';}).join("")+'</ul>';
+  h+='<p>'+esc(it.lesson)+'</p><p class="selfnote">Reading: '+esc(it.src)+'.</p></div>';
+  h+='<div class="foot"><span></span><button class="btn" type="button" data-act="nextitem">'+(S.ii+1<c.items.length?'Show the week '+c.items[S.ii+1].week+' data':'Finish this case')+'</button></div>';
+  return h;
+}
+function misses(ci){ var m=[]; S.ans[ci].forEach(function(a,ix){ if(!a.ok) m.push(ix); }); return m; }
+function afterCase(){ var m=misses(S.ci); if(m.length){ S.phase="second"; S.sl=m; S.sli=0; } else { S.phase="caseend"; } render("panel"); }
+function renderSecond(){
+  var c=curCase(), ix=S.sl[S.sli], it=c.items[ix], a=S.ans[S.ci][ix], saveii=S.ii; S.ii=ix;
+  var h=caseCard(c)+'<section class="panel" aria-live="polite"><h2 class="hd" id="panelhead" tabindex="-1">Second look '+(S.sli+1)+' of '+S.sl.length+', '+esc(c.name)+'</h2>'+dataView(c,it.week)+ruleBox()+
+    '<div class="intro"><b>Second look.</b> You missed this one the first time. Answer again without the earlier explanation. A correct answer now counts for half a point.</div><p class="qprompt">Week '+it.week+' review.</p><div class="options" role="group" aria-label="Decision, second look">';
+  ordDecs(it).forEach(function(d){ var cls="", tag=""; if(a.sl){ if(d.id===it.best){cls=" correct";tag=" (rule's answer)";} else if(d.id===a.slPick){cls=" wrong";tag=" (your choice)";} else cls=" dim"; } h+=optBtn("sldec",d.id,esc(d.label)+(tag?' <b>'+esc(tag)+'</b>':''),a.sl?"":d.gloss,cls,a.sl); });
+  h+='</div>';
+  if(a.sl){ var rc=ruleCheck(c,it.week,it.event); h+='<div class="fbbox" id="fbbox" tabindex="-1"><p><span class="badge '+(a.slOk?'ok':'no')+'">'+(a.slOk?'Correct, half credit':'Does not match the rule')+'</span> The rule gives: '+esc(DECLAB[it.best])+'.</p><p>'+esc(it.dec[it.best])+'</p><ul>'+rc.lines.map(function(l){return '<li>'+esc(l)+'</li>';}).join("")+'</ul></div><div class="foot"><span></span><button class="btn" type="button" data-act="slnext">'+(S.sli+1<S.sl.length?'Next second look':'Finish this case')+'</button></div>'; }
+  S.ii=saveii; return h+'</section>';
+}
+function caseScore(ci){ var t=0; S.ans[ci].forEach(function(a){t+=a.score;}); return t; }
+function totalScore(){ var t=0; CASES.forEach(function(c,ci){t+=caseScore(ci);}); return t; }
+function r1(x){ return Math.round(x*10)/10; }
+function renderCaseEnd(){
+  var c=curCase(), last=(S.ci>=CASES.length-1);
+  return '<section class="panel"><h2 class="hd" id="panelhead" tabindex="-1">'+esc(c.label)+' complete</h2><p class="explain">You scored '+r1(caseScore(S.ci))+' of '+c.items.length+' on this case. A second-look answer counts for half a point.</p><div class="foot"><span></span><button class="btn" type="button" data-act="'+(last?'toresults':'startnext')+'">'+(last?'See your results':'Begin Case '+(S.ci+2))+'</button></div></section>';
+}
+function renderResults(){
+  var tot=totalScore(), mx=maxScore();
+  var h='<section class="panel results"><h2 id="panelhead" tabindex="-1">Your results</h2><p class="score">You scored <b>'+r1(tot)+' of '+mx+'</b> on the eight review decisions. A decision answered correctly on the second look counts for half a point.</p><div>';
+  CASES.forEach(function(c,ci){ c.items.forEach(function(it,ix){ var a=S.ans[ci][ix]; var how=a.ok?'Matched the rule on the first try.':(a.slOk?'Missed first, correct on the second look.':'Missed.'); h+='<div class="brow"><span class="bs">'+r1(a.score)+' / 1</span><span><b>'+esc(c.name+', week '+it.week+' review.')+'</b> You chose '+esc(DECLAB[a.first])+'. The rule gives '+esc(DECLAB[it.best])+'. '+esc(how)+(a.ok?'':' Revisit: '+esc(it.src)+'.')+'</span></div>'; }); });
+  h+='</div><div class="take"><b>Carry forward.</b> The same rule gave stay, step up, step down, and a safety review, depending on the latest score, its direction, the safety item, and the client\'s context. A clinic dashboard that reported only an average marked Lorcan as improving while his latest scores were rising. A total can improve while one item worsens, as in Yaretzi\'s case. Step-up rules vary widely across published stepped-care trials, and the rule here is an example.</div>';
+  h+='<div class="foot"><span></span><button class="btn secondary" type="button" data-act="again">Start over</button></div><p class="selfnote">Every client, score, and the rule are invented practice material. In the United States, call or text 988 at any hour, or call 911 in an emergency.</p></section>';
+  return h;
+}
+function act(v,val){
+  var c=CASES[S.ci];
+  if(v==="start"){ S.phase="case"; S.ci=0; S.ii=0; render("panel"); return; }
+  if(v==="dec"){ var a=curAns(); if(a.done) return; var it=curItem(); a.done=true; a.first=val; a.ok=(val===it.best); a.score=a.ok?1:0; render("#fbbox"); return; }
+  if(v==="nextitem"){ if(S.ii+1>=c.items.length){ afterCase(); return; } S.ii++; render("panel"); return; }
+  if(v==="sldec"){ var ix=S.sl[S.sli], it2=c.items[ix], a2=S.ans[S.ci][ix]; if(a2.sl) return; a2.sl=true; a2.slPick=val; a2.slOk=(val===it2.best); if(a2.slOk) a2.score=0.5; render("#fbbox"); return; }
+  if(v==="slnext"){ S.sli++; if(S.sli>=S.sl.length){ S.phase="caseend"; } render("panel"); return; }
+  if(v==="startnext"){ S.ci++; S.phase="case"; S.ii=0; render("panel"); return; }
+  if(v==="toresults"){ S.phase="results"; render("panel"); return; }
+  if(v==="again"){ reset(); try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){} return; }
+}
+root.addEventListener("click",function(e){ var t=e.target.closest("[data-act]"); if(!t||t.disabled) return; act(t.getAttribute("data-act"),t.getAttribute("data-val")); });
+reset();
+
+</script>
+</body>
+</html>

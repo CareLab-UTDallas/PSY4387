@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evidence Appraisal: Claims About Digital Care</title>
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#1f1e1c; --muted:#6b6862; --line:#e7e4de;
+    --panel:#ffffff; --panel-shadow:0 1px 2px rgba(28,27,25,.04),0 6px 20px rgba(28,27,25,.05);
+    --accent:#8a5a25; --accent-ink:#6f4a20;
+    --amber-bg:#fffbef; --amber-line:#e7c98a; --amber-ink:#8a6d2f;
+    --ok-bg:#eef5ee; --ok-line:#bcd6bd; --ok-ink:#3c6b3e;
+    --no-bg:#fbecec; --no-line:#e3b9b9; --no-ink:#a23b34;
+    --study-bg:#f2f4f8; --study-line:#c9d4e6; --study-ink:#2f4a72;
+    --tool-bg:#f3eef7; --tool-ink:#6d4a86; --tool-line:#d8c7e6;
+    --focus:#2f6f4f; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 20px 60px;}
+  .masthead{padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid var(--line);}
+  .masthead h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.01em;}
+  .masthead .sub{margin:6px 0 0;color:var(--ink);font-size:14.5px;max-width:82ch;}
+
+  .stagetabs{display:flex;gap:0;margin:16px 0 6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .stagetabs button{flex:1 1 0;border:none;background:#fff;padding:11px 10px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.25;}
+  .stagetabs button+button{border-left:1px solid var(--line);}
+  .stagetabs button[aria-selected="true"]{background:var(--accent);color:#fff;}
+  .stagetabs button:disabled{color:#b7b2a9;cursor:not-allowed;}
+  .stagetabs button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+  .stagetabs .sn{display:block;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+  .stagetabs .stt{display:block;font-weight:600;font-size:13px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:12px 0 18px;}
+  .pbar{flex:1 1 auto;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .pbar span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s;}
+  .pcount{font-size:12.5px;color:var(--muted);flex:0 0 auto;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:20px 22px;}
+  .intro{background:var(--study-bg);border:1px solid var(--study-line);color:var(--study-ink);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.6;margin-bottom:16px;}
+  .intro b{font-weight:700;}
+
+  /* toolkit cards */
+  .toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  @media(max-width:620px){ .toolgrid{grid-template-columns:1fr;} }
+  .tool{border:1px solid var(--tool-line);background:var(--tool-bg);border-radius:12px;padding:13px 15px;}
+  .tool h3{margin:0 0 4px;font-size:14px;color:var(--tool-ink);}
+  .tool p{margin:0;font-size:13px;line-height:1.55;}
+  .tool .ask{margin-top:7px;font-size:12.5px;font-style:italic;color:var(--muted);}
+
+  .study{background:var(--study-bg);border:1px solid var(--study-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;}
+  .study .slabel{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--study-ink);background:#fff;border-radius:7px;padding:3px 9px;margin-bottom:8px;}
+  .study .sbody{font-size:14px;line-height:1.6;}
+  .study .sbody b{font-weight:700;}
+  .study .datarow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .study .chip{font-size:12px;background:#fff;border:1px solid var(--study-line);border-radius:7px;padding:4px 10px;color:var(--study-ink);}
+
+  .difficulty{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:6px;padding:3px 9px;display:inline-block;margin-bottom:10px;}
+  .difficulty.mod{background:var(--amber-bg);color:var(--amber-ink);}
+  .difficulty.hard{background:var(--no-bg);color:var(--no-ink);}
+
+  .qprompt{font-size:15px;line-height:1.5;margin:14px 0 12px;font-weight:600;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .12s;}
+  .opt:hover:not(:disabled){border-color:#cfc9bf;}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt .ol{font-weight:700;margin-right:7px;color:var(--muted);}
+  .opt.correct-pick{background:var(--ok-bg);border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.wrong-pick{background:var(--no-bg);border-color:var(--no-line);box-shadow:0 0 0 2px var(--no-ink) inset;}
+  .opt.show-correct{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-ink) inset;}
+  .opt.dim{opacity:.5;}
+  .fnote{margin-top:12px;font-size:13.5px;line-height:1.6;padding:12px 14px;border-radius:10px;}
+  .fnote.ok{background:var(--ok-bg);color:var(--ok-ink);}
+  .fnote.no{background:var(--no-bg);color:var(--no-ink);}
+  .fnote b{font-weight:700;}
+  .fnote .tool-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:#fff;border-radius:6px;padding:2px 8px;margin-bottom:6px;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 19px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.05);}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500;}
+
+  .results h2{margin:0 0 4px;font-size:20px;}
+  .results .score{font-size:16px;margin:0 0 6px;}
+  .results .score b{color:var(--accent-ink);}
+  .results p{font-size:14px;line-height:1.62;}
+  .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .selfnote{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Evidence Appraisal: Four Claims About Digital Care</h1>
+    <p class="sub">Judging whether the evidence supports a claim about digital care takes different skills from knowing the terms. The seven questions below apply to four claims, each with two questions, one on the best reading and one on the check that would most change the conclusion. Claims A, B, and C are constructed for practice and every number in them is invented unless a published source is named. Claim D pairs an invented flyer with real published results. If anything in these cases affects you personally, you can call or text 988 at any hour, and in an emergency you can call 911.</p>
+  </div>
+
+  <div class="stagetabs" id="tabs" role="tablist"></div>
+
+  <div class="progress" aria-hidden="true">
+    <div class="pbar"><span id="pbarfill"></span></div>
+    <div class="pcount" id="pcount"></div>
+  </div>
+
+  <section class="card" id="cardPanel" aria-live="polite"></section>
+</div>
+
+<script>
+// Appraisal toolkit and constructed studies (not real publications; nothing here should be cited as a finding).
+var TOOLS = [
+ {
+  "name": "Who was counted?",
+  "body": "A percentage means little until its denominator is clear. Survey results from people who finished, retention among people who completed setup, and outcomes among people who stayed describe selected groups, and the people who left are often the ones who did not benefit.",
+  "ask": "Out of how many people who started, and what happened to the rest?"
+ },
+ {
+  "name": "Compared to what?",
+  "body": "A before-and-after change, a waitlist, usual care, and another active treatment answer different questions. A claim that one approach is better than another needs the other approach in the comparison.",
+  "ask": "Does the comparison match the claim that was made?"
+ },
+ {
+  "name": "What was measured?",
+  "body": "Using an app, finishing it, feeling better, and being safe are separate outcomes. A number on one of them does not carry over to the others.",
+  "ask": "Is the outcome the one the claim is about?"
+ },
+ {
+  "name": "What the design can show",
+  "body": "A study can show that a package beat a comparison and still be unable to say which part of the package mattered. A wide interval is compatible with a small gap and with a large one.",
+  "ask": "Could the design separate the part being credited from the rest of the package?"
+ },
+ {
+  "name": "Who ran it and who paid",
+  "body": "Funders and developers who write the report have a stake in it. That is a reason to look for independent confirmation, and it does not show that a result is wrong.",
+  "ask": "Who had a stake, and has anyone independent checked the result?"
+ },
+ {
+  "name": "Who was in it",
+  "body": "A result describes the people enrolled, including how they were recruited, who was excluded, and what connections and conditions they had. Whether it holds for another group is a separate question.",
+  "ask": "Do the participants resemble the people I care about?"
+ },
+ {
+  "name": "Match the check to the claim",
+  "body": "Several checks could improve a study. The one that matters most is the one that bears on the sentence being claimed.",
+  "ask": "Which single check could change what the claim is allowed to say?"
+ }
+];
+
+var ITEMS = [
+ {
+  "diff": "mod",
+  "bloom": "analyze",
+  "study": {
+   "label": "Claim A (constructed), question 1 of 2",
+   "body": "Sablewick, an invented company, markets a generative AI chatbot for anxiety and low mood. Its white paper, written by company staff, concludes, “Sablewick safely reduces anxiety.” All numbers are invented.",
+   "data": [
+    "4,000 people started the 12-week program (invented)",
+    "1,100 people completed the week-12 survey, and 77% of them said they felt less anxious (invented)",
+    "People who stopped before week 12 were not surveyed, and there was no comparison group (invented)",
+    "Safety evidence was that no survey respondent reported a crisis and that the company handled all 10 of its own scripted crisis messages correctly in internal tests (invented)"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "a",
+  "tool": "Who was counted?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The data describe a group that stayed and rated itself, so they cannot show that the chatbot reduced anxiety or that it is safe"
+   },
+   {
+    "id": "b",
+    "text": "The 77 percent figure shows benefit, because a survey of 1,100 people is large enough to rule out chance as the explanation"
+   },
+   {
+    "id": "c",
+    "text": "The safety claim is supported, because ten scripted crisis messages handled correctly show the system recognizes crisis language"
+   },
+   {
+    "id": "d",
+    "text": "The white paper may be set aside, because a report written by company staff is biased and cannot inform a decision"
+   }
+  ],
+  "why": "The 1,100 who completed the survey are 27.5 percent of the 4,000 who started, and the 847 who reported feeling less anxious are about 21 percent of starters. People who stay and answer are not a random slice of everyone who tried the program, and with no comparison group the survey cannot separate the chatbot’s effect from time passing or from who chose to stay. A large sample reduces chance variation and leaves selection untouched. Ten scripted messages tested by the company show that the system can recognize obvious crisis language and say little about messages that are less clear. Staff authorship is a reason to want independent confirmation, and it does not make the paper useless."
+ },
+ {
+  "diff": "hard",
+  "bloom": "evaluate",
+  "study": {
+   "label": "Claim A (constructed), question 2 of 2",
+   "body": "The same constructed white paper from Sablewick, which concludes, “Sablewick safely reduces anxiety.” All numbers are invented. If anything in this case affects you personally, you can call or text 988 at any hour, and in an emergency you can call 911.",
+   "data": [
+    "No survey respondent reported a crisis (invented)",
+    "The company tested 10 scripted crisis messages internally, and the chatbot handled all 10 correctly (invented)",
+    "No person reviews the chatbot’s conversations (invented)"
+   ]
+  },
+  "prompt": "Which single check matters most for the word “safely” in the conclusion?",
+  "answer": "b",
+  "tool": "Match the check to the claim",
+  "options": [
+   {
+    "id": "a",
+    "text": "Whether the ten scripted messages are also handled correctly in a second language, because more tests of the same kind settle the matter"
+   },
+   {
+    "id": "b",
+    "text": "How the chatbot responds to messages that signal moderate risk, tested by people independent of the company on a wide range of messages"
+   },
+   {
+    "id": "c",
+    "text": "Whether users rate the chatbot as friendly and easy to talk to, because users who trust a chatbot are less likely to be harmed"
+   },
+   {
+    "id": "d",
+    "text": "Whether more than 1,100 people complete the next survey, because a higher completion rate would show that the chatbot is safe"
+   }
+  ],
+  "why": "A 2025 evaluation of three chatbots (McBain et al., 2025, abstract) used 30 suicide-related queries and about 9,000 responses. Responses matched expert ratings at the extremes of risk and were inconsistent at intermediate levels. Products change faster than studies, so this describes those chatbots at that time, and it shows why the middle of the range needs testing. Scripted obvious messages test the easy end, and the open question is the middle, where judgment is required and no person reviews the conversation. A higher survey completion rate describes who answered and says nothing about how crisis messages were handled. Friendliness is a different outcome from safety and may even invite over-reliance. Repeating the same type of test in another language extends the easy end and leaves the middle untested."
+ },
+ {
+  "diff": "mod",
+  "bloom": "evaluate",
+  "study": {
+   "label": "Claim B (constructed), question 1 of 2",
+   "body": "Fenmoor Steps, an invented program, reports a trial of its stepped design for depression. Step 1 is a guided self-help app with weekly check-in calls. Step 2 is eight video therapy sessions for anyone whose PHQ-9 score is 10 or more at week 6. The report concludes, “The stepped design is what makes Fenmoor Steps work.” All numbers are invented.",
+   "data": [
+    "160 adults randomized, 80 per group. Entry required a PHQ-9 of 10 or more (invented)",
+    "Step-up rule: PHQ-9 of 10 or more at week 6. 72 of 80 people (90%) stepped up (invented)",
+    "The comparison group received usual care, meaning a list of local resources (invented)",
+    "PHQ-9 difference at week 20: 3.9 points in favor of Fenmoor Steps, 95% CI 0.8 to 7.0 (invented)",
+    "Outcome available at week 20: 57 of 80 in Fenmoor Steps (71%) and 70 of 80 in usual care (88%) (invented)"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "c",
+  "tool": "What the design can show",
+  "options": [
+   {
+    "id": "a",
+    "text": "The stepped design is responsible for the gain, because the program matched the amount of care to how each person was responding"
+   },
+   {
+    "id": "b",
+    "text": "The gap in who was assessed is minor, because both groups lost participants and the result held among those who remained to be assessed at week 20"
+   },
+   {
+    "id": "c",
+    "text": "The package beat usual care, and because 90 percent stepped up, the trial cannot separate the stepped design from the therapy step alone"
+   },
+   {
+    "id": "d",
+    "text": "The result is unreliable, because an interval whose lower bound is 0.8 points is too close to zero to count as an effect on depression scores"
+   }
+  ],
+  "why": "Entry required a PHQ-9 of 10 or more and the step-up rule used the same line, so almost everyone stepped up and most of the program group received the therapy step. The trial shows that the package did better than a list of resources and cannot show that stepping added anything beyond Step 2. A matched amount of care would mean fewer people stepping up. The interval of 0.8 to 7.0 excludes zero, so calling the result unreliable overstates the problem, and the interval is wide. The assessment gap is a real concern, because 71 percent against 88 percent is a difference in who is left to analyze, and the people who left may differ. A review of ten stepped-care trials judged the evidence that stepped care should be the dominant model to be limited and noted that step-up criteria varied greatly (van Straten et al., abstract)."
+ },
+ {
+  "diff": "hard",
+  "bloom": "evaluate",
+  "study": {
+   "label": "Claim B (constructed), question 2 of 2",
+   "body": "The same constructed Fenmoor Steps trial. The report concludes, “The stepped design is what makes Fenmoor Steps work.” All numbers are invented.",
+   "data": [
+    "Step-up rule: PHQ-9 of 10 or more at week 6, the same line used for entry. 72 of 80 (90%) stepped up (invented)",
+    "The comparison group received usual care (invented)",
+    "Outcome available at week 20: 71% in Fenmoor Steps and 88% in usual care (invented)"
+   ]
+  },
+  "prompt": "Which single check matters most for the claim that the stepped design is what works?",
+  "answer": "d",
+  "tool": "Match the check to the claim",
+  "options": [
+   {
+    "id": "a",
+    "text": "A recount of outcomes using only the 57 program participants who were assessed, because completers show the program’s true effect"
+   },
+   {
+    "id": "b",
+    "text": "A longer follow-up of the same two groups, because a benefit that lasts would show that the stepped design was the cause of the gain seen at week 20"
+   },
+   {
+    "id": "c",
+    "text": "A survey of how satisfied people were with each step, because satisfaction shows whether the stepped design fit their needs and whether it works"
+   },
+   {
+    "id": "d",
+    "text": "A comparison group in which everyone received the therapy step at once, because it would show whether stepping adds anything beyond that step"
+   }
+  ],
+  "why": "The claim is about the design, so the check is a comparison that isolates it. When nearly everyone stepped up, the program group mostly received both steps, and only an arm that gets the therapy step directly can show whether the first step and the rule add anything. Longer follow-up tells how long the benefit lasts and leaves the question of which part produced it. Counting only people who were assessed risks flattering the program, because the people who left may have done worse. Satisfaction describes experience and gives no comparison on symptoms."
+ },
+ {
+  "diff": "mod",
+  "bloom": "analyze",
+  "study": {
+   "label": "Claim C (constructed), question 1 of 2",
+   "body": "Quillmere, an invented mood-tracking app, posts this on its website. “Quillmere users stay. Day-15 retention is 42 percent, more than ten times the published median of 3.9 percent, so Quillmere works.” The published median comes from an analysis of 93 widely installed Android mental health apps (Baumel et al., 2019, abstract). The Quillmere figures are invented.",
+   "data": [
+    "Quillmere day-15 retention is 42 percent, counted among people who created an account and finished a five-minute setup (invented)",
+    "31 percent of people who installed the app created an account and finished setup (invented)",
+    "Published median day-15 retention for 93 Android apps with at least 10,000 installs: 3.9 percent",
+    "Quillmere collected no symptom measures (invented)"
+   ]
+  },
+  "prompt": "Which appraisal is most defensible?",
+  "answer": "b",
+  "tool": "Who was counted?",
+  "options": [
+   {
+    "id": "a",
+    "text": "The comparison has no value, because a median across 93 apps can never say anything about one particular app or its users"
+   },
+   {
+    "id": "b",
+    "text": "The two figures may count different groups, so the tenfold gap is not yet established, and retention alone does not show benefit to users"
+   },
+   {
+    "id": "c",
+    "text": "The tenfold gap stands, because 42 percent is far above 3.9 percent, and the only open question is whether the app actually works"
+   },
+   {
+    "id": "d",
+    "text": "The app works, because people keep using something only while it helps them, and 42 percent of its users kept using it for two weeks"
+   }
+  ],
+  "why": "Quillmere’s 42 percent counts only people who finished setup, which is 31 percent of installers. The published median is a different measure, and whether it counts everyone who installed is a thing to check before comparing. If the benchmark counts installers, Quillmere’s comparable figure would be about 13 percent (0.42 times 0.31), which is above 3.9 and well under ten times it. Retention measures use and gives no information about symptoms, and people keep using apps for many reasons, including habit and reminders. A benchmark across 93 apps can be informative about one app when the measures match, which is why matching them is the check."
+ },
+ {
+  "diff": "hard",
+  "bloom": "evaluate",
+  "study": {
+   "label": "Claim C (constructed), question 2 of 2",
+   "body": "The same constructed Quillmere website claim. “Day-15 retention is 42 percent, more than ten times the published median of 3.9 percent.” The Quillmere figures are invented.",
+   "data": [
+    "42 percent is counted among people who created an account and finished setup, which is 31 percent of installers (invented)",
+    "Published median day-15 retention, 93 Android apps: 3.9 percent (Baumel et al., 2019)"
+   ]
+  },
+  "prompt": "Which single check matters most before accepting “more than ten times the median”?",
+  "answer": "d",
+  "tool": "Compared to what?",
+  "options": [
+   {
+    "id": "a",
+    "text": "Whether the app’s store rating is above four stars, because satisfied users are the ones who stay and so predict retention"
+   },
+   {
+    "id": "b",
+    "text": "Whether day-30 retention is also above the published median, because a second time point would settle which figure is larger"
+   },
+   {
+    "id": "c",
+    "text": "Whether the people who created accounts are mostly adults, because age could explain a difference in retention between apps"
+   },
+   {
+    "id": "d",
+    "text": "Which group the published 3.9 percent counts, and what Quillmere’s figure becomes when the same group is counted"
+   }
+  ],
+  "why": "A ratio is meaningful only when both figures count the same group. The check is to find out who the 3.9 percent describes and to recompute Quillmere’s figure for that group. Day-30 retention would repeat the mismatch at a second time point, with the same two denominators. A store rating describes satisfaction and does not align the two counts. Age could matter for generalization, and it is a smaller issue than whether the two percentages describe the same people."
+ },
+ {
+  "diff": "mod",
+  "bloom": "evaluate",
+  "study": {
+   "label": "Claim D, question 1 of 2",
+   "body": "A county clinic’s flyer (invented) says, “Research shows video therapy works as well as in-person therapy for everyone.” The results listed below are real and are summarized from their published abstracts.",
+   "data": [
+    "Greenwood et al., 2022: 12 randomized trials, 931 patients. Symptom severity difference 0.05 (95% CI −0.17 to 0.27). Evidence was insufficient to judge less common conditions",
+    "Norwood et al., 2018: 12 studies. Symptom reduction was noninferior (difference −0.03, 95% CI −0.45 to 0.40). Noninferiority of the alliance was not established (difference −0.30, 95% CI −0.67 to 0.07)",
+    "Holder et al., 2026: observational data, n = 17,106, Veterans Health Administration. Video telehealth showed lower odds of a clinically meaningful PTSD improvement (median posterior odds ratio 0.83)"
+   ]
+  },
+  "prompt": "Which appraisal of the flyer is most defensible?",
+  "answer": "a",
+  "tool": "Compared to what?",
+  "options": [
+   {
+    "id": "a",
+    "text": "No difference was detected on symptoms, the intervals are wide, and alliance noninferiority was not established in one review, so “for everyone” overreaches"
+   },
+   {
+    "id": "b",
+    "text": "The flyer is contradicted, because the observational study found lower odds of improvement with video and so shows that video therapy is worse in routine care"
+   },
+   {
+    "id": "c",
+    "text": "The flyer is supported for symptoms and for the alliance, because neither interval excludes zero and so no difference exists between formats"
+   },
+   {
+    "id": "d",
+    "text": "The flyer is supported, because two of the three results found symptom differences close to zero, and that is exactly what equivalence means for every group studied"
+   }
+  ],
+  "why": "Estimates close to zero with wide intervals show that no difference was detected, and the intervals leave room for a gap in either direction. Equivalence needs a stated margin and an interval that fits inside it. In one review the alliance interval included −0.67, and noninferiority was not established. One review found too little evidence on less common conditions, and the observational study found a small gap in PTSD improvement, with the usual limits of observational data. Together these do not contradict the flyer outright, and they do not support “for everyone.” An interval that includes zero fails to exclude a difference, which differs from showing that none exists."
+ },
+ {
+  "diff": "hard",
+  "bloom": "evaluate",
+  "study": {
+   "label": "Claim D, question 2 of 2",
+   "body": "The same invented flyer, “Research shows video therapy works as well as in-person therapy for everyone.” The clinic serves many clients with PTSD, and many live where home internet is unreliable (invented). One national study of 3,659,699 veterans found a rate of video visits 1.52 times as high with optimal as with inadequate broadband (O’Shea et al., 2023, abstract).",
+   "data": [
+    "Greenwood et al., 2022: 12 randomized trials. Evidence was insufficient to judge less common conditions",
+    "Norwood et al., 2018: noninferiority of the alliance was not established",
+    "Holder et al., 2026: observational, small gap in PTSD improvement favoring in-person care"
+   ]
+  },
+  "prompt": "Which single check matters most for this clinic’s decision to rely on the flyer’s claim?",
+  "answer": "c",
+  "tool": "Who was in it",
+  "options": [
+   {
+    "id": "a",
+    "text": "Whether therapists in the studies preferred video, because therapist preference predicts how much clients benefit from therapy in either format"
+   },
+   {
+    "id": "b",
+    "text": "Whether each review reports a p-value for the comparison, because a p-value would show the two formats are equivalent in practice for this clinic"
+   },
+   {
+    "id": "c",
+    "text": "Whether the studies covered the conditions and connection quality of the people the clinic serves, since the results may not describe them"
+   },
+   {
+    "id": "d",
+    "text": "Whether a fourth meta-analysis reports the same symptom result, because agreement among reviews would settle the question for every group"
+   }
+  ],
+  "why": "The clinic serves many clients with PTSD and many with unreliable connections, so the useful check is whether the studies included people like them. The pooled results come from the conditions and settings the trials covered, and the reviews note limits for less common conditions. Video visits were also more common where broadband was better, so use is itself uneven. A fourth review that agrees would add the same type of evidence about the same people. None of the cited results examined therapist preference. A p-value reports whether a difference is detectable and does not demonstrate equivalence."
+ }
+];
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+var stage="toolkit", idx=0, answers=[];
+
+function init(){ answers=ITEMS.map(function(){return null;}); stage="toolkit"; idx=0; render(); }
+
+function renderTabs(){
+  var host=document.getElementById("tabs"); host.innerHTML="";
+  [["toolkit","Stage 1","The appraisal toolkit"],["appraise","Stage 2","Appraise the studies"]].forEach(function(t){
+    var b=el("button"); b.setAttribute("role","tab"); b.setAttribute("aria-selected",String(stage===t[0]));
+    var locked = t[0]==="appraise" && !toolkitSeen;
+    b.disabled=locked;
+    b.innerHTML='<span class="sn">'+esc(t[1])+'</span><span class="stt">'+esc(t[2])+'</span>';
+    if(!locked) b.addEventListener("click", function(){ stage=t[0]; render(); });
+    host.appendChild(b);
+  });
+}
+var toolkitSeen=false;
+
+function renderProgress(){
+  if(stage==="toolkit"){ document.getElementById("pbarfill").style.width="0%"; document.getElementById("pcount").textContent="Toolkit"; }
+  else { var d=answers.filter(function(x){return x!==null;}).length; document.getElementById("pbarfill").style.width=(d/ITEMS.length*100)+"%"; document.getElementById("pcount").textContent="Study "+Math.min(idx+1,ITEMS.length)+" of "+ITEMS.length; }
+}
+
+function render(){ renderTabs(); renderProgress(); if(stage==="toolkit") renderToolkit(); else renderAppraise(); }
+
+function renderToolkit(){
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("div","intro","<b>Seven tools for judging a claim.</b> Each names a question a careful reader asks of any study. You will use these by name in the next stage, so read the question each one poses. The point is not to distrust all research, it is to calibrate how much a given study can actually support."));
+  var grid=el("div","toolgrid");
+  TOOLS.forEach(function(t){
+    var c=el("div","tool");
+    c.appendChild(el("h3",null,esc(t.name)));
+    c.appendChild(el("p",null,esc(t.body)));
+    c.appendChild(el("div","ask","Ask: "+esc(t.ask)));
+    grid.appendChild(c);
+  });
+  p.appendChild(grid);
+  var foot=el("div","foot"); foot.appendChild(el("span","",""));
+  var b=el("button","btn","Start appraising \u2192");
+  b.addEventListener("click", function(){ toolkitSeen=true; stage="appraise"; idx=0; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  foot.appendChild(b); p.appendChild(foot);
+}
+
+function renderAppraise(){
+  var it=ITEMS[idx], chosen=answers[idx];
+  var p=document.getElementById("cardPanel"); p.innerHTML="";
+  p.appendChild(el("span","difficulty "+(it.diff==="hard"?"hard":"mod"), it.diff==="hard"?"Harder":"Moderate"));
+  var st=el("div","study");
+  st.appendChild(el("span","slabel", it.study.label));
+  st.appendChild(el("div","sbody", it.study.body));
+  var dr=el("div","datarow"); it.study.data.forEach(function(d){ dr.appendChild(el("span","chip", esc(d))); }); st.appendChild(dr);
+  p.appendChild(st);
+  p.appendChild(el("div","qprompt", esc(it.prompt)));
+  var opts=el("div","opts");
+  it.options.forEach(function(o){
+    var b=el("button","opt"); b.type="button";
+    b.innerHTML='<span class="ol">'+esc(o.id.toUpperCase())+'</span>'+esc(o.text);
+    if(chosen!==null){
+      b.disabled=true;
+      if(o.id===chosen) b.classList.add(o.id===it.answer?"correct-pick":"wrong-pick");
+      else if(o.id===it.answer) b.classList.add("show-correct");
+      else b.classList.add("dim");
+    } else { b.addEventListener("click", function(){ answers[idx]=o.id; render(); }); }
+    opts.appendChild(b);
+  });
+  p.appendChild(opts);
+  if(chosen!==null){
+    var right=chosen===it.answer;
+    var note=el("div","fnote "+(right?"ok":"no"));
+    note.innerHTML='<span class="tool-tag">'+esc(it.tool)+'</span><br>'+(right?"<b>Sound appraisal.</b> ":"<b>Not the strongest reading.</b> ")+esc(it.why);
+    p.appendChild(note);
+  }
+  var foot=el("div","foot");
+  var back=el("button","btn secondary","\u2190 Back"); back.disabled=idx===0;
+  back.addEventListener("click", function(){ if(idx>0){idx--;render();} }); foot.appendChild(back);
+  var next=el("button","btn"); var last=idx===ITEMS.length-1; next.disabled=chosen===null;
+  next.innerHTML=last?"See results":"Next study \u2192";
+  next.addEventListener("click", function(){ if(last){ finish(); } else { idx++; render(); window.scrollTo({top:0,behavior:"smooth"}); } });
+  foot.appendChild(next); p.appendChild(foot);
+}
+
+function finish(){
+  var correct=0; ITEMS.forEach(function(it,i){ if(answers[i]===it.answer) correct++; });
+  var p=document.getElementById("cardPanel"); p.innerHTML=""; p.className="card results";
+  p.appendChild(el("h2",null,"Appraisal complete"));
+  p.appendChild(el("p","score","You chose the best-supported reading on <b>"+correct+" of "+ITEMS.length+"</b> studies."));
+  p.appendChild(el("p",null,"In each hard case the conclusion claimed more than the design could support, because the studies lacked a comparison, a mechanism measure, or a way to establish order in time."));
+  var act=el("div","actions");
+  var again=el("button","btn secondary","Review the toolkit"); again.addEventListener("click", function(){ stage="toolkit"; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+  var retry=el("button","btn","Try the studies again"); retry.addEventListener("click", function(){ init(); window.scrollTo({top:0,behavior:"smooth"}); });
+  act.appendChild(again); act.appendChild(retry); p.appendChild(act);
+  p.appendChild(el("div","selfnote","This activity runs entirely on your own screen. Nothing you select is saved, sent, or seen by anyone. The studies here are constructed for practice."));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+init();
+</script>
+</body>
+</html>
