@@ -234,8 +234,8 @@ var TOOLS = {
 };
 var SCENARIOS = [
   {
-    name:"Social anxiety (Devon-style)",
-    setup:"<b>The situation.</b> Devon dreads his group-project meetings. Follow how one belief spins a whole afternoon downward.",
+    name:"Social anxiety (Soren-style)",
+    setup:"<b>The situation.</b> Soren dreads his group-project meetings. Follow how one belief spins a whole afternoon downward.",
     rungs:[
       {mech:"Core belief", txt:"Underneath it all sits a quiet conviction: <b>\u201cI'm fundamentally inadequate.\u201d</b>"},
       {mech:"Biased attention", txt:"In the meeting, his attention locks onto his <b>pounding heart and any sign of disapproval</b>, skipping the neutral and friendly faces entirely."},
@@ -248,12 +248,12 @@ var SCENARIOS = [
     branchPrompt:"The maintaining process keeping this loop going is the avoidance: skipping means the feared prediction never gets tested. Which tool most directly pries open <em>this</em> point in the cycle?",
     correct:"exposure",
     outcomes:{
-      exposure:"<b>Yes.</b> A graded return to meetings, starting with lower-stakes contact, is exposure. It puts Devon back in the situation so the prediction \u201cthey'll ridicule me\u201d can finally be disconfirmed, and each attended meeting doubles as a behavioral experiment.",
+      exposure:"<b>Yes.</b> A graded return to meetings, starting with lower-stakes contact, is exposure. It puts Soren back in the situation so the prediction \u201cthey'll ridicule me\u201d can finally be disconfirmed, and each attended meeting doubles as a behavioral experiment.",
       restructuring:"<b>A reasonable start, but not the deepest lever here.</b> Weighing the evidence for \u201cthey think I'm worthless\u201d can loosen the thought, but talking alone leaves the head-gut gap. While he keeps avoiding, the belief keeps refilling. The avoidance is what needs interrupting.",
-      activation:"<b>Aimed at the wrong mechanism.</b> Behavioral activation targets depressive withdrawal from reward. Devon's core mechanism here is fear-driven avoidance of a specific feared situation, which is exposure territory.",
+      activation:"<b>Aimed at the wrong mechanism.</b> Behavioral activation targets depressive withdrawal from reward. Soren's core mechanism here is fear-driven avoidance of a specific feared situation, which is exposure territory.",
       experiment:"<b>Close, and it works alongside the answer.</b> A behavioral experiment tests a prediction, and each returned meeting is one. But the core move that reverses the maintaining mechanism, deliberately re-approaching the avoided situation, is exposure."
     },
-    rewind:"Run it in reverse: Devon attends one lower-stakes meeting, keeps his eyes up, and nobody ridicules him. That lived evidence is hard to dismiss. The belief loses a little grip, attention widens to the friendly faces, and the next meeting is slightly easier. The loop starts running the other way."
+    rewind:"Run it in reverse: Soren attends one lower-stakes meeting, keeps his eyes up, and nobody ridicules him. That lived evidence is hard to dismiss. The belief loses a little grip, attention widens to the friendly faces, and the next meeting is slightly easier. The loop starts running the other way."
   },
   {
     name:"Depression (Maya-style)",
@@ -279,7 +279,7 @@ var SCENARIOS = [
   },
   {
     name:"Panic (body-sensation loop)",
-    setup:"<b>The situation.</b> Priya notices her heart racing while sitting at her desk. Watch a fast cycle build in seconds.",
+    setup:"<b>The situation.</b> Yara notices her heart racing while sitting at her desk. Watch a fast cycle build in seconds.",
     rungs:[
       {mech:"Trigger sensation", txt:"She feels her <b>heart speed up and a wave of dizziness</b>, ordinary sensations that everyone gets."},
       {mech:"Catastrophic interpretation", txt:"She reads them as <b>\u201cI'm having a heart attack\u201d</b> or \u201cI'm losing control.\u201d"},
@@ -294,12 +294,12 @@ var SCENARIOS = [
     correctAlt:"exposure",
     branchPromptChallenge:"What is the maintaining mechanism of panic, and which tool most directly targets it?",
     outcomes:{
-      experiment:"<b>Yes.</b> The matched approach tests the catastrophic prediction directly: with interoceptive exposure, Priya deliberately brings on the feared sensations (breathing fast, spinning) and gathers first-hand data that they're uncomfortable but harmless. That lived test is a behavioral experiment aimed straight at the misinterpretation.",
+      experiment:"<b>Yes.</b> The matched approach tests the catastrophic prediction directly: with interoceptive exposure, Yara deliberately brings on the feared sensations (breathing fast, spinning) and gathers first-hand data that they're uncomfortable but harmless. That lived test is a behavioral experiment aimed straight at the misinterpretation.",
       exposure:"<b>Also right.</b> Interoceptive exposure, deliberately bringing on the feared sensations and staying with them, is exactly the matched tool. It works as a behavioral experiment against the catastrophic prediction. Either name captures the correct move here.",
       restructuring:"<b>A helpful first step, not the whole fix.</b> Education about what the body's alarm response actually does can loosen the catastrophic thought. But panic usually needs a lived test of the sensations rather than discussion alone, to close the head-gut gap.",
       activation:"<b>Aimed at the wrong mechanism.</b> Behavioral activation targets depressive withdrawal from reward. Panic's maintaining process is catastrophic misinterpretation of sensations, addressed by exposure to those sensations as a behavioral experiment."
     },
-    rewind:"Run it in reverse: guided by a plan, Priya deliberately brings on the racing-heart feeling and stays with it. Nothing catastrophic happens. Her body gathers new evidence that the sensations are harmless, the catastrophic reading loosens, and the fast cycle loses its fuel."
+    rewind:"Run it in reverse: guided by a plan, Yara deliberately brings on the racing-heart feeling and stays with it. Nothing catastrophic happens. Her body gathers new evidence that the sensations are harmless, the catastrophic reading loosens, and the fast cycle loses its fuel."
   }
 ];
 
