@@ -152,7 +152,7 @@
     <p class="sub">One invented case, five decisions drawn from across the course, and a short written defense compared with a model paragraph.</p>
   </div>
   <div id="root"></div>
-  <p class="selfnote">The client, the clinic, and all numbers are invented and illustrative. Nothing is saved or sent. If anything in this activity affects you, you can call or text 988 at any hour, or call 911 in an emergency.</p>
+  <p class="selfnote">The patient, the clinic, and all numbers are invented and illustrative. Nothing is saved or sent.</p>
 </div>
 <script>
 var STEPS = [
@@ -433,7 +433,7 @@ var STEPS = [
       "label": "Whether she attends each scheduled session and completes the weekly homework",
       "pts": 0,
       "cls": "weak",
-      "fb": "Attendance describes the care she receives and says nothing about whether she is getting better. A client can attend every session and stay as distressed as at intake."
+      "fb": "Attendance describes the care she receives and says nothing about whether she is getting better. A patient can attend every session and stay as distressed as at intake."
      },
      {
       "id": "om1",
@@ -529,14 +529,14 @@ var STEPS = [
     "id": "hr",
     "kind": "single",
     "rv": "Module 13, The Two-Part Question",
-    "prompt": "Her employer's human resources office has asked the clinic for a note about her fitness for duty. Choose the response best supported by Module 13's reasoning. The course gives no legal answer here. What the law and the clinic's policy require depends on where you practice.",
+    "prompt": "Her employer's human resources office has asked the clinic for a note about her fitness for duty. Choose the response best supported by Module 13's reasoning. The course gives no legal answer here. What the law and the clinic's policy require depends on where the clinician practices.",
     "options": [
      {
       "id": "h4",
-      "label": "Write the fitness opinion yourself, as her treating clinician, because the employer asked for it and she is already your client in treatment.",
+      "label": "Have her treating clinician write the fitness opinion, because the employer asked for it and she is already a patient in treatment with that clinician.",
       "pts": 1,
       "cls": "ok",
-      "fb": "Whether a treating clinician may take this role is not settled by the course reading. It does say that when a third party requests services, the clinician clarifies the role, who the client is, the probable uses of the information, and the limits of confidentiality (Standard 3.07). The supervisor, the clinic's policy, and the rules where you practice decide, and Sabine needs to hear about the request first."
+      "fb": "Whether a treating clinician may take this role is not settled by the course reading. It does say that when a third party requests services, the clinician clarifies the role, who the patient is, the probable uses of the information, and the limits of confidentiality (Standard 3.07). The supervisor, the clinic's policy, and the rules where the clinician practices decide, and Sabine needs to hear about the request first."
      },
      {
       "id": "h3",
@@ -550,7 +550,7 @@ var STEPS = [
       "label": "Tell Sabine about the request, check clinic policy and local rules with your supervisor, and share only what she agrees to in writing.",
       "pts": 6,
       "cls": "best",
-      "fb": "This follows the course's reasoning. The sources of authority for the question are the law where you practice, the code, the clinic's policy, and your supervisor, and the course does not supply the legal answer. Consent is one route to disclosure, the limits of confidentiality are discussed with the client at the outset and as circumstances change, and what is shared is limited to what is germane. Sabine makes the decision with full information about what the note would say."
+      "fb": "This follows the course's reasoning. The sources of authority for the question are the law where the clinician practices, the code, the clinic's policy, and the clinician's supervisor, and the course does not supply the legal answer. Consent is one route to disclosure, the limits of confidentiality are discussed with the patient at the outset and as circumstances change, and what is shared is limited to what is germane. Sabine makes the decision with full information about what the note would say."
      },
      {
       "id": "h2",
@@ -611,7 +611,7 @@ var STEPS = [
       "label": "An unguided self-help app on her phone, because it works at any hour and costs the least for her and for the clinic.",
       "pts": 1,
       "cls": "weak",
-      "fb": "The reading's evidence on apps is thin. Most store descriptions claim effectiveness without published support, and most downloaders stop within weeks. An unguided app also has no person to review her answers, which matters for a client who drinks to sleep, and the course sources do not carry findings from guided programs to unguided ones."
+      "fb": "The reading's evidence on apps is thin. Most store descriptions claim effectiveness without published support, and most downloaders stop within weeks. An unguided app also has no person to review her answers, which matters for a patient who drinks to sleep, and the course sources do not carry findings from guided programs to unguided ones."
      }
     ]
    }
@@ -815,7 +815,7 @@ function stepsRow(){
   names.forEach(function(n,i){ h+='<span class="stp'+(i===ix?' on':(i<ix?' done':''))+'">'+n+(i===ix?' (current)':(i<ix?' (done)':''))+'</span>'; });
   return h+'</div>';
 }
-function safetyNote(){ return '<p class="note safe"><b>Safety.</b> A case plan never replaces asking a person directly how they are. If anything in this activity affects you, call or text 988 at any hour, or call 911 in an emergency.</p>'; }
+function safetyNote(){ return ''; }
 function optBtn(act,val,label,gloss,selected,disabled,cls){
   return '<button class="opt'+(selected?' sel':'')+(cls?' '+cls:'')+'" type="button" aria-pressed="'+(selected?'true':'false')+'" data-act="'+act+'" data-val="'+val+'"'+(disabled?' disabled':'')+'><span class="mark" aria-hidden="true">'+(selected?'✓':'○')+'</span><span>'+label+(gloss?gloss:'')+'</span></button>';
 }
@@ -951,8 +951,8 @@ function fitNotes(){
   if(S.ans.loop==="l4") n.push("Your step 1 choice was a cause story. Module 14 separates what started a problem from what keeps it going.");
   if(m.cls==="none") n.push("Your process measure was an impression at the end of treatment, so nothing could show before the end whether the targeted process was changing. Module 14 puts a process measure beside the outcome measure.");
   if(S.ans.om!=="om1") n.push("Your outcome measure in step 3 was not the repeated, scored one with a reliable-change rule. Modules 11 and 12 ask for the same instrument at regular points and a rule for what counts as change.");
-  if(S.ans.hr==="h2") n.push("Your step 4 choice kept the employer's request from Sabine. Module 13 has the clinician tell the client about a request that concerns her.");
-  if(S.ans.dl==="d1"||S.ans.dl==="d3") n.push("Your delivery plan fitted one channel to a client with a long distance and limited internet. Module 15 adds a phone path, a week-4 review, and safety routing.");
+  if(S.ans.hr==="h2") n.push("Your step 4 choice kept the employer's request from Sabine. Module 13 has the clinician tell the patient about a request that concerns her.");
+  if(S.ans.dl==="d1"||S.ans.dl==="d3") n.push("Your delivery plan fitted one channel to a patient with a long distance and limited internet. Module 15 adds a phone path, a week-4 review, and safety routing.");
   if(S.ans.rev==="rv2") n.push("Your week-6 decision recorded the plan as working from attendance and a moving row in the table. Module 14 reads the process series and the outcome series together.");
   if(!n.length) n.push("Your choices line up. The loop, the first point, and the measure aim at the same link.");
   var h='<ul class="plain">'; n.forEach(function(x){ h+='<li>'+esc(x)+'</li>'; }); return h+'</ul>';
@@ -989,7 +989,7 @@ function renderFinal(){
   h+='<h3 class="ch">Things this case cannot yet answer</h3><ul class="plain">';
   GAPS.forEach(function(g){ h+='<li>'+esc(g)+'</li>'; });
   h+='</ul><div class="foot"><button class="btn secondary" type="button" data-act="again">Start over</button></div>'+
-   '<p class="selfnote">Sabine, the scores, and the model answer are invented, and your answers are not saved or sent. In the United States, call or text 988 at any hour, or call 911 in an emergency.</p></section>';
+   '<p class="selfnote">Sabine, the scores, and the model answer are invented, and your answers are not saved or sent.</p></section>';
   return h;
 }
 function act(v,val){

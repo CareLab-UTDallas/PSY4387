@@ -712,7 +712,7 @@ function planText(p,rate){
     L.push("");
     L.push("Session "+n+". "+dLabel(s.d)+" ("+gapTxt+(s.kind==="L"?", the last session before the exam, kept light":"")+")");
     var b=0;
-    if(s.round) L.push("  Mixed Retrieval Round "+s.round+" (about 17 minutes). Do it closed book, then read the feedback on the items you missed.");
+    if(s.round) L.push("  Mixed Retrieval Round "+s.round+". Do it closed book, then read the feedback on the items you missed.");
     s.slots.forEach(function(mn){
       b++; var m=modById(mn), j=(occ[mn]||0); occ[mn]=j+1; var pr=m.p[j%m.p.length];
       L.push("  Block "+b+", "+BLOCK+" minutes. Module "+mn+" ("+m.topic+"), rated "+rate[mn]+".");
@@ -782,7 +782,7 @@ function renderPlan(){
   if(S.copied) h+='<p class="explain noprint" role="status">'+esc(S.copied)+'</p>';
   h+='<pre class="plan" id="plantext" tabindex="0" aria-label="Study plan text">'+esc(p.text)+'</pre>'+
    '<div class="foot noprint"><button class="btn secondary" type="button" data-act="again">Start over</button></div>'+
-   '<p class="selfnote">The schedule is a proposal. Retrieval practice and spacing have support in the research the course cites, and the exact spacing for this course is unknown. If anything about the exam feels overwhelming, you can call or text 988 at any hour, or call 911 in an emergency.</p></section>';
+   '<p class="selfnote">The schedule is a proposal. Retrieval practice and spacing have support in the research the course cites, and the exact spacing for this course is unknown.</p></section>';
   return h;
 }
 function toggleDay(d){ var i=S.days.indexOf(d); if(i>=0) S.days.splice(i,1); else S.days.push(d); S.days.sort(function(a,b){return a-b;}); S.plan=null; }
